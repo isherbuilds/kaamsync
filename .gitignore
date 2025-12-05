@@ -1,0 +1,10 @@
+.DS_Store
+.env
+/node_modules/
+
+CURRENT.md
+30-Day.md
+
+# React Router
+/.react-router/
+/build/
