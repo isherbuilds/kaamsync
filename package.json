@@ -9,7 +9,7 @@
 		"dev:ui": "react-router dev --port 3000",
 		"dev:clean": "tsx scripts/clean.ts",
 		"build": "react-router build",
-		"start": "PORT=3000 react-router-serve ./build/server/index.js",
+		"start": "react-router-serve ./build/server/index.js",
 		"typecheck": "react-router typegen && tsc",
 		"db:generate": "drizzle-kit generate",
 		"db:generate-zero": "drizzle-zero generate --format -o zero/schema.gen.ts",
