@@ -43,14 +43,21 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 		const orgSlug = params.orgSlug;
 
 		// Prime from cache with SWR background refresh
-		const swr1Start = DEBUG_LAYOUT ? performance.now() : 0;
 		const baseSession = await getAuthSessionSWR(() => authClient.getSession(), {
 			refreshMaxAgeMs: 60_000,
 			blockOnEmpty: true,
 		});
-		layoutLog(
-			`[Layout Middleware] getAuthSessionSWR took ${(performance.now() - swr1Start).toFixed(2)}ms`,
-		);
+		// if (!baseSession) {
+		// 	try {
+		// 		const result = await authClient.getSession();
+		// 		if (result?.data) {
+		// 			baseSession = result.data;
+		// 			saveAuthSessionToLocalStorage(result.data);
+		// 		}
+		// 	} catch {
+		// 		baseSession = getAuthSessionFromLocalStorage();
+		// 	}
+		// }
 
 		if (!baseSession?.session) {
 			throw redirect("/login");

@@ -1,6 +1,14 @@
 "use client";
 
-import { ChevronsUpDown, Plus } from "lucide-react";
+import {
+	BlocksIcon,
+	ChevronsUpDown,
+	CogIcon,
+	HandbagIcon,
+	HomeIcon,
+	Plus,
+	Users2Icon,
+} from "lucide-react";
 import { Link } from "react-router";
 import {
 	DropdownMenu,
@@ -19,7 +27,7 @@ import {
 } from "~/components/ui/sidebar";
 import { authClient } from "~/lib/auth-client";
 import { clearAuthSessionFromLocalStorage } from "~/lib/offline-auth";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage, CustomAvatar } from "./ui/avatar";
 
 export function OrgSwitcher({
 	organizations,
@@ -76,14 +84,50 @@ export function OrgSwitcher({
 						align="start"
 						className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
 						side={isMobile ? "bottom" : "right"}
-						sideOffset={4}
+						sideOffset={6}
 					>
+						<DropdownMenuItem asChild className="p-2">
+							<Link className="cursor-pointer" to={`/${currentOrg.slug}`}>
+								<HomeIcon className="size-4" />
+								<div>Home</div>
+							</Link>
+						</DropdownMenuItem>
+
+						<DropdownMenuItem asChild className="p-2">
+							<Link
+								className="cursor-pointer"
+								to={`/${currentOrg.slug}/settings`}
+							>
+								<CogIcon className="size-4" />
+								<div>Settings</div>
+							</Link>
+						</DropdownMenuItem>
+
+						<DropdownMenuItem asChild className="p-2">
+							<Link
+								className="cursor-pointer"
+								to={`/${currentOrg.slug}/settings/members`}
+							>
+								<Users2Icon className="size-4" />
+								<div>Invite and Manage Users</div>
+							</Link>
+						</DropdownMenuItem>
+
+						<DropdownMenuItem asChild className="p-2">
+							<Link className="cursor-pointer" to="/join">
+								<BlocksIcon className="size-4" />
+								<div>Add Organization</div>
+							</Link>
+						</DropdownMenuItem>
+
+						<DropdownMenuSeparator />
+
 						<DropdownMenuLabel className="text-muted-foreground text-xs">
-							Teams
+							Organizations
 						</DropdownMenuLabel>
 
 						{organizations?.map((org) => (
-							<DropdownMenuItem asChild className="gap-2 p-2" key={org.name}>
+							<DropdownMenuItem asChild className="p-2" key={org.name}>
 								<Link
 									to={`/${org.slug}`}
 									onClick={async (e) => {
@@ -94,19 +138,15 @@ export function OrgSwitcher({
 											});
 										}
 									}}
+									className="cursor-pointer"
 								>
-									<div className="flex size-6 items-center justify-center rounded-md border">
-										{/* <team.logo className="size-3.5 shrink-0" /> */}
-										<Avatar className="size-3.5 shrink-0 rounded-lg">
-											<AvatarImage
-												alt={org.name}
-												src={`https://api.dicebear.com/9.x/glass/svg?seed=${org.name}`}
-											/>
-											<AvatarFallback className="rounded-lg">
-												{org.name.charAt(0)}
-											</AvatarFallback>
-										</Avatar>
-									</div>
+									{/* <org.logo className="size-3.5 shrink-0" /> */}
+									<CustomAvatar
+										key={org.id}
+										avatar={`https://api.dicebear.com/9.x/glass/svg?seed=${org.name}`}
+										name={org.name}
+										className="size-5"
+									/>
 									{org.name}
 									<DropdownMenuShortcut>
 										{currentOrg.id === org.id && "✓"}
@@ -114,28 +154,6 @@ export function OrgSwitcher({
 								</Link>
 							</DropdownMenuItem>
 						))}
-						<DropdownMenuSeparator />
-						<DropdownMenuItem asChild className="gap-2 p-2">
-							<Link className="cursor-pointer" to="/settings">
-								<div className="flex size-6 items-center justify-center rounded-md border">
-									<Plus className="size-4" />
-								</div>
-								<div className="font-medium text-muted-foreground">
-									Settings
-								</div>
-							</Link>
-						</DropdownMenuItem>
-
-						<DropdownMenuItem asChild className="gap-2 p-2">
-							<Link className="cursor-pointer" to="/join">
-								<div className="flex size-6 items-center justify-center rounded-md border">
-									<Plus className="size-4" />
-								</div>
-								<div className="font-medium text-muted-foreground">
-									Add team
-								</div>
-							</Link>
-						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</SidebarMenuItem>

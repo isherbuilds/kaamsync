@@ -547,7 +547,7 @@ export async function seed() {
 
 	for (const workspace of workspaceData) {
 		// Create 300-500 matters per workspace to get to thousands total
-		const matterCount = 300 + Math.floor(Math.random() * 201);
+		const matterCount = 30 + Math.floor(Math.random() * 21);
 
 		// Track short IDs for this workspace
 		let currentShortId = 1;
