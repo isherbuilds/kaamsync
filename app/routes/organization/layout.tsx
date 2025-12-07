@@ -29,16 +29,16 @@ let lastOrgSlug: string | undefined;
 let hasInitializedOrg = false;
 
 // Debug logging - disable in production for performance
-const DEBUG_LAYOUT = false;
-function layoutLog(msg: string, ...args: unknown[]) {
-	if (DEBUG_LAYOUT) console.log(msg, ...args);
-}
+// const DEBUG_LAYOUT = false;
+// function layoutLog(msg: string, ...args: unknown[]) {
+// 	if (DEBUG_LAYOUT) console.log(msg, ...args);
+// }
 
 // Framework mode
 export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 	async ({ context, params }, next) => {
-		const middlewareStart = DEBUG_LAYOUT ? performance.now() : 0;
-		layoutLog("[Layout Middleware] START");
+		// const middlewareStart = DEBUG_LAYOUT ? performance.now() : 0;
+		// layoutLog("[Layout Middleware] START");
 
 		const orgSlug = params.orgSlug;
 
@@ -47,17 +47,6 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 			refreshMaxAgeMs: 60_000,
 			blockOnEmpty: true,
 		});
-		// if (!baseSession) {
-		// 	try {
-		// 		const result = await authClient.getSession();
-		// 		if (result?.data) {
-		// 			baseSession = result.data;
-		// 			saveAuthSessionToLocalStorage(result.data);
-		// 		}
-		// 	} catch {
-		// 		baseSession = getAuthSessionFromLocalStorage();
-		// 	}
-		// }
 
 		if (!baseSession?.session) {
 			throw redirect("/login");
@@ -73,9 +62,9 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 			!needsOrgUpdate &&
 			!hasInitializedOrg;
 
-		layoutLog(
-			`[Layout Middleware] needsOrgUpdate: ${needsOrgUpdate}, orgAlreadyMatches: ${orgAlreadyMatches}`,
-		);
+		// layoutLog(
+		// 	`[Layout Middleware] needsOrgUpdate: ${needsOrgUpdate}, orgAlreadyMatches: ${orgAlreadyMatches}`,
+		// );
 
 		if (orgAlreadyMatches) {
 			// Skip redundant setActive call on initial load
@@ -83,11 +72,11 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 			hasInitializedOrg = true;
 		} else if (needsOrgUpdate) {
 			try {
-				const setActiveStart = DEBUG_LAYOUT ? performance.now() : 0;
+				// const setActiveStart = DEBUG_LAYOUT ? performance.now() : 0;
 				await authClient.organization.setActive({ organizationSlug: orgSlug });
-				layoutLog(
-					`[Layout Middleware] setActive took ${(performance.now() - setActiveStart).toFixed(2)}ms`,
-				);
+				// layoutLog(
+				// 	`[Layout Middleware] setActive took ${(performance.now() - setActiveStart).toFixed(2)}ms`,
+				// );
 				lastOrgSlug = orgSlug;
 				hasInitializedOrg = true;
 				finalSession =
@@ -106,14 +95,14 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 
 		context.set(clientAuthContext, finalSession);
 
-		const nextStart = DEBUG_LAYOUT ? performance.now() : 0;
+		// const nextStart = DEBUG_LAYOUT ? performance.now() : 0;
 		await next();
-		layoutLog(
-			`[Layout Middleware] next() took ${(performance.now() - nextStart).toFixed(2)}ms`,
-		);
-		layoutLog(
-			`[Layout Middleware] TOTAL: ${(performance.now() - middlewareStart).toFixed(2)}ms`,
-		);
+		// layoutLog(
+		// 	`[Layout Middleware] next() took ${(performance.now() - nextStart).toFixed(2)}ms`,
+		// );
+		// layoutLog(
+		// 	`[Layout Middleware] TOTAL: ${(performance.now() - middlewareStart).toFixed(2)}ms`,
+		// );
 	},
 ];
 
@@ -121,7 +110,7 @@ export async function clientLoader({
 	params,
 	context,
 }: Route.ClientLoaderArgs) {
-	layoutLog("[Layout clientLoader] START");
+	// layoutLog("[Layout clientLoader] START");
 
 	const orgSlug = params.orgSlug;
 	const authSession = context.get(clientAuthContext);

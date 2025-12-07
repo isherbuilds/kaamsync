@@ -128,7 +128,7 @@ export default function HomePage() {
 									</div>
 									<div className="ml-4 flex-1 flex justify-center">
 										<div className="h-5 px-4 rounded-md bg-muted/50 text-xs text-muted-foreground flex items-center">
-											app.kaamsync.com
+											kaamsync.com
 										</div>
 									</div>
 								</div>

@@ -10,23 +10,9 @@ import type { Schema } from "./schema";
 const preloadedWorkspaces = new Set<string>();
 let globalPreloadDone = false;
 
-// Debug logging for preload timing - disable in production
-const DEBUG_PRELOAD = false;
-function preloadLog(msg: string, data?: unknown) {
-	if (DEBUG_PRELOAD) console.log(`[Preload] ${msg}`, data ?? "");
-}
-
-/**
- * Preloads essential app data. Call after login or org change.
- * Following zbugs pattern: preload common data to avoid spinners.
- *
- * Strategy: Preload workspace list first, then preload per-workspace queries
- * using the SAME queries that components use. This ensures cache hits.
- */
 export function preloadAll(z: Zero<Schema, Mutators>, ctx: QueryContext) {
 	if (!ctx.sub || !ctx.activeOrganizationId || globalPreloadDone) return;
-	preloadLog("preloadAll START", { orgId: ctx.activeOrganizationId });
-	const start = performance.now();
+
 	globalPreloadDone = true;
 	preloadedWorkspaces.clear();
 
@@ -37,7 +23,6 @@ export function preloadAll(z: Zero<Schema, Mutators>, ctx: QueryContext) {
 	z.preload(queries.getUserAuthoredMatters(ctx), CACHE_PRELOAD);
 	z.preload(queries.getOrganizationLabels(ctx), CACHE_PRELOAD);
 	z.preload(queries.getOrganizationMembers(ctx), CACHE_PRELOAD);
-	preloadLog(`preloadAll DONE in ${(performance.now() - start).toFixed(2)}ms`);
 }
 
 /**
@@ -51,15 +36,10 @@ export function preloadAllWorkspaces(
 	workspaceIds: string[],
 ) {
 	if (!ctx.sub || !ctx.activeOrganizationId) return;
-	preloadLog(`preloadAllWorkspaces START - ${workspaceIds.length} workspaces`);
-	const start = performance.now();
 	// Preload all workspaces - Zero handles this efficiently
 	for (const id of workspaceIds) {
 		preloadWorkspace(z, ctx, id);
 	}
-	preloadLog(
-		`preloadAllWorkspaces DONE in ${(performance.now() - start).toFixed(2)}ms`,
-	);
 }
 
 /**
@@ -74,23 +54,13 @@ export function preloadWorkspace(
 	if (!ctx.sub || !ctx.activeOrganizationId || !workspaceId) return;
 
 	const key = `${ctx.activeOrganizationId}:${workspaceId}`;
-	if (preloadedWorkspaces.has(key)) {
-		preloadLog(
-			`preloadWorkspace SKIP (already preloaded): ${workspaceId.slice(0, 8)}...`,
-		);
-		return;
-	}
-	preloadLog(`preloadWorkspace START: ${workspaceId.slice(0, 8)}...`);
-	const start = performance.now();
+
 	preloadedWorkspaces.add(key);
 
 	// Use CACHE_NAV to match component - this is critical for cache hit
 	z.preload(queries.getWorkspaceMatters(ctx, workspaceId), CACHE_NAV);
 	z.preload(queries.getWorkspaceMembers(ctx, workspaceId), CACHE_NAV);
 	z.preload(queries.getWorkspaceStatuses(ctx, workspaceId), CACHE_NAV);
-	preloadLog(
-		`preloadWorkspace DONE: ${workspaceId.slice(0, 8)}... in ${(performance.now() - start).toFixed(2)}ms`,
-	);
 }
 
 /**

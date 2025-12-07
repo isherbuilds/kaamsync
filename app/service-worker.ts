@@ -10,8 +10,8 @@ declare const self: ServiceWorkerGlobalScope & {
 	__WB_MANIFEST: Array<import("workbox-precaching").PrecacheEntry | string>;
 };
 
-const SHELL_CACHE = "kaamsync-shell";
-const STATIC_CACHE = "kaamsync-static";
+const SHELL_CACHE = "KaamSync-shell";
+const STATIC_CACHE = "KaamSync-static";
 const SHELL_URLS = ["/", "/index.html", "/build/client/index.html"];
 
 // Immediately take control
@@ -42,7 +42,7 @@ self.addEventListener("message", (event) => {
 	if (event.data === "SKIP_WAITING") void self.skipWaiting();
 });
 
-setCacheNameDetails({ prefix: "kaamsync" });
+setCacheNameDetails({ prefix: "KaamSync" });
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 

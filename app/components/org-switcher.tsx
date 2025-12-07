@@ -4,9 +4,7 @@ import {
 	BlocksIcon,
 	ChevronsUpDown,
 	CogIcon,
-	HandbagIcon,
 	HomeIcon,
-	Plus,
 	Users2Icon,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -26,7 +24,6 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 import { authClient } from "~/lib/auth-client";
-import { clearAuthSessionFromLocalStorage } from "~/lib/offline-auth";
 import { Avatar, AvatarFallback, AvatarImage, CustomAvatar } from "./ui/avatar";
 
 export function OrgSwitcher({

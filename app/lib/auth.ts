@@ -10,14 +10,14 @@ export const auth = betterAuth({
 	experimental: {
 		joins: true,
 	},
-	appName: "kaamsync",
+	appName: "KaamSync",
 	database: drizzleAdapter(db, {
 		provider: "pg",
 		schema,
 	}),
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: true,
+		requireEmailVerification: process.env.NODE_ENV === "production",
 		sendResetPassword: async ({ user, url }) => {
 			//   await resend.emails.send({
 			//     from: "support@mail.kanbased.com",
