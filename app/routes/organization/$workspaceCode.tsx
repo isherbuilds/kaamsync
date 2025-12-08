@@ -262,7 +262,7 @@ export default function WorkspaceIndex() {
 					)}
 					{canCreateRequest && <CreateRequestDialog {...dialogProps} />}
 				</div>
-			</div>{" "}
+			</div>
 			{/* Task List - Virtualized */}
 			<div className="flex-1 min-h-0">
 				{flatItems.length === 0 ? (
