@@ -1,6 +1,6 @@
 import { useQuery } from "@rocicorp/zero/react";
 import { CheckCircle2, ChevronRight, MoreHorizontal, Star } from "lucide-react";
-import { memo, useCallback, useState } from "react";
+import { memo, useState } from "react";
 import { useNavigate } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
@@ -18,6 +18,13 @@ import { useZ } from "~/hooks/use-zero-cache";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
+
+const TIMELINE_TYPE_COLORS: Record<string, string> = {
+	comment: "bg-blue-500",
+	created: "bg-green-500",
+	status_change: "bg-purple-500",
+	assigned: "bg-orange-500",
+};
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 	const matterKey = params.matterKey;
@@ -60,51 +67,49 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		},
 	);
 
-	// Determine admin privileges once from loaded members
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
-	const me = members.find((m: any) => m.userId === authSession.user.id);
-	const isAdmin = !!(me && (me.role === "admin" || me.role === "owner"));
+	// Determine admin privileges - direct lookup
+	const userId = authSession.user.id;
+	let isAdmin = false;
+	let canEdit = false;
+	for (let i = 0; i < members.length; i++) {
+		// biome-ignore lint/suspicious/noExplicitAny: Zero query types
+		const m = members[i] as any;
+		if (m.userId === userId) {
+			isAdmin = m.role === "admin" || m.role === "owner";
+			break;
+		}
+	}
 
-	// Define canEdit based on user role/ownership - safe even if matter is null
-	const canEdit = matter
-		? matter.authorId === authSession.user.id ||
-			matter.assigneeId === authSession.user.id ||
-			isAdmin
-		: false;
+	// Define canEdit based on user role/ownership
+	if (matter) {
+		canEdit =
+			matter.authorId === userId || matter.assigneeId === userId || isAdmin;
+	}
 
-	// Memoized handlers - safe to call before early return since matter?.id is used
-	const handleStatusChange = useCallback(
-		(newStatusId: string) => {
-			if (!matter) return;
-			z.mutate.matter.updateStatus({
-				id: matter.id,
-				statusId: newStatusId,
-			});
-		},
-		[z, matter],
-	);
+	// Handler functions - z is stable so no useCallback needed
+	const handleStatusChange = (newStatusId: string) => {
+		if (!matter) return;
+		z.mutate.matter.updateStatus({
+			id: matter.id,
+			statusId: newStatusId,
+		});
+	};
 
-	const handleAssign = useCallback(
-		(assigneeId: string | null) => {
-			if (!matter) return;
-			z.mutate.matter.assign({
-				id: matter.id,
-				assigneeId: assigneeId || null,
-			});
-		},
-		[z, matter],
-	);
+	const handleAssign = (assigneeId: string | null) => {
+		if (!matter) return;
+		z.mutate.matter.assign({
+			id: matter.id,
+			assigneeId: assigneeId || null,
+		});
+	};
 
-	const handlePriorityChange = useCallback(
-		(priority: PriorityValue) => {
-			if (!matter) return;
-			z.mutate.matter.update({
-				id: matter.id,
-				priority,
-			});
-		},
-		[z, matter],
-	);
+	const handlePriorityChange = (priority: PriorityValue) => {
+		if (!matter) return;
+		z.mutate.matter.update({
+			id: matter.id,
+			priority,
+		});
+	};
 
 	// Early return after all hooks
 	if (!matter) {
@@ -382,46 +387,47 @@ function TaskTimeline({
 		CACHE_NAV,
 	);
 
-	// Helper function to get status name by ID
-	const getStatusName = (statusId: string | null) => {
-		if (!statusId) return "Unknown";
-		if (!Array.isArray(statuses) || statuses.length === 0) {
-			return statusId.slice(0, 8);
-		}
-		const status = statuses.find((s) => s?.id === statusId);
-		return status?.name || "Unknown Status";
-	};
+	// Build lookup maps once - O(n) setup, O(1) lookup
+	const statusMap = new Map<string, string>();
+	for (let i = 0; i < statuses.length; i++) {
+		const s = statuses[i];
+		if (s?.id) statusMap.set(s.id, s.name || "Unknown Status");
+	}
 
-	// Helper function to get user name by ID
-	const getUserName = (userId: string | null) => {
-		if (!userId) return "Unassigned";
-		const member = members.find((m) => m.userId === userId);
-		return member?.usersTable?.name || "Unknown User";
-	};
+	const memberMap = new Map<string, string>();
+	for (let i = 0; i < members.length; i++) {
+		const m = members[i];
+		if (m?.userId)
+			memberMap.set(m.userId, m.usersTable?.name || "Unknown User");
+	}
 
+	if (timeline.length === 0) {
+		return (
+			<div className="space-y-4">
+				<p className="text-sm text-muted-foreground italic">No activity yet</p>
+			</div>
+		);
+	}
+
+	const timelineLength = timeline.length;
 	return (
 		<div className="space-y-4">
-			{timeline.length === 0 ? (
-				<p className="text-sm text-muted-foreground italic">No activity yet</p>
-			) : (
-				timeline.map((entry, index) => {
-					const userName = entry.user?.name || "Unknown User";
-					const userImage = entry.user?.image ?? undefined;
-					const isLast = index === timeline.length - 1;
+			{timeline.map((entry, index) => {
+				const userName = entry.user?.name || "Unknown User";
+				const userImage = entry.user?.image ?? undefined;
 
-					return (
-						<TimelineEntry
-							key={entry.id}
-							entry={entry}
-							userName={userName}
-							userImage={userImage}
-							isLast={isLast}
-							getStatusName={getStatusName}
-							getUserName={getUserName}
-						/>
-					);
-				})
-			)}
+				return (
+					<TimelineEntry
+						key={entry.id}
+						entry={entry}
+						userName={userName}
+						userImage={userImage}
+						isLast={index === timelineLength - 1}
+						statusMap={statusMap}
+						memberMap={memberMap}
+					/>
+				);
+			})}
 		</div>
 	);
 }
@@ -432,56 +438,46 @@ const TimelineEntry = memo(function TimelineEntry({
 	userName,
 	userImage,
 	isLast,
-	getStatusName,
-	getUserName,
+	statusMap,
+	memberMap,
 }: {
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
 	entry: any;
 	userName: string;
 	userImage: string | undefined;
 	isLast: boolean;
-	getStatusName: (statusId: string | null) => string;
-	getUserName: (userId: string | null) => string;
+	statusMap: Map<string, string>;
+	memberMap: Map<string, string>;
 }) {
-	const typeColors: Record<string, string> = {
-		comment: "bg-blue-500",
-		created: "bg-green-500",
-		status_change: "bg-purple-500",
-		assigned: "bg-orange-500",
-	};
-
-	const getContent = () => {
-		switch (entry.type) {
-			case "comment":
-				return <p className="text-sm whitespace-pre-wrap">{entry.content}</p>;
-			case "created":
-				return <p className="text-sm">Created this task</p>;
-			case "status_change":
-				return (
-					<p className="text-sm">
-						Status:{" "}
-						<span className="font-medium">
-							{getStatusName(entry.fromStatusId)}
-						</span>
-						{" → "}
-						<span className="font-medium text-primary">
-							{getStatusName(entry.toStatusId)}
-						</span>
-					</p>
-				);
-			case "assigned":
-				return (
-					<p className="text-sm">
-						Assigned to{" "}
-						<span className="font-medium">
-							{getUserName(entry.toAssigneeId)}
-						</span>
-					</p>
-				);
-			default:
-				return null;
-		}
-	};
+	// Inline lookup using maps
+	const getStatusName = (statusId: string | null) =>
+		statusId ? statusMap.get(statusId) || statusId.slice(0, 8) : "Unknown";
+	const getUserName = (userId: string | null) =>
+		userId ? memberMap.get(userId) || "Unknown User" : "Unassigned";
+	let content: React.ReactNode = null;
+	if (entry.type === "comment") {
+		content = <p className="text-sm whitespace-pre-wrap">{entry.content}</p>;
+	} else if (entry.type === "created") {
+		content = <p className="text-sm">Created this task</p>;
+	} else if (entry.type === "status_change") {
+		content = (
+			<p className="text-sm">
+				Status:{" "}
+				<span className="font-medium">{getStatusName(entry.fromStatusId)}</span>
+				{" → "}
+				<span className="font-medium text-primary">
+					{getStatusName(entry.toStatusId)}
+				</span>
+			</p>
+		);
+	} else if (entry.type === "assigned") {
+		content = (
+			<p className="text-sm">
+				Assigned to{" "}
+				<span className="font-medium">{getUserName(entry.toAssigneeId)}</span>
+			</p>
+		);
+	}
 
 	return (
 		<div className="relative flex gap-3">
@@ -505,15 +501,13 @@ const TimelineEntry = memo(function TimelineEntry({
 				<div className="flex items-center gap-2 mb-1">
 					<span className="text-sm font-medium">{userName}</span>
 					<div
-						className={`size-1 rounded-full ${typeColors[entry.type] || "bg-muted"}`}
+						className={`size-1 rounded-full ${TIMELINE_TYPE_COLORS[entry.type] || "bg-muted"}`}
 					/>
 					<span className="text-xs text-muted-foreground">
 						{formatTimelineDate(entry.createdAt || Date.now())}
 					</span>
 				</div>
-				<div className="rounded-md bg-muted/30 border px-3 py-2">
-					{getContent()}
-				</div>
+				<div className="rounded-md bg-muted/30 border px-3 py-2">{content}</div>
 			</div>
 		</div>
 	);

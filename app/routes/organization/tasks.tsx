@@ -1,5 +1,4 @@
 import { useQuery } from "@rocicorp/zero/react";
-import { isPast } from "date-fns";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
@@ -61,7 +60,6 @@ export default function TasksPage() {
 		enabled: Boolean(queryCtx.activeOrganizationId),
 		...CACHE_LONG,
 	});
-	const membersArray = Array.isArray(members) ? members : [];
 
 	if (!tasks) {
 		return (
@@ -74,22 +72,17 @@ export default function TasksPage() {
 		);
 	}
 
-	const assignedTasks = Array.isArray(tasks) ? tasks : [];
-	const sortedAssignedTasks = assignedTasks
-		.slice()
-		.sort((a, b) => compareStatuses(a.status || {}, b.status || {}));
-
-	const listPanelSize = getListPanelSize(isTablet, isExtraLargeScreen);
-	const detailPanelSize = getDetailPanelSize(isTablet, isExtraLargeScreen);
-
-	const taskCount = assignedTasks.length;
-	const now = new Date();
+	// Direct sort - tasks is already an array from useInfiniteMatters
+	const sortedTasks = [...tasks].sort((a, b) =>
+		compareStatuses(a.status || {}, b.status || {}),
+	);
+	const taskCount = sortedTasks.length;
 
 	return (
 		<ResizablePanelGroup className="h-full" direction="horizontal">
 			<ResizablePanel
 				className="border-r"
-				defaultSize={listPanelSize}
+				defaultSize={getListPanelSize(isTablet, isExtraLargeScreen)}
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
 			>
@@ -122,7 +115,7 @@ export default function TasksPage() {
 						/>
 					) : (
 						<VirtualizedList
-							items={sortedAssignedTasks}
+							items={sortedTasks}
 							getItemKey={(item) => item.id}
 							estimateSize={80}
 							className="p-1"
@@ -133,7 +126,7 @@ export default function TasksPage() {
 								const statusType =
 									(matter.status?.type as StatusType) ?? "not_started";
 								const StatusIcon = STATUS_TYPE_ICONS[statusType];
-								const author = getMemberInfo(matter.authorId, membersArray);
+								const author = getMemberInfo(matter.authorId, members);
 
 								return (
 									<NavLink
@@ -180,12 +173,12 @@ export default function TasksPage() {
 															<span
 																className={cn(
 																	"text-xs text-muted-foreground",
-																	(isPast(matter.dueDate) ||
+																	(matter.dueDate < Date.now() ||
 																		priority === Priority.URGENT) &&
 																		"text-red-600 font-medium",
 																)}
 															>
-																{formatCompactRelativeDate(matter.dueDate, now)}
+																{formatCompactRelativeDate(matter.dueDate)}
 															</span>
 														)}
 													</div>
@@ -204,7 +197,7 @@ export default function TasksPage() {
 
 			<ResizablePanel
 				className="hidden md:block"
-				defaultSize={detailPanelSize}
+				defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
 				minSize={DETAIL_PANEL_MIN_SIZE}
 			>
 				<Outlet />

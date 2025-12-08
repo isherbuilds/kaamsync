@@ -1,6 +1,6 @@
 import { useQuery } from "@rocicorp/zero/react";
 import { AlertCircle } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import {
 	createContext,
 	isRouteErrorResponse,
@@ -99,27 +99,21 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
 		CACHE_NAV,
 	);
 
-	// Preload workspaces for instant switching
-	const workspaceIds = useMemo(
-		() => workspacesData.map((w) => w.id),
-		[workspacesData],
-	);
+	// Preload workspaces for instant switching - direct map is O(n) and cheap
 	const activeOrgId = queryCtx.activeOrganizationId;
 
 	useEffect(() => {
-		if (workspaceIds.length > 0 && activeOrgId) {
+		if (workspacesData.length > 0 && activeOrgId) {
 			preloadAllWorkspaces(
 				z,
 				{ sub: queryCtx.sub, activeOrganizationId: activeOrgId },
-				workspaceIds,
+				workspacesData.map((w) => w.id),
 			);
 		}
-	}, [z, queryCtx.sub, activeOrgId, workspaceIds]);
+	}, [z, queryCtx.sub, activeOrgId, workspacesData]);
 
-	const selectedOrg = useMemo(
-		() => orgsData.find((o) => o.slug === orgSlug),
-		[orgsData, orgSlug],
-	);
+	// Direct find - O(n) on small array, no memoization overhead needed
+	const selectedOrg = orgsData.find((o) => o.slug === orgSlug);
 
 	return (
 		<SidebarProvider>

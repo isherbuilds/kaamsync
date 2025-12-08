@@ -60,7 +60,6 @@ export default function RequestsPage() {
 		enabled: Boolean(queryCtx.activeOrganizationId),
 		...CACHE_LONG,
 	});
-	const membersArray = Array.isArray(members) ? members : [];
 
 	if (!requests) {
 		return (
@@ -75,21 +74,17 @@ export default function RequestsPage() {
 		);
 	}
 
-	const assignedRequests = Array.isArray(requests) ? requests : [];
-	const sortedAssignedRequests = assignedRequests
-		.slice()
-		.sort((a, b) => compareStatuses(a.status || {}, b.status || {}));
-
-	const listPanelSize = getListPanelSize(isTablet, isExtraLargeScreen);
-	const detailPanelSize = getDetailPanelSize(isTablet, isExtraLargeScreen);
-
-	const requestCount = assignedRequests.length;
+	// Direct sort - requests is already an array from useInfiniteMatters
+	const sortedRequests = [...requests].sort((a, b) =>
+		compareStatuses(a.status || {}, b.status || {}),
+	);
+	const requestCount = sortedRequests.length;
 
 	return (
 		<ResizablePanelGroup className="h-full" direction="horizontal">
 			<ResizablePanel
 				className="border-r"
-				defaultSize={listPanelSize}
+				defaultSize={getListPanelSize(isTablet, isExtraLargeScreen)}
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
 			>
@@ -122,12 +117,12 @@ export default function RequestsPage() {
 						/>
 					) : (
 						<VirtualizedList
-							items={sortedAssignedRequests}
+							items={sortedRequests}
 							getItemKey={(item) => item.id}
 							estimateSize={100}
 							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
 							renderItem={(matter) => {
-								const assignee = getMemberInfo(matter.assigneeId, membersArray);
+								const assignee = getMemberInfo(matter.assigneeId, members);
 								const createdDate = matter.createdAt
 									? new Date(matter.createdAt).toLocaleDateString("en-IN", {
 											month: "short",
@@ -212,7 +207,7 @@ export default function RequestsPage() {
 
 			<ResizablePanel
 				className="hidden md:block"
-				defaultSize={detailPanelSize}
+				defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
 				minSize={DETAIL_PANEL_MIN_SIZE}
 			>
 				<Outlet />
