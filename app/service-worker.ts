@@ -68,7 +68,7 @@ registerRoute(
 	}),
 );
 
-// Fallback for failed navigation's
+// Fallback for failed navigations
 setCatchHandler(async ({ request }) => {
 	if (request.mode === "navigate") {
 		for (const url of SHELL_URLS) {

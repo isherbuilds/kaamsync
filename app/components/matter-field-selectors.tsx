@@ -177,7 +177,8 @@ export function StatusSelect({
 				<button
 					type="button"
 					className={cn(
-						"flex items-center gap-1.5 rounded-full hover:bg-muted",
+						"flex items-center rounded-full hover:bg-muted",
+						compact ? "gap-1.5" : "gap-2",
 						compact ? "p-0.5" : "p-1",
 						className,
 					)}

@@ -238,10 +238,12 @@ export default function WorkspaceIndex() {
 		count: 0,
 	});
 
-	// Update ref when we have valid data
-	if (isDataReady && flatItems.length > 0) {
-		lastValidItemsRef.current = { items: flatItems, count: activeCount };
-	}
+	// Update ref after render when we have valid data
+	useEffect(() => {
+		if (isDataReady && flatItems.length > 0) {
+			lastValidItemsRef.current = { items: flatItems, count: activeCount };
+		}
+	}, [isDataReady, flatItems, activeCount]);
 
 	// Use current items if ready, otherwise fall back to last valid items during transition
 	const displayItems = isDataReady
