@@ -364,25 +364,6 @@ export async function createOrganization(
 			});
 		}
 
-		// Explicitly add Admin as Manager if not already present in orgMemberIds (should be, but as a safeguard)
-		if (adminUser && !orgMemberIds.includes(adminUser.id)) {
-			membershipValues.push({
-				id: createId(),
-				workspaceId: actualWorkspaceId,
-				userId: adminUser.id,
-				orgId: org.id,
-				role: workspaceRole.manager, // Manager role for full access
-				status: membershipStatus.active,
-				createdAt: randomDate(oneYearAgo, now),
-				canCreateTasks: true,
-				canCreateRequests: true,
-				canApproveRequests: true,
-				canManageMembers: true,
-				canManageWorkspace: true,
-				updatedAt: now,
-			});
-		}
-
 		await db
 			.insert(workspaceMembershipsTable)
 			.values(membershipValues)

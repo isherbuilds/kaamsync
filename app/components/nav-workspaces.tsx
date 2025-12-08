@@ -66,7 +66,11 @@ export function NavWorkspaces({
 									isActive={isActive}
 									asChild
 								>
-									<Link to={`/${orgSlug}/${workspace.code}`} prefetch="intent">
+									<Link
+										to={`/${orgSlug}/${workspace.code}`}
+										prefetch="intent"
+										// viewTransition
+									>
 										{workspace.name}
 									</Link>
 								</SidebarMenuButton>

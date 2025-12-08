@@ -12,6 +12,7 @@ import {
 	useDeferredValue,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 } from "react";
 import { useParams } from "react-router";
@@ -95,7 +96,7 @@ export default function WorkspaceIndex() {
 	const deferredWorkspaceId = deferredWorkspace?.id ?? "";
 
 	// Get matters - Use deferred workspace ID to avoid blocking UI
-	const [allMatters] = useQuery(
+	const [allMatters, mattersResult] = useQuery(
 		queries.getWorkspaceMatters(queryCtx, deferredWorkspaceId),
 		{ enabled: Boolean(deferredWorkspaceId), ...CACHE_NAV },
 	);
@@ -107,28 +108,43 @@ export default function WorkspaceIndex() {
 	});
 
 	// Get statuses - use deferred for consistency with matters
-	const [statuses] = useQuery(
+	const [statuses, statusesResult] = useQuery(
 		queries.getWorkspaceStatuses(queryCtx, deferredWorkspaceId),
 		{ enabled: Boolean(deferredWorkspaceId), ...CACHE_NAV },
 	);
 
+	// Track if data is ready - prevent showing partial state during transitions
+	// This ensures we don't show empty status headers before matters load
+	// Zero query result types: 'complete' | 'unknown' | 'error'
+	// We consider data ready if both queries have settled (not just statuses alone)
+	// or if matters array has items (we have actual task data to show)
+	const isDataReady =
+		!deferredWorkspaceId ||
+		allMatters.length > 0 ||
+		(mattersResult.type === "complete" && statusesResult.type === "complete");
+
 	// State for expanded groups
 	const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-	const [hasInitializedGroups, setHasInitializedGroups] = useState(false);
+	const [lastInitializedWorkspaceId, setLastInitializedWorkspaceId] = useState<
+		string | null
+	>(null);
 
-	// Reset group initialization when workspace changes
+	// Initialize expanded groups when workspace or statuses change
 	useEffect(() => {
-		setHasInitializedGroups(false);
-		setExpandedGroups(new Set());
-	}, [deferredWorkspaceCode]);
-
-	useEffect(() => {
-		if (statuses.length > 0 && !hasInitializedGroups) {
-			// Default all open
-			setExpandedGroups(new Set(statuses.map((s) => s.id).concat("no-status")));
-			setHasInitializedGroups(true);
+		// Reset and reinitialize when workspace changes
+		if (deferredWorkspaceId !== lastInitializedWorkspaceId) {
+			if (statuses.length > 0) {
+				// Default all open
+				setExpandedGroups(
+					new Set(statuses.map((s) => s.id).concat("no-status")),
+				);
+				setLastInitializedWorkspaceId(deferredWorkspaceId);
+			} else if (deferredWorkspaceId) {
+				// Clear while waiting for new statuses
+				setExpandedGroups(new Set());
+			}
 		}
-	}, [statuses, hasInitializedGroups]);
+	}, [deferredWorkspaceId, statuses, lastInitializedWorkspaceId]);
 
 	const toggleGroup = useCallback((statusId: string) => {
 		setExpandedGroups((prev) => {
@@ -142,31 +158,28 @@ export default function WorkspaceIndex() {
 		});
 	}, []);
 
-	// Group by status and sort groups - data is partially sorted by priority/due date from server
-	// Since Zero can't order by related columns, we group by status and sort groups client-side
+	// Group by status and flatten into list items
 	const { flatItems, activeCount } = useMemo(() => {
-		if (allMatters.length === 0) {
-			return { flatItems: [], activeCount: 0 };
-		}
+		if (!allMatters.length)
+			return { flatItems: [] as ListItem[], activeCount: 0 };
 
 		// Group tasks by status ID
-		const groupMap = new Map<
-			string,
-			{
-				status: (typeof allMatters)[0]["status"];
-				tasks: typeof allMatters;
-				isCompleted: boolean;
-			}
-		>();
+		const groups: {
+			status: (typeof allMatters)[0]["status"];
+			tasks: typeof allMatters;
+			isCompleted: boolean;
+		}[] = [];
+		const groupIdx = new Map<string, number>();
 
 		for (const task of allMatters) {
 			const statusId = task.status?.id || "no-status";
-			const existing = groupMap.get(statusId);
-			if (existing) {
-				existing.tasks.push(task);
+			const idx = groupIdx.get(statusId);
+			if (idx !== undefined) {
+				groups[idx].tasks.push(task);
 			} else {
 				const statusType = (task.status?.type ?? "not_started") as StatusType;
-				groupMap.set(statusId, {
+				groupIdx.set(statusId, groups.length);
+				groups.push({
 					status: task.status,
 					tasks: [task],
 					isCompleted: COMPLETED_STATUS_TYPES.includes(statusType),
@@ -174,24 +187,25 @@ export default function WorkspaceIndex() {
 			}
 		}
 
-		// Sort groups
-		const sortedGroups = Array.from(groupMap.values()).sort((a, b) => {
-			const aType = (a.status?.type ?? "not_started") as StatusType;
-			const bType = (b.status?.type ?? "not_started") as StatusType;
-			return (
-				(STATUS_TYPE_ORDER[aType] ?? 99) - (STATUS_TYPE_ORDER[bType] ?? 99)
-			);
+		// Sort: active groups first, then completed, each sorted by status type order
+		groups.sort((a, b) => {
+			if (a.isCompleted !== b.isCompleted) return a.isCompleted ? 1 : -1;
+			const aOrder =
+				STATUS_TYPE_ORDER[(a.status?.type ?? "not_started") as StatusType] ??
+				99;
+			const bOrder =
+				STATUS_TYPE_ORDER[(b.status?.type ?? "not_started") as StatusType] ??
+				99;
+			return aOrder - bOrder;
 		});
 
 		// Flatten into list items
 		const items: ListItem[] = [];
 		let active = 0;
 
-		// Helper to add group to items
-		const addGroup = (group: (typeof sortedGroups)[0]) => {
+		for (const group of groups) {
 			const statusId = group.status?.id || "no-status";
 			const isExpanded = expandedGroups.has(statusId);
-
 			if (!group.isCompleted) active += group.tasks.length;
 
 			items.push({
@@ -213,20 +227,29 @@ export default function WorkspaceIndex() {
 					});
 				}
 			}
-		};
-
-		// Add active groups
-		for (const group of sortedGroups.filter((g) => !g.isCompleted)) {
-			addGroup(group);
-		}
-
-		// Add completed groups
-		for (const group of sortedGroups.filter((g) => g.isCompleted)) {
-			addGroup(group);
 		}
 
 		return { flatItems: items, activeCount: active };
 	}, [allMatters, expandedGroups]);
+
+	// Keep reference to last valid items to prevent flash during transitions
+	const lastValidItemsRef = useRef<{ items: ListItem[]; count: number }>({
+		items: [],
+		count: 0,
+	});
+
+	// Update ref when we have valid data
+	if (isDataReady && flatItems.length > 0) {
+		lastValidItemsRef.current = { items: flatItems, count: activeCount };
+	}
+
+	// Use current items if ready, otherwise fall back to last valid items during transition
+	const displayItems = isDataReady
+		? flatItems
+		: lastValidItemsRef.current.items;
+	const displayCount = isDataReady
+		? activeCount
+		: lastValidItemsRef.current.count;
 
 	// Memoized mutator functions
 	const onPriorityChange = useCallback(
@@ -276,7 +299,9 @@ export default function WorkspaceIndex() {
 				<div className="flex items-center gap-2 min-w-0">
 					<SidebarTrigger className="lg:hidden shrink-0" />
 					<h5 className="truncate">{workspace.name}</h5>
-					<span className="text-muted-foreground text-sm">· {activeCount}</span>
+					<span className="text-muted-foreground text-sm">
+						· {displayCount}
+					</span>
 				</div>
 				<div className="flex items-center gap-2">
 					{isManager && (
@@ -289,18 +314,23 @@ export default function WorkspaceIndex() {
 			{/* Task List - Virtualized */}
 			<div
 				className="flex-1 min-h-0"
-				style={{ opacity: isStale ? 0.7 : 1, transition: "opacity 100ms" }}
+				style={{
+					opacity: isStale || !isDataReady ? 0.7 : 1,
+					transition: "opacity 100ms",
+				}}
 			>
-				{flatItems.length === 0 ? (
-					<WorkspaceEmptyState
-						isManager={isManager}
-						canCreateRequest={canCreateRequest}
-						dialogProps={dialogProps}
-						statuses={statuses}
-					/>
+				{displayItems.length === 0 ? (
+					isDataReady ? (
+						<WorkspaceEmptyState
+							isManager={isManager}
+							canCreateRequest={canCreateRequest}
+							dialogProps={dialogProps}
+							statuses={statuses}
+						/>
+					) : null
 				) : (
 					<VirtualizedList
-						items={flatItems}
+						items={displayItems}
 						getItemKey={(item) => item.id}
 						estimateSize={40} // Average size (header=40, task=48)
 						renderItem={(item) => {
@@ -429,7 +459,7 @@ const GroupHeader = memo(function GroupHeader({
 	);
 });
 
-// Optimized task row - no hooks, callbacks passed from parent
+// Task row - mobile-first for deskless workers with large touch targets
 const TaskRow = memo(
 	function TaskRow({
 		task,
@@ -453,102 +483,121 @@ const TaskRow = memo(
 		onStatusChange: (taskId: string, statusId: string) => void;
 		onAssigneeChange: (taskId: string, userId: string | null) => void;
 	}) {
-		const taskId = task.id;
-		const linkTo = `/${orgSlug}/matter/${task.workspaceCode}-${task.shortID}`;
-		const taskCode = `${task.workspaceCode}-${task.shortID}`;
+		const {
+			id,
+			workspaceCode: wCode,
+			shortID,
+			title,
+			priority,
+			statusId,
+			assigneeId,
+			dueDate,
+		} = task;
+		const linkTo = `/${orgSlug}/matter/${wCode}-${shortID}`;
 
 		return (
-			<div className="group relative grid grid-cols-[auto_1fr_auto] md:grid-cols-[auto_5rem_auto_1fr_auto_auto] items-center gap-2 md:gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-muted/50 border-b border-border/40 last:border-0">
-				<StableLink
-					to={linkTo}
-					className={cn("absolute inset-0 z-0", isCompleted && "opacity-60")}
-				/>
+			<div
+				className={cn(
+					"group relative border-b border-border/40 last:border-0 transition-colors",
+					"active:bg-muted/70 hover:bg-muted/50", // Better touch feedback
+					isCompleted && "opacity-60",
+				)}
+			>
+				<StableLink to={linkTo} className="absolute inset-0 z-0" />
 
-				{/* Priority */}
-				<div className="relative z-10">
-					<PrioritySelect
-						value={(task.priority ?? 4) as PriorityValue}
-						onChange={(p) => onPriorityChange(taskId, p)}
-						align="start"
-					/>
-				</div>
+				{/* Mobile-first layout: two rows for clarity on small screens */}
+				<div className="flex flex-col gap-1 px-3 py-3 md:px-4 md:py-2.5">
+					<div className="flex items-center gap-2 min-h-10">
+						{/* Priority - 44px min touch target */}
+						<div className="relative z-10 -m-1 p-1">
+							<PrioritySelect
+								value={(priority ?? 4) as PriorityValue}
+								onChange={(p) => onPriorityChange(id, p)}
+								align="start"
+							/>
+						</div>
 
-				{/* ID - Desktop only */}
-				<div className="relative z-10 hidden md:block font-mono text-xs text-muted-foreground/50 pointer-events-none">
-					{taskCode}
-				</div>
+						{/* Title */}
+						<p
+							className={cn(
+								"flex-1 truncate text-sm font-medium min-w-0 leading-5",
+								isCompleted && "line-through text-muted-foreground",
+							)}
+						>
+							{title}
+						</p>
 
-				{/* Status - Desktop only */}
-				<div className="relative z-10 hidden md:block">
-					<StatusSelect
-						value={task.statusId || ""}
-						statuses={statuses}
-						onChange={(s) => onStatusChange(taskId, s)}
-						align="start"
-					/>
-				</div>
+						{/* Assignee - 44px touch target */}
+						<div className="relative z-10 -m-1 p-1">
+							<AssigneeSelect
+								value={assigneeId || null}
+								members={members}
+								onChange={(u) => onAssigneeChange(id, u)}
+								align="end"
+							/>
+						</div>
+					</div>
 
-				{/* Title */}
-				<div className="relative z-10 min-w-0 pointer-events-none">
-					<p
-						className={cn(
-							"truncate font-medium text-foreground/90",
-							isCompleted && "line-through text-muted-foreground",
-						)}
-					>
-						{task.title}
-					</p>
-				</div>
+					<div className="flex items-center gap-3 text-xs text-muted-foreground">
+						{/* Status */}
+						<div className="relative z-10 -m-1 p-1">
+							<StatusSelect
+								value={statusId || ""}
+								statuses={statuses}
+								onChange={(s) => onStatusChange(id, s)}
+								align="start"
+								compact
+							/>
+						</div>
 
-				{/* Due Date - Desktop only */}
-				<div className="relative z-10 hidden md:block">
-					{task.dueDate && <DueDateBadge date={task.dueDate} />}
-				</div>
+						{/* ID */}
+						<span className="font-mono text-[11px] text-muted-foreground/70">
+							{wCode}-{shortID}
+						</span>
 
-				{/* Assignee */}
-				<div className="relative z-10">
-					<AssigneeSelect
-						value={task.assigneeId || null}
-						members={members}
-						onChange={(u) => onAssigneeChange(taskId, u)}
-						align="end"
-					/>
+						{/* Due date */}
+						{dueDate && <DueDateBadge date={dueDate} />}
+					</div>
 				</div>
 			</div>
 		);
 	},
 	(prev, next) =>
-		(prev.task === next.task ||
-			(prev.task.id === next.task.id &&
-				prev.task.title === next.task.title &&
-				prev.task.priority === next.task.priority &&
-				prev.task.statusId === next.task.statusId &&
-				prev.task.assigneeId === next.task.assigneeId &&
-				prev.task.dueDate === next.task.dueDate &&
-				prev.isCompleted === next.isCompleted)) &&
-		prev.members === next.members &&
-		prev.statuses === next.statuses,
+		prev.task === next.task ||
+		(prev.task.id === next.task.id &&
+			prev.task.title === next.task.title &&
+			prev.task.priority === next.task.priority &&
+			prev.task.statusId === next.task.statusId &&
+			prev.task.assigneeId === next.task.assigneeId &&
+			prev.task.dueDate === next.task.dueDate &&
+			prev.isCompleted === next.isCompleted &&
+			prev.members === next.members &&
+			prev.statuses === next.statuses),
 );
 
-function DueDateBadge({ date, compact }: { date: number; compact?: boolean }) {
-	const label = formatCompactRelativeDate(date);
-	const colorClass =
-		label === "Overdue"
-			? "text-destructive font-medium"
-			: label === "Today"
-				? "text-orange-500 font-medium"
-				: label === "Tomorrow"
-					? "text-blue-500"
-					: "text-muted-foreground";
+const DUE_COLORS: Record<string, string> = {
+	Overdue: "text-destructive font-medium",
+	Today: "text-orange-500 font-medium",
+	Tomorrow: "text-blue-500",
+};
 
+function DueDateBadge({
+	date,
+	className,
+}: {
+	date: number;
+	className?: string;
+}) {
+	const label = formatCompactRelativeDate(date);
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors hover:bg-muted",
-				colorClass,
+				"flex items-center gap-1 text-xs",
+				DUE_COLORS[label] || "text-muted-foreground",
+				className,
 			)}
 		>
-			{!compact && <CalendarIcon className="size-3" />}
+			<CalendarIcon className="size-3" />
 			<span>{label}</span>
 		</div>
 	);

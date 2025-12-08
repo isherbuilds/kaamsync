@@ -12,7 +12,7 @@ declare const self: ServiceWorkerGlobalScope & {
 
 const SHELL_CACHE = "KaamSync-shell";
 const STATIC_CACHE = "KaamSync-static";
-const SHELL_URLS = ["/", "/index.html", "/build/client/index.html"];
+const SHELL_URLS = ["/"];
 
 // Immediately take control
 self.addEventListener("install", (event) => {
@@ -68,7 +68,7 @@ registerRoute(
 	}),
 );
 
-// Fallback for failed navigations
+// Fallback for failed navigation's
 setCatchHandler(async ({ request }) => {
 	if (request.mode === "navigate") {
 		for (const url of SHELL_URLS) {

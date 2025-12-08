@@ -148,6 +148,7 @@ interface StatusSelectProps extends BaseSelectProps {
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query return types are complex
 	statuses: any[];
 	onChange: (statusId: string) => void;
+	compact?: boolean;
 }
 
 export function StatusSelect({
@@ -158,6 +159,7 @@ export function StatusSelect({
 	className,
 	showLabel,
 	align,
+	compact,
 }: StatusSelectProps) {
 	const current = statuses.find((s) => s.id === value);
 	const statusType = (current?.type || "not_started") as StatusType;
@@ -175,13 +177,29 @@ export function StatusSelect({
 				<button
 					type="button"
 					className={cn(
-						"flex items-center gap-2 p-1 rounded-full hover:bg-muted",
+						"flex items-center gap-1.5 rounded-full hover:bg-muted",
+						compact ? "p-0.5" : "p-1",
 						className,
 					)}
 					onClick={(e) => e.stopPropagation()}
 				>
-					<StatusIcon className={cn("size-4 shrink-0", statusColor)} />
-					{showLabel && <span className="text-sm">{current?.name}</span>}
+					<StatusIcon
+						className={cn(
+							compact ? "size-3.5" : "size-4",
+							"shrink-0",
+							statusColor,
+						)}
+					/>
+					{(showLabel || compact) && (
+						<span
+							className={cn(
+								compact ? "text-[10px]" : "text-sm",
+								"truncate max-w-20",
+							)}
+						>
+							{current?.name}
+						</span>
+					)}
 				</button>
 			}
 			placeholder="Search status..."
