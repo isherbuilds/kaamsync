@@ -1,12 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { createId } from "@paralleldrive/cuid2";
-import { eq, max, sql } from "drizzle-orm";
-import {
-	approvalStatus,
-	matterType,
-	statusType,
-	timelineEventType,
-} from "~/db/helpers";
+import { eq, max } from "drizzle-orm";
+import { approvalStatus, matterType, timelineEventType } from "~/db/helpers";
 import { db } from "~/db/index";
 import {
 	matterLabelsTable,

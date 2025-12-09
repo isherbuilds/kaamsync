@@ -117,9 +117,9 @@ export default function TasksPage() {
 						<VirtualizedList
 							items={sortedTasks}
 							getItemKey={(item) => item.id}
-							estimateSize={80}
+							estimateSize={60}
 							className="p-1"
-							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
+							onEndReached={loadMore}
 							renderItem={(matter) => {
 								const priority = (matter.priority ??
 									Priority.NONE) as PriorityValue;
