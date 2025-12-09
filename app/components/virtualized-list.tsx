@@ -1,16 +1,25 @@
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { useCallback, useEffect, useRef } from "react";
+import {
+	defaultRangeExtractor,
+	type Range,
+	useVirtualizer,
+} from "@tanstack/react-virtual";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { itemSizeCache } from "~/lib/lru-cache";
 
 interface VirtualizedListProps<T> {
 	items: T[];
-	renderItem: (item: T, index: number) => React.ReactNode;
+	renderItem: (
+		item: T,
+		index: number,
+		isActiveSticky?: boolean,
+	) => React.ReactNode;
 	estimateSize?: number;
 	overscan?: number;
 	className?: string;
 	getItemKey?: (item: T, index: number) => string;
 	onEndReached?: () => void;
 	onEndReachedThreshold?: number;
+	stickyIndices?: number[];
 }
 
 export function VirtualizedList<T>({
@@ -22,56 +31,76 @@ export function VirtualizedList<T>({
 	getItemKey,
 	onEndReached,
 	onEndReachedThreshold = 200,
+	stickyIndices = [],
 }: VirtualizedListProps<T>) {
 	const parentRef = useRef<HTMLDivElement>(null);
-	const refs = useRef({ items, getItemKey, samples: [] as number[], sum: 0 });
-	refs.current.items = items;
-	refs.current.getItemKey = getItemKey;
+	const activeStickyIndexRef = useRef(0);
+
+	const stickySet = useMemo(() => new Set(stickyIndices), [stickyIndices]);
+	const reversedSticky = useMemo(
+		() => [...stickyIndices].reverse(),
+		[stickyIndices],
+	);
+
+	const stableRef = useRef({ items, getItemKey });
+	stableRef.current.items = items;
+	stableRef.current.getItemKey = getItemKey;
 
 	const getScrollElement = useCallback(() => parentRef.current, []);
 
 	const estimateSizeFn = useCallback(
 		(i: number) => {
-			const { items: itms, getItemKey: gk, samples, sum } = refs.current;
+			const { items: itms, getItemKey: gk } = stableRef.current;
 			if (gk && itms[i]) {
 				const cached = itemSizeCache.get(gk(itms[i], i));
 				if (cached !== undefined) return cached;
 			}
-			return samples.length ? sum / samples.length : estimateSize;
+			return estimateSize;
 		},
 		[estimateSize],
 	);
 
-	const measureElementFn = useCallback((el: Element | null) => {
-		if (!el) return 0;
-		const h = el.getBoundingClientRect().height;
-		const attr = (el as HTMLElement).dataset.index;
-		if (!attr) return h;
-		const idx = +attr;
-		if (h > 0 && !Number.isNaN(idx)) {
-			const { items: itms, getItemKey: gk, samples } = refs.current;
-			if (idx >= itms.length) return h;
-			if (gk && itms[idx]) itemSizeCache.set(gk(itms[idx], idx), h);
-			if (samples.length >= 30) refs.current.sum -= samples.shift() ?? 0;
-			samples.push(h);
-			refs.current.sum += h;
-		}
-		return h;
-	}, []);
-
 	const getItemKeyFn = useCallback((i: number) => {
-		const { items: itms, getItemKey: gk } = refs.current;
+		const { items: itms, getItemKey: gk } = stableRef.current;
 		return gk && itms[i] ? gk(itms[i], i) : String(i);
 	}, []);
+
+	const rangeExtractor = useCallback(
+		(range: Range) => {
+			activeStickyIndexRef.current =
+				reversedSticky.find((i) => range.startIndex >= i) ?? 0;
+			const next = new Set([
+				activeStickyIndexRef.current,
+				...defaultRangeExtractor(range),
+			]);
+			return [...next].sort((a, b) => a - b);
+		},
+		[reversedSticky],
+	);
 
 	const virtualizer = useVirtualizer({
 		count: items.length,
 		getScrollElement,
 		estimateSize: estimateSizeFn,
 		overscan,
-		measureElement: measureElementFn,
 		getItemKey: getItemKey ? getItemKeyFn : undefined,
+		rangeExtractor: stickyIndices.length > 0 ? rangeExtractor : undefined,
 	});
+
+	const measureElement = useCallback(
+		(el: Element | null) => {
+			if (!el) return;
+			virtualizer.measureElement(el);
+			const idx = Number((el as HTMLElement).dataset.index);
+			if (Number.isNaN(idx)) return;
+			const { items: itms, getItemKey: gk } = stableRef.current;
+			if (gk && itms[idx]) {
+				const h = el.getBoundingClientRect().height;
+				if (h > 0) itemSizeCache.set(gk(itms[idx], idx), h);
+			}
+		},
+		[virtualizer],
+	);
 
 	useEffect(() => {
 		if (!onEndReached) return;
@@ -89,6 +118,7 @@ export function VirtualizedList<T>({
 	}, [onEndReached, onEndReachedThreshold]);
 
 	const vItems = virtualizer.getVirtualItems();
+
 	return (
 		<div
 			ref={parentRef}
@@ -97,27 +127,37 @@ export function VirtualizedList<T>({
 		>
 			<div
 				style={{
-					height: `${virtualizer.getTotalSize()}px`,
+					height: virtualizer.getTotalSize(),
 					width: "100%",
 					position: "relative",
 				}}
 			>
-				{vItems.map((v) => (
-					<div
-						key={v.key}
-						data-index={v.index}
-						ref={virtualizer.measureElement}
-						style={{
-							position: "absolute",
-							top: 0,
-							left: 0,
-							width: "100%",
-							transform: `translateY(${v.start}px)`,
-						}}
-					>
-						{renderItem(items[v.index], v.index)}
-					</div>
-				))}
+				{vItems.map((v) => {
+					const isSticky = stickySet.has(v.index);
+					const isActiveSticky =
+						isSticky && activeStickyIndexRef.current === v.index;
+
+					return (
+						<div
+							key={v.key}
+							data-index={v.index}
+							ref={measureElement}
+							style={{
+								position: isActiveSticky ? "sticky" : "absolute",
+								top: 0,
+								left: 0,
+								width: "100%",
+								transform: isActiveSticky
+									? undefined
+									: `translateY(${v.start}px)`,
+								zIndex: isSticky ? 1 : undefined,
+							}}
+						>
+							{items[v.index] &&
+								renderItem(items[v.index], v.index, isActiveSticky)}
+						</div>
+					);
+				})}
 			</div>
 		</div>
 	);

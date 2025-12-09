@@ -6,7 +6,7 @@ import {
 	MessageSquareIcon,
 	PlusIcon,
 } from "lucide-react";
-import { memo, useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_NAV, CACHE_STATIC } from "zero/query-cache-policy";
@@ -126,11 +126,11 @@ export default function WorkspaceIndex() {
 	}, []);
 
 	// Group by status and sort - optimized with plain JS
-	// Compute flat items directly - runs on every render but is fast with for loops
-	const flatItems: ListItem[] = [];
-	let activeCount = 0;
+	// Memoize flat items calculation to avoid re-looping on every render
+	const flatItems = useMemo(() => {
+		const items: ListItem[] = [];
+		if (allMatters.length === 0) return items;
 
-	if (allMatters.length > 0) {
 		// Group tasks by status ID using Map
 		const groupMap = new Map<
 			string,
@@ -173,9 +173,7 @@ export default function WorkspaceIndex() {
 			const statusId = group.status?.id || "no-status";
 			const isExpanded = expandedGroups.has(statusId);
 
-			if (!group.isCompleted) activeCount += group.tasks.length;
-
-			flatItems.push({
+			items.push({
 				type: "header",
 				id: `header-${statusId}`,
 				status: group.status,
@@ -187,7 +185,7 @@ export default function WorkspaceIndex() {
 			if (isExpanded) {
 				for (let j = 0; j < group.tasks.length; j++) {
 					const task = group.tasks[j];
-					flatItems.push({
+					items.push({
 						type: "task",
 						id: task.id,
 						task,
@@ -196,7 +194,32 @@ export default function WorkspaceIndex() {
 				}
 			}
 		}
-	}
+		return items;
+	}, [allMatters, expandedGroups]);
+
+	// Memoize sticky indices - all header positions
+	const stickyIndices = useMemo(() => {
+		const indices: number[] = [];
+		for (let i = 0; i < flatItems.length; i++) {
+			if (flatItems[i].type === "header") {
+				indices.push(i);
+			}
+		}
+		return indices;
+	}, [flatItems]);
+
+	// Calculate active count directly (no memoization or function needed)
+	const activeCount = (() => {
+		let count = 0;
+		for (let i = 0; i < allMatters.length; i++) {
+			const task = allMatters[i];
+			const statusType = (task.status?.type ?? "not_started") as StatusType;
+			if (!COMPLETED_STATUS_TYPES.includes(statusType)) {
+				count++;
+			}
+		}
+		return count;
+	})();
 
 	// Memoized mutator functions
 	const onPriorityChange = useCallback(
@@ -277,7 +300,12 @@ export default function WorkspaceIndex() {
 						items={flatItems}
 						getItemKey={(item) => item.id}
 						estimateSize={40} // Average size (header=40, task=48)
-						renderItem={(item) => {
+						stickyIndices={stickyIndices}
+						renderItem={(
+							item: ListItem,
+							_index: number,
+							// isActiveSticky?: boolean,
+						) => {
 							if (item.type === "header") {
 								return (
 									<GroupHeader
@@ -378,12 +406,12 @@ const GroupHeader = memo(function GroupHeader({
 	return (
 		<button
 			type="button"
-			className="z-20 flex w-full items-center gap-2 px-3 md:px-4 py-2.5 md:py-2 bg-muted/90 backdrop-blur-sm border-y border-border/40 cursor-pointer select-none hover:bg-muted active:bg-muted/80 transition-colors text-left"
+			className="flex w-full items-center gap-2 px-4 h-10 bg-muted border-b cursor-pointer select-none hover:bg-muted"
 			onClick={onToggle}
 		>
 			<ChevronDown
 				className={cn(
-					"size-4 text-muted-foreground transition-transform duration-200",
+					"size-4 text-muted-foreground transition-transform",
 					!isExpanded && "-rotate-90",
 				)}
 			/>
