@@ -33,7 +33,7 @@ export function NavMain({
 						<SidebarMenuButton
 							asChild
 							tooltip={item.title}
-							isActive={location.pathname.includes(`/${orgSlug}${item.url}`)}
+							isActive={location.pathname.startsWith(`/${orgSlug}${item.url}`)}
 						>
 							<StableLink prefetch="viewport" to={`/${orgSlug}${item.url}`}>
 								{item.icon && <item.icon />}
