@@ -11,7 +11,7 @@ Built with a modern, performance-focused stack:
 - **Sync Engine**: [Zero](https://zero.rocicorp.dev/) for local-first, offline-capable data sync
 - **Authentication**: [Better Auth](https://www.better-auth.com/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components**: [Shadcn UI](https://https://ui.shadcn.com/) & [Lucide Icons](https://lucide.dev/)
+- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) & [Lucide Icons](https://lucide.dev/)
 
 ## ✨ Key Features
 
