@@ -54,7 +54,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const nonce = useNonce();
 
 	useEffect(() => {
-		if (typeof window === "undefined") return;
+		if (typeof window === "undefined" || import.meta.env.DEV) return;
 		const register = () =>
 			import("virtual:pwa-register").then(({ registerSW }) => {
 				registerSW({ immediate: true });

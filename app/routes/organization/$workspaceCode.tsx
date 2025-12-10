@@ -23,9 +23,8 @@ import { Button } from "~/components/ui/button";
 import { EmptyStateCard } from "~/components/ui/empty-state";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
-import type { workspaceRole } from "~/db/helpers";
+import type { WorkspaceRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
-import { useCachedQuery } from "~/hooks/use-stable-query";
 import { useZ } from "~/hooks/use-zero-cache";
 import {
 	COMPLETED_STATUS_TYPES,
@@ -239,7 +238,7 @@ export default function WorkspaceIndex() {
 	const userMembership = workspace.memberships?.find(
 		(m) => m.userId === authSession.user.id,
 	);
-	const userRole = userMembership?.role as keyof typeof workspaceRole;
+	const userRole = userMembership?.role as WorkspaceRole;
 	const isManager = userRole === "manager";
 	const canCreateRequest = isManager || userRole === "member";
 
