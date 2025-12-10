@@ -33,7 +33,6 @@ import {
 	STATUS_TYPE_ICONS,
 	type StatusType,
 } from "~/lib/matter-constants";
-import { getMemberInfo } from "~/lib/member-helpers";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 
 export default function TasksPage() {
@@ -126,18 +125,20 @@ export default function TasksPage() {
 								const statusType =
 									(matter.status?.type as StatusType) ?? "not_started";
 								const StatusIcon = STATUS_TYPE_ICONS[statusType];
-								const author = getMemberInfo(matter.authorId, members);
+								const author = members?.find(
+									(m) => m.userId === matter.authorId,
+								);
 
 								return (
 									<NavLink
 										key={matter.id}
-										prefetch="viewport"
+										prefetch="intent"
 										to={`/${orgSlug}/${isMobile ? "" : "tasks/"}matter/${matter.workspaceCode}-${matter.shortID}`}
 										className={({ isActive }) =>
 											cn(
-												"group relative rounded block transition-all duration-200",
+												"group relative block rounded transition-all duration-200 ",
 												isActive
-													? "bg-blue-50/60 dark:bg-blue-950/30"
+													? "bg-blue-50/60 dark:bg-blue-900/30"
 													: "hover:bg-muted/50",
 											)
 										}
@@ -145,7 +146,7 @@ export default function TasksPage() {
 										<Item className="p-3">
 											<ItemContent className="flex-row items-start gap-3">
 												{/* COL 1: Avatar */}
-												<CustomAvatar name={author.name} />
+												<CustomAvatar name={author?.usersTable?.name} />
 
 												{/* COL 2: ID + Title */}
 												<ItemTitle className="flex-1 min-w-0 line-clamp-2 text-sm font-light text-foreground">

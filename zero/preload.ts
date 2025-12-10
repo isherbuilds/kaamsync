@@ -3,7 +3,7 @@ import type { Zero } from "@rocicorp/zero";
 import type { Mutators } from "./mutators";
 import type { QueryContext } from "./queries";
 import { queries } from "./queries";
-import { CACHE_NAV, CACHE_PRELOAD } from "./query-cache-policy";
+import { CACHE_LONG, CACHE_NAV, CACHE_PRELOAD } from "./query-cache-policy";
 import type { Schema } from "./schema";
 
 // Simple tracking to avoid redundant preloads (following zbugs pattern)
@@ -59,8 +59,8 @@ export function preloadWorkspace(
 
 	// Use CACHE_NAV to match component - this is critical for cache hit
 	z.preload(queries.getWorkspaceMatters(ctx, workspaceId), CACHE_NAV);
-	z.preload(queries.getWorkspaceMembers(ctx, workspaceId), CACHE_NAV);
-	z.preload(queries.getWorkspaceStatuses(ctx, workspaceId), CACHE_NAV);
+	// z.preload(queries.getWorkspaceMembers(ctx, workspaceId), CACHE_NAV);
+	z.preload(queries.getWorkspaceStatuses(ctx, workspaceId), CACHE_LONG);
 }
 
 /**

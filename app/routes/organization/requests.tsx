@@ -33,7 +33,6 @@ import {
 	getPriorityLabel,
 	Priority,
 } from "~/lib/matter-constants";
-import { getMemberInfo } from "~/lib/member-helpers";
 import { cn } from "~/lib/utils";
 
 export default function RequestsPage() {
@@ -122,7 +121,10 @@ export default function RequestsPage() {
 							estimateSize={100}
 							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
 							renderItem={(matter) => {
-								const assignee = getMemberInfo(matter.assigneeId, members);
+								const assignee = members?.find(
+									(m) => m.userId === matter.assigneeId,
+								);
+
 								const createdDate = matter.createdAt
 									? new Date(matter.createdAt).toLocaleDateString("en-IN", {
 											month: "short",
@@ -135,9 +137,9 @@ export default function RequestsPage() {
 											cn(
 												"group relative block transition-all duration-200",
 												isActive
-													? "bg-amber-50/50 dark:bg-amber-950/20"
+													? "bg-amber-50/50 dark:bg-amber-900/20"
 													: "hover:bg-muted/50",
-												"border-b p-4",
+												"border-b p-1",
 											)
 										}
 										key={matter.id}
@@ -170,11 +172,11 @@ export default function RequestsPage() {
 													{matter.title}
 												</ItemTitle>
 												<ItemDescription className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground/70">
-													{matter.assigneeId && (
+													{assignee && (
 														<span className="flex items-center gap-1.5">
 															<UserIcon className="size-3 opacity-60" />
-															<span className="font-medium">
-																{assignee.name}
+															<span className="">
+																{assignee.usersTable?.name}
 															</span>
 														</span>
 													)}

@@ -55,9 +55,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		import("virtual:pwa-register").then(({ registerSW }) => {
-			registerSW({ immediate: true });
-		});
+		const register = () =>
+			import("virtual:pwa-register").then(({ registerSW }) => {
+				registerSW({ immediate: true });
+			});
+
+		const useIdle = typeof window.requestIdleCallback === "function";
+		// Defer SW registration to idle to keep first paint responsive.
+		const handle = useIdle
+			? window.requestIdleCallback(register, { timeout: 2000 })
+			: window.setTimeout(register, 1000);
+
+		return () => {
+			if (useIdle && typeof window.cancelIdleCallback === "function") {
+				window.cancelIdleCallback(handle as number);
+			} else {
+				window.clearTimeout(handle as number);
+			}
+		};
 	}, []);
 
 	return (
