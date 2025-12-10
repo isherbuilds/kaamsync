@@ -6,7 +6,7 @@ import {
 	MessageSquareIcon,
 	PlusIcon,
 } from "lucide-react";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_NAV, CACHE_STATIC } from "zero/query-cache-policy";
@@ -116,10 +116,12 @@ export default function WorkspaceIndex() {
 
 	// Track which workspace we've seen to reset collapsed state on workspace change
 	const prevWorkspaceRef = useRef(workspaceId);
-	if (workspaceId && prevWorkspaceRef.current !== workspaceId) {
-		prevWorkspaceRef.current = workspaceId;
-		setCollapsedGroups(new Set());
-	}
+	useEffect(() => {
+		if (workspaceId && prevWorkspaceRef.current !== workspaceId) {
+			prevWorkspaceRef.current = workspaceId;
+			setCollapsedGroups(new Set());
+		}
+	}, [workspaceId]);
 
 	const toggleGroup = useCallback((statusId: string) => {
 		// Use startTransition to keep UI responsive during group toggle

@@ -118,7 +118,7 @@ export default function TasksPage() {
 							getItemKey={(item) => item.id}
 							estimateSize={60}
 							className="p-1"
-							onEndReached={loadMore}
+							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
 							renderItem={(matter) => {
 								const priority = (matter.priority ??
 									Priority.NONE) as PriorityValue;
