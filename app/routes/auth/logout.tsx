@@ -12,7 +12,7 @@ export async function clientAction() {
 	await dropAllDatabases();
 
 	const dbs = await window.indexedDB.databases();
-	dbs.forEach((db) => {
+	dbs.forEach((db: any) => {
 		window.indexedDB.deleteDatabase(db.name);
 	});
 

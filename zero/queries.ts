@@ -274,7 +274,7 @@ export const queries = {
 		(ctx: QueryContext) =>
 			builder.organizationsTable
 				.whereExists("membersTables", (q) => q.where("userId", ctx.sub))
-				.related("membersTables", (q) => q.related("usersTable"))
+				// .related("membersTables", (q) => q.related("usersTable"))
 				.limit(DEFAULT_LIMIT),
 	),
 

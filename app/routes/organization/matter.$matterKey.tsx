@@ -1,16 +1,6 @@
 import { useQuery } from "@rocicorp/zero/react";
-import {
-	Bell,
-	CheckCircle2,
-	ChevronRight,
-	Clock,
-	Link as LinkIcon,
-	MoreHorizontal,
-	Plus,
-	Sidebar,
-	Star,
-} from "lucide-react";
-import { memo, useCallback, useState } from "react";
+import { CheckCircle2, ChevronRight, MoreHorizontal, Star } from "lucide-react";
+import { memo, useState } from "react";
 import { useNavigate } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
@@ -28,6 +18,13 @@ import { useZ } from "~/hooks/use-zero-cache";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
+
+const TIMELINE_TYPE_COLORS: Record<string, string> = {
+	comment: "bg-blue-500",
+	created: "bg-green-500",
+	status_change: "bg-purple-500",
+	assigned: "bg-orange-500",
+};
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 	const matterKey = params.matterKey;
@@ -70,61 +67,60 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		},
 	);
 
-	// Determine admin privileges once from loaded members
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
-	const me = members.find((m: any) => m.userId === authSession.user.id);
-	const isAdmin = !!(me && (me.role === "admin" || me.role === "owner"));
+	// Determine admin privileges - direct lookup
+	const userId = authSession.user.id;
+	let isAdmin = false;
+	let canEdit = false;
+	for (let i = 0; i < members.length; i++) {
+		// biome-ignore lint/suspicious/noExplicitAny: Zero query types
+		const m = members[i] as any;
+		if (m.userId === userId) {
+			isAdmin = m.role === "admin" || m.role === "owner";
+			break;
+		}
+	}
 
-	// Define canEdit based on user role/ownership - safe even if matter is null
-	const canEdit = matter
-		? matter.authorId === authSession.user.id ||
-			matter.assigneeId === authSession.user.id ||
-			isAdmin
-		: false;
+	// Define canEdit based on user role/ownership
+	if (matter) {
+		canEdit =
+			matter.authorId === userId || matter.assigneeId === userId || isAdmin;
+	}
 
-	// Memoized handlers - safe to call before early return since matter?.id is used
-	const handleStatusChange = useCallback(
-		(newStatusId: string) => {
-			if (!matter) return;
-			z.mutate.matter.updateStatus({
-				id: matter.id,
-				statusId: newStatusId,
-			});
-		},
-		[z, matter],
-	);
+	// Handler functions - z is stable so no useCallback needed
+	const handleStatusChange = (newStatusId: string) => {
+		if (!matter) return;
+		z.mutate.matter.updateStatus({
+			id: matter.id,
+			statusId: newStatusId,
+		});
+	};
 
-	const handleAssign = useCallback(
-		(assigneeId: string | null) => {
-			if (!matter) return;
-			z.mutate.matter.assign({
-				id: matter.id,
-				assigneeId: assigneeId || null,
-			});
-		},
-		[z, matter],
-	);
+	const handleAssign = (assigneeId: string | null) => {
+		if (!matter) return;
+		z.mutate.matter.assign({
+			id: matter.id,
+			assigneeId: assigneeId || null,
+		});
+	};
 
-	const handlePriorityChange = useCallback(
-		(priority: PriorityValue) => {
-			if (!matter) return;
-			z.mutate.matter.update({
-				id: matter.id,
-				priority,
-			});
-		},
-		[z, matter],
-	);
+	const handlePriorityChange = (priority: PriorityValue) => {
+		if (!matter) return;
+		z.mutate.matter.update({
+			id: matter.id,
+			priority,
+		});
+	};
 
 	// Early return after all hooks
 	if (!matter) {
 		return (
-			<div className="flex h-screen items-center justify-center">
+			<div className="flex h-screen items-center justify-center p-4">
 				<div className="text-center">
 					<p className="text-lg font-semibold">Task not found</p>
 					<Button
-						onClick={() => navigate(`/${orgSlug}/tasks`)}
+						onClick={() => navigate(`/${orgSlug}`)}
 						className="mt-4"
+						size="lg"
 					>
 						Back to Tasks
 					</Button>
@@ -133,145 +129,98 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		);
 	}
 
-	const handleAddComment = async (e: React.FormEvent) => {
-		e.preventDefault();
-		// Implementation for adding comment would go here
-	};
-
 	return (
 		<div className="@container flex h-full flex-col bg-background">
-			{/* Top Navigation Bar */}
-			<header className="flex h-12 shrink-0 items-center justify-between border-b px-4 text-sm">
-				<div className="flex items-center gap-2 text-muted-foreground">
+			{/* Compact header - mobile optimized */}
+			<header className="flex h-12 shrink-0 items-center justify-between border-b px-3 md:px-4">
+				<div className="flex items-center gap-2 text-muted-foreground min-w-0">
 					<Button
 						variant="ghost"
 						size="sm"
-						className="h-auto p-0 hover:text-foreground"
-						onClick={() => navigate(`/${orgSlug}/tasks`)}
+						className="h-8 px-2"
+						onClick={() => navigate(`/${orgSlug}`)}
 					>
-						Inbox
+						<ChevronRight className="size-4 rotate-180" />
+						<span className="hidden sm:inline ml-1">Back</span>
 					</Button>
-					<ChevronRight className="size-4 opacity-50" />
-					<span className="font-medium text-foreground">
+					<span className="font-mono text-sm font-medium text-foreground truncate">
 						{matter.workspaceCode}-{matter.shortID}
 					</span>
-					<div className="ml-1 flex items-center">
-						<Button variant="ghost" size="icon" className="size-6">
-							<Star className="size-4" />
-						</Button>
-						<Button variant="ghost" size="icon" className="size-6">
-							<MoreHorizontal className="size-4" />
-						</Button>
-					</div>
 				</div>
-
 				<div className="flex items-center gap-1">
 					<Button variant="ghost" size="icon" className="size-8">
-						<Bell className="size-4 text-muted-foreground" />
+						<Star className="size-4" />
 					</Button>
 					<Button variant="ghost" size="icon" className="size-8">
-						<Clock className="size-4 text-muted-foreground" />
-					</Button>
-					<Button variant="ghost" size="icon" className="size-8">
-						<Sidebar className="size-4 text-muted-foreground" />
+						<MoreHorizontal className="size-4" />
 					</Button>
 				</div>
 			</header>
 
 			<div className="flex flex-1 flex-col overflow-hidden @3xl:flex-row">
 				{/* Main Content */}
-				<div className="flex-1 overflow-y-auto">
-					<div className="mx-auto max-w-3xl px-4 py-6 @3xl:px-8 @3xl:py-10">
-						<div className="space-y-6 @3xl:space-y-8">
-							{/* Title & Description */}
-							<div className="space-y-4">
-								<h1 className="text-2xl font-bold tracking-tight @3xl:text-3xl">
-									{matter.title}
-								</h1>
-								<div className="prose prose-sm max-w-none dark:prose-invert">
-									<p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90 @3xl:text-base">
-										{matter.description || (
-											<span className="italic text-muted-foreground">
-												No description provided.
-											</span>
-										)}
-									</p>
-								</div>
+				<div className="flex-1 overflow-y-auto pb-20 @3xl:pb-6">
+					<div className="mx-auto max-w-3xl px-4 py-4 @3xl:px-8 @3xl:py-8">
+						<div className="space-y-4 @3xl:space-y-6">
+							{/* Admin approval banner - mobile visible */}
+							<AdminApproveSection
+								isVisible={matter.type === "request"}
+								isAdmin={isAdmin}
+								matterId={matter.id}
+								statuses={statuses}
+								z={z}
+							/>
+
+							{/* Title */}
+							<h1 className="text-xl font-bold @3xl:text-2xl">
+								{matter.title}
+							</h1>
+
+							{/* Quick properties - mobile horizontal scroll */}
+							<div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 @3xl:hidden">
+								<PropertyPill label="Status">
+									<StatusSelect
+										value={matter.statusId || ""}
+										statuses={statuses}
+										onChange={handleStatusChange}
+										disabled={!canEdit}
+										showLabel
+									/>
+								</PropertyPill>
+								<PropertyPill label="Priority">
+									<PrioritySelect
+										value={(matter.priority ?? Priority.NONE) as PriorityValue}
+										onChange={handlePriorityChange}
+										showLabel
+									/>
+								</PropertyPill>
+								<PropertyPill label="Assignee">
+									<AssigneeSelect
+										value={matter.assigneeId || null}
+										members={members}
+										onChange={handleAssign}
+										showLabel
+									/>
+								</PropertyPill>
 							</div>
 
-							{/* Properties - Mobile/Tablet Only */}
-							<div className="space-y-4 @3xl:hidden">
-								<Separator />
-								<div className="space-y-3">
-									<h3 className="text-xs font-medium text-muted-foreground">
-										Properties
-									</h3>
-									<div className="space-y-0.5">
-										<PropertyRow label="Status">
-											<StatusSelect
-												value={matter.statusId || ""}
-												statuses={statuses}
-												onChange={handleStatusChange}
-												disabled={!canEdit}
-												showLabel
-												className="h-7 w-full justify-start px-2"
-											/>
-										</PropertyRow>
-										<PropertyRow label="Priority">
-											<PrioritySelect
-												value={
-													(matter.priority ?? Priority.NONE) as PriorityValue
-												}
-												onChange={handlePriorityChange}
-												showLabel
-												className="h-7 w-full justify-start px-2"
-											/>
-										</PropertyRow>
-										<PropertyRow label="Assignee">
-											<AssigneeSelect
-												value={matter.assigneeId || null}
-												members={members}
-												onChange={handleAssign}
-												showLabel
-												className="h-7 w-full justify-start px-2"
-											/>
-										</PropertyRow>
-									</div>
-								</div>
-							</div>
+							{/* Description */}
+							{matter.description ? (
+								<p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+									{matter.description}
+								</p>
+							) : (
+								<p className="text-sm italic text-muted-foreground">
+									No description
+								</p>
+							)}
 
 							<Separator />
 
-							{/* Activity / Comments */}
-							<div className="space-y-6">
+							{/* Activity */}
+							<div className="space-y-4">
 								<h2 className="text-sm font-semibold">Activity</h2>
-
-								<form onSubmit={handleAddComment} className="space-y-3">
-									<div className="relative rounded-lg border bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring">
-										<Textarea
-											placeholder="Leave a comment..."
-											rows={3}
-											className="resize-none border-0 bg-transparent focus-visible:ring-0"
-										/>
-										<div className="flex items-center justify-between border-t bg-muted/20 px-3 py-2">
-											<Button
-												variant="ghost"
-												size="icon"
-												className="size-6 text-muted-foreground"
-											>
-												<LinkIcon className="size-3.5" />
-											</Button>
-											<Button
-												size="sm"
-												type="submit"
-												className="h-7 px-3 text-xs"
-											>
-												Comment
-											</Button>
-										</div>
-									</div>
-								</form>
-
+								<CommentInput />
 								<TaskTimeline
 									matterId={matter.id}
 									queryCtx={queryCtx}
@@ -283,9 +232,9 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 					</div>
 				</div>
 
-				{/* Right Sidebar - Desktop Only */}
-				<div className="hidden w-80 shrink-0 overflow-y-auto border-l bg-muted/5 px-4 py-6 @3xl:block">
-					<div className="space-y-8">
+				{/* Desktop Sidebar */}
+				<aside className="hidden w-72 shrink-0 overflow-y-auto border-l bg-muted/5 p-4 @3xl:block">
+					<div className="space-y-6">
 						<AdminApproveSection
 							isVisible={matter.type === "request"}
 							isAdmin={isAdmin}
@@ -294,117 +243,92 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 							z={z}
 						/>
 
-						<div className="space-y-3">
-							<h3 className="px-2 text-xs font-medium text-muted-foreground">
+						<div className="space-y-2">
+							<h3 className="text-xs font-medium text-muted-foreground">
 								Properties
 							</h3>
-							<div className="space-y-0.5">
-								<PropertyRow label="Status">
-									<StatusSelect
-										value={matter.statusId || ""}
-										statuses={statuses}
-										onChange={handleStatusChange}
-										disabled={!canEdit}
-										showLabel
-										className="h-7 w-full justify-start px-2"
-									/>
-								</PropertyRow>
-								<PropertyRow label="Priority">
-									<PrioritySelect
-										value={(matter.priority ?? Priority.NONE) as PriorityValue}
-										onChange={handlePriorityChange}
-										showLabel
-										className="h-7 w-full justify-start px-2"
-									/>
-								</PropertyRow>
-								<PropertyRow label="Assignee">
-									<AssigneeSelect
-										value={matter.assigneeId || null}
-										members={members}
-										onChange={handleAssign}
-										showLabel
-										className="h-7 w-full justify-start px-2"
-									/>
-								</PropertyRow>
-							</div>
+							<PropertyRow label="Status">
+								<StatusSelect
+									value={matter.statusId || ""}
+									statuses={statuses}
+									onChange={handleStatusChange}
+									disabled={!canEdit}
+									showLabel
+									className="h-7 w-full justify-start px-2"
+								/>
+							</PropertyRow>
+							<PropertyRow label="Priority">
+								<PrioritySelect
+									value={(matter.priority ?? Priority.NONE) as PriorityValue}
+									onChange={handlePriorityChange}
+									showLabel
+									className="h-7 w-full justify-start px-2"
+								/>
+							</PropertyRow>
+							<PropertyRow label="Assignee">
+								<AssigneeSelect
+									value={matter.assigneeId || null}
+									members={members}
+									onChange={handleAssign}
+									showLabel
+									className="h-7 w-full justify-start px-2"
+								/>
+							</PropertyRow>
 						</div>
 
 						<Separator />
 
-						<div className="space-y-3">
-							<div className="flex items-center justify-between px-2">
-								<h3 className="text-xs font-medium text-muted-foreground">
-									Labels
-								</h3>
-								<Button variant="ghost" size="icon" className="size-5">
-									<Plus className="size-3.5" />
-								</Button>
-							</div>
-							<div className="px-2">
-								{matter.type === "request" ? (
-									<div className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-950/30 dark:text-yellow-400">
-										Request
-									</div>
-								) : (
-									<div className="text-sm text-muted-foreground/50 italic">
-										None
-									</div>
-								)}
-							</div>
-						</div>
-
-						<Separator />
-
-						<div className="space-y-3">
-							<div className="flex items-center justify-between px-2">
-								<h3 className="text-xs font-medium text-muted-foreground">
-									Project
-								</h3>
-								<Button variant="ghost" size="icon" className="size-5">
-									<Plus className="size-3.5" />
-								</Button>
-							</div>
-							<div className="px-2">
-								<Button
-									variant="ghost"
-									size="sm"
-									className="h-auto justify-start p-0 text-muted-foreground hover:text-foreground"
-								>
-									<span className="text-sm">Add to project...</span>
-								</Button>
-							</div>
-						</div>
-
-						<Separator />
-
-						<div className="space-y-3">
-							<h3 className="px-2 text-xs font-medium text-muted-foreground">
-								Details
+						<div className="space-y-2">
+							<h3 className="text-xs font-medium text-muted-foreground">
+								Labels
 							</h3>
-							<div className="space-y-2 px-2 text-sm">
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Created</span>
-									<span>{new Date(matter.createdAt).toLocaleDateString()}</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">Updated</span>
-									<span>
-										{new Date(
-											matter.updatedAt || matter.createdAt,
-										).toLocaleDateString()}
-									</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-muted-foreground">ID</span>
-									<span className="font-mono text-xs">
-										{matter.id.slice(0, 8)}
-									</span>
-								</div>
+							{matter.type === "request" ? (
+								<span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-950/30 dark:text-yellow-400">
+									Request
+								</span>
+							) : (
+								<span className="text-sm text-muted-foreground/50 italic">
+									None
+								</span>
+							)}
+						</div>
+
+						<Separator />
+
+						<div className="space-y-2 text-xs text-muted-foreground">
+							<h3 className="font-medium">Details</h3>
+							<div className="flex justify-between">
+								<span>Created</span>
+								<span>{new Date(matter.createdAt).toLocaleDateString()}</span>
+							</div>
+							<div className="flex justify-between">
+								<span>Updated</span>
+								<span>
+									{new Date(
+										matter.updatedAt || matter.createdAt,
+									).toLocaleDateString()}
+								</span>
 							</div>
 						</div>
 					</div>
-				</div>
+				</aside>
 			</div>
+		</div>
+	);
+}
+
+// Mobile property pill - horizontal scrollable
+function PropertyPill({
+	label,
+	children,
+}: {
+	label: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 shrink-0">
+			<span className="text-xs text-muted-foreground">{label}</span>
+			{children}
 		</div>
 	);
 }
@@ -417,12 +341,28 @@ function PropertyRow({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="group flex items-center justify-between rounded-md px-2 py-1 hover:bg-muted/50">
-			<span className="w-24 shrink-0 text-sm text-muted-foreground">
+		<div className="flex items-center justify-between rounded-md px-2 py-1 hover:bg-muted/50">
+			<span className="w-20 shrink-0 text-sm text-muted-foreground">
 				{label}
 			</span>
 			<div className="flex-1">{children}</div>
 		</div>
+	);
+}
+
+// Simplified comment input
+function CommentInput() {
+	return (
+		<form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+			<Textarea
+				placeholder="Add a comment..."
+				rows={2}
+				className="resize-none text-sm min-h-[60px]"
+			/>
+			<Button type="submit" size="sm" className="shrink-0 self-end">
+				Send
+			</Button>
+		</form>
 	);
 }
 
@@ -447,76 +387,104 @@ function TaskTimeline({
 		CACHE_NAV,
 	);
 
-	// Helper function to get status name by ID
-	const getStatusName = (statusId: string | null) => {
-		if (!statusId) return "Unknown";
-		if (!Array.isArray(statuses) || statuses.length === 0) {
-			return statusId.slice(0, 8);
-		}
-		const status = statuses.find((s) => s?.id === statusId);
-		return status?.name || "Unknown Status";
-	};
+	// Build lookup maps once - O(n) setup, O(1) lookup
+	const statusMap = new Map<string, string>();
+	for (let i = 0; i < statuses.length; i++) {
+		const s = statuses[i];
+		if (s?.id) statusMap.set(s.id, s.name || "Unknown Status");
+	}
 
-	// Helper function to get user name by ID
-	const getUserName = (userId: string | null) => {
-		if (!userId) return "Unassigned";
-		const member = members.find((m) => m.userId === userId);
-		return member?.usersTable?.name || "Unknown User";
-	};
+	const memberMap = new Map<string, string>();
+	for (let i = 0; i < members.length; i++) {
+		const m = members[i];
+		if (m?.userId)
+			memberMap.set(m.userId, m.usersTable?.name || "Unknown User");
+	}
 
+	if (timeline.length === 0) {
+		return (
+			<div className="space-y-4">
+				<p className="text-sm text-muted-foreground italic">No activity yet</p>
+			</div>
+		);
+	}
+
+	const timelineLength = timeline.length;
 	return (
 		<div className="space-y-4">
-			{timeline.length === 0 ? (
-				<p className="text-sm text-muted-foreground italic">No activity yet</p>
-			) : (
-				timeline.map((entry, index) => {
-					const userName = entry.user?.name || "Unknown User";
-					const userImage = entry.user?.image ?? undefined;
-					const isLast = index === timeline.length - 1;
+			{timeline.map((entry, index) => {
+				const userName = entry.user?.name || "Unknown User";
+				const userImage = entry.user?.image ?? undefined;
 
-					return (
-						<TimelineEntry
-							key={entry.id}
-							entry={entry}
-							userName={userName}
-							userImage={userImage}
-							isLast={isLast}
-							getStatusName={getStatusName}
-							getUserName={getUserName}
-						/>
-					);
-				})
-			)}
+				return (
+					<TimelineEntry
+						key={entry.id}
+						entry={entry}
+						userName={userName}
+						userImage={userImage}
+						isLast={index === timelineLength - 1}
+						statusMap={statusMap}
+						memberMap={memberMap}
+					/>
+				);
+			})}
 		</div>
 	);
 }
 
-// Memoized timeline entry for better performance
+// Memoized timeline entry - simplified for mobile
 const TimelineEntry = memo(function TimelineEntry({
 	entry,
 	userName,
 	userImage,
 	isLast,
-	getStatusName,
-	getUserName,
+	statusMap,
+	memberMap,
 }: {
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
 	entry: any;
 	userName: string;
 	userImage: string | undefined;
 	isLast: boolean;
-	getStatusName: (statusId: string | null) => string;
-	getUserName: (userId: string | null) => string;
+	statusMap: Map<string, string>;
+	memberMap: Map<string, string>;
 }) {
-	return (
-		<div className="relative flex gap-3 group">
-			{/* Timeline line */}
-			{!isLast && (
-				<div className="absolute left-[19px] top-10 bottom-0 w-0.5 bg-linear-to-b from-border to-transparent" />
-			)}
+	// Inline lookup using maps
+	const getStatusName = (statusId: string | null) =>
+		statusId ? statusMap.get(statusId) || statusId.slice(0, 8) : "Unknown";
+	const getUserName = (userId: string | null) =>
+		userId ? memberMap.get(userId) || "Unknown User" : "Unassigned";
+	let content: React.ReactNode = null;
+	if (entry.type === "comment") {
+		content = <p className="text-sm whitespace-pre-wrap">{entry.content}</p>;
+	} else if (entry.type === "created") {
+		content = <p className="text-sm">Created this task</p>;
+	} else if (entry.type === "status_change") {
+		content = (
+			<p className="text-sm">
+				Status:{" "}
+				<span className="font-medium">{getStatusName(entry.fromStatusId)}</span>
+				{" → "}
+				<span className="font-medium text-primary">
+					{getStatusName(entry.toStatusId)}
+				</span>
+			</p>
+		);
+	} else if (entry.type === "assigned") {
+		content = (
+			<p className="text-sm">
+				Assigned to{" "}
+				<span className="font-medium">{getUserName(entry.toAssigneeId)}</span>
+			</p>
+		);
+	}
 
-			{/* User avatar */}
-			<div className="relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-primary/10 to-primary/5 ring-2 ring-background shadow-sm">
+	return (
+		<div className="relative flex gap-3">
+			{!isLast && (
+				<div className="absolute left-[15px] top-8 bottom-0 w-px bg-border" />
+			)}
+			<div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-background">
 				{userImage ? (
 					<img
 						src={userImage}
@@ -524,89 +492,22 @@ const TimelineEntry = memo(function TimelineEntry({
 						className="size-full rounded-full object-cover"
 					/>
 				) : (
-					<span className="text-xs font-semibold text-primary">
+					<span className="text-[10px] font-semibold">
 						{getInitials(userName)}
 					</span>
 				)}
 			</div>
-
-			{/* Timeline content */}
-			<div className="flex-1 space-y-2 pt-0.5 pb-4">
-				{/* Header with user and time */}
-				<div className="flex items-center gap-2 flex-wrap">
-					<span className="font-semibold text-sm text-foreground">
-						{userName}
-					</span>
+			<div className="flex-1 pb-4">
+				<div className="flex items-center gap-2 mb-1">
+					<span className="text-sm font-medium">{userName}</span>
+					<div
+						className={`size-1 rounded-full ${TIMELINE_TYPE_COLORS[entry.type] || "bg-muted"}`}
+					/>
 					<span className="text-xs text-muted-foreground">
-						{formatTimelineDate((entry.createdAt as number) || Date.now())}
+						{formatTimelineDate(entry.createdAt || Date.now())}
 					</span>
 				</div>
-
-				{/* Activity content */}
-				<div className="rounded-lg bg-muted/30 border border-border/50 px-4 py-3 shadow-sm group-hover:border-border transition-colors">
-					{entry.type === "comment" && (
-						<div className="space-y-1">
-							<div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
-								<div className="size-1 rounded-full bg-blue-500" />
-								<span>Commented</span>
-							</div>
-							<p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-								{entry.content}
-							</p>
-						</div>
-					)}
-
-					{entry.type === "created" && (
-						<div className="space-y-1">
-							<div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
-								<div className="size-1 rounded-full bg-green-500" />
-								<span>Created Task</span>
-							</div>
-							<p className="text-sm text-foreground/80">
-								Created this task
-								{entry.matter?.title && (
-									<span className="block mt-1 font-medium text-foreground">
-										"{entry.matter.title}"
-									</span>
-								)}
-							</p>
-						</div>
-					)}
-
-					{entry.type === "status_change" && (
-						<div className="space-y-1">
-							<div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
-								<div className="size-1 rounded-full bg-purple-500" />
-								<span>Status Changed</span>
-							</div>
-							<div className="flex items-center gap-2 flex-wrap text-sm">
-								<span className="text-foreground/70">Changed status from</span>
-								<span className="inline-flex items-center rounded-full bg-background border px-2.5 py-0.5 text-xs font-medium shadow-sm">
-									{getStatusName(entry.fromStatusId)}
-								</span>
-								<span className="text-foreground/70">to</span>
-								<span className="inline-flex items-center rounded-full bg-primary/10 border border-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary shadow-sm">
-									{getStatusName(entry.toStatusId)}
-								</span>
-							</div>
-						</div>
-					)}
-
-					{entry.type === "assigned" && (
-						<div className="space-y-1">
-							<div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
-								<div className="size-1 rounded-full bg-orange-500" />
-								<span>Assignment Changed</span>
-							</div>
-							<p className="text-sm">
-								<span className="text-foreground/70">Assigned to </span>
-								<span className="font-semibold text-foreground">
-									{getUserName(entry.toAssigneeId)}
-								</span>
-							</p>
-						</div>
-					)}
-				</div>
+				<div className="rounded-md bg-muted/30 border px-3 py-2">{content}</div>
 			</div>
 		</div>
 	);

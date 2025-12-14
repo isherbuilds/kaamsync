@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
 	data,
 	Links,
@@ -51,6 +52,28 @@ export const shouldRevalidate = ({
 export function Layout({ children }: { children: React.ReactNode }) {
 	const colorScheme = useColorScheme();
 	const nonce = useNonce();
+
+	useEffect(() => {
+		if (typeof window === "undefined" || import.meta.env.DEV) return;
+		const register = () =>
+			import("virtual:pwa-register").then(({ registerSW }) => {
+				registerSW({ immediate: true });
+			});
+
+		const useIdle = typeof window.requestIdleCallback === "function";
+		// Defer SW registration to idle to keep first paint responsive.
+		const handle = useIdle
+			? window.requestIdleCallback(register, { timeout: 2000 })
+			: window.setTimeout(register, 1000);
+
+		return () => {
+			if (useIdle && typeof window.cancelIdleCallback === "function") {
+				window.cancelIdleCallback(handle as number);
+			} else {
+				window.clearTimeout(handle as number);
+			}
+		};
+	}, []);
 
 	return (
 		<html

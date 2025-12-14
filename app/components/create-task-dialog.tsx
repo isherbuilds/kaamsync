@@ -1,4 +1,9 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import {
+	getFormProps,
+	getInputProps,
+	useForm,
+	useInputControl,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { CalendarIcon, ListTodoIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -55,14 +60,6 @@ export function CreateTaskDialog({
 }: CreateTaskDialogProps) {
 	const z = useZ();
 	const [open, setOpen] = useState(false);
-	const [priority, setPriority] = useState<PriorityValue>(Priority.NONE);
-	const [dueDate, setDueDate] = useState<string>();
-	const [assigneeId, setAssigneeId] = useState<string>(
-		members[0]?.user?.id || members[0]?.userId || "",
-	);
-	const [statusId, setStatusId] = useState<string>(
-		statuses.find((s) => s.isDefault)?.id || statuses[0]?.id,
-	);
 
 	// Block reservation and cache seeding
 	useShortIdSeeder(workspaceId, open);
@@ -78,10 +75,19 @@ export function CreateTaskDialog({
 		[members],
 	);
 
+	const defaultStatusId =
+		statuses.find((s) => s.isDefault)?.id || statuses[0]?.id;
+	const defaultAssigneeId =
+		members[0]?.user?.id || members[0]?.userId || undefined;
+
 	const [form, fields] = useForm({
 		id: "create-task-form",
 		constraint: getZodConstraint(createTaskSchema),
-		defaultValue: {},
+		defaultValue: {
+			priority: Priority.NONE,
+			statusId: defaultStatusId,
+			assigneeId: defaultAssigneeId,
+		},
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: createTaskSchema });
 		},
@@ -109,6 +115,10 @@ export function CreateTaskDialog({
 			form.reset();
 		},
 	});
+
+	const statusControl = useInputControl(fields.statusId);
+	const priorityControl = useInputControl(fields.priority);
+	const assigneeControl = useInputControl(fields.assigneeId);
 
 	return (
 		<Dialog onOpenChange={setOpen} open={open}>
@@ -161,18 +171,6 @@ export function CreateTaskDialog({
 							{...getInputProps(fields.workspaceId, { type: "hidden" })}
 							value={workspaceId}
 						/>
-						<input
-							{...getInputProps(fields.statusId, { type: "hidden" })}
-							value={statusId}
-						/>
-						<input
-							{...getInputProps(fields.priority, { type: "hidden" })}
-							value={priority}
-						/>
-						<input
-							{...getInputProps(fields.assigneeId, { type: "hidden" })}
-							value={assigneeId}
-						/>
 
 						{/* Title Input */}
 						<InputField
@@ -203,21 +201,23 @@ export function CreateTaskDialog({
 						<div className="flex flex-wrap items-start sm:items-center gap-2">
 							{/* Status */}
 							<StatusSelect
-								value={statusId}
+								value={statusControl.value || defaultStatusId || ""}
 								statuses={statuses}
-								onChange={setStatusId}
+								onChange={statusControl.change}
 								align="start"
 								showLabel
 							/>
 							<PrioritySelect
-								value={priority}
-								onChange={setPriority}
+								value={
+									(priorityControl.value as PriorityValue) ?? Priority.NONE
+								}
+								onChange={priorityControl.change}
 								showLabel
 							/>
 							<AssigneeSelect
-								value={assigneeId || null}
+								value={assigneeControl.value || null}
 								members={assigneeMembers}
-								onChange={(val) => setAssigneeId(val || "")}
+								onChange={assigneeControl.change}
 								align="start"
 								showLabel
 							/>{" "}
@@ -230,14 +230,10 @@ export function CreateTaskDialog({
 										className={cn(
 											"h-8 w-36 cursor-pointer rounded-md border-none bg-slate-400/10 px-2 py-1 text-sm outline-none transition-all",
 											"focus-visible:ring-2 focus-visible:ring-ring/50",
-											dueDate ? "text-foreground" : "text-muted-foreground",
+											fields.dueDate.value
+												? "text-foreground"
+												: "text-muted-foreground",
 										)}
-										onChange={(e) => setDueDate(e.target.value)}
-										value={dueDate}
-										aria-invalid={fields.dueDate.errors ? true : undefined}
-										aria-describedby={
-											fields.dueDate.errors ? fields.dueDate.errorId : undefined
-										}
 									/>
 								</div>
 								{fields.dueDate.errors && (

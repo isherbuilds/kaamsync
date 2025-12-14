@@ -2,7 +2,7 @@
 
 import { Folder, Forward, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Link, useMatches } from "react-router";
+import { Link, useParams } from "react-router";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 import { CreateWorkspaceDialog } from "./create-workspace-dialog";
+import { StableLink } from "./stable-link.js";
 import { Button } from "./ui/button";
 
 export function NavWorkspaces({
@@ -36,7 +37,8 @@ export function NavWorkspaces({
 }) {
 	const { isMobile } = useSidebar();
 	const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
-	const matches = useMatches();
+	const params = useParams();
+	const activeCode = params.workspaceCode;
 
 	return (
 		<>
@@ -54,53 +56,51 @@ export function NavWorkspaces({
 					</Button>
 				</SidebarGroupLabel>
 				<SidebarMenu>
-					{workspaces?.map((workspace) => {
-						// Simple inline check - no need for memoization overhead
-						const isActive = matches.some(
-							(m) => m.pathname === `/${orgSlug}/${workspace.code}`,
-						);
-						return (
-							<SidebarMenuItem key={workspace.id}>
-								<SidebarMenuButton
-									tooltip={workspace.name}
-									isActive={isActive}
-									asChild
+					{workspaces?.map((workspace) => (
+						<SidebarMenuItem key={workspace.id}>
+							<SidebarMenuButton
+								tooltip={workspace.name}
+								isActive={workspace.code === activeCode}
+								asChild
+							>
+								<StableLink
+									to={`/${orgSlug}/${workspace.code}`}
+									prefetch="intent"
+									// viewTransition
 								>
-									<Link to={`/${orgSlug}/${workspace.code}`} prefetch="intent">
-										{workspace.name}
-									</Link>
-								</SidebarMenuButton>
+									{workspace.name}
+								</StableLink>
+							</SidebarMenuButton>
 
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<SidebarMenuAction>
-											<MoreHorizontal />
-											<span className="sr-only">More</span>
-										</SidebarMenuAction>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align={isMobile ? "end" : "start"}
-										className="min-w-48 rounded-lg"
-										side={isMobile ? "bottom" : "right"}
-									>
-										<DropdownMenuItem>
-											<Folder className="text-muted-foreground" />
-											<span>Members</span>
-										</DropdownMenuItem>
-										<DropdownMenuItem>
-											<Forward className="text-muted-foreground" />
-											<span>Settings</span>
-										</DropdownMenuItem>
-										<DropdownMenuSeparator />
-										<DropdownMenuItem>
-											<Trash2 className="text-muted-foreground" />
-											<span>Delete Workspace</span>
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</SidebarMenuItem>
-						);
-					})}
+							<DropdownMenu>
+								<DropdownMenuTrigger asChild>
+									<SidebarMenuAction>
+										<MoreHorizontal />
+										<span className="sr-only">More</span>
+									</SidebarMenuAction>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent
+									align={isMobile ? "end" : "start"}
+									className="min-w-48 rounded-lg"
+									side={isMobile ? "bottom" : "right"}
+								>
+									<DropdownMenuItem>
+										<Folder className="text-muted-foreground" />
+										<span>Members</span>
+									</DropdownMenuItem>
+									<DropdownMenuItem>
+										<Forward className="text-muted-foreground" />
+										<span>Settings</span>
+									</DropdownMenuItem>
+									<DropdownMenuSeparator />
+									<DropdownMenuItem>
+										<Trash2 className="text-muted-foreground" />
+										<span>Delete Workspace</span>
+									</DropdownMenuItem>
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</SidebarMenuItem>
+					))}
 				</SidebarMenu>
 			</SidebarGroup>
 

@@ -1,6 +1,6 @@
 import type { AuthSession } from "./auth-client";
 
-const CACHE_KEY = "kaamsync:auth-session";
+const CACHE_KEY = "KaamSync:auth-session";
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 type CachedSession = { session: AuthSession; timestamp: number };

@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { useLocation } from "react-router";
 import { StableLink } from "~/components/stable-link";
 import {
 	SidebarGroup,
@@ -22,13 +23,19 @@ export function NavMain({
 	}[];
 	orgSlug: string;
 }) {
+	const location = useLocation();
+
 	return (
 		<SidebarGroup>
 			<SidebarMenu>
 				{items.map((item) => (
 					<SidebarMenuItem key={item.title}>
-						<SidebarMenuButton asChild tooltip={item.title}>
-							<StableLink prefetch="render" to={`${orgSlug}${item.url}`}>
+						<SidebarMenuButton
+							asChild
+							tooltip={item.title}
+							isActive={location.pathname.startsWith(`/${orgSlug}${item.url}`)}
+						>
+							<StableLink prefetch="viewport" to={`/${orgSlug}${item.url}`}>
 								{item.icon && <item.icon />}
 								<span>{item.title}</span>
 							</StableLink>

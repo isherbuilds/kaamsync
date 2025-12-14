@@ -14,6 +14,9 @@
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
+  "cSpell.words": [
+    "Kaam"
+  ],
   // "css.lint.unknownAtRules": "ignore",
   // "files.associations": {
   //   "*.css": "tailwindcss"

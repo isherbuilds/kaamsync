@@ -20,7 +20,9 @@ interface CreateWorkspaceDialogProps {
 	onCreated?: (workspace: { name: string }) => void;
 }
 
-export function CreateWorkspaceDialog({
+import { memo } from "react";
+
+export const CreateWorkspaceDialog = memo(function CreateWorkspaceDialog({
 	open,
 	onOpenChange,
 	onCreated,
@@ -88,4 +90,4 @@ export function CreateWorkspaceDialog({
 			</DialogContent>
 		</Dialog>
 	);
-}
+});

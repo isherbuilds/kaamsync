@@ -96,7 +96,7 @@ export default function HomePage() {
 						<div className="flex flex-col sm:flex-row gap-4 items-center mb-20">
 							<Button
 								size="lg"
-								className="h-12 px-8 rounded-full bg-foreground text-background hover:bg-foreground/90 gap-2 text-base shadow-lg shadow-foreground/5"
+								className="h-12 px-8 rounded-xl bg-foreground text-background hover:bg-foreground/90 gap-2 text-base shadow-lg shadow-foreground/5"
 								asChild
 							>
 								<Link to="/signup">
@@ -105,8 +105,8 @@ export default function HomePage() {
 							</Button>
 							<Button
 								size="lg"
-								variant="outline"
-								className="h-12 px-8 rounded-full text-base backdrop-blur-sm bg-background/50"
+								variant="link"
+								className="text-foreground"
 								asChild
 							>
 								<Link to="/contact">Book a Demo</Link>
@@ -128,7 +128,7 @@ export default function HomePage() {
 									</div>
 									<div className="ml-4 flex-1 flex justify-center">
 										<div className="h-5 px-4 rounded-md bg-muted/50 text-xs text-muted-foreground flex items-center">
-											app.kaamsync.com
+											kaamsync.com
 										</div>
 									</div>
 								</div>

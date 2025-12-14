@@ -7,7 +7,7 @@ export default {
 
 	prerender: ["/", "/login", "/signup"],
 
-	// routeDiscovery: { mode: "initial" },
+	routeDiscovery: { mode: "initial" },
 
 	future: {
 		v8_middleware: true,

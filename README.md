@@ -11,7 +11,7 @@ Built with a modern, performance-focused stack:
 - **Sync Engine**: [Zero](https://zero.rocicorp.dev/) for local-first, offline-capable data sync
 - **Authentication**: [Better Auth](https://www.better-auth.com/)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components**: [Radix UI](https://www.radix-ui.com/) & [Lucide Icons](https://lucide.dev/)
+- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) & [Lucide Icons](https://lucide.dev/)
 
 ## ✨ Key Features
 
@@ -73,24 +73,27 @@ The core unit of work is a "Matter", which can be:
    npm run db:generate
    ```
 
+5. **Zero Database Setup**
+   Generate schema for zero:
+   ```bash
+   npm run db:generate-zero
+   ```
+   
+6. **Seed database (Optional)**
+   ```bash
+   npm run db:seed
+   ```
+
 ### Running the App
 
-The project uses several services that need to run simultaneously.
+The project uses several services that need to run simultaneously make sure **docker is started with postgres:17-alpine**.
 
-**Development Server**
+**Development Server `scripts/dev.ts`**
 ```bash
 npm run dev
 ```
 
-**Zero Sync Server** (Required for offline sync)
-```bash
-npm run dev:zero
-```
-
-**Database Studio** (Optional)
-```bash
-npm run dev:db
-```
+**Runs all the required commands check `scripts/dev.ts` and `scripts/` folder**
 
 ## 📂 Project Structure
 
@@ -99,11 +102,3 @@ npm run dev:db
 - `app/components`: Reusable UI components.
 - `app/lib`: Utilities and helpers.
 - `zero`: Zero sync configuration and generated schema.
-
-## 📜 Scripts
-
-- `npm run dev`: Start the main development server.
-- `npm run build`: Build for production.
-- `npm run typecheck`: Run TypeScript validation.
-- `npm run db:generate`: Generate SQL migrations from Drizzle schema.
-- `npm run db:generate-zero`: Generate Zero schema from Drizzle schema.
