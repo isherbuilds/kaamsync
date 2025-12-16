@@ -62,7 +62,7 @@
 		"concurrently": "^9.2.1",
 		"dotenv-expand": "^12.0.3",
 		"drizzle-kit": "^0.31.8",
-		"knip": "^5.73.4",
+		"knip": "^5.74.0",
 		"tailwindcss": "^4.1.18",
 		"tsx": "^4.21.0",
 		"typescript": "^5.9.3",

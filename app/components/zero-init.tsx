@@ -1,6 +1,6 @@
-import { Zero } from "@rocicorp/zero";
+import type { Zero } from "@rocicorp/zero";
 import { ZeroProvider } from "@rocicorp/zero/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { must } from "shared/must";
 import { mutators } from "zero/mutators";
 import { preloadAll } from "zero/preload";
@@ -36,20 +36,18 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
 		};
 	}, [userID, activeOrganizationId]);
 
-	const z = useMemo(() => {
-		return new Zero({
-			userID,
-			context: { userId: userID, activeOrganizationId },
-			cacheURL,
-			schema,
-			mutators,
-			storageKey,
-			kvStore: "idb", // kvStore is now top-level
-		});
-	}, [userID, activeOrganizationId, storageKey]);
-
 	return (
-		<ZeroProvider zero={z} init={init}>
+		<ZeroProvider
+			key={storageKey}
+			schema={schema}
+			userID={userID}
+			storageKey={storageKey}
+			context={{ userId: userID, activeOrganizationId }}
+			cacheURL={cacheURL}
+			mutators={mutators}
+			kvStore="idb"
+			init={init}
+		>
 			{children}
 		</ZeroProvider>
 	);

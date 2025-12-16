@@ -1,14 +1,3 @@
-/**
- * Color scheme implementation based on React Router's official website solution
- * @see https://github.com/remix-run/react-router-website
- *
- * This component provides a complete color theme switching solution:
- * - Supports system/light/dark modes
- * - Includes client and server-side isomorphic rendering
- * - Uses Zod for type validation
- * - Responds to system theme changes
- */
-
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useLocation, useNavigation, useRouteLoaderData } from "react-router";
 import { z } from "zod";
