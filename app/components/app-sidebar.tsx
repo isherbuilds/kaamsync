@@ -9,7 +9,6 @@ import {
 	Users,
 } from "lucide-react";
 import { useMatches } from "react-router";
-import type { QueryContext } from "zero/queries";
 
 import { NavMain } from "~/components/nav-main";
 import { NavUser } from "~/components/nav-user";
@@ -67,7 +66,6 @@ export function AppSidebar({
 	selectedOrg,
 	authUser,
 	workspaces,
-	queryCtx,
 	...props
 }: {
 	organizations: {
@@ -92,7 +90,6 @@ export function AppSidebar({
 		code: string;
 		slug: string;
 	}[];
-	queryCtx?: QueryContext | null;
 } & React.ComponentProps<typeof Sidebar>) {
 	const matches = useMatches();
 	const isSettings = matches.find(

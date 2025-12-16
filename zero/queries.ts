@@ -1,29 +1,13 @@
-import { syncedQueryWithContext } from "@rocicorp/zero";
-import { z } from "zod";
-import { builder } from "./schema.gen";
-
-// ============================================================================
-// AUTH CONTEXT TYPE (following zbugs pattern)
-// ============================================================================
-
-export type QueryContext = {
-	sub: string;
-	activeOrganizationId: string | null;
-};
-
-// ============================================================================
-// LIMITS (following zbugs - high limits for local caching, pagination for huge lists)
-// ============================================================================
+import { defineQueries, defineQuery } from "@rocicorp/zero";
+import z from "zod";
+import type { Context } from "./auth";
+import { zql } from "./schema";
 
 const DEFAULT_LIMIT = 100;
 const WORKSPACE_MATTERS_LIMIT = 1000; // High limit - Zero caches to IndexedDB
 const TIMELINE_LIMIT = 50;
 const ATTACHMENTS_LIMIT = 25;
 const PAGE_SIZE = 100; // For paginated queries
-
-// ============================================================================
-// PAGINATION TYPES (following zbugs issueListV2 pattern)
-// ============================================================================
 
 /** Sort cursor for keyset pagination - use createdAt + id for stable sorting */
 export type MatterSortCursor = {
@@ -43,18 +27,14 @@ const matterCursorSchema = z.object({
 // biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 type Q = { where: (f: string, opOrVal: unknown, v?: unknown) => any };
 
-const withOrg = <T extends Q>(q: T, ctx: QueryContext): T =>
+const withOrg = <T extends Q>(q: T, ctx: Context): T =>
 	q
 		.where("orgId", ctx.activeOrganizationId ?? "")
 		.where("deletedAt", "IS", null);
 
 const notDeleted = <T extends Q>(q: T): T => q.where("deletedAt", "IS", null);
 
-const withWorkspaceAccess = <T>(
-	q: T,
-	ctx: QueryContext,
-	workspaceId: string,
-): T =>
+const withWorkspaceAccess = <T>(q: T, ctx: Context, workspaceId: string): T =>
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 	(q as any)
 		.where("workspaceId", workspaceId)
@@ -64,56 +44,44 @@ const withWorkspaceAccess = <T>(
 				.where("orgId", ctx.activeOrganizationId ?? "")
 				// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 				.whereExists("memberships", (m: any) =>
-					m.where("userId", ctx.sub).where("deletedAt", "IS", null),
+					m.where("userId", ctx.userId).where("deletedAt", "IS", null),
 				),
 		);
 
-// ============================================================================
-// SYNCED QUERIES
-// ============================================================================
-
-export const queries = {
+export const queries = defineQueries({
 	// WORKSPACE QUERIES
-	getWorkspacesList: syncedQueryWithContext(
-		"getWorkspacesList",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			withOrg(builder.workspacesTable, ctx)
-				.whereExists("memberships", (q) =>
-					q.where("userId", ctx.sub).where("deletedAt", "IS", null),
-				)
-				.related("memberships", (q) => notDeleted(q).related("user"))
-				.orderBy("createdAt", "desc")
-				.limit(DEFAULT_LIMIT),
+	getWorkspacesList: defineQuery(({ ctx }) =>
+		withOrg(zql.workspacesTable, ctx)
+			.whereExists("memberships", (q) =>
+				q.where("userId", ctx.userId).where("deletedAt", "IS", null),
+			)
+			.related("memberships", (q) => notDeleted(q).related("user"))
+			.orderBy("createdAt", "desc")
+			.limit(DEFAULT_LIMIT),
 	),
 
-	getWorkspaceByCode: syncedQueryWithContext(
-		"getWorkspaceByCode",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, code: string) =>
-			withOrg(builder.workspacesTable, ctx)
+	getWorkspaceByCode: defineQuery(
+		z.object({ code: z.string() }),
+		({ ctx, args: { code } }) =>
+			withOrg(zql.workspacesTable, ctx)
 				.where("code", code)
 				.related("memberships", (q) => notDeleted(q).related("user"))
 				.one(),
 	),
 
-	getUserWorkspaces: syncedQueryWithContext(
-		"getUserWorkspaces",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			withOrg(builder.workspaceMembershipsTable, ctx)
-				.where("userId", ctx.sub)
-				.related("workspace", (q) => notDeleted(q))
-				.related("user")
-				.limit(DEFAULT_LIMIT),
+	getUserWorkspaces: defineQuery(({ ctx }) =>
+		withOrg(zql.workspaceMembershipsTable, ctx)
+			.where("userId", ctx.userId)
+			.related("workspace", (q) => notDeleted(q))
+			.related("user")
+			.limit(DEFAULT_LIMIT),
 	),
 
 	// MATTER QUERIES
-	getMatter: syncedQueryWithContext(
-		"getMatter",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, id: string) =>
-			withOrg(builder.mattersTable, ctx)
+	getMatter: defineQuery(
+		z.object({ id: z.string() }),
+		({ ctx, args: { id } }) =>
+			withOrg(zql.mattersTable, ctx)
 				.where("id", id)
 				.related("author")
 				.related("assignee")
@@ -133,11 +101,10 @@ export const queries = {
 				.one(),
 	),
 
-	getMatterByKey: syncedQueryWithContext(
-		"getMatterByKey",
-		z.tuple([z.string(), z.number()]),
-		(ctx: QueryContext, code: string, shortID: number) =>
-			withOrg(builder.mattersTable, ctx)
+	getMatterByKey: defineQuery(
+		z.object({ code: z.string(), shortID: z.number() }),
+		({ ctx, args: { code, shortID } }) =>
+			withOrg(zql.mattersTable, ctx)
 				.where("workspaceCode", code)
 				.where("shortID", shortID)
 				.related("workspace")
@@ -158,11 +125,10 @@ export const queries = {
 				.one(),
 	),
 
-	getWorkspaceMatters: syncedQueryWithContext(
-		"getWorkspaceMatters",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, workspaceId: string) =>
-			withWorkspaceAccess(builder.mattersTable, ctx, workspaceId)
+	getWorkspaceMatters: defineQuery(
+		z.object({ workspaceId: z.string() }),
+		({ ctx, args: { workspaceId } }) =>
+			withWorkspaceAccess(zql.mattersTable, ctx, workspaceId)
 				.where("type", "task")
 				.related("status") // Only status is needed for grouping - fetch others on detail page
 				// Server-side sorting: priority (numeric) → dueDate → createdAt
@@ -176,58 +142,48 @@ export const queries = {
 
 	// Pre-sync all matters across ALL workspaces user has access to
 	// This enables instant workspace switching (no workspaceId filter)
-	getAllMatters: syncedQueryWithContext(
-		"getAllMatters",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			withOrg(builder.mattersTable, ctx)
-				.where("type", "task")
-				// Only sync matters from workspaces user is a member of
-				// flip: true because user is member of few workspaces (small subset)
-				.whereExists("workspace", (w) =>
-					w.whereExists("memberships", (m) =>
-						m.where("userId", ctx.sub).where("deletedAt", "IS", null),
-					),
-				)
-				.related("status")
-				.related("workspace")
-				.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
-				.limit(WORKSPACE_MATTERS_LIMIT),
+	getAllMatters: defineQuery(z.tuple([]), ({ ctx }) =>
+		withOrg(zql.mattersTable, ctx)
+			.where("type", "task")
+			// Only sync matters from workspaces user is a member of
+			// flip: true because user is member of few workspaces (small subset)
+			.whereExists("workspace", (w) =>
+				w.whereExists("memberships", (m) =>
+					m.where("userId", ctx.userId).where("deletedAt", "IS", null),
+				),
+			)
+			.related("status")
+			.related("workspace")
+			.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
+			.limit(WORKSPACE_MATTERS_LIMIT),
 	),
 
-	getUserAssignedMatters: syncedQueryWithContext(
-		"getUserAssignedMatters",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			withOrg(builder.mattersTable, ctx)
-				.where("assigneeId", ctx.sub)
-				.where("type", "task")
-				.related("author")
-				.related("assignee")
-				.related("status")
-				.related("labels", (q) => q.related("label"))
-				.orderBy("createdAt", "desc")
-				.limit(DEFAULT_LIMIT),
+	getUserAssignedMatters: defineQuery(({ ctx }) =>
+		withOrg(zql.mattersTable, ctx)
+			.where("assigneeId", ctx.userId)
+			.where("type", "task")
+			.related("author")
+			.related("assignee")
+			.related("status")
+			.related("labels", (q) => q.related("label"))
+			.orderBy("createdAt", "desc")
+			.limit(DEFAULT_LIMIT),
 	),
 
-	getUserAuthoredMatters: syncedQueryWithContext(
-		"getUserAuthoredMatters",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			withOrg(builder.mattersTable, ctx)
-				.where("authorId", ctx.sub)
-				.where("type", "request")
-				.related("assignee")
-				.related("status")
-				.orderBy("createdAt", "desc")
-				.limit(DEFAULT_LIMIT),
+	getUserAuthoredMatters: defineQuery(({ ctx }) =>
+		withOrg(zql.mattersTable, ctx)
+			.where("authorId", ctx.userId)
+			.where("type", "request")
+			.related("assignee")
+			.related("status")
+			.orderBy("createdAt", "desc")
+			.limit(DEFAULT_LIMIT),
 	),
 
-	getPendingRequests: syncedQueryWithContext(
-		"getPendingRequests",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, workspaceId: string) =>
-			withWorkspaceAccess(builder.mattersTable, ctx, workspaceId)
+	getPendingRequests: defineQuery(
+		z.object({ workspaceId: z.string() }),
+		({ ctx, args: { workspaceId } }) =>
+			withWorkspaceAccess(zql.mattersTable, ctx, workspaceId)
 				.where("type", "REQUEST")
 				.where("approvalStatus", "PENDING")
 				.related("author")
@@ -237,12 +193,11 @@ export const queries = {
 				.limit(DEFAULT_LIMIT),
 	),
 
-	getWatchedMatters: syncedQueryWithContext(
-		"getWatchedMatters",
-		z.tuple([z.string().nullable()]),
-		(ctx: QueryContext, workspaceId: string | null) => {
-			let q = withOrg(builder.mattersTable, ctx)
-				.whereExists("watchers", (w) => w.where("userId", ctx.sub))
+	getWatchedMatters: defineQuery(
+		z.object({ workspaceId: z.string().nullable() }),
+		({ ctx, args: { workspaceId } }) => {
+			let q = withOrg(zql.mattersTable, ctx)
+				.whereExists("watchers", (w) => w.where("userId", ctx.userId))
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -252,11 +207,10 @@ export const queries = {
 		},
 	),
 
-	getMatterWatchers: syncedQueryWithContext(
-		"getMatterWatchers",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, matterId: string) =>
-			notDeleted(builder.matterWatchersTable)
+	getMatterWatchers: defineQuery(
+		z.object({ matterId: z.string() }),
+		({ ctx, args: { matterId } }) =>
+			notDeleted(zql.matterWatchersTable)
 				.where("matterId", matterId)
 				.related("matter", (q) =>
 					q.where("orgId", ctx.activeOrganizationId ?? ""),
@@ -268,44 +222,34 @@ export const queries = {
 	),
 
 	// ORGANIZATION QUERIES
-	getOrganizationList: syncedQueryWithContext(
-		"getOrganizationList",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			builder.organizationsTable
-				.whereExists("membersTables", (q) => q.where("userId", ctx.sub))
-				// .related("membersTables", (q) => q.related("usersTable"))
-				.limit(DEFAULT_LIMIT),
+	getOrganizationList: defineQuery(({ ctx }) =>
+		zql.organizationsTable
+			.whereExists("membersTables", (q) => q.where("userId", ctx.userId))
+			// .related("membersTables", (q) => q.related("usersTable"))
+			.limit(DEFAULT_LIMIT),
 	),
 
-	getOrganizationMembers: syncedQueryWithContext(
-		"getOrganizationMembers",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			builder.membersTable
-				.where("organizationId", ctx.activeOrganizationId ?? "")
-				.related("usersTable", (q) => q.orderBy("name", "asc"))
-				.orderBy("createdAt", "asc")
-				.limit(DEFAULT_LIMIT),
+	getOrganizationMembers: defineQuery(({ ctx }) =>
+		zql.membersTable
+			.where("organizationId", ctx.activeOrganizationId ?? "")
+			.related("usersTable", (q) => q.orderBy("name", "asc"))
+			.orderBy("createdAt", "asc")
+			.limit(DEFAULT_LIMIT),
 	),
 
-	getOrganizationInvitations: syncedQueryWithContext(
-		"getOrganizationInvitations",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			builder.invitationsTable
-				.where("organizationId", ctx.activeOrganizationId ?? "")
-				.where("status", "pending")
-				.orderBy("expiresAt", "desc")
-				.limit(DEFAULT_LIMIT),
+	getOrganizationInvitations: defineQuery(({ ctx }) =>
+		zql.invitationsTable
+			.where("organizationId", ctx.activeOrganizationId ?? "")
+			.where("status", "pending")
+			.orderBy("expiresAt", "desc")
+			.limit(DEFAULT_LIMIT),
 	),
 
 	// WORKSPACE MEMBERSHIP QUERIES
-	getWorkspaceMembers: syncedQueryWithContext(
-		"getWorkspaceMembers",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, workspaceId: string) =>
-			withWorkspaceAccess(builder.workspaceMembershipsTable, ctx, workspaceId)
+	getWorkspaceMembers: defineQuery(
+		z.object({ workspaceId: z.string() }),
+		({ ctx, args: { workspaceId } }) =>
+			withWorkspaceAccess(zql.workspaceMembershipsTable, ctx, workspaceId)
 				.related("user")
 				.related("workspace")
 				.orderBy("createdAt", "asc")
@@ -313,30 +257,22 @@ export const queries = {
 	),
 
 	// LABEL & STATUS QUERIES
-	getOrganizationLabels: syncedQueryWithContext(
-		"getOrganizationLabels",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			withOrg(builder.labelsTable, ctx)
-				.orderBy("name", "asc")
-				.limit(DEFAULT_LIMIT),
+	getOrganizationLabels: defineQuery(({ ctx }) =>
+		withOrg(zql.labelsTable, ctx).orderBy("name", "asc").limit(DEFAULT_LIMIT),
 	),
 
-	getWorkspaceStatuses: syncedQueryWithContext(
-		"getWorkspaceStatuses",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, workspaceId: string) =>
-			withWorkspaceAccess(notDeleted(builder.statusesTable), ctx, workspaceId)
+	getWorkspaceStatuses: defineQuery(
+		z.object({ workspaceId: z.string() }),
+		({ ctx, args: { workspaceId } }) =>
+			withWorkspaceAccess(notDeleted(zql.statusesTable), ctx, workspaceId)
 				.orderBy("position", "asc")
 				.limit(DEFAULT_LIMIT),
 	),
 
 	// Pre-sync statuses from ALL workspaces for instant switching
-	getAllWorkspaceStatuses: syncedQueryWithContext(
-		"getAllWorkspaceStatuses",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			notDeleted(builder.statusesTable)
+	getAllWorkspaceStatuses: defineQuery(
+		({ ctx }) =>
+			notDeleted(zql.statusesTable)
 				// Filter to workspaces in current org that user is a member of
 				// flip: true because user is member of few workspaces (small subset)
 				.whereExists("workspace", (w) =>
@@ -344,7 +280,7 @@ export const queries = {
 						.where("orgId", ctx.activeOrganizationId ?? "")
 						.where("deletedAt", "IS", null)
 						.whereExists("memberships", (m) =>
-							m.where("userId", ctx.sub).where("deletedAt", "IS", null),
+							m.where("userId", ctx.userId).where("deletedAt", "IS", null),
 						),
 				)
 				.related("workspace")
@@ -353,11 +289,10 @@ export const queries = {
 	),
 
 	// TIMELINE QUERIES
-	getMatterTimelines: syncedQueryWithContext(
-		"getMatterTimelines",
-		z.tuple([z.string()]),
-		(ctx: QueryContext, matterId: string) =>
-			notDeleted(builder.timelinesTable)
+	getMatterTimelines: defineQuery(
+		z.object({ matterId: z.string() }),
+		({ ctx, args: { matterId } }) =>
+			notDeleted(zql.timelinesTable)
 				.where("matterId", matterId)
 				.related("user")
 				.related("matter", (q) =>
@@ -368,17 +303,14 @@ export const queries = {
 	),
 
 	// USER QUERIES
-	getOrganizationUsers: syncedQueryWithContext(
-		"getOrganizationUsers",
-		z.tuple([]),
-		(ctx: QueryContext) =>
-			builder.usersTable
-				.related("membersTables", (q) =>
-					q
-						.where("organizationId", ctx.activeOrganizationId ?? "")
-						.related("organizationsTable"),
-				)
-				.limit(DEFAULT_LIMIT),
+	getOrganizationUsers: defineQuery(z.object({}), ({ ctx }) =>
+		zql.usersTable
+			.related("membersTables", (q) =>
+				q
+					.where("organizationId", ctx.activeOrganizationId ?? "")
+					.related("organizationsTable"),
+			)
+			.limit(DEFAULT_LIMIT),
 	),
 
 	// =========================================================================
@@ -390,30 +322,23 @@ export const queries = {
 	 * Paginated workspace matters - use when workspace has 1000+ matters.
 	 * Uses keyset pagination with cursor for efficient large list navigation.
 	 */
-	getWorkspaceMattersPaginated: syncedQueryWithContext(
-		"getWorkspaceMattersPaginated",
-		z.tuple([
-			z.string(), // workspaceId
-			z.number(), // limit (page size)
-			matterCursorSchema.nullable(), // cursor (null for first page)
-			z.enum(["forward", "backward"]), // direction
-		]),
-		(
-			ctx: QueryContext,
-			workspaceId: string,
-			limit: number,
-			cursor: MatterSortCursor | null,
-			direction: "forward" | "backward",
-		) => {
-			let q = withWorkspaceAccess(builder.mattersTable, ctx, workspaceId)
+	getWorkspaceMattersPaginated: defineQuery(
+		z.object({
+			workspaceId: z.string(), // workspaceId
+			limit: z.number(), // limit (page size)
+			cursor: matterCursorSchema.nullable(), // cursor (null for first page)
+			direction: z.enum(["forward", "backward"]), // direction
+		}),
+		({ ctx, args: { workspaceId, limit, cursor, direction } }) => {
+			let q = withWorkspaceAccess(zql.mattersTable, ctx, workspaceId)
 				.related("author")
 				.related("assignee")
-				.related("status");
+				.related("status")
+				.related("labels", (q) => q.related("label"));
 
 			// Keyset pagination - more efficient than offset for large datasets
 			if (cursor) {
-				// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
-				q = (q as any).start(cursor);
+				q = q.start(cursor);
 			}
 
 			const orderDir = direction === "forward" ? "desc" : "asc";
@@ -427,21 +352,15 @@ export const queries = {
 	/**
 	 * Paginated user assigned matters - use for users with many tasks.
 	 */
-	getUserAssignedMattersPaginated: syncedQueryWithContext(
-		"getUserAssignedMattersPaginated",
-		z.tuple([
-			z.number(), // limit
-			matterCursorSchema.nullable(), // cursor
-			z.enum(["forward", "backward"]), // direction
-		]),
-		(
-			ctx: QueryContext,
-			limit: number,
-			cursor: MatterSortCursor | null,
-			direction: "forward" | "backward",
-		) => {
-			let q = withOrg(builder.mattersTable, ctx)
-				.where("assigneeId", ctx.sub)
+	getUserAssignedMattersPaginated: defineQuery(
+		z.object({
+			limit: z.number(), // limit
+			cursor: matterCursorSchema.nullable(), // cursor
+			direction: z.enum(["forward", "backward"]), // direction
+		}),
+		({ ctx, args: { limit, cursor, direction } }) => {
+			let q = withOrg(zql.mattersTable, ctx)
+				.where("assigneeId", ctx.userId)
 				.where("type", "task")
 				.related("author")
 				.related("assignee")
@@ -449,8 +368,7 @@ export const queries = {
 				.related("labels", (q) => q.related("label"));
 
 			if (cursor) {
-				// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
-				q = (q as any).start(cursor);
+				q = q.start(cursor);
 			}
 
 			const orderDir = direction === "forward" ? "desc" : "asc";
@@ -464,28 +382,23 @@ export const queries = {
 	/**
 	 * Paginated user authored matters - use for users with many requests.
 	 */
-	getUserAuthoredMattersPaginated: syncedQueryWithContext(
-		"getUserAuthoredMattersPaginated",
-		z.tuple([
-			z.number(), // limit
-			matterCursorSchema.nullable(), // cursor
-			z.enum(["forward", "backward"]), // direction
-		]),
-		(
-			ctx: QueryContext,
-			limit: number,
-			cursor: MatterSortCursor | null,
-			direction: "forward" | "backward",
-		) => {
-			let q = withOrg(builder.mattersTable, ctx)
-				.where("authorId", ctx.sub)
+	getUserAuthoredMattersPaginated: defineQuery(
+		z.object({
+			limit: z.number(), // limit
+			cursor: matterCursorSchema.nullable(), // cursor
+			direction: z.enum(["forward", "backward"]), // direction
+		}),
+		({ ctx, args: { limit, cursor, direction } }) => {
+			let q = withOrg(zql.mattersTable, ctx)
+				.where("authorId", ctx.userId)
 				.where("type", "request")
+				.related("author")
 				.related("assignee")
-				.related("status");
+				.related("status")
+				.related("labels", (q) => q.related("label"));
 
 			if (cursor) {
-				// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
-				q = (q as any).start(cursor);
+				q = q.start(cursor);
 			}
 
 			const orderDir = direction === "forward" ? "desc" : "asc";
@@ -495,7 +408,7 @@ export const queries = {
 				.limit(limit);
 		},
 	),
-};
+});
 
 export type QueryName = keyof typeof queries;
 export { DEFAULT_LIMIT, PAGE_SIZE };

@@ -1,5 +1,5 @@
+import { useZero } from "@rocicorp/zero/react";
 import { useEffect, useRef } from "react";
-import { useZ } from "~/hooks/use-zero-cache";
 import { peekNextShortId, seedNextShortId } from "~/lib/short-id-cache";
 
 /**
@@ -7,7 +7,7 @@ import { peekNextShortId, seedNextShortId } from "~/lib/short-id-cache";
  * Allocates a block from the server if needed and seeds the local cache.
  */
 export function useShortIdSeeder(workspaceId: string, enabled = true) {
-	const z = useZ();
+	const z = useZero();
 	const seeded = useRef(false);
 
 	useEffect(() => {
@@ -17,8 +17,8 @@ export function useShortIdSeeder(workspaceId: string, enabled = true) {
 		(async () => {
 			try {
 				// Seed cache from latest local matter to ensure continuity
-				const matters = await z.query.mattersTable
-					.where("workspaceId", workspaceId)
+				const matters = await z
+					.query!.mattersTable.where("workspaceId", workspaceId)
 					.where("deletedAt", "IS", null)
 					.orderBy("shortID", "desc")
 					.limit(1)

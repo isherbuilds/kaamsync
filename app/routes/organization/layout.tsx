@@ -1,4 +1,4 @@
-import { useQuery } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import { AlertCircle } from "lucide-react";
 import { useEffect } from "react";
 import {
@@ -16,7 +16,7 @@ import { AppSidebar } from "~/components/app-sidebar";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
-import { useZ } from "~/hooks/use-zero-cache";
+import { ZeroInit } from "~/components/zero-init.js";
 import type { AuthSession } from "~/lib/auth-client";
 import { authClient } from "~/lib/auth-client";
 import { getAuthSessionSWR } from "~/lib/offline-auth";
@@ -79,38 +79,47 @@ export async function clientLoader({
 	return {
 		authSession,
 		orgSlug: params.orgSlug,
-		queryCtx: {
-			sub: authSession.user.id,
-			activeOrganizationId: authSession.session.activeOrganizationId || "",
-		},
 	};
 }
 
-export default function Layout({ loaderData }: Route.ComponentProps) {
-	const { authSession, orgSlug, queryCtx } = loaderData;
-	const z = useZ();
+export default function ParentLayout({ loaderData }: Route.ComponentProps) {
+	const { authSession, orgSlug } = loaderData;
 
-	const [orgsData] = useQuery(
-		queries.getOrganizationList(queryCtx),
-		CACHE_LONG,
+	return (
+		<ZeroInit>
+			<Layout authSession={authSession} orgSlug={orgSlug} />
+		</ZeroInit>
 	);
-	const [workspacesData] = useQuery(
-		queries.getWorkspacesList(queryCtx),
-		CACHE_NAV,
-	);
+}
 
-	// Preload workspaces for instant switching - direct map is O(n) and cheap
-	const activeOrgId = queryCtx.activeOrganizationId;
+function Layout({
+	authSession,
+	orgSlug,
+}: {
+	authSession: AuthSession;
+	orgSlug: string;
+}) {
+	const z = useZero();
+
+	// Context is now automatic from ZeroProvider - no need to pass queryCtx
+	const [orgsData] = useQuery(queries.getOrganizationList(), CACHE_LONG);
+	const [workspacesData] = useQuery(queries.getWorkspacesList(), CACHE_NAV);
+
+	// Preload workspaces for instant switching
+	const activeOrgId = authSession.session.activeOrganizationId;
 
 	useEffect(() => {
 		if (workspacesData.length > 0 && activeOrgId) {
-			preloadAllWorkspaces(
-				z,
-				{ sub: queryCtx.sub, activeOrganizationId: activeOrgId },
-				workspacesData.map((w) => w.id),
-			);
+			const timeout = setTimeout(() => {
+				preloadAllWorkspaces(
+					z,
+					workspacesData.map((w) => w.id),
+					activeOrgId,
+				);
+			}, 100); // Defer to next event loop tick to avoid UI blocking
+			return () => clearTimeout(timeout);
 		}
-	}, [z, queryCtx.sub, activeOrgId, workspacesData]);
+	}, [z, activeOrgId, workspacesData]);
 
 	// Direct find - O(n) on small array, no memoization overhead needed
 	const selectedOrg = orgsData.find((o) => o.slug === orgSlug);
@@ -124,7 +133,6 @@ export default function Layout({ loaderData }: Route.ComponentProps) {
 						selectedOrg={selectedOrg ?? { id: "", name: "", slug: "" }}
 						organizations={orgsData}
 						workspaces={workspacesData}
-						queryCtx={queryCtx}
 					/>
 				)}
 			</ClientOnly>

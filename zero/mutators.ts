@@ -1,121 +1,99 @@
 import { createId } from "@paralleldrive/cuid2";
-import type { CustomMutatorDefs } from "@rocicorp/zero";
+import { defineMutator, defineMutators } from "@rocicorp/zero";
+import { z } from "zod";
 import { matterType, membershipStatus, workspaceRole } from "~/db/helpers";
 import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
 import { reservedWorkspaceSlugs } from "~/lib/validations/organization";
-import {
-	DEFAULT_LABELS,
-	DEFAULT_STATUSES,
-} from "../app/lib/server/default-workspace-data";
+import { DEFAULT_STATUSES } from "../app/lib/server/default-workspace-data";
+import type { Context } from "./auth";
 import { allocateShortID, type MutatorTx } from "./mutator-helpers";
+import { zql } from "./schema";
 
-/**
- * Auth context passed to mutators. Follows zbugs pattern: minimal auth data.
- */
-type AuthData = {
-	sub: string;
-	activeOrganizationId: string | null;
-};
-
-export type Mutators = ReturnType<typeof createMutators>;
-
-/**
- * Create custom mutators with authentication context.
- * Following zbugs pattern: inline permission checks, minimal helpers.
- */
-export function createMutators(authData: AuthData) {
-	const userId = authData.sub;
-	const orgId = authData.activeOrganizationId;
-
-	// --------------------------------------------------------------------------
-	// Helper: Assert user is logged in
-	// --------------------------------------------------------------------------
-	function assertLoggedIn() {
-		if (!orgId) {
-			throw new Error("User must be logged in");
-		}
+function assertLoggedIn(ctx: Context) {
+	if (!ctx.activeOrganizationId) {
+		throw new Error("User must be logged in");
 	}
+}
 
-	// --------------------------------------------------------------------------
-	// Helper: Get workspace membership
-	// --------------------------------------------------------------------------
-	async function getWorkspaceMembership(tx: MutatorTx, workspaceId: string) {
-		assertLoggedIn();
-		return await tx.query.workspaceMembershipsTable
+async function getWorkspaceMembership(
+	tx: MutatorTx,
+	ctx: Context,
+	workspaceId: string,
+) {
+	assertLoggedIn(ctx);
+	return await tx.run(
+		zql.workspaceMembershipsTable
 			.where("workspaceId", workspaceId)
-			.where("userId", userId)
-			.where("orgId", orgId ?? "")
+			.where("userId", ctx.userId)
+			.where("orgId", ctx.activeOrganizationId ?? "")
 			.where("deletedAt", "IS", null)
-			.one()
-			.run();
-	}
+			.one(),
+	);
+}
 
-	// --------------------------------------------------------------------------
-	// Helper: Assert manager role
-	// --------------------------------------------------------------------------
-	async function assertManager(tx: MutatorTx, workspaceId: string) {
-		const membership = await getWorkspaceMembership(tx, workspaceId);
-		if (!membership || membership.role !== "manager") {
-			throw new Error("Only workspace managers can perform this action");
-		}
+async function assertManager(tx: MutatorTx, ctx: Context, workspaceId: string) {
+	const membership = await getWorkspaceMembership(tx, ctx, workspaceId);
+	if (!membership || membership.role !== "manager") {
+		throw new Error("Only workspace managers can perform this action");
 	}
+}
 
-	// --------------------------------------------------------------------------
-	// Helper: Check if user can modify matter (author, assignee, or manager)
-	// --------------------------------------------------------------------------
-	async function canModifyMatter(tx: MutatorTx, matterId: string) {
-		assertLoggedIn();
-		const matter = await tx.query.mattersTable
+async function canModifyMatter(tx: MutatorTx, ctx: Context, matterId: string) {
+	assertLoggedIn(ctx);
+	const matter = await tx.run(
+		zql.mattersTable
 			.where("id", matterId)
-			.where("orgId", orgId ?? "")
+			.where("orgId", ctx.activeOrganizationId ?? "")
 			.where("deletedAt", "IS", null)
-			.one()
-			.run();
+			.one(),
+	);
 
-		if (!matter) {
-			throw new Error("Matter not found");
-		}
-
-		const membership = await getWorkspaceMembership(tx, matter.workspaceId);
-		if (!membership) {
-			throw new Error("Not a member of this workspace");
-		}
-
-		const isAuthor = matter.authorId === userId;
-		const isAssignee = matter.assigneeId === userId;
-		const isManager = membership.role === "manager";
-
-		return {
-			matter,
-			membership,
-			canModify: isAuthor || isAssignee || isManager,
-		};
+	if (!matter) {
+		throw new Error("Matter not found");
 	}
+
+	const membership = await getWorkspaceMembership(tx, ctx, matter.workspaceId);
+	if (!membership) {
+		throw new Error("Not a member of this workspace");
+	}
+
+	const isAuthor = matter.authorId === ctx.userId;
+	const isAssignee = matter.assigneeId === ctx.userId;
+	const isManager = membership.role === "manager";
 
 	return {
-		// ======================================================================
-		// MATTER MUTATORS
-		// ======================================================================
+		matter,
+		membership,
+		canModify: isAuthor || isAssignee || isManager,
+	};
+}
 
-		matter: {
-			create: async (
-				tx: MutatorTx,
-				args: {
-					workspaceId: string;
-					workspaceCode: string;
-					title: string;
-					description?: string;
-					type: keyof typeof matterType; // Explicitly type args.type
-					priority?: number; // 0=urgent, 1=high, 2=medium, 3=low, 4=none
-					assigneeId?: string;
-					dueDate?: number;
-					statusId: string;
-					// Optional: client-provided short ID from local cache for better offline UX
-					clientShortID?: number;
-				},
-			) => {
-				assertLoggedIn();
-				const membership = await getWorkspaceMembership(tx, args.workspaceId);
+// ============================================================================
+// MUTATORS
+// ============================================================================
+
+export const mutators = defineMutators({
+	matter: {
+		create: defineMutator(
+			z.object({
+				workspaceId: z.string(),
+				workspaceCode: z.string(),
+				title: z.string(),
+				description: z.string().optional(),
+				type: z.enum(["task", "request"]),
+				priority: z.number().optional(),
+				assigneeId: z.string().optional(),
+				dueDate: z.number().optional(),
+				statusId: z.string(),
+				clientShortID: z.number().optional(),
+			}),
+			async ({ tx, ctx, args }) => {
+				assertLoggedIn(ctx);
+				const membership = await getWorkspaceMembership(
+					tx,
+					ctx,
+					args.workspaceId,
+				);
 				if (!membership) {
 					throw new Error("Not a member of this workspace");
 				}
@@ -142,7 +120,7 @@ export function createMutators(authData: AuthData) {
 					workspaceId: args.workspaceId,
 					workspaceCode: args.workspaceCode,
 					orgId: membership.orgId,
-					authorId: userId,
+					authorId: ctx.userId,
 					statusId: args.statusId,
 					title: args.title,
 					type: args.type,
@@ -165,18 +143,18 @@ export function createMutators(authData: AuthData) {
 					args.clientShortID,
 				);
 			},
+		),
 
-			update: async (
-				tx: MutatorTx,
-				args: {
-					id: string;
-					title?: string;
-					description?: string;
-					priority?: number; // 0=urgent, 1=high, 2=medium, 3=low, 4=none
-					dueDate?: number | null;
-				},
-			) => {
-				const { canModify } = await canModifyMatter(tx, args.id);
+		update: defineMutator(
+			z.object({
+				id: z.string(),
+				title: z.string().optional(),
+				description: z.string().optional(),
+				priority: z.number().optional(),
+				dueDate: z.number().nullable().optional(),
+			}),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error("Not allowed to update this matter");
 				}
@@ -186,15 +164,15 @@ export function createMutators(authData: AuthData) {
 					updatedAt: Date.now(),
 				});
 			},
+		),
 
-			updateStatus: async (
-				tx: MutatorTx,
-				args: { id: string; statusId: string },
-			) => {
-				const { matter, membership } = await canModifyMatter(tx, args.id);
+		updateStatus: defineMutator(
+			z.object({ id: z.string(), statusId: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { matter, membership } = await canModifyMatter(tx, ctx, args.id);
 
 				// Permission: Only assignee or manager can change status
-				if (matter.assigneeId !== userId && membership.role !== "manager") {
+				if (matter.assigneeId !== ctx.userId && membership.role !== "manager") {
 					throw new Error("Not allowed to change status");
 				}
 
@@ -204,17 +182,17 @@ export function createMutators(authData: AuthData) {
 					updatedAt: Date.now(),
 				});
 			},
+		),
 
-			assign: async (
-				tx: MutatorTx,
-				args: { id: string; assigneeId: string | null },
-			) => {
-				const { matter, membership } = await canModifyMatter(tx, args.id);
+		assign: defineMutator(
+			z.object({ id: z.string(), assigneeId: z.string().nullable() }),
+			async ({ tx, ctx, args }) => {
+				const { matter, membership } = await canModifyMatter(tx, ctx, args.id);
 
 				// Permission: Managers can assign, or users can (un)assign themselves
 				const isManager = membership.role === "manager";
 				const isSelfAssignment =
-					args.assigneeId === userId || matter.assigneeId === userId;
+					args.assigneeId === ctx.userId || matter.assigneeId === ctx.userId;
 
 				if (!isManager && !isSelfAssignment) {
 					throw new Error("Only managers can change assignee");
@@ -226,9 +204,12 @@ export function createMutators(authData: AuthData) {
 					updatedAt: Date.now(),
 				});
 			},
+		),
 
-			delete: async (tx: MutatorTx, args: { id: string }) => {
-				const { canModify } = await canModifyMatter(tx, args.id);
+		delete: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error("Not allowed to delete this matter");
 				}
@@ -239,15 +220,19 @@ export function createMutators(authData: AuthData) {
 					updatedAt: Date.now(),
 				});
 			},
+		),
 
-			approve: async (tx: MutatorTx, args: { id: string; note?: string }) => {
-				assertLoggedIn();
-				const matter = await tx.query.mattersTable
-					.where("id", args.id)
-					.where("orgId", orgId ?? "")
-					.where("deletedAt", "IS", null)
-					.one()
-					.run();
+		approve: defineMutator(
+			z.object({ id: z.string(), note: z.string().optional() }),
+			async ({ tx, ctx, args }) => {
+				assertLoggedIn(ctx);
+				const matter = await tx.run(
+					zql.mattersTable
+						.where("id", args.id)
+						.where("orgId", ctx.activeOrganizationId ?? "")
+						.where("deletedAt", "IS", null)
+						.one(),
+				);
 
 				if (!matter) {
 					throw new Error("Request not found");
@@ -258,26 +243,30 @@ export function createMutators(authData: AuthData) {
 				}
 
 				// Permission: Only managers can approve
-				await assertManager(tx, matter.workspaceId);
+				await assertManager(tx, ctx, matter.workspaceId);
 
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					approvalStatus: "APPROVED",
-					approvedBy: userId,
+					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
 					updatedAt: Date.now(),
 				});
 			},
+		),
 
-			reject: async (tx: MutatorTx, args: { id: string; note?: string }) => {
-				assertLoggedIn();
-				const matter = await tx.query.mattersTable
-					.where("id", args.id)
-					.where("orgId", orgId ?? "")
-					.where("deletedAt", "IS", null)
-					.one()
-					.run();
+		reject: defineMutator(
+			z.object({ id: z.string(), note: z.string().optional() }),
+			async ({ tx, ctx, args }) => {
+				assertLoggedIn(ctx);
+				const matter = await tx.run(
+					zql.mattersTable
+						.where("id", args.id)
+						.where("orgId", ctx.activeOrganizationId ?? "")
+						.where("deletedAt", "IS", null)
+						.one(),
+				);
 
 				if (!matter) {
 					throw new Error("Request not found");
@@ -288,37 +277,33 @@ export function createMutators(authData: AuthData) {
 				}
 
 				// Permission: Only managers can reject
-				await assertManager(tx, matter.workspaceId);
+				await assertManager(tx, ctx, matter.workspaceId);
 
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					approvalStatus: "REJECTED",
-					approvedBy: userId,
+					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
 					updatedAt: Date.now(),
 				});
 			},
-		},
+		),
+	},
 
-		// ======================================================================
-		// TIMELINE MUTATORS
-		// ======================================================================
-
-		timeline: {
-			addComment: async (
-				tx: MutatorTx,
-				args: { matterId: string; content: string },
-			) => {
+	timeline: {
+		addComment: defineMutator(
+			z.object({ matterId: z.string(), content: z.string() }),
+			async ({ tx, ctx, args }) => {
 				// Permission: Ensure user can access the matter
-				await canModifyMatter(tx, args.matterId);
+				await canModifyMatter(tx, ctx, args.matterId);
 
 				const id = createId();
 				const now = Date.now();
 				await tx.mutate.timelinesTable.insert({
 					id,
 					matterId: args.matterId,
-					userId,
+					userId: ctx.userId,
 					type: "comment",
 					content: args.content,
 					edited: false,
@@ -326,46 +311,45 @@ export function createMutators(authData: AuthData) {
 					updatedAt: now,
 				});
 			},
-		},
+		),
+	},
 
-		// ======================================================================
-		// WORKSPACE MUTATORS
-		// ======================================================================
-
-		workspace: {
-			create: async (
-				tx: MutatorTx,
-				args: {
-					name: string;
-					code: string;
-					description?: string;
-					icon?: string;
-				},
-			) => {
-				assertLoggedIn();
+	workspace: {
+		create: defineMutator(
+			z.object({
+				name: z.string(),
+				code: z.string(),
+				description: z.string().optional(),
+				icon: z.string().optional(),
+			}),
+			async ({ tx, ctx, args }) => {
+				assertLoggedIn(ctx);
 
 				if (reservedWorkspaceSlugs.includes(args.code)) {
 					throw new Error("This URL is reserved.");
 				}
 
 				// Verify user is org member
-				const orgMembership = await tx.query.membersTable
-					.where("organizationId", orgId ?? "")
-					.where("userId", userId)
-					.one()
-					.run();
+				const orgMembership = await tx.run(
+					zql.membersTable
+						.where("organizationId", ctx.activeOrganizationId ?? "")
+						.where("userId", ctx.userId)
+						.one(),
+				);
 
 				if (!orgMembership) {
 					throw new Error("Not a member of this organization");
 				}
 
 				// Find unique code by checking existing workspaces
-				const existingWorkspaces = await tx.query.workspacesTable
-					.where("orgId", orgMembership.organizationId)
-					.run();
+				const existingWorkspaces = await tx.run(
+					zql.workspacesTable.where("orgId", orgMembership.organizationId),
+				);
 
 				const usedCodes = new Set(
-					existingWorkspaces.flatMap((w) => [w.slug, w.code].filter(Boolean)),
+					existingWorkspaces.flatMap((w: { slug?: string; code?: string }) =>
+						[w.slug, w.code].filter(Boolean),
+					),
 				);
 
 				// Generate candidates: GEN, GEN1, GEN2...
@@ -405,7 +389,7 @@ export function createMutators(authData: AuthData) {
 					isDefault: status.isDefault,
 					archived: false,
 					isRequestStatus: false,
-					creatorId: userId,
+					creatorId: ctx.userId,
 					createdAt: now,
 					updatedAt: now,
 				}));
@@ -415,7 +399,7 @@ export function createMutators(authData: AuthData) {
 					tx.mutate.workspaceMembershipsTable.insert({
 						id: createId(),
 						workspaceId,
-						userId,
+						userId: ctx.userId,
 						orgId: orgMembership.organizationId,
 						role: workspaceRole.manager,
 						status: membershipStatus.active,
@@ -430,35 +414,37 @@ export function createMutators(authData: AuthData) {
 					...statusRows.map((row) => tx.mutate.statusesTable.insert(row)),
 				]);
 			},
+		),
 
-			addMember: async (
-				tx: MutatorTx,
-				args: {
-					workspaceId: string;
-					userId: string;
-					role: "manager" | "member" | "viewer";
-				},
-			) => {
+		addMember: defineMutator(
+			z.object({
+				workspaceId: z.string(),
+				userId: z.string(),
+				role: z.enum(["manager", "member", "viewer"]),
+			}),
+			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can add members
-				await assertManager(tx, args.workspaceId);
+				await assertManager(tx, ctx, args.workspaceId);
 
 				// Verify user is in the organization
-				const orgMembership = await tx.query.membersTable
-					.where("organizationId", orgId ?? "")
-					.where("userId", args.userId)
-					.one()
-					.run();
+				const orgMembership = await tx.run(
+					zql.membersTable
+						.where("organizationId", ctx.activeOrganizationId ?? "")
+						.where("userId", args.userId)
+						.one(),
+				);
 
 				if (!orgMembership) {
 					throw new Error("User is not a member of this organization");
 				}
 
 				// Check if already a member (including deleted)
-				const existingMembership = await tx.query.workspaceMembershipsTable
-					.where("workspaceId", args.workspaceId)
-					.where("userId", args.userId)
-					.one()
-					.run();
+				const existingMembership = await tx.run(
+					zql.workspaceMembershipsTable
+						.where("workspaceId", args.workspaceId)
+						.where("userId", args.userId)
+						.one(),
+				);
 
 				if (existingMembership) {
 					if (existingMembership.deletedAt) {
@@ -492,24 +478,25 @@ export function createMutators(authData: AuthData) {
 					});
 				}
 			},
+		),
 
-			updateMemberRole: async (
-				tx: MutatorTx,
-				args: {
-					workspaceId: string;
-					userId: string;
-					role: "manager" | "member" | "viewer";
-				},
-			) => {
+		updateMemberRole: defineMutator(
+			z.object({
+				workspaceId: z.string(),
+				userId: z.string(),
+				role: z.enum(["manager", "member", "viewer"]),
+			}),
+			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can update roles
-				await assertManager(tx, args.workspaceId);
+				await assertManager(tx, ctx, args.workspaceId);
 
-				const membership = await tx.query.workspaceMembershipsTable
-					.where("workspaceId", args.workspaceId)
-					.where("userId", args.userId)
-					.where("deletedAt", "IS", null)
-					.one()
-					.run();
+				const membership = await tx.run(
+					zql.workspaceMembershipsTable
+						.where("workspaceId", args.workspaceId)
+						.where("userId", args.userId)
+						.where("deletedAt", "IS", null)
+						.one(),
+				);
 
 				if (!membership) {
 					throw new Error("User is not a member of this workspace");
@@ -524,23 +511,24 @@ export function createMutators(authData: AuthData) {
 					updatedAt: Date.now(),
 				});
 			},
+		),
 
-			removeMember: async (
-				tx: MutatorTx,
-				args: {
-					workspaceId: string;
-					userId: string;
-				},
-			) => {
+		removeMember: defineMutator(
+			z.object({
+				workspaceId: z.string(),
+				userId: z.string(),
+			}),
+			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can remove members
-				await assertManager(tx, args.workspaceId);
+				await assertManager(tx, ctx, args.workspaceId);
 
-				const membership = await tx.query.workspaceMembershipsTable
-					.where("workspaceId", args.workspaceId)
-					.where("userId", args.userId)
-					.where("deletedAt", "IS", null)
-					.one()
-					.run();
+				const membership = await tx.run(
+					zql.workspaceMembershipsTable
+						.where("workspaceId", args.workspaceId)
+						.where("userId", args.userId)
+						.where("deletedAt", "IS", null)
+						.one(),
+				);
 
 				if (!membership) {
 					throw new Error("User is not a member of this workspace");
@@ -552,25 +540,21 @@ export function createMutators(authData: AuthData) {
 					updatedAt: Date.now(),
 				});
 			},
-		},
+		),
+	},
 
-		// ======================================================================
-		// STATUS MUTATORS
-		// ======================================================================
-
-		status: {
-			create: async (
-				tx: MutatorTx,
-				args: {
-					workspaceId: string;
-					name: string;
-					type: string;
-					color: string;
-					position: number;
-				},
-			) => {
+	status: {
+		create: defineMutator(
+			z.object({
+				workspaceId: z.string(),
+				name: z.string(),
+				type: z.string(),
+				color: z.string(),
+				position: z.number(),
+			}),
+			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can create statuses
-				await assertManager(tx, args.workspaceId);
+				await assertManager(tx, ctx, args.workspaceId);
 
 				const statusId = createId();
 				const now = Date.now();
@@ -583,38 +567,32 @@ export function createMutators(authData: AuthData) {
 					isDefault: false,
 					archived: false,
 					isRequestStatus: false,
-					// Optional field
 					color: args.color,
 					createdAt: now,
 					updatedAt: now,
 				});
 			},
+		),
+	},
+
+	allocateShortIdBlock: defineMutator(
+		z.object({ workspaceId: z.string(), blockSize: z.number().optional() }),
+		async ({ tx, args }) => {
+			if (!args.workspaceId) throw new Error("workspaceId required");
+			if (tx.location !== "server") return;
+			const size =
+				typeof args.blockSize === "number" &&
+				Number.isFinite(args.blockSize) &&
+				args.blockSize > 0
+					? Math.min(Math.floor(args.blockSize), 1000)
+					: 100;
+			const sql = `
+			   UPDATE workspaces
+			   SET next_short_id = next_short_id + $2
+			   WHERE id = $1
+			   RETURNING next_short_id - $2 AS start, next_short_id - 1 AS finish;
+			`;
+			await tx.dbTransaction.query(sql, [args.workspaceId, size]);
 		},
-
-		allocateShortIdBlock,
-	} as const satisfies CustomMutatorDefs;
-}
-
-// COUNTER MUTATOR: allocate block and seed client cache (side-effect only)
-export async function allocateShortIdBlock(
-	tx: MutatorTx,
-	args: { workspaceId: string; blockSize?: number },
-): Promise<void> {
-	if (!args.workspaceId) throw new Error("workspaceId required");
-	if (tx.location !== "server") return;
-	const size =
-		typeof args.blockSize === "number" &&
-		Number.isFinite(args.blockSize) &&
-		args.blockSize > 0
-			? Math.min(Math.floor(args.blockSize), 1000)
-			: 100;
-	const sql = `
-	   UPDATE workspaces
-	   SET next_short_id = next_short_id + $2
-	   WHERE id = $1
-	   RETURNING next_short_id - $2 AS start, next_short_id - 1 AS finish;
-	`;
-	await tx.dbTransaction.query(sql, [args.workspaceId, size]);
-}
-
-export const mutators = createMutators;
+	),
+});

@@ -36,7 +36,7 @@ import {
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 
 export default function TasksPage() {
-	const { orgSlug, queryCtx } = useOrgLoaderData();
+	const { orgSlug } = useOrgLoaderData();
 
 	const isMobile = useIsMobile();
 	const isTablet = useIsMobile("tablet");
@@ -49,14 +49,14 @@ export default function TasksPage() {
 		hasMore,
 		loadedCount,
 		loadMore,
-	} = useInfiniteMatters(queryCtx, {
+	} = useInfiniteMatters({
 		queryType: "userAssigned",
-		enabled: Boolean(queryCtx.activeOrganizationId),
+		// enabled: true, // Auto-enabled when logged in, handled by Zero
 	});
 
 	// Load members once for the entire list - cached by Zero
-	const [members] = useQuery(queries.getOrganizationMembers(queryCtx), {
-		enabled: Boolean(queryCtx.activeOrganizationId),
+	const [members] = useQuery(queries.getOrganizationMembers(), {
+		// enabled: Boolean(queryCtx.activeOrganizationId), // Zero handles this via implicit context
 		...CACHE_LONG,
 	});
 

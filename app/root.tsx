@@ -98,7 +98,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<Links />
 			</head>
 			<body className="overflow-hidden">
-				<ZeroInit>{children}</ZeroInit>
+				{/* <ZeroInit>{children}</ZeroInit> */}
+				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />
 				<Toaster closeButton position="bottom-right" theme={colorScheme} />

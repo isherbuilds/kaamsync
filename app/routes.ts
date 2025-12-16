@@ -57,7 +57,7 @@ export default [
 	...prefix("api", [
 		route("auth/*", "routes/api/auth/better.ts"),
 		route("auth/error", "routes/api/auth/better-error.tsx"),
-		route("zero/get-queries", "routes/api/zero/get-queries.ts"),
+		route("zero/query", "routes/api/zero/query.ts"),
 		route("zero/mutate", "routes/api/zero/mutate.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 	]),
