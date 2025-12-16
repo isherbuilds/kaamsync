@@ -2,8 +2,8 @@ import type { Zero } from "@rocicorp/zero";
 import { queries } from "./queries";
 import { CACHE_LONG, CACHE_NAV, CACHE_PRELOAD } from "./query-cache-policy";
 
-// Simple tracking to avoid redundant preloads (following zbugs pattern)
-const preloadedWorkspaces = new Set<string>();
+// Per-instance tracking to avoid redundant preloads (following zbugs pattern)
+const preloadedWorkspaces = new WeakMap<Zero, Set<string>>();
 const preloadedInstances = new WeakSet<Zero>();
 
 /**
@@ -14,7 +14,7 @@ export function preloadAll(z: Zero) {
 	if (preloadedInstances.has(z)) return;
 
 	preloadedInstances.add(z);
-	preloadedWorkspaces.clear();
+	// No global clear; per-instance cache is handled by WeakMap
 
 	// Essential navigation data - context comes from ZeroProvider
 	z.preload(queries.getOrganizationList(), CACHE_PRELOAD);
@@ -52,14 +52,20 @@ export function preloadWorkspace(
 ) {
 	if (!workspaceId) return;
 
+	let instanceSet = preloadedWorkspaces.get(z);
+	if (!instanceSet) {
+		instanceSet = new Set<string>();
+		preloadedWorkspaces.set(z, instanceSet);
+	}
+
 	const key = `${activeOrgId ?? "default"}:${workspaceId}`;
-	if (preloadedWorkspaces.has(key)) return;
+	if (instanceSet.has(key)) return;
 
 	// Use CACHE_NAV to match component - this is critical for cache hit
 	z.preload(queries.getWorkspaceMatters({ workspaceId }), CACHE_NAV);
 	z.preload(queries.getWorkspaceStatuses({ workspaceId }), CACHE_LONG);
 
-	preloadedWorkspaces.add(key);
+	instanceSet.add(key);
 }
 
 /**
@@ -85,10 +91,13 @@ export function preloadAdjacentWorkspaces(
 	max = 3,
 	activeOrgId?: string,
 ) {
+	let instanceSet = preloadedWorkspaces.get(z);
+	if (!instanceSet) {
+		instanceSet = new Set<string>();
+		preloadedWorkspaces.set(z, instanceSet);
+	}
 	const toPreload = workspaceIds
-		.filter(
-			(id) => !preloadedWorkspaces.has(`${activeOrgId ?? "default"}:${id}`),
-		)
+		.filter((id) => !instanceSet.has(`${activeOrgId ?? "default"}:${id}`))
 		.slice(0, max);
 	// Preload immediately - no delay needed, Zero handles async well
 	for (const id of toPreload) {
@@ -96,7 +105,8 @@ export function preloadAdjacentWorkspaces(
 	}
 }
 
-/** Clears preload cache. Call on logout or org switch. */
-export function clearPreloadCache() {
-	preloadedWorkspaces.clear();
+export function clearPreloadCache(z?: Zero) {
+	if (z) {
+		preloadedWorkspaces.delete(z);
+	}
 }
