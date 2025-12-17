@@ -80,7 +80,7 @@ export default function RequestsPage() {
 	const requestCount = sortedRequests.length;
 
 	return (
-		<ResizablePanelGroup className="h-full" direction="horizontal">
+		<ResizablePanelGroup className="h-full" orientation="horizontal">
 			<ResizablePanel
 				className="border-r"
 				defaultSize={getListPanelSize(isTablet, isExtraLargeScreen)}
