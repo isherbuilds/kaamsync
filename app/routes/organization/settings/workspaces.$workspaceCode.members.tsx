@@ -1,4 +1,4 @@
-import { useQuery } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import {
 	MoreVerticalIcon,
 	PlusIcon,
@@ -8,6 +8,7 @@ import {
 import { useMemo, useState } from "react";
 import { useParams, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
+import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -40,18 +41,14 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "~/components/ui/popover";
-import { useZ } from "~/hooks/use-zero-cache";
 import { cn } from "~/lib/utils";
 
 export default function WorkspaceMembersPage() {
 	const { workspaceCode } = useParams();
-	const { queryCtx, authSession } = useRouteLoaderData(
-		"routes/organization/layout",
-	) as {
-		queryCtx: { sub: string; activeOrganizationId: string };
+	const { authSession } = useRouteLoaderData("routes/organization/layout") as {
 		authSession: { user: { id: string } };
 	};
-	const z = useZ();
+	const z = useZero();
 
 	const [addMemberOpen, setAddMemberOpen] = useState(false);
 	const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -61,13 +58,13 @@ export default function WorkspaceMembersPage() {
 
 	// 1. Get Workspace ID
 	const [workspace] = useQuery(
-		queries.getWorkspaceByCode(queryCtx, workspaceCode!),
+		queries.getWorkspaceByCode({ code: workspaceCode! }),
 		CACHE_LONG,
 	);
 
 	// 2. Get Workspace Members
 	const [workspaceMembers] = useQuery(
-		queries.getWorkspaceMembers(queryCtx, workspace?.id || ""),
+		queries.getWorkspaceMembers({ workspaceId: workspace?.id || "" }),
 		{
 			enabled: !!workspace,
 			...CACHE_LONG,
@@ -75,10 +72,7 @@ export default function WorkspaceMembersPage() {
 	);
 
 	// 3. Get Organization Members (for adding new members)
-	const [orgMembers] = useQuery(
-		queries.getOrganizationMembers(queryCtx),
-		CACHE_LONG,
-	);
+	const [orgMembers] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 
 	// Derived state
 	const currentMembership = workspaceMembers?.find(
@@ -96,11 +90,13 @@ export default function WorkspaceMembersPage() {
 		if (!workspace || !selectedUserId) return;
 
 		try {
-			await z.mutate.workspace.addMember({
-				workspaceId: workspace.id,
-				userId: selectedUserId,
-				role: selectedRole,
-			});
+			await z.mutate(
+				mutators.workspace.addMember({
+					workspaceId: workspace.id,
+					userId: selectedUserId,
+					role: selectedRole,
+				}),
+			);
 			toast.success("Member added successfully");
 			setAddMemberOpen(false);
 			setSelectedUserId(null);
@@ -117,11 +113,13 @@ export default function WorkspaceMembersPage() {
 	) => {
 		if (!workspace) return;
 		try {
-			await z.mutate.workspace.updateMemberRole({
-				workspaceId: workspace.id,
-				userId,
-				role,
-			});
+			await z.mutate(
+				mutators.workspace.updateMemberRole({
+					workspaceId: workspace.id,
+					userId,
+					role,
+				}),
+			);
 			toast.success("Role updated successfully");
 		} catch (error) {
 			toast.error("Failed to update role");
@@ -134,10 +132,12 @@ export default function WorkspaceMembersPage() {
 		if (!confirm("Are you sure you want to remove this member?")) return;
 
 		try {
-			await z.mutate.workspace.removeMember({
-				workspaceId: workspace.id,
-				userId,
-			});
+			await z.mutate(
+				mutators.workspace.removeMember({
+					workspaceId: workspace.id,
+					userId,
+				}),
+			);
 			toast.success("Member removed successfully");
 		} catch (error) {
 			toast.error("Failed to remove member");
@@ -196,7 +196,7 @@ export default function WorkspaceMembersPage() {
 														{selectedUserId
 															? orgMembers?.find(
 																	(m) => m.userId === selectedUserId,
-																)?.user?.name
+																)?.usersTable?.name
 															: "Select member..."}
 														<PlusIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 													</Button>
@@ -214,23 +214,26 @@ export default function WorkspaceMembersPage() {
 																			setSelectedUserId(member.userId);
 																		}}
 																		value={
-																			member.user?.name ||
-																			member.user?.email ||
+																			member.usersTable?.name ||
+																			member.usersTable?.email ||
 																			""
 																		}
 																	>
 																		<div className="flex items-center gap-2">
 																			<Avatar className="h-6 w-6">
 																				<AvatarImage
-																					src={member.user?.image ?? undefined}
+																					src={
+																						member.usersTable?.image ??
+																						undefined
+																					}
 																				/>
 																				<AvatarFallback>
-																					{member.user?.name?.[0]}
+																					{member.usersTable?.name?.[0]}
 																				</AvatarFallback>
 																			</Avatar>
 																			<span>
-																				{member.user?.name ||
-																					member.user?.email}
+																				{member.usersTable?.name ||
+																					member.usersTable?.email}
 																			</span>
 																		</div>
 																	</CommandItem>

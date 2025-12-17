@@ -12,7 +12,7 @@ export async function allocateShortID(
 	workspaceId: string,
 	baseInsert: any, // Using any for flexibility with the insert object, strict typing can be added if needed
 	clientShortID?: number,
-): Promise<void> {
+) {
 	if (tx.location !== "server") {
 		// Client: use client-provided shortID from cache or fallback to 0
 		const shortID =

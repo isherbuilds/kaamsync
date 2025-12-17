@@ -1,6 +1,7 @@
+import { useZero } from "@rocicorp/zero/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useZ } from "~/hooks/use-zero-cache";
+import { mutators } from "zero/mutators";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -30,7 +31,7 @@ export function ApproveRequestDialog({
 	onApprove,
 	onReject,
 }: ApproveRequestDialogProps) {
-	const z = useZ();
+	const z = useZero();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [note, setNote] = useState("");
@@ -39,10 +40,12 @@ export function ApproveRequestDialog({
 		setLoading(true);
 		setError(null);
 		try {
-			await z.mutate.matter.approve({
-				id: requestId,
-				note: note || undefined,
-			});
+			await z.mutate(
+				mutators.matter.approve({
+					id: requestId,
+					note: note || undefined,
+				}),
+			);
 
 			toast.success("Request approved successfully");
 			onApprove?.(note || undefined);
@@ -62,10 +65,12 @@ export function ApproveRequestDialog({
 		setLoading(true);
 		setError(null);
 		try {
-			await z.mutate.matter.reject({
-				id: requestId,
-				note: note || undefined,
-			});
+			await z.mutate(
+				mutators.matter.reject({
+					id: requestId,
+					note: note || undefined,
+				}),
+			);
 
 			toast.success("Request rejected");
 			onReject?.(note || undefined);

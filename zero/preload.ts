@@ -1,28 +1,28 @@
-// @ts-nocheck
 import type { Zero } from "@rocicorp/zero";
-import type { Mutators } from "./mutators";
-import type { QueryContext } from "./queries";
 import { queries } from "./queries";
 import { CACHE_LONG, CACHE_NAV, CACHE_PRELOAD } from "./query-cache-policy";
-import type { Schema } from "./schema";
 
-// Simple tracking to avoid redundant preloads (following zbugs pattern)
-const preloadedWorkspaces = new Set<string>();
-let globalPreloadDone = false;
+// Per-instance tracking to avoid redundant preloads (following zbugs pattern)
+const preloadedWorkspaces = new WeakMap<Zero, Set<string>>();
+const preloadedInstances = new WeakSet<Zero>();
 
-export function preloadAll(z: Zero<Schema, Mutators>, ctx: QueryContext) {
-	if (!ctx.sub || !ctx.activeOrganizationId || globalPreloadDone) return;
+/**
+ * Preloads essential data for the app.
+ * Context is automatically provided by Zero - no manual passing needed.
+ */
+export function preloadAll(z: Zero) {
+	if (preloadedInstances.has(z)) return;
 
-	globalPreloadDone = true;
-	preloadedWorkspaces.clear();
+	preloadedInstances.add(z);
+	// No global clear; per-instance cache is handled by WeakMap
 
-	// Essential navigation data
-	z.preload(queries.getOrganizationList(ctx), CACHE_PRELOAD);
-	z.preload(queries.getWorkspacesList(ctx), CACHE_PRELOAD);
-	z.preload(queries.getUserAssignedMatters(ctx), CACHE_PRELOAD);
-	z.preload(queries.getUserAuthoredMatters(ctx), CACHE_PRELOAD);
-	z.preload(queries.getOrganizationLabels(ctx), CACHE_PRELOAD);
-	z.preload(queries.getOrganizationMembers(ctx), CACHE_PRELOAD);
+	// Essential navigation data - context comes from ZeroProvider
+	z.preload(queries.getOrganizationList(), CACHE_PRELOAD);
+	z.preload(queries.getWorkspacesList(), CACHE_PRELOAD);
+	z.preload(queries.getUserAssignedMatters(), CACHE_PRELOAD);
+	z.preload(queries.getUserAuthoredMatters(), CACHE_PRELOAD);
+	z.preload(queries.getOrganizationLabels(), CACHE_PRELOAD);
+	z.preload(queries.getOrganizationMembers(), CACHE_PRELOAD);
 }
 
 /**
@@ -31,14 +31,13 @@ export function preloadAll(z: Zero<Schema, Mutators>, ctx: QueryContext) {
  * Uses the SAME per-workspace queries that components use for cache hits.
  */
 export function preloadAllWorkspaces(
-	z: Zero<Schema, Mutators>,
-	ctx: QueryContext,
+	z: Zero,
 	workspaceIds: string[],
+	activeOrgId?: string,
 ) {
-	if (!ctx.sub || !ctx.activeOrganizationId) return;
 	// Preload all workspaces - Zero handles this efficiently
 	for (const id of workspaceIds) {
-		preloadWorkspace(z, ctx, id);
+		preloadWorkspace(z, id, activeOrgId);
 	}
 }
 
@@ -47,34 +46,39 @@ export function preloadAllWorkspaces(
  * Zero caches to IndexedDB so subsequent loads are instant.
  */
 export function preloadWorkspace(
-	z: Zero<Schema, Mutators>,
-	ctx: QueryContext,
+	z: Zero,
 	workspaceId: string,
+	activeOrgId?: string,
 ) {
-	if (!ctx.sub || !ctx.activeOrganizationId || !workspaceId) return;
+	if (!workspaceId) return;
 
-	const key = `${ctx.activeOrganizationId}:${workspaceId}`;
+	let instanceSet = preloadedWorkspaces.get(z);
+	if (!instanceSet) {
+		instanceSet = new Set<string>();
+		preloadedWorkspaces.set(z, instanceSet);
+	}
 
-	preloadedWorkspaces.add(key);
+	const key = `${activeOrgId ?? "default"}:${workspaceId}`;
+	if (instanceSet.has(key)) return;
 
 	// Use CACHE_NAV to match component - this is critical for cache hit
-	z.preload(queries.getWorkspaceMatters(ctx, workspaceId), CACHE_NAV);
-	// z.preload(queries.getWorkspaceMembers(ctx, workspaceId), CACHE_NAV);
-	z.preload(queries.getWorkspaceStatuses(ctx, workspaceId), CACHE_LONG);
+	z.preload(queries.getWorkspaceMatters({ workspaceId }), CACHE_NAV);
+	z.preload(queries.getWorkspaceStatuses({ workspaceId }), CACHE_LONG);
+
+	instanceSet.add(key);
 }
 
 /**
  * Preloads all workspace matters for instant switching.
  */
 export function preloadAllWorkspaceMatters(
-	z: Zero<Schema, Mutators>,
-	ctx: QueryContext,
+	z: Zero,
 	workspaceIds: string[],
 	max = 10,
+	activeOrgId?: string,
 ) {
-	if (!ctx.sub || !ctx.activeOrganizationId) return;
 	for (const id of workspaceIds.slice(0, max)) {
-		preloadWorkspace(z, ctx, id);
+		preloadWorkspace(z, id, activeOrgId);
 	}
 }
 
@@ -82,25 +86,27 @@ export function preloadAllWorkspaceMatters(
  * Preloads adjacent workspaces for instant navigation.
  */
 export function preloadAdjacentWorkspaces(
-	z: Zero<Schema, Mutators>,
-	ctx: QueryContext,
+	z: Zero,
 	workspaceIds: string[],
 	max = 3,
+	activeOrgId?: string,
 ) {
-	if (!ctx.sub || !ctx.activeOrganizationId) return;
+	let instanceSet = preloadedWorkspaces.get(z);
+	if (!instanceSet) {
+		instanceSet = new Set<string>();
+		preloadedWorkspaces.set(z, instanceSet);
+	}
 	const toPreload = workspaceIds
-		.filter(
-			(id) => !preloadedWorkspaces.has(`${ctx.activeOrganizationId}:${id}`),
-		)
+		.filter((id) => !instanceSet.has(`${activeOrgId ?? "default"}:${id}`))
 		.slice(0, max);
 	// Preload immediately - no delay needed, Zero handles async well
 	for (const id of toPreload) {
-		preloadWorkspace(z, ctx, id);
+		preloadWorkspace(z, id, activeOrgId);
 	}
 }
 
-/** Clears preload cache. Call on logout or org switch. */
-export function clearPreloadCache() {
-	preloadedWorkspaces.clear();
-	globalPreloadDone = false;
+export function clearPreloadCache(z?: Zero) {
+	if (z) {
+		preloadedWorkspaces.delete(z);
+	}
 }

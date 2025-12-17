@@ -1,4 +1,4 @@
-import { useQuery } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import {
 	CalendarIcon,
 	ChevronDown,
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
+import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_NAV, CACHE_STATIC } from "zero/query-cache-policy";
 import { CreateRequestDialog } from "~/components/create-request-dialog";
@@ -25,7 +26,6 @@ import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
 import type { WorkspaceRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
-import { useZ } from "~/hooks/use-zero-cache";
 import {
 	COMPLETED_STATUS_TYPES,
 	type PriorityValue,
@@ -72,17 +72,14 @@ type StatusGroup = {
 };
 
 export default function WorkspaceIndex() {
-	const { orgSlug, queryCtx, authSession } = useOrgLoaderData();
+	const { orgSlug, authSession } = useOrgLoaderData();
 	const params = useParams();
-	const z = useZ();
+	const z = useZero();
 
 	const { workspaceCode } = params;
 
 	// Workspace list query
-	const [workspacesData] = useQuery(
-		queries.getWorkspacesList(queryCtx),
-		CACHE_NAV,
-	);
+	const [workspacesData] = useQuery(queries.getWorkspacesList(), CACHE_NAV);
 
 	// Find workspace - simple find, no memoization needed for small arrays
 	const workspace = workspacesData.find((w) => w.code === workspaceCode);
@@ -90,22 +87,22 @@ export default function WorkspaceIndex() {
 
 	// Get matters - Use workspace ID directly
 	// TODO: Analyze if useCachedQuery is beneficial here
-	const [allMatters] = useQuery(
-		queries.getWorkspaceMatters(queryCtx, workspaceId),
-		{ enabled: Boolean(workspaceId), ...CACHE_NAV },
-	);
+	const [allMatters] = useQuery(queries.getWorkspaceMatters({ workspaceId }), {
+		enabled: Boolean(workspaceId),
+		...CACHE_NAV,
+	});
 
 	// Get members (cached longer)
-	const [members] = useQuery(queries.getOrganizationMembers(queryCtx), {
+	const [members] = useQuery(queries.getOrganizationMembers(), {
 		enabled: Boolean(authSession.session.activeOrganizationId),
 		...CACHE_STATIC,
 	});
 
 	// Get statuses
-	const [statuses] = useQuery(
-		queries.getWorkspaceStatuses(queryCtx, workspaceId),
-		{ enabled: Boolean(workspaceId), ...CACHE_NAV },
-	);
+	const [statuses] = useQuery(queries.getWorkspaceStatuses({ workspaceId }), {
+		enabled: Boolean(workspaceId),
+		...CACHE_NAV,
+	});
 
 	// Track collapsed groups (inverse logic - track what's collapsed, not expanded)
 	// This way we only store the minority case (completed/canceled are collapsed)
@@ -211,21 +208,21 @@ export default function WorkspaceIndex() {
 	// many memoized child components and z reference is stable
 	const handlePriorityChange = useCallback(
 		(taskId: string, priority: PriorityValue) => {
-			z.mutate.matter.update({ id: taskId, priority });
+			z.mutate(mutators.matter.update({ id: taskId, priority }));
 		},
 		[z],
 	);
 
 	const handleStatusChange = useCallback(
 		(taskId: string, statusId: string) => {
-			z.mutate.matter.updateStatus({ id: taskId, statusId });
+			z.mutate(mutators.matter.updateStatus({ id: taskId, statusId }));
 		},
 		[z],
 	);
 
 	const handleAssigneeChange = useCallback(
 		(taskId: string, userId: string | null) => {
-			z.mutate.matter.assign({ id: taskId, assigneeId: userId });
+			z.mutate(mutators.matter.assign({ id: taskId, assigneeId: userId }));
 		},
 		[z],
 	);

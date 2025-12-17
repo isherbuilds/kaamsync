@@ -1,6 +1,5 @@
 import { useQuery } from "@rocicorp/zero/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { QueryContext } from "zero/queries";
 import { type MatterSortCursor, queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
 
@@ -51,7 +50,6 @@ interface UseInfiniteScrollResult<T> {
  * Get the appropriate paginated query based on query type
  */
 function getPaginatedQuery(
-	ctx: QueryContext,
 	queryType: QueryType,
 	workspaceId: string | undefined,
 	pageSize: number,
@@ -60,28 +58,25 @@ function getPaginatedQuery(
 ) {
 	switch (queryType) {
 		case "userAssigned":
-			return queries.getUserAssignedMattersPaginated(
-				ctx,
-				pageSize,
+			return queries.getUserAssignedMattersPaginated({
+				limit: pageSize,
 				cursor,
 				direction,
-			);
+			});
 		case "userAuthored":
-			return queries.getUserAuthoredMattersPaginated(
-				ctx,
-				pageSize,
+			return queries.getUserAuthoredMattersPaginated({
+				limit: pageSize,
 				cursor,
 				direction,
-			);
+			});
 		case "workspace":
 		default:
-			return queries.getWorkspaceMattersPaginated(
-				ctx,
-				workspaceId || "",
-				pageSize,
+			return queries.getWorkspaceMattersPaginated({
+				workspaceId: workspaceId || "",
+				limit: pageSize,
 				cursor,
 				direction,
-			);
+			});
 	}
 }
 
@@ -97,7 +92,7 @@ function getPaginatedQuery(
  *
  * @example
  * ```tsx
- * const { items, hasMore, loadMore, scrollRef, loadedCount } = useInfiniteMatters(ctx, {
+ * const { items, hasMore, loadMore, scrollRef, loadedCount } = useInfiniteMatters({
  *   workspaceId: workspace.id,
  *   queryType: 'workspace',
  * });
@@ -112,7 +107,6 @@ function getPaginatedQuery(
  * ```
  */
 export function useInfiniteMatters(
-	ctx: QueryContext,
 	options: UseInfiniteScrollOptions,
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
 ): UseInfiniteScrollResult<any> {
@@ -125,8 +119,7 @@ export function useInfiniteMatters(
 
 	// Determine if query should be enabled based on query type
 	const queryEnabled =
-		enabled &&
-		(queryType === "workspace" ? Boolean(workspaceId) : Boolean(ctx.sub));
+		enabled && (queryType === "workspace" ? Boolean(workspaceId) : true); // Context check handled by Zero
 
 	// Track accumulated items across pages
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
@@ -147,15 +140,15 @@ export function useInfiniteMatters(
 	const scrollRef = useRef<HTMLDivElement | null>(null);
 
 	// Current page query using dynamic query selector
+	// No context passed to getPaginatedQuery
 	const [currentPage, queryResult] = useQuery(
 		getPaginatedQuery(
-			ctx,
 			queryType,
 			workspaceId,
 			initialPageSize,
 			pagination.cursor,
 			pagination.direction,
-		),
+		) as any,
 		{ enabled: queryEnabled, ...CACHE_NAV },
 	);
 
@@ -226,12 +219,7 @@ export function useInfiniteMatters(
 					lastItem.createdAt instanceof Date
 						? lastItem.createdAt.getTime()
 						: lastItem.createdAt,
-				updatedAt: lastItem.updatedAt
-					? lastItem.updatedAt instanceof Date
-						? lastItem.updatedAt.getTime()
-						: lastItem.updatedAt
-					: undefined,
-				priority: lastItem.priority,
+				priority: lastItem.priority ?? 0,
 			},
 		}));
 	}, [pagination.hasMore, isLoadingMore, accumulatedItems]);

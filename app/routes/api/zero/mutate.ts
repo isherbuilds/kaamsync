@@ -1,19 +1,20 @@
-import { PushProcessor } from "@rocicorp/zero/server";
+import { mustGetMutator } from "@rocicorp/zero";
+import { handleMutateRequest } from "@rocicorp/zero/server";
 import { zeroPostgresJS } from "@rocicorp/zero/server/adapters/postgresjs";
 import postgres from "postgres";
 import { data } from "react-router";
 import { must } from "shared/must";
-import { createMutators } from "zero/mutators";
+import { mutators } from "zero/mutators";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth";
 import { getActiveOrganization } from "~/lib/server/organization.server";
 
-// Create processor with Postgres adapter
+// Create database provider with Postgres adapter
 const pgURL = must(
 	process.env.ZERO_UPSTREAM_DB,
 	"ZERO_UPSTREAM_DB is required",
 );
-const processor = new PushProcessor(zeroPostgresJS(schema, postgres(pgURL)));
+const dbProvider = zeroPostgresJS(schema, postgres(pgURL));
 
 export async function action({ request }: { request: Request }) {
 	// Get session from Better Auth
@@ -32,13 +33,25 @@ export async function action({ request }: { request: Request }) {
 		activeOrgId = await getActiveOrganization(authSession.user.id);
 	}
 
-	const authData = {
-		sub: authSession.user.id,
+	// Build context from session - this is passed to mutators automatically
+	const ctx = {
+		userId: authSession.user.id,
 		activeOrganizationId: activeOrgId ?? null,
 	};
 
 	try {
-		return data(await processor.process(createMutators(authData), request));
+		return data(
+			await handleMutateRequest(
+				dbProvider,
+				(transact) =>
+					transact(async (tx: any, name: string, args: any) => {
+						const mutator = mustGetMutator(mutators, name);
+						// mutator.fn receives tx, ctx, and args
+						await mutator.fn({ tx, ctx, args });
+					}),
+				request,
+			),
+		);
 	} catch (err) {
 		console.error("Mutate error:", err);
 		return new Response(JSON.stringify({ error: "Internal server error" }), {

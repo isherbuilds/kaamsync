@@ -1,7 +1,8 @@
-import { useQuery } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import { CheckCircle2, ChevronRight, MoreHorizontal, Star } from "lucide-react";
 import { memo, useState } from "react";
 import { useNavigate } from "react-router";
+import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import {
@@ -14,7 +15,6 @@ import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
 import { parseMatterKey } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
-import { useZ } from "~/hooks/use-zero-cache";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
@@ -42,25 +42,25 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 }
 
 export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
-	const { authSession, queryCtx, orgSlug } = useOrgLoaderData();
+	const { authSession, orgSlug } = useOrgLoaderData();
 	const { parsed } = loaderData;
 	const navigate = useNavigate();
 
-	const z = useZ();
+	const z = useZero();
 
 	// Load matter via synced query with workspace code + shortID
 	const [matter] = useQuery(
-		queries.getMatterByKey(queryCtx, parsed.code, parsed.shortID),
+		queries.getMatterByKey({ code: parsed.code, shortID: parsed.shortID }),
 		CACHE_NAV,
 	);
 
 	// Fetch organization members and workspace statuses once
-	const [members] = useQuery(queries.getOrganizationMembers(queryCtx), {
-		enabled: Boolean(queryCtx.activeOrganizationId),
+	const [members] = useQuery(queries.getOrganizationMembers(), {
+		// enabled: Boolean(queryCtx.activeOrganizationId), // Zero auto-checks
 		...CACHE_LONG,
 	});
 	const [statuses] = useQuery(
-		queries.getWorkspaceStatuses(queryCtx, matter?.workspaceId || ""),
+		queries.getWorkspaceStatuses({ workspaceId: matter?.workspaceId || "" }),
 		{
 			enabled: Boolean(matter?.workspaceId),
 			...CACHE_LONG,
@@ -89,26 +89,32 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 	// Handler functions - z is stable so no useCallback needed
 	const handleStatusChange = (newStatusId: string) => {
 		if (!matter) return;
-		z.mutate.matter.updateStatus({
-			id: matter.id,
-			statusId: newStatusId,
-		});
+		z.mutate(
+			mutators.matter.updateStatus({
+				id: matter.id,
+				statusId: newStatusId,
+			}),
+		);
 	};
 
 	const handleAssign = (assigneeId: string | null) => {
 		if (!matter) return;
-		z.mutate.matter.assign({
-			id: matter.id,
-			assigneeId: assigneeId || null,
-		});
+		z.mutate(
+			mutators.matter.assign({
+				id: matter.id,
+				assigneeId: assigneeId || null,
+			}),
+		);
 	};
 
 	const handlePriorityChange = (priority: PriorityValue) => {
 		if (!matter) return;
-		z.mutate.matter.update({
-			id: matter.id,
-			priority,
-		});
+		z.mutate(
+			mutators.matter.update({
+				id: matter.id,
+				priority,
+			}),
+		);
 	};
 
 	// Early return after all hooks
@@ -223,7 +229,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								<CommentInput />
 								<TaskTimeline
 									matterId={matter.id}
-									queryCtx={queryCtx}
 									members={members}
 									statuses={statuses}
 								/>
@@ -368,22 +373,17 @@ function CommentInput() {
 
 function TaskTimeline({
 	matterId,
-	queryCtx,
 	members,
 	statuses,
 }: {
 	matterId: string;
-	queryCtx: {
-		sub: string;
-		activeOrganizationId: string;
-	};
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
 	members: any[];
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
 	statuses: any[];
 }) {
 	const [timeline] = useQuery(
-		queries.getMatterTimelines(queryCtx, matterId),
+		queries.getMatterTimelines({ matterId }),
 		CACHE_NAV,
 	);
 
@@ -541,14 +541,18 @@ function AdminApproveSection({
 		if (!next) return;
 		try {
 			setIsSubmitting(true);
-			z.mutate.matter.updateStatus({
-				id: matterId,
-				statusId: (next as { id: string }).id,
-			});
-			z.mutate.matter.update({
-				id: matterId,
-				priority: Priority.MEDIUM,
-			});
+			z.mutate(
+				mutators.matter.updateStatus({
+					id: matterId,
+					statusId: (next as { id: string }).id,
+				}),
+			);
+			z.mutate(
+				mutators.matter.update({
+					id: matterId,
+					priority: Priority.MEDIUM,
+				}),
+			);
 		} finally {
 			setIsSubmitting(false);
 		}

@@ -1,10 +1,11 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { useZero } from "@rocicorp/zero/react";
 import { CalendarIcon, MessageSquareIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
-import { useZ } from "~/hooks/use-zero-cache";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
 import { cn } from "~/lib/utils";
@@ -47,7 +48,7 @@ export function CreateRequestDialog({
 	workspaceMembers,
 	triggerButton,
 }: CreateRequestDialogProps) {
-	const z = useZ();
+	const z = useZero();
 	const [open, setOpen] = useState(false);
 	const [priority, setPriority] = useState<PriorityValue>(Priority.MEDIUM);
 	const [dueDate, setDueDate] = useState<string>("");
@@ -94,20 +95,22 @@ export function CreateRequestDialog({
 					return;
 				}
 				const clientShortID = getAndIncrementNextShortId(workspaceId);
-				z.mutate.matter.create({
-					workspaceId,
-					workspaceCode,
-					title: submission.value.title,
-					description: submission.value.description,
-					type: "request",
-					statusId: defaultStatus.id,
-					priority,
-					assigneeId: assigneeId || undefined,
-					dueDate: submission.value.dueDate
-						? new Date(submission.value.dueDate).getTime()
-						: undefined,
-					clientShortID,
-				});
+				z.mutate(
+					mutators.matter.create({
+						workspaceId,
+						workspaceCode,
+						title: submission.value.title,
+						description: submission.value.description,
+						type: "request",
+						statusId: defaultStatus.id,
+						priority,
+						assigneeId: assigneeId || undefined,
+						dueDate: submission.value.dueDate
+							? new Date(submission.value.dueDate).getTime()
+							: undefined,
+						clientShortID,
+					}),
+				);
 				toast.success("Request created successfully");
 				onCreated?.(submission.value);
 				setOpen(false);

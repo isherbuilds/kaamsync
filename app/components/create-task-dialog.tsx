@@ -5,11 +5,12 @@ import {
 	useInputControl,
 } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { useZero } from "@rocicorp/zero/react";
 import { CalendarIcon, ListTodoIcon, PlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
-import { useZ } from "~/hooks/use-zero-cache";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
 import { cn } from "~/lib/utils";
@@ -58,7 +59,7 @@ export function CreateTaskDialog({
 	workspaceMembers: members,
 	triggerButton,
 }: CreateTaskDialogProps) {
-	const z = useZ();
+	const z = useZero();
 	const [open, setOpen] = useState(false);
 
 	// Block reservation and cache seeding
@@ -98,18 +99,20 @@ export function CreateTaskDialog({
 				submission.value;
 			const clientShortID = getAndIncrementNextShortId(workspaceId);
 
-			z.mutate.matter.create({
-				workspaceId,
-				workspaceCode,
-				title,
-				description,
-				type: matterType.task, // Use constant
-				statusId,
-				priority,
-				assigneeId: assigneeId || undefined,
-				dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
-				clientShortID,
-			});
+			z.mutate(
+				mutators.matter.create({
+					workspaceId,
+					workspaceCode,
+					title,
+					description,
+					type: matterType.task, // Use constant
+					statusId,
+					priority,
+					assigneeId: assigneeId || undefined,
+					dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
+					clientShortID,
+				}),
+			);
 			toast.success("Task created successfully");
 			setOpen(false);
 			form.reset();
@@ -209,15 +212,16 @@ export function CreateTaskDialog({
 							/>
 							<PrioritySelect
 								value={
-									(priorityControl.value as PriorityValue) ?? Priority.NONE
+									(priorityControl.value as unknown as PriorityValue) ??
+									Priority.NONE
 								}
-								onChange={priorityControl.change}
+								onChange={priorityControl.change as any}
 								showLabel
 							/>
 							<AssigneeSelect
 								value={assigneeControl.value || null}
 								members={assigneeMembers}
-								onChange={assigneeControl.change}
+								onChange={assigneeControl.change as any}
 								align="start"
 								showLabel
 							/>{" "}

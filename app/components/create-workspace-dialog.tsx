@@ -1,7 +1,8 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { useZero } from "@rocicorp/zero/react";
 import { toast } from "sonner";
-import { useZ } from "~/hooks/use-zero-cache";
+import { mutators } from "zero/mutators";
 import { sanitizeSlug } from "~/lib/utils";
 import { createWorkspaceSchema } from "../lib/validations/organization";
 import { InputField } from "./forms";
@@ -27,7 +28,7 @@ export const CreateWorkspaceDialog = memo(function CreateWorkspaceDialog({
 	onOpenChange,
 	onCreated,
 }: CreateWorkspaceDialogProps) {
-	const z = useZ();
+	const z = useZero();
 
 	const [form, fields] = useForm({
 		constraint: getZodConstraint(createWorkspaceSchema),
@@ -46,10 +47,12 @@ export const CreateWorkspaceDialog = memo(function CreateWorkspaceDialog({
 					const slug = sanitizeSlug(submission.value.name);
 					const code = slug.substring(0, 3).toUpperCase();
 
-					await z.mutate.workspace.create({
-						name: submission.value.name,
-						code,
-					});
+					await z.mutate(
+						mutators.workspace.create({
+							name: submission.value.name,
+							code,
+						}),
+					);
 
 					toast.success("Workspace created successfully");
 					onCreated?.(submission.value);

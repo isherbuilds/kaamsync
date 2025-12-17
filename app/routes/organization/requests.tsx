@@ -36,7 +36,7 @@ import {
 import { cn } from "~/lib/utils";
 
 export default function RequestsPage() {
-	const { orgSlug, queryCtx } = useOrgLoaderData();
+	const { orgSlug } = useOrgLoaderData();
 
 	const isMobile = useIsMobile();
 	const isTablet = useIsMobile("tablet");
@@ -49,14 +49,14 @@ export default function RequestsPage() {
 		hasMore,
 		loadedCount,
 		loadMore,
-	} = useInfiniteMatters(queryCtx, {
+	} = useInfiniteMatters({
 		queryType: "userAuthored",
-		enabled: Boolean(queryCtx.activeOrganizationId),
+		enabled: true, // Zero handles context check
 	});
 
 	// Load members once for the entire list - cached by Zero
-	const [members] = useQuery(queries.getOrganizationMembers(queryCtx), {
-		enabled: Boolean(queryCtx.activeOrganizationId),
+	const [members] = useQuery(queries.getOrganizationMembers(), {
+		// enabled: Boolean(queryCtx.activeOrganizationId), // Zero handles context
 		...CACHE_LONG,
 	});
 
@@ -80,7 +80,7 @@ export default function RequestsPage() {
 	const requestCount = sortedRequests.length;
 
 	return (
-		<ResizablePanelGroup className="h-full" direction="horizontal">
+		<ResizablePanelGroup className="h-full" orientation="horizontal">
 			<ResizablePanel
 				className="border-r"
 				defaultSize={getListPanelSize(isTablet, isExtraLargeScreen)}

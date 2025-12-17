@@ -43,16 +43,13 @@ const inviteSchema = z.object({
 
 export default function MembersPage() {
 	// Get query context from parent layout
-	const { queryCtx, authSession } = useOrgLoaderData();
+	const { authSession } = useOrgLoaderData();
 	const [inviteOpen, setInviteOpen] = useState(false);
 
-	const [members] = useQuery(
-		queries.getOrganizationMembers(queryCtx),
-		CACHE_LONG,
-	);
+	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 
 	const [invitations] = useQuery(
-		queries.getOrganizationInvitations(queryCtx),
+		queries.getOrganizationInvitations(),
 		CACHE_LONG,
 	);
 
@@ -198,25 +195,30 @@ export default function MembersPage() {
 												<Avatar className="h-10 w-10">
 													<AvatarImage
 														alt={
-															member.user?.name || member.user?.email || "User"
+															member.usersTable?.name ||
+															member.usersTable?.email ||
+															"User"
 														}
 														src={
-															member.user?.image ??
-															`https://api.dicebear.com/9.x/glass/svg?seed=${member.user?.name || member.user?.email}`
+															member.usersTable?.image ??
+															`https://api.dicebear.com/9.x/glass/svg?seed=${member.usersTable?.name || member.usersTable?.email}`
 														}
 													/>
 													<AvatarFallback>
-														{(member.user?.name || member.user?.email)
+														{(
+															member.usersTable?.name ||
+															member.usersTable?.email
+														)
 															?.charAt(0)
 															.toUpperCase()}
 													</AvatarFallback>
 												</Avatar>
 												<div>
 													<div className="font-medium">
-														{member.user?.name || "Unknown"}
+														{member.usersTable?.name || "Unknown"}
 													</div>
 													<div className="text-muted-foreground text-sm">
-														{member.user?.email}
+														{member.usersTable?.email}
 													</div>
 												</div>
 											</div>

@@ -1,9 +1,11 @@
 import {
-	type QueryResultDetails,
+	type QueryResult,
 	type UseQueryOptions,
 	useQuery,
 } from "@rocicorp/zero/react";
 import { useMemo, useRef } from "react";
+
+type QueryStatus = QueryResult<unknown>[1];
 
 /**
  * Deduplicates query results across renders by comparing query hash.
@@ -15,7 +17,7 @@ export function useStableQuery<T>(
 	// biome-ignore lint/suspicious/noExplicitAny: Query type from Zero is complex
 	query: any,
 	options?: UseQueryOptions,
-): [T[], QueryResultDetails] {
+): [T[], QueryStatus] {
 	const [data, result] = useQuery(query, options);
 	const lastDataRef = useRef<T[]>(data as T[]);
 	const lastQueryHashRef = useRef<string>("");
@@ -55,7 +57,7 @@ export function useStableQuery<T>(
  * @example
  * ```tsx
  * const [tasks, status] = useCachedQuery(
- *   queries.getWorkspaceMatters(ctx, workspaceId),
+ *   queries.getWorkspaceMatters({ workspaceId }),
  *   CACHE_NAV
  * );
  * // `tasks` will show previous workspace data until new data loads
@@ -65,7 +67,7 @@ export function useCachedQuery<T>(
 	// biome-ignore lint/suspicious/noExplicitAny: Query type from Zero is complex
 	query: any,
 	options?: UseQueryOptions,
-): [T[], QueryResultDetails & { isStale: boolean }] {
+): [T[], QueryStatus & { isStale: boolean }] {
 	const [data, result] = useQuery(query, options);
 	const cacheRef = useRef<{ data: T[]; queryKey: string }>({
 		data: [],
