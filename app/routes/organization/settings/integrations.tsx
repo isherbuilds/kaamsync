@@ -1,8 +1,5 @@
+import UnderConstruction from "~/components/under-construction";
+
 export default function IntegrationsSettings() {
-	return (
-		<div>
-			<h2 className="text-xl font-semibold">Integrations</h2>
-			<p>Manage third-party integrations.</p>
-		</div>
-	);
+	return <UnderConstruction route="/integrations" />;
 }

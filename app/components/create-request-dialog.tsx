@@ -11,7 +11,7 @@ import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
 import { cn } from "~/lib/utils";
 import { createRequestSchema } from "../lib/validations/matter";
 import { InputField, TextareaField } from "./forms";
-import { AssigneeSelect, PrioritySelect } from "./matter-field-selectors";
+import { MemberSelect, PrioritySelect } from "./matter-field-selectors";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -220,8 +220,8 @@ export function CreateRequestDialog({
 							/>
 
 							{/* Assignee */}
-							<AssigneeSelect
-								value={assigneeId || null}
+							<MemberSelect
+								value={assigneeId || ""}
 								members={assigneeMembers}
 								onChange={(val) => setAssigneeId(val || undefined)}
 								align="start"

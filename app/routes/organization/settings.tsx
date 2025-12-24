@@ -1,7 +1,9 @@
+import UnderConstruction from "~/components/under-construction.js";
+
 export default function Settings() {
- return (
-  <div>
-    <h1>Unknown Route</h1>
-  </div>
- )
+	return (
+		<div>
+			<UnderConstruction />
+		</div>
+	);
 }

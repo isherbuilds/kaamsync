@@ -14,7 +14,7 @@ import { CACHE_NAV, CACHE_STATIC } from "zero/query-cache-policy";
 import { CreateRequestDialog } from "~/components/create-request-dialog";
 import { CreateTaskDialog } from "~/components/create-task-dialog";
 import {
-	AssigneeSelect,
+	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter-field-selectors";
@@ -35,6 +35,15 @@ import {
 	type StatusType,
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
+
+import type { Route } from "./+types/$workspaceCode";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Workspace - ${params.workspaceCode}`,
+		description: "Manage your workspace tasks and requests.",
+	},
+];
 
 // Status types that should be collapsed by default
 const COLLAPSED_STATUS_TYPES = new Set<StatusType>(COMPLETED_STATUS_TYPES);
@@ -487,8 +496,8 @@ const TaskRow = memo(function TaskRow({
 						{title}
 					</p>
 					<div className="relative z-10 shrink-0">
-						<AssigneeSelect
-							value={assigneeId || null}
+						<MemberSelect
+							value={assigneeId || ""}
 							members={members}
 							onChange={handleAssignee}
 							align="end"
@@ -561,7 +570,7 @@ const TaskRow = memo(function TaskRow({
 
 				{/* Assignee */}
 				<div className="relative z-10">
-					<AssigneeSelect
+					<MemberSelect
 						value={assigneeId || null}
 						members={members}
 						onChange={handleAssignee}

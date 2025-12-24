@@ -1,6 +1,7 @@
 "use client";
 
 import {
+	ChevronLeft,
 	CircleCheckBigIcon,
 	CreditCard,
 	Plug,
@@ -38,6 +39,11 @@ const navMain = [
 ];
 
 const navSettings = [
+	{
+		title: "Back Home",
+		url: "/tasks",
+		icon: ChevronLeft,
+	},
 	{
 		title: "General",
 		url: "/settings",

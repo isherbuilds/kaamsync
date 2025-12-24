@@ -80,7 +80,7 @@
     "body": [
       "import { type Route } from \"./+types/${TM_FILENAME_BASE}.ts\"",
       "",
-      "export const meta: Route.MetaFunction = ({ data }) => [{",
+      "export const meta: Route.MetaFunction = ({ loaderData }) => [{",
       "  title: 'Title',",
       "}]"
     ]

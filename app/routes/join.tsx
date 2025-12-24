@@ -9,7 +9,7 @@ import { useState } from "react";
 import { data, Form, href, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
 import { BasicLayout } from "~/components/basic-layout";
-import { GroupInputField, InputField, LoadingButton } from "~/components/forms";
+import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AppInfo } from "~/lib/app-config";
 import { auth, getServerSession } from "~/lib/auth";
@@ -218,7 +218,7 @@ export default function onboardingOrganization({
 							}}
 							labelProps={{ children: "Org Name" }}
 						/>
-						<GroupInputField
+						<InputGroupField
 							errors={fields.slug.errors}
 							groupText="https://example.com/"
 							inputProps={{

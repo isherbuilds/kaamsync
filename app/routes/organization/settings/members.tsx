@@ -1,14 +1,8 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery } from "@rocicorp/zero/react";
-import {
-	MailIcon,
-	MoreVerticalIcon,
-	TrashIcon,
-	UserPlusIcon,
-} from "lucide-react";
-import { useMemo, useState } from "react";
-import { Form, useRouteLoaderData } from "react-router";
+import { MoreVerticalIcon, UserPlusIcon, XIcon } from "lucide-react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -31,280 +25,199 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { orgRole } from "~/db/helpers.js";
 import { authClient } from "~/lib/auth-client";
-import type { Route } from "./+types/members";
 
 const inviteSchema = z.object({
-	email: z.email("Please enter a valid email address"),
-	role: z.string().optional(),
+	email: z.email("Invalid email"),
+	role: z.enum(orgRole).default(orgRole.member),
 });
 
 export default function MembersPage() {
-	// Get query context from parent layout
-	const { authSession } = useOrgLoaderData();
 	const [inviteOpen, setInviteOpen] = useState(false);
-
+	const [isPending, startTransition] = useTransition();
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
-
 	const [invitations] = useQuery(
 		queries.getOrganizationInvitations(),
 		CACHE_LONG,
 	);
 
 	const [form, fields] = useForm({
-		constraint: getZodConstraint(inviteSchema),
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: inviteSchema });
-		},
-		async onSubmit(event, context) {
+		id: "invite-member",
+		defaultValue: { role: "member" },
+		onValidate: ({ formData }) =>
+			parseWithZod(formData, { schema: inviteSchema }),
+		onSubmit: async (event, { submission }) => {
 			event.preventDefault();
-			if (context.submission?.status !== "success") return;
+			if (submission?.status !== "success") return;
 
-			const { email, role } = context.submission.value;
-
-			try {
-				await authClient.organization.inviteMember({
-					email,
-					role: (role as "member" | "admin" | "owner") || "member",
-				});
-				toast.success("Invitation sent successfully!");
-				setInviteOpen(false);
-				form.reset();
-			} catch {
-				toast.error("Failed to send invitation");
-			}
+			const { error } = await authClient.organization.inviteMember(
+				submission.value,
+			);
+			if (error) return toast.error(error.message);
+			setInviteOpen(false);
+			toast.success("Invitation sent");
+			form.reset();
 		},
 	});
 
-	const handleRemoveMember = async (userId: string) => {
-		if (!confirm("Are you sure you want to remove this member?")) {
-			return;
-		}
-
-		try {
-			await authClient.organization.removeMember({
-				memberIdOrEmail: userId,
-			});
-			toast.success("Member removed successfully");
-		} catch {
-			toast.error("Failed to remove member");
-		}
-	};
-
-	const handleUpdateRole = async (userId: string, role: string) => {
-		try {
-			await authClient.organization.updateMemberRole({
-				memberId: userId,
-				role: role as "member" | "admin" | "owner",
-			});
-			toast.success("Member role updated successfully");
-		} catch {
-			toast.error("Failed to update member role");
-		}
+	const runAction = (
+		name: string,
+		fn: () => Promise<{ error?: { message?: string } | null }>,
+	) => {
+		startTransition(async () => {
+			const { error } = await fn();
+			error
+				? toast.error(error?.message || `Failed to ${name}`)
+				: toast.success(`${name} successful`);
+		});
 	};
 
 	return (
-		<div className="flex flex-1 flex-col gap-4 p-4">
-			<div className="grid gap-4 md:grid-cols-3">
-				<div className="md:col-span-2">
-					<div className="flex flex-col gap-4 card-container">
-						<div className="flex flex-col space-y-1.5 p-6">
-							<div className="flex flex-row items-center justify-between">
-								<div>
-									<h3 className="font-semibold leading-none tracking-tight">
-										Team Members
-									</h3>
-									<p className="text-muted-foreground text-sm">
-										Manage your organization members and their roles
-									</p>
+		<div className="flex flex-col gap-6">
+			<div className="flex items-center justify-between">
+				<div>
+					<h1 className="text-xl font-semibold">Organization Members</h1>
+					<p className="text-sm text-muted-foreground">
+						Manage organization members and invites.
+					</p>
+				</div>
+				<Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+					<DialogTrigger asChild>
+						<Button size="sm">
+							<UserPlusIcon className="size-4" />
+							Invite
+						</Button>
+					</DialogTrigger>
+					<DialogContent>
+						<DialogHeader>
+							<DialogTitle>Invite Member</DialogTitle>
+							<DialogDescription>
+								Invite a new member to your organization by entering their email
+								address below.
+							</DialogDescription>
+						</DialogHeader>
+						<form {...getFormProps(form)} className="space-y-4">
+							<Input
+								{...getInputProps(fields.email, { type: "email" })}
+								placeholder="email@example.com"
+							/>
+							<div className="flex gap-2">
+								{Object.values(orgRole).map((r) => (
+									<Button
+										key={r}
+										type="button"
+										size="sm"
+										variant={fields.role.value === r ? "default" : "outline"}
+										onClick={() =>
+											form.update({ name: fields.role.name, value: r })
+										}
+										className="flex-1 capitalize"
+									>
+										{r}
+									</Button>
+								))}
+							</div>
+							<Button type="submit" className="w-full" disabled={isPending}>
+								Send Invite
+							</Button>
+						</form>
+					</DialogContent>
+				</Dialog>
+			</div>
+
+			<div className="grid gap-6 md:grid-cols-3 items-start overflow-y-auto">
+				<div className="md:col-span-2 border rounded-lg divide-y bg-card">
+					{members?.map((m) => (
+						<div key={m.id} className="flex items-center justify-between p-4">
+							<div className="flex items-center gap-3">
+								<Avatar className="h-8 w-8">
+									<AvatarImage src={m.usersTable?.image || ""} />
+									<AvatarFallback>{m.usersTable?.email[0]}</AvatarFallback>
+								</Avatar>
+								<div className="text-sm">
+									<div className="font-medium">
+										{m.usersTable?.name || "Pending"}
+									</div>
+									<div className="text-muted-foreground text-xs">
+										{m.usersTable?.email}
+									</div>
 								</div>
-								<Dialog onOpenChange={setInviteOpen} open={inviteOpen}>
-									<DialogTrigger asChild>
-										<Button size="sm">
-											<UserPlusIcon className="h-4 w-4" />
-											Invite Member
+							</div>
+							<div className="flex items-center gap-2">
+								<Badge variant="secondary" className="text-[10px] uppercase">
+									{m.role}
+								</Badge>
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button size="icon" variant="ghost" className="h-8 w-8">
+											<MoreVerticalIcon className="h-4 w-4" />
 										</Button>
-									</DialogTrigger>
-									<DialogContent>
-										<DialogHeader>
-											<DialogTitle>Invite Team Member</DialogTitle>
-											<DialogDescription>
-												Send an invitation to join your organization. You can
-												invite anyone by email - they don't need to have an
-												account yet.
-											</DialogDescription>
-										</DialogHeader>
-										<Form method="post" {...getFormProps(form)}>
-											<div className="space-y-4">
-												<div>
-													<Label htmlFor={fields.email.id}>Email Address</Label>
-													<Input
-														{...getInputProps(fields.email, { type: "email" })}
-														placeholder="colleague@example.com"
-													/>
-													{fields.email.errors && (
-														<p className="mt-1 text-destructive text-sm">
-															{fields.email.errors[0]}
-														</p>
-													)}
-													<p className="mt-1 text-muted-foreground text-xs">
-														The invitation will be sent to this email. If they
-														don't have an account, they can sign up and the
-														invitation will be waiting for them. Note: New
-														members won't have workspace access until explicitly
-														granted by an admin.
-													</p>
-												</div>
-												<div className="flex justify-end gap-2">
-													<Button
-														onClick={() => setInviteOpen(false)}
-														type="button"
-														variant="outline"
-													>
-														Cancel
-													</Button>
-													<Button type="submit">Send Invitation</Button>
-												</div>
-											</div>
-										</Form>
-									</DialogContent>
-								</Dialog>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem
+											onClick={() =>
+												runAction("Update", () =>
+													authClient.organization.updateMemberRole({
+														memberId: m.userId,
+														role:
+															m.role === orgRole.admin
+																? orgRole.member
+																: orgRole.admin,
+													}),
+												)
+											}
+										>
+											Make {m.role === orgRole.admin ? "Member" : "Admin"}
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											className="text-destructive"
+											onClick={() =>
+												runAction("Remove", () =>
+													authClient.organization.removeMember({
+														memberIdOrEmail: m.userId,
+													}),
+												)
+											}
+										>
+											Remove
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
 							</div>
 						</div>
-						<div className="p-6 pt-0">
-							{!members && (
-								<div className="py-8 text-center text-muted-foreground text-sm">
-									Loading members...
-								</div>
-							)}
-							{members && members.length === 0 && (
-								<div className="py-8 text-center text-muted-foreground text-sm">
-									No members found
-								</div>
-							)}
-							{members && members.length > 0 && (
-								<div className="divide-y">
-									{members.map((member) => (
-										<div
-											className="flex items-center justify-between py-3"
-											key={member.id}
-										>
-											<div className="flex items-center gap-2">
-												<Avatar className="h-10 w-10">
-													<AvatarImage
-														alt={
-															member.usersTable?.name ||
-															member.usersTable?.email ||
-															"User"
-														}
-														src={
-															member.usersTable?.image ??
-															`https://api.dicebear.com/9.x/glass/svg?seed=${member.usersTable?.name || member.usersTable?.email}`
-														}
-													/>
-													<AvatarFallback>
-														{(
-															member.usersTable?.name ||
-															member.usersTable?.email
-														)
-															?.charAt(0)
-															.toUpperCase()}
-													</AvatarFallback>
-												</Avatar>
-												<div>
-													<div className="font-medium">
-														{member.usersTable?.name || "Unknown"}
-													</div>
-													<div className="text-muted-foreground text-sm">
-														{member.usersTable?.email}
-													</div>
-												</div>
-											</div>
-											<div className="flex items-center gap-2">
-												<Badge variant="secondary">{member.role}</Badge>
-												<DropdownMenu>
-													<DropdownMenuTrigger asChild>
-														<Button size="icon" variant="ghost">
-															<MoreVerticalIcon className="h-4 w-4" />
-														</Button>
-													</DropdownMenuTrigger>
-													<DropdownMenuContent align="end">
-														<DropdownMenuItem
-															onClick={() =>
-																handleUpdateRole(
-																	member.userId,
-																	member.role === "admin" ? "member" : "admin",
-																)
-															}
-														>
-															{member.role === "admin"
-																? "Make Member"
-																: "Make Admin"}
-														</DropdownMenuItem>
-														<DropdownMenuItem
-															className="text-destructive"
-															onClick={() => handleRemoveMember(member.userId)}
-														>
-															<TrashIcon className="h-4 w-4" />
-															Remove
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
+					))}
 				</div>
 
-				<div>
-					<div className="flex flex-col gap-4 card-container">
-						<div className="flex flex-col space-y-1.5 p-6">
-							<h3 className="font-semibold leading-none tracking-tight">
-								Pending Invitations
-							</h3>
-							<p className="text-muted-foreground text-sm">
-								Invitations waiting to be accepted. Recipients will see these
-								when they sign in or sign up.
-							</p>
+				<div className="border rounded-lg bg-muted/30 p-4 space-y-3">
+					<h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+						Pending
+					</h3>
+					{invitations?.map((i) => (
+						<div
+							key={i.id}
+							className="flex items-center justify-between bg-card border rounded p-2 text-xs"
+						>
+							<div className="truncate pr-2">
+								<div className="font-medium truncate">{i.email}</div>
+								<div className="text-muted-foreground capitalize">{i.role}</div>
+							</div>
+							<Button
+								size="icon"
+								variant="ghost"
+								className="h-6 w-6 shrink-0"
+								onClick={() =>
+									runAction("Cancel", () =>
+										authClient.organization.cancelInvitation({
+											invitationId: i.id,
+										}),
+									)
+								}
+							>
+								<XIcon className="h-3 w-3" />
+							</Button>
 						</div>
-						<div className="p-6 pt-0">
-							{!invitations && (
-								<div className="py-4 text-center text-muted-foreground text-sm">
-									Loading...
-								</div>
-							)}
-							{invitations && invitations.length === 0 && (
-								<div className="py-4 text-center text-muted-foreground text-sm">
-									No pending invitations
-								</div>
-							)}
-							{invitations && invitations.length > 0 && (
-								<div className="space-y-3">
-									{invitations.map((invitation) => (
-										<div
-											className="flex items-start gap-2 rounded-lg border p-3"
-											key={invitation.id}
-										>
-											<MailIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
-											<div className="min-w-0 flex-1">
-												<div className="truncate font-medium text-sm">
-													{invitation.email}
-												</div>
-												<div className="text-muted-foreground text-xs">
-													{invitation.role || "member"}
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							)}
-						</div>
-					</div>
+					))}
 				</div>
 			</div>
 		</div>

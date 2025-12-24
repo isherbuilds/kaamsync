@@ -6,6 +6,7 @@ import {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	useSidebar,
 } from "~/components/ui/sidebar";
 
 export function NavMain({
@@ -24,6 +25,7 @@ export function NavMain({
 	orgSlug: string;
 }) {
 	const location = useLocation();
+	const { setOpenMobile } = useSidebar();
 
 	return (
 		<SidebarGroup>
@@ -33,9 +35,13 @@ export function NavMain({
 						<SidebarMenuButton
 							asChild
 							tooltip={item.title}
-							isActive={location.pathname.startsWith(`/${orgSlug}${item.url}`)}
+							isActive={location.pathname === `/${orgSlug}${item.url}`}
 						>
-							<StableLink prefetch="viewport" to={`/${orgSlug}${item.url}`}>
+							<StableLink
+								prefetch="viewport"
+								to={`/${orgSlug}${item.url}`}
+								onClick={() => setTimeout(() => setOpenMobile(false), 100)}
+							>
 								{item.icon && <item.icon />}
 								<span>{item.title}</span>
 							</StableLink>

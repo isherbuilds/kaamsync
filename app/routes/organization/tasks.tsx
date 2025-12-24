@@ -35,6 +35,15 @@ import {
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 
+import type { Route } from "./+types/tasks";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Tasks - ${params.orgSlug}`,
+		description: "Manage your tasks and assignments within the organization.",
+	},
+];
+
 export default function TasksPage() {
 	const { orgSlug } = useOrgLoaderData();
 
@@ -194,15 +203,18 @@ export default function TasksPage() {
 				</div>
 			</ResizablePanel>
 
-			<ResizableHandle />
+			{!isMobile && (
+				<>
+					<ResizableHandle />
 
-			<ResizablePanel
-				className="hidden md:block"
-				defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
-				minSize={DETAIL_PANEL_MIN_SIZE}
-			>
-				<Outlet />
-			</ResizablePanel>
+					<ResizablePanel
+						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
+						minSize={DETAIL_PANEL_MIN_SIZE}
+					>
+						<Outlet />
+					</ResizablePanel>
+				</>
+			)}
 		</ResizablePanelGroup>
 	);
 }

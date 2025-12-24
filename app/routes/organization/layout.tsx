@@ -76,6 +76,7 @@ export async function clientLoader({
 	context,
 }: Route.ClientLoaderArgs) {
 	const authSession = context.get(clientAuthContext);
+
 	return {
 		authSession,
 		orgSlug: params.orgSlug,
@@ -136,7 +137,7 @@ function Layout({
 					/>
 				)}
 			</ClientOnly>
-			<div className="h-screen w-full overflow-hidden bg-card">
+			<div className="h-screen w-full bg-card">
 				<Outlet />
 			</div>
 		</SidebarProvider>

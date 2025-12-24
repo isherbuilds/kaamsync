@@ -6,7 +6,7 @@ import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import {
-	AssigneeSelect,
+	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter-field-selectors";
@@ -18,6 +18,13 @@ import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Matter ${params.matterKey}`,
+		description: `Details and activity for matter ${params.matterKey}.`,
+	},
+];
 
 const TIMELINE_TYPE_COLORS: Record<string, string> = {
 	comment: "bg-blue-500",
@@ -69,22 +76,11 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	// Determine admin privileges - direct lookup
 	const userId = authSession.user.id;
-	let isAdmin = false;
-	let canEdit = false;
-	for (let i = 0; i < members.length; i++) {
-		// biome-ignore lint/suspicious/noExplicitAny: Zero query types
-		const m = members[i] as any;
-		if (m.userId === userId) {
-			isAdmin = m.role === "admin" || m.role === "owner";
-			break;
-		}
-	}
-
-	// Define canEdit based on user role/ownership
-	if (matter) {
-		canEdit =
-			matter.authorId === userId || matter.assigneeId === userId || isAdmin;
-	}
+	const member = members.find((m: any) => m.userId === userId);
+	const isAdmin = member?.role === "admin" || member?.role === "owner";
+	const canEdit =
+		matter &&
+		(matter.authorId === userId || matter.assigneeId === userId || isAdmin);
 
 	// Handler functions - z is stable so no useCallback needed
 	const handleStatusChange = (newStatusId: string) => {
@@ -117,18 +113,23 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		);
 	};
 
+	const handleBack = () => {
+		// window.history.state?.idx is specific to how React Router tracks history index
+		if (window.history.state && window.history.state.idx > 0) {
+			navigate(-1);
+		} else {
+			navigate(`/${orgSlug}`);
+		}
+	};
+
 	// Early return after all hooks
 	if (!matter) {
 		return (
 			<div className="flex h-screen items-center justify-center p-4">
 				<div className="text-center">
 					<p className="text-lg font-semibold">Task not found</p>
-					<Button
-						onClick={() => navigate(`/${orgSlug}`)}
-						className="mt-4"
-						size="lg"
-					>
-						Back to Tasks
+					<Button onClick={handleBack} className="mt-4" size="lg">
+						Back
 					</Button>
 				</div>
 			</div>
@@ -144,7 +145,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						variant="ghost"
 						size="sm"
 						className="h-8 px-2"
-						onClick={() => navigate(`/${orgSlug}`)}
+						onClick={handleBack}
 					>
 						<ChevronRight className="size-4 rotate-180" />
 						<span className="hidden sm:inline ml-1">Back</span>
@@ -201,8 +202,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 									/>
 								</PropertyPill>
 								<PropertyPill label="Assignee">
-									<AssigneeSelect
-										value={matter.assigneeId || null}
+									<MemberSelect
+										value={matter.assigneeId || ""}
 										members={members}
 										onChange={handleAssign}
 										showLabel
@@ -271,8 +272,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								/>
 							</PropertyRow>
 							<PropertyRow label="Assignee">
-								<AssigneeSelect
-									value={matter.assigneeId || null}
+								<MemberSelect
+									value={matter.assigneeId || ""}
 									members={members}
 									onChange={handleAssign}
 									showLabel
@@ -362,7 +363,7 @@ function CommentInput() {
 			<Textarea
 				placeholder="Add a comment..."
 				rows={2}
-				className="resize-none text-sm min-h-[60px]"
+				className="resize-none text-sm min-h-15"
 			/>
 			<Button type="submit" size="sm" className="shrink-0 self-end">
 				Send
@@ -482,7 +483,7 @@ const TimelineEntry = memo(function TimelineEntry({
 	return (
 		<div className="relative flex gap-3">
 			{!isLast && (
-				<div className="absolute left-[15px] top-8 bottom-0 w-px bg-border" />
+				<div className="absolute left-3.75 top-8 bottom-0 w-px bg-border" />
 			)}
 			<div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-background">
 				{userImage ? (

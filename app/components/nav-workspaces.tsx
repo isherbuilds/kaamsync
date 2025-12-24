@@ -1,13 +1,13 @@
 "use client";
 
-import { Folder, Forward, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { Cog, MoreHorizontal, Plus, Users2Icon } from "lucide-react";
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
-	DropdownMenuSeparator,
+	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import {
@@ -20,8 +20,7 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 import { CreateWorkspaceDialog } from "./create-workspace-dialog";
-import { StableLink } from "./stable-link.js";
-import { Button } from "./ui/button";
+import { StableLink } from "./stable-link";
 
 export function NavWorkspaces({
 	workspaces,
@@ -35,7 +34,7 @@ export function NavWorkspaces({
 	}[];
 	orgSlug: string;
 }) {
-	const { isMobile } = useSidebar();
+	const { isMobile, setOpenMobile } = useSidebar();
 	const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
 	const params = useParams();
 	const activeCode = params.workspaceCode;
@@ -43,17 +42,12 @@ export function NavWorkspaces({
 	return (
 		<>
 			<SidebarGroup>
-				<SidebarGroupLabel>
+				<SidebarGroupLabel className="relative">
 					<span>Workspaces</span>
-					<Button
-						size="sm"
-						variant="ghost"
-						className="ml-auto size-5 p-0"
-						onClick={() => setCreateWorkspaceOpen(true)}
-					>
-						<Plus className="size-4" />
+					<SidebarMenuAction onClick={() => setCreateWorkspaceOpen(true)}>
+						<Plus />
 						<span className="sr-only">Create Workspace</span>
-					</Button>
+					</SidebarMenuAction>
 				</SidebarGroupLabel>
 				<SidebarMenu>
 					{workspaces?.map((workspace) => (
@@ -66,7 +60,8 @@ export function NavWorkspaces({
 								<StableLink
 									to={`/${orgSlug}/${workspace.code}`}
 									prefetch="intent"
-									// viewTransition
+									onClick={() => setTimeout(() => setOpenMobile(false), 100)}
+									viewTransition
 								>
 									{workspace.name}
 								</StableLink>
@@ -81,22 +76,37 @@ export function NavWorkspaces({
 								</DropdownMenuTrigger>
 								<DropdownMenuContent
 									align={isMobile ? "end" : "start"}
-									className="min-w-48 rounded-lg"
+									className="rounded-md border"
 									side={isMobile ? "bottom" : "right"}
 								>
-									<DropdownMenuItem>
-										<Folder className="text-muted-foreground" />
-										<span>Members</span>
+									<DropdownMenuLabel>{workspace.name}</DropdownMenuLabel>
+									<hr />
+									<DropdownMenuItem asChild>
+										<StableLink
+											to={`/${orgSlug}/settings/workspaces/${workspace.code}/members`}
+											prefetch="intent"
+											className="flex w-full items-center"
+										>
+											<Users2Icon className="text-muted-foreground" />
+											<span>Members</span>
+										</StableLink>
 									</DropdownMenuItem>
-									<DropdownMenuItem>
-										<Forward className="text-muted-foreground" />
-										<span>Settings</span>
+
+									<DropdownMenuItem asChild>
+										<StableLink
+											to={`/${orgSlug}/settings/workspaces/${workspace.code}`}
+											prefetch="intent"
+											className="flex w-full items-center"
+										>
+											<Cog className="text-muted-foreground" />
+											<span>Settings</span>
+										</StableLink>
 									</DropdownMenuItem>
-									<DropdownMenuSeparator />
+									{/* <DropdownMenuSeparator />
 									<DropdownMenuItem>
 										<Trash2 className="text-muted-foreground" />
 										<span>Delete Workspace</span>
-									</DropdownMenuItem>
+									</DropdownMenuItem> */}
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</SidebarMenuItem>

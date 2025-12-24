@@ -34,6 +34,14 @@ import {
 	Priority,
 } from "~/lib/matter-constants";
 import { cn } from "~/lib/utils";
+import type { Route } from "./+types/requests";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Requests - ${params.orgSlug}`,
+		description: "Manage your requests within the organization.",
+	},
+];
 
 export default function RequestsPage() {
 	const { orgSlug } = useOrgLoaderData();
@@ -205,15 +213,18 @@ export default function RequestsPage() {
 				</div>
 			</ResizablePanel>
 
-			<ResizableHandle />
+			{!isMobile && (
+				<>
+					<ResizableHandle />
 
-			<ResizablePanel
-				className="hidden md:block"
-				defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
-				minSize={DETAIL_PANEL_MIN_SIZE}
-			>
-				<Outlet />
-			</ResizablePanel>
+					<ResizablePanel
+						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
+						minSize={DETAIL_PANEL_MIN_SIZE}
+					>
+						<Outlet />
+					</ResizablePanel>
+				</>
+			)}
 		</ResizablePanelGroup>
 	);
 }

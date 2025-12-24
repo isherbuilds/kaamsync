@@ -56,11 +56,10 @@ export const workspaceVisibility = {
 	public: "public",
 } as const;
 
-export const membershipRole = {
+export const orgRole = {
 	owner: "owner",
 	admin: "admin",
 	member: "member",
-	guest: "guest",
 } as const;
 
 export const membershipStatus = {
@@ -87,9 +86,9 @@ export const approvalStatus = {
 } as const;
 
 export const workspaceRole = {
-	manager: "manager", // Can create tasks, approve requests, manage workspace
-	member: "member", // Can create requests, limited task creation
 	viewer: "viewer", // Read-only access
+	member: "member", // Can create requests, limited task creation
+	manager: "manager", // Can create tasks, approve requests, manage workspace
 } as const;
 
 export type WorkspaceRole = (typeof workspaceRole)[keyof typeof workspaceRole];

@@ -1,27 +1,20 @@
+import { getCollectionProps, getFormProps, useForm } from "@conform-to/react";
+import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import {
-	MoreVerticalIcon,
-	PlusIcon,
-	TrashIcon,
-	UserPlusIcon,
-} from "lucide-react";
+import { MoreVerticalIcon, TrashIcon, UserPlusIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useParams, useRouteLoaderData } from "react-router";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
+import { z as zod } from "zod";
+import { CustomChildrenField } from "~/components/forms";
+import { MemberSelect } from "~/components/matter-field-selectors";
+// UI Components
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from "~/components/ui/command";
 import {
 	Dialog,
 	DialogContent,
@@ -36,81 +29,79 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "~/components/ui/popover";
-import { cn } from "~/lib/utils";
+import { type WorkspaceRole, workspaceRole } from "~/db/helpers";
+import { useOrgLoaderData } from "~/hooks/use-loader-data";
+
+// 1. Define a Schema for Conform
+const addMemberSchema = zod.object({
+	userId: zod.string({ error: "Please select a user" }),
+	role: zod.enum(workspaceRole),
+});
 
 export default function WorkspaceMembersPage() {
-	const { workspaceCode } = useParams();
-	const { authSession } = useRouteLoaderData("routes/organization/layout") as {
-		authSession: { user: { id: string } };
-	};
+	const { authSession } = useOrgLoaderData();
 	const z = useZero();
 
+	const { workspaceCode } = useParams();
 	const [addMemberOpen, setAddMemberOpen] = useState(false);
-	const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-	const [selectedRole, setSelectedRole] = useState<
-		"manager" | "member" | "viewer"
-	>("member");
 
-	// 1. Get Workspace ID
+	// 2. Optimized Query
 	const [workspace] = useQuery(
-		queries.getWorkspaceByCode({ code: workspaceCode! }),
+		queries.getWorkspaceByCode({ code: workspaceCode ?? "" }),
 		CACHE_LONG,
 	);
 
-	// 2. Get Workspace Members
-	const [workspaceMembers] = useQuery(
-		queries.getWorkspaceMembers({ workspaceId: workspace?.id || "" }),
-		{
-			enabled: !!workspace,
-			...CACHE_LONG,
-		},
-	);
-
-	// 3. Get Organization Members (for adding new members)
+	// 3. Get Organization Members
 	const [orgMembers] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 
-	// Derived state
-	const currentMembership = workspaceMembers?.find(
+	// 4. Derived State
+	const workspaceMembers = workspace?.memberships ?? [];
+	const currentMembership = workspaceMembers.find(
 		(m) => m.userId === authSession.user.id,
 	);
 	const isManager = currentMembership?.role === "manager";
 
 	const availableOrgMembers = useMemo(() => {
-		if (!orgMembers || !workspaceMembers) return [];
-		const workspaceMemberIds = new Set(workspaceMembers.map((m) => m.userId));
-		return orgMembers.filter((m) => !workspaceMemberIds.has(m.userId));
+		const existingIds = new Set(workspaceMembers.map((m) => m.userId));
+		return orgMembers?.filter((m) => !existingIds.has(m.userId)) ?? [];
 	}, [orgMembers, workspaceMembers]);
 
-	const handleAddMember = async () => {
-		if (!workspace || !selectedUserId) return;
+	// 5. Conform Form Setup
+	const [form, fields] = useForm({
+		id: "add-member",
+		onValidate({ formData }) {
+			return parseWithZod(formData, { schema: addMemberSchema });
+		},
+		defaultValue: {
+			role: workspaceRole.viewer,
+		},
+		onSubmit: async (event, { submission }) => {
+			event.preventDefault();
 
-		try {
-			await z.mutate(
-				mutators.workspace.addMember({
-					workspaceId: workspace.id,
-					userId: selectedUserId,
-					role: selectedRole,
-				}),
-			);
-			toast.success("Member added successfully");
-			setAddMemberOpen(false);
-			setSelectedUserId(null);
-			setSelectedRole("member");
-		} catch (error) {
-			toast.error("Failed to add member");
-			console.error(error);
-		}
-	};
+			console.log("Submission:", submission);
 
-	const handleUpdateRole = async (
-		userId: string,
-		role: "manager" | "member" | "viewer",
-	) => {
+			if (submission?.status !== "success" || !workspace) return;
+
+			const { userId, role } = submission.value;
+
+			try {
+				await z.mutate(
+					mutators.workspace.addMember({
+						workspaceId: workspace.id,
+						userId,
+						role,
+					}),
+				);
+				toast.success("Member added");
+				setAddMemberOpen(false);
+			} catch (_e) {
+				toast.error("Failed to add member");
+			}
+		},
+	});
+
+	// Actions
+	const handleUpdateRole = async (userId: string, role: WorkspaceRole) => {
 		if (!workspace) return;
 		try {
 			await z.mutate(
@@ -120,17 +111,19 @@ export default function WorkspaceMembersPage() {
 					role,
 				}),
 			);
-			toast.success("Role updated successfully");
-		} catch (error) {
+			toast.success(`Role updated to ${role}`);
+		} catch (_e) {
 			toast.error("Failed to update role");
-			console.error(error);
 		}
 	};
 
 	const handleRemoveMember = async (userId: string) => {
 		if (!workspace) return;
-		if (!confirm("Are you sure you want to remove this member?")) return;
 
+		const memberToRestore = workspaceMembers.find((m) => m.userId === userId);
+		if (!memberToRestore) return;
+
+		// Optimistic mutation call
 		try {
 			await z.mutate(
 				mutators.workspace.removeMember({
@@ -138,231 +131,191 @@ export default function WorkspaceMembersPage() {
 					userId,
 				}),
 			);
-			toast.success("Member removed successfully");
-		} catch (error) {
+
+			toast("Member removed", {
+				action: {
+					label: "Undo",
+					onClick: () => {
+						z.mutate(
+							mutators.workspace.addMember({
+								workspaceId: workspace.id,
+								userId: memberToRestore.userId,
+								role: memberToRestore.role as WorkspaceRole,
+							}),
+						);
+					},
+				},
+			});
+		} catch (_e) {
 			toast.error("Failed to remove member");
-			console.error(error);
 		}
 	};
 
-	if (!workspace) {
-		return <div className="p-8 text-center">Loading workspace...</div>;
-	}
-
 	return (
-		<div className="flex flex-1 flex-col gap-4 p-4">
-			<div className="flex flex-col gap-4 rounded-xl border bg-card text-card-foreground shadow">
-				<div className="flex flex-col space-y-1.5 p-6">
-					<div className="flex flex-row items-center justify-between">
-						<div>
-							<h3 className="font-semibold leading-none tracking-tight">
-								Workspace Members
-							</h3>
-							<p className="text-muted-foreground text-sm">
-								Manage access to the {workspace.name} workspace
-							</p>
-						</div>
-						{isManager && (
-							<Dialog onOpenChange={setAddMemberOpen} open={addMemberOpen}>
-								<DialogTrigger asChild>
-									<Button size="sm">
-										<UserPlusIcon className="h-4 w-4" />
-										Add Member
-									</Button>
-								</DialogTrigger>
-								<DialogContent>
-									<DialogHeader>
-										<DialogTitle>Add Member to Workspace</DialogTitle>
-										<DialogDescription>
-											Select a member from your organization to add to this
-											workspace.
-										</DialogDescription>
-									</DialogHeader>
-									<div className="space-y-4 py-4">
-										<div className="space-y-2">
-											<label className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-												Member
-											</label>
-											<Popover>
-												<PopoverTrigger asChild>
-													<Button
-														className={cn(
-															"w-full justify-between",
-															!selectedUserId && "text-muted-foreground",
-														)}
-														role="combobox"
-														variant="outline"
-													>
-														{selectedUserId
-															? orgMembers?.find(
-																	(m) => m.userId === selectedUserId,
-																)?.usersTable?.name
-															: "Select member..."}
-														<PlusIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-													</Button>
-												</PopoverTrigger>
-												<PopoverContent className="w-[300px] p-0">
-													<Command>
-														<CommandInput placeholder="Search members..." />
-														<CommandList>
-															<CommandEmpty>No members found.</CommandEmpty>
-															<CommandGroup>
-																{availableOrgMembers.map((member) => (
-																	<CommandItem
-																		key={member.userId}
-																		onSelect={() => {
-																			setSelectedUserId(member.userId);
-																		}}
-																		value={
-																			member.usersTable?.name ||
-																			member.usersTable?.email ||
-																			""
-																		}
-																	>
-																		<div className="flex items-center gap-2">
-																			<Avatar className="h-6 w-6">
-																				<AvatarImage
-																					src={
-																						member.usersTable?.image ??
-																						undefined
-																					}
-																				/>
-																				<AvatarFallback>
-																					{member.usersTable?.name?.[0]}
-																				</AvatarFallback>
-																			</Avatar>
-																			<span>
-																				{member.usersTable?.name ||
-																					member.usersTable?.email}
-																			</span>
-																		</div>
-																	</CommandItem>
-																))}
-															</CommandGroup>
-														</CommandList>
-													</Command>
-												</PopoverContent>
-											</Popover>
-										</div>
-										<div className="space-y-2">
-											<label className="font-medium text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-												Role
-											</label>
-											<div className="flex gap-2">
-												{(["member", "viewer", "manager"] as const).map((r) => (
-													<Button
-														className="flex-1 capitalize"
-														key={r}
-														onClick={() => setSelectedRole(r)}
-														variant={selectedRole === r ? "default" : "outline"}
-													>
-														{r}
-													</Button>
-												))}
-											</div>
-										</div>
-										<Button
-											className="w-full"
-											disabled={!selectedUserId}
-											onClick={handleAddMember}
-										>
-											Add Member
-										</Button>
-									</div>
-								</DialogContent>
-							</Dialog>
-						)}
-					</div>
+		<div className="flex flex-1 flex-col gap-4 w-full">
+			<header className="flex items-center justify-between">
+				<div>
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Workspace Members
+					</h1>
+					<p className="text-muted-foreground text-sm">
+						Manage access for the{" "}
+						<span className="font-medium text-foreground">
+							{workspace?.name}
+						</span>{" "}
+						workspace.
+					</p>
 				</div>
-				<div className="p-6 pt-0">
-					{!workspaceMembers && (
-						<div className="py-8 text-center text-muted-foreground text-sm">
-							Loading members...
-						</div>
-					)}
-					{workspaceMembers && workspaceMembers.length === 0 && (
-						<div className="py-8 text-center text-muted-foreground text-sm">
-							No members found
-						</div>
-					)}
-					{workspaceMembers && workspaceMembers.length > 0 && (
-						<div className="divide-y">
-							{workspaceMembers.map((member) => (
+
+				{isManager && (
+					<Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+						<DialogTrigger asChild>
+							<Button size="sm" className="gap-2">
+								<UserPlusIcon className="size-4" />
+								Add Member
+							</Button>
+						</DialogTrigger>
+						<DialogContent>
+							<DialogHeader>
+								<DialogTitle>Add Workspace Member</DialogTitle>
+								<DialogDescription>
+									Invite someone from your organization to this workspace.
+								</DialogDescription>
+							</DialogHeader>
+
+							<form {...getFormProps(form)} className="space-y-6">
+								<CustomChildrenField labelProps={{ children: "Select Member" }}>
+									<MemberSelect
+										members={availableOrgMembers}
+										value={fields.userId.value ?? ""}
+										onChange={(value) =>
+											form.update({ name: fields.userId.name, value })
+										}
+										showLabel
+										align="start"
+										className="w-full rounded-md border bg-muted px-2"
+									/>
+									<input
+										type="hidden"
+										name={fields.userId.name}
+										value={fields.userId.value ?? ""}
+									/>
+								</CustomChildrenField>
+
 								<div
-									className="flex items-center justify-between py-3"
-									key={member.id}
+									role="radiogroup"
+									aria-label="Role"
+									className="flex gap-2 justify-between"
 								>
-									<div className="flex items-center gap-2">
-										<Avatar className="h-10 w-10">
-											<AvatarImage
-												alt={member.user?.name || member.user?.email || "User"}
-												src={
-													member.user?.image ??
-													`https://api.dicebear.com/9.x/glass/svg?seed=${member.user?.name || member.user?.email}`
-												}
-											/>
-											<AvatarFallback>
-												{(member.user?.name || member.user?.email)
-													?.charAt(0)
-													.toUpperCase()}
-											</AvatarFallback>
-										</Avatar>
-										<div>
-											<div className="font-medium">
-												{member.user?.name || "Unknown"}
-											</div>
-											<div className="text-muted-foreground text-sm">
-												{member.user?.email}
-											</div>
-										</div>
-									</div>
-									<div className="flex items-center gap-2">
-										<Badge variant="secondary">{member.role}</Badge>
-										{isManager && (
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<Button size="icon" variant="ghost">
-														<MoreVerticalIcon className="h-4 w-4" />
-													</Button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="end">
-													<DropdownMenuItem
-														onClick={() =>
-															handleUpdateRole(member.userId, "manager")
-														}
-													>
-														Make Manager
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															handleUpdateRole(member.userId, "member")
-														}
-													>
-														Make Member
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														onClick={() =>
-															handleUpdateRole(member.userId, "viewer")
-														}
-													>
-														Make Viewer
-													</DropdownMenuItem>
-													<DropdownMenuItem
-														className="text-destructive"
-														onClick={() => handleRemoveMember(member.userId)}
-													>
-														<TrashIcon className="h-4 w-4" />
-														Remove
-													</DropdownMenuItem>
-												</DropdownMenuContent>
-											</DropdownMenu>
-										)}
-									</div>
+									{getCollectionProps(fields.role, {
+										type: "radio",
+										options: Object.values(workspaceRole),
+									}).map((props) => (
+										<label key={props.value} className="flex-1 cursor-pointer">
+											<input {...props} className="sr-only peer" />
+											<span className="block capitalize text-sm rounded py-1 text-center transition-all duration-150 bg-muted hover:bg-primary hover:text-white peer-checked:bg-primary peer-checked:text-white shadow-sm">
+												{props.value}
+											</span>
+										</label>
+									))}
 								</div>
-							))}
+
+								<Button type="submit" className="w-full">
+									Add to Workspace
+								</Button>
+							</form>
+						</DialogContent>
+					</Dialog>
+				)}
+			</header>
+
+			<div className="rounded-lg border bg-card overflow-hidden">
+				<div className="divide-y">
+					{workspaceMembers.length === 0 && (
+						<div className="p-8 text-center text-muted-foreground text-sm">
+							No members found.
 						</div>
 					)}
+					{workspaceMembers.map((member) => (
+						<MemberRow
+							key={member.id}
+							member={member}
+							isManager={isManager}
+							onUpdateRole={(role) => handleUpdateRole(member.userId, role)}
+							onRemove={() => handleRemoveMember(member.userId)}
+						/>
+					))}
 				</div>
+			</div>
+		</div>
+	);
+}
+
+// --- Sub-components ---
+
+interface MemberRowProps {
+	member: any; // Ideally import this type from your Zero schema
+	isManager: boolean;
+	onUpdateRole: (role: WorkspaceRole) => void;
+	onRemove: () => void;
+}
+
+function MemberRow({
+	member,
+	isManager,
+	onUpdateRole,
+	onRemove,
+}: MemberRowProps) {
+	return (
+		<div className="flex items-center justify-between p-4 transition-colors hover:bg-muted/40 group">
+			<div className="flex items-center gap-3">
+				<Avatar className="h-9 w-9 border border-border/50">
+					<AvatarImage src={member.user?.image ?? undefined} />
+					<AvatarFallback className="text-xs">
+						{member.user?.name?.[0] ?? member.user?.email?.[0]}
+					</AvatarFallback>
+				</Avatar>
+				<div className="flex flex-col">
+					<span className="text-sm font-medium leading-none">
+						{member.user?.name || "Unknown"}
+					</span>
+					<span className="text-xs text-muted-foreground mt-1">
+						{member.user?.email}
+					</span>
+				</div>
+			</div>
+
+			<div className="flex items-center gap-3">
+				<Badge
+					variant="secondary"
+					className="capitalize font-normal px-2 py-0 h-5 text-[10px] bg-muted/50 text-muted-foreground border-transparent"
+				>
+					{member.role}
+				</Badge>
+
+				{isManager && (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button size="icon" variant="ghost" aria-label="Member actions">
+								<MoreVerticalIcon className="size-4" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="w-44">
+							{Object.values(workspaceRole).map((role) => (
+								<DropdownMenuItem key={role} onClick={() => onUpdateRole(role)}>
+									Make {role.charAt(0).toUpperCase() + role.slice(1)}
+								</DropdownMenuItem>
+							))}
+							<DropdownMenuItem
+								className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+								onClick={onRemove}
+							>
+								<TrashIcon className="size-4 text-destructive" />
+								Remove
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</div>
 		</div>
 	);
