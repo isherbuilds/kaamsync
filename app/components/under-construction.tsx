@@ -21,8 +21,7 @@ export default function UnderConstruction({
 				{message}
 			</h1>
 			<p className="md:text-xl">
-				This section is currently under works. Please check back later for
-				updates.
+				This section is currently underway. Please check back later for updates.
 			</p>
 		</section>
 	);

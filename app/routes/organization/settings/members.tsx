@@ -42,13 +42,14 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/select";
+import { orgRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 // Auth & Hooks
 import { authClient } from "~/lib/auth-client";
 
 const inviteSchema = z.object({
-	email: z.email("Please enter a valid work email"),
-	role: z.enum(["admin", "member"]),
+	email: z.email("Please enter a valid email"),
+	role: z.enum(orgRole),
 });
 
 export default function OrgMembersPage() {
