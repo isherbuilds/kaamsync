@@ -1,7 +1,12 @@
 import { createId } from "@paralleldrive/cuid2";
 import { defineMutator, defineMutators } from "@rocicorp/zero";
 import { z } from "zod";
-import { matterType, membershipStatus, workspaceRole } from "~/db/helpers";
+import {
+	matterType,
+	membershipStatus,
+	type WorkspaceRole,
+	workspaceRole,
+} from "~/db/helpers";
 import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
 import { reservedWorkspaceSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/server/default-workspace-data";
@@ -101,13 +106,13 @@ export const mutators = defineMutators({
 				// Permission checks using unified permission system
 				if (
 					args.type === matterType.task &&
-					!canCreateTasks(membership.role as "manager" | "member" | "viewer")
+					!canCreateTasks(membership.role as WorkspaceRole)
 				) {
 					throw new Error("Only managers can create tasks directly");
 				}
 				if (
 					args.type === matterType.request &&
-					!canCreateRequests(membership.role as "manager" | "member" | "viewer")
+					!canCreateRequests(membership.role as WorkspaceRole)
 				) {
 					throw new Error("You do not have permission to create requests");
 				}
@@ -420,7 +425,7 @@ export const mutators = defineMutators({
 			z.object({
 				workspaceId: z.string(),
 				userId: z.string(),
-				role: z.enum(["manager", "member", "viewer"]),
+				role: z.enum(workspaceRole),
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can add members
@@ -484,7 +489,7 @@ export const mutators = defineMutators({
 			z.object({
 				workspaceId: z.string(),
 				userId: z.string(),
-				role: z.enum(["manager", "member", "viewer"]),
+				role: z.enum(workspaceRole),
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can update roles

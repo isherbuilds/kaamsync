@@ -14,7 +14,7 @@ import { CACHE_NAV, CACHE_STATIC } from "zero/query-cache-policy";
 import { CreateRequestDialog } from "~/components/create-request-dialog";
 import { CreateTaskDialog } from "~/components/create-task-dialog";
 import {
-	AssigneeSelect,
+	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter-field-selectors";
@@ -35,6 +35,18 @@ import {
 	type StatusType,
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
+
+import type { Route } from "./+types/$workspaceCode";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Workspace - ${params.workspaceCode}`,
+	},
+	{
+		name: "description",
+		content: `Workspace ${params.workspaceCode} overview and tasks management.`,
+	},
+];
 
 // Status types that should be collapsed by default
 const COLLAPSED_STATUS_TYPES = new Set<StatusType>(COMPLETED_STATUS_TYPES);
@@ -247,15 +259,15 @@ export default function WorkspaceIndex() {
 	};
 
 	return (
-		<div className="flex flex-col h-full">
+		<div className="flex h-full flex-col">
 			{/* Header */}
-			<div className="flex items-center justify-between gap-2 border-b bg-background px-3 md:px-4 h-12 md:h-12 shrink-0">
-				<div className="flex items-center gap-2 min-w-0">
-					<SidebarTrigger className="lg:hidden shrink-0 -ml-1" />
-					<h5 className="truncate text-base font-semibold">{workspace.name}</h5>
+			<div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b bg-background px-3 md:h-12 md:px-4">
+				<div className="flex min-w-0 items-center gap-2">
+					<SidebarTrigger className="-ml-1 shrink-0 lg:hidden" />
+					<h5 className="truncate font-semibold text-base">{workspace.name}</h5>
 					<Badge
 						variant="outline"
-						className="text-xs tabular-nums shrink-0 hidden sm:inline-flex"
+						className="hidden shrink-0 text-xs tabular-nums sm:inline-flex"
 					>
 						{activeCount} active
 					</Badge>
@@ -271,7 +283,7 @@ export default function WorkspaceIndex() {
 				</div>
 			</div>
 			{/* Task List - Virtualized */}
-			<div className="flex-1 min-h-0">
+			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
 					<WorkspaceEmptyState
 						isManager={isManager}
@@ -394,7 +406,7 @@ const GroupHeader = memo(function GroupHeader({
 	return (
 		<button
 			type="button"
-			className="flex w-full items-center gap-2 px-4 h-10 bg-muted border-b cursor-pointer select-none hover:bg-muted"
+			className="flex h-10 w-full cursor-pointer select-none items-center gap-2 border-b bg-muted px-4 hover:bg-muted"
 			onClick={handleClick}
 		>
 			<ChevronDown
@@ -403,15 +415,15 @@ const GroupHeader = memo(function GroupHeader({
 					!isExpanded && "-rotate-90",
 				)}
 			/>
-			<div className="flex items-center gap-2 min-w-0 flex-1">
+			<div className="flex min-w-0 flex-1 items-center gap-2">
 				{StatusIcon && (
 					<StatusIcon className={cn("size-4 shrink-0", statusColor)} />
 				)}
-				<span className="text-sm font-medium truncate">{label}</span>
+				<span className="truncate font-medium text-sm">{label}</span>
 			</div>
 			<Badge
 				variant="secondary"
-				className="text-[10px] h-5 px-1.5 min-w-5 justify-center shrink-0 tabular-nums"
+				className="h-5 min-w-5 shrink-0 justify-center px-1.5 text-[10px] tabular-nums"
 			>
 				{count}
 			</Badge>
@@ -461,14 +473,14 @@ const TaskRow = memo(function TaskRow({
 	const handleAssignee = (u: string | null) => onAssigneeChange(taskId, u);
 
 	return (
-		<div className="group relative border-b border-border/40 last:border-0 transition-colors hover:bg-muted/50 active:bg-muted/70">
+		<div className="group relative border-border/40 border-b transition-colors last:border-0 hover:bg-muted/50 active:bg-muted/70">
 			<StableLink
 				to={linkTo}
 				className={cn("absolute inset-0 z-0", isCompleted && "opacity-60")}
 			/>
 
 			{/* Mobile Layout */}
-			<div className="flex md:hidden flex-col gap-1.5 px-3 py-3">
+			<div className="flex flex-col gap-1.5 px-3 py-3 md:hidden">
 				{/* Top row: Priority + Title + Assignee */}
 				<div className="flex items-center gap-2">
 					<div className="relative z-10 shrink-0">
@@ -480,15 +492,15 @@ const TaskRow = memo(function TaskRow({
 					</div>
 					<p
 						className={cn(
-							"flex-1 min-w-0 truncate text-sm font-medium text-foreground/90",
-							isCompleted && "line-through text-muted-foreground",
+							"min-w-0 flex-1 truncate font-medium text-foreground/90 text-sm",
+							isCompleted && "text-muted-foreground line-through",
 						)}
 					>
 						{title}
 					</p>
 					<div className="relative z-10 shrink-0">
-						<AssigneeSelect
-							value={assigneeId || null}
+						<MemberSelect
+							value={assigneeId || ""}
 							members={members}
 							onChange={handleAssignee}
 							align="end"
@@ -517,7 +529,7 @@ const TaskRow = memo(function TaskRow({
 			</div>
 
 			{/* Desktop Layout */}
-			<div className="hidden md:grid grid-cols-[auto_5rem_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 text-sm">
+			<div className="hidden grid-cols-[auto_5rem_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 text-sm md:grid">
 				{/* Priority */}
 				<div className="relative z-10">
 					<PrioritySelect
@@ -528,7 +540,7 @@ const TaskRow = memo(function TaskRow({
 				</div>
 
 				{/* ID */}
-				<div className="relative z-10 font-mono text-xs text-muted-foreground/50 pointer-events-none">
+				<div className="pointer-events-none relative z-10 font-mono text-muted-foreground/50 text-xs">
 					{taskCode}
 				</div>
 
@@ -543,11 +555,11 @@ const TaskRow = memo(function TaskRow({
 				</div>
 
 				{/* Title */}
-				<div className="relative z-10 min-w-0 pointer-events-none">
+				<div className="pointer-events-none relative z-10 min-w-0">
 					<p
 						className={cn(
 							"truncate font-medium text-foreground/90",
-							isCompleted && "line-through text-muted-foreground",
+							isCompleted && "text-muted-foreground line-through",
 						)}
 					>
 						{title}
@@ -561,8 +573,8 @@ const TaskRow = memo(function TaskRow({
 
 				{/* Assignee */}
 				<div className="relative z-10">
-					<AssigneeSelect
-						value={assigneeId || null}
+					<MemberSelect
+						value={assigneeId || ""}
 						members={members}
 						onChange={handleAssignee}
 						align="end"

@@ -106,9 +106,9 @@ export default function PricingPage() {
 			{/* Hero */}
 			<section className="py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="text-center max-w-3xl mx-auto mb-16">
-						<p className="text-sm font-medium text-primary mb-4">Pricing</p>
-						<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+					<div className="mx-auto mb-16 max-w-3xl text-center">
+						<p className="mb-4 font-medium text-primary text-sm">Pricing</p>
+						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
 							Simple pricing for
 							<br />
 							every team size
@@ -119,34 +119,34 @@ export default function PricingPage() {
 					</div>
 
 					{/* Plans */}
-					<div className="grid gap-6 md:grid-cols-3 max-w-5xl mx-auto">
+					<div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
 						{plans.map((plan) => (
 							<div
 								key={plan.name}
-								className={`relative rounded-2xl border bg-card/30 backdrop-blur-sm p-8 ${plan.popular ? "border-primary/50 bg-card/50 shadow-lg shadow-primary/5" : "border-border/60"}`}
+								className={`relative rounded-2xl border bg-card/30 p-8 backdrop-blur-sm ${plan.popular ? "border-primary/50 bg-card/50 shadow-lg shadow-primary/5" : "border-border/60"}`}
 							>
 								{plan.popular && (
 									<div className="absolute -top-3 left-1/2 -translate-x-1/2">
-										<span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+										<span className="rounded-full bg-primary px-3 py-1 font-medium text-primary-foreground text-xs">
 											Most Popular
 										</span>
 									</div>
 								)}
 								<div className="mb-6">
-									<h3 className="text-lg font-semibold mb-1">{plan.name}</h3>
-									<p className="text-sm text-muted-foreground">
+									<h3 className="mb-1 font-semibold text-lg">{plan.name}</h3>
+									<p className="text-muted-foreground text-sm">
 										{plan.description}
 									</p>
 								</div>
 								<div className="mb-6">
-									<span className="text-4xl font-bold">{plan.price}</span>
-									<span className="text-muted-foreground ml-1">
+									<span className="font-bold text-4xl">{plan.price}</span>
+									<span className="ml-1 text-muted-foreground">
 										/{plan.period}
 									</span>
 								</div>
 								<Button
 									asChild
-									className={`w-full rounded-lg h-10 mb-6 ${plan.popular ? "bg-foreground text-background hover:bg-foreground/90" : ""}`}
+									className={`mb-6 h-10 w-full rounded-lg ${plan.popular ? "bg-foreground text-background hover:bg-foreground/90" : ""}`}
 									variant={plan.popular ? "default" : "outline"}
 								>
 									<Link to={plan.href}>{plan.cta}</Link>
@@ -157,7 +157,7 @@ export default function PricingPage() {
 											key={feature}
 											className="flex items-start gap-2 text-sm"
 										>
-											<Check className="size-4 text-primary shrink-0 mt-0.5" />
+											<Check className="mt-0.5 size-4 shrink-0 text-primary" />
 											<span className="text-muted-foreground">{feature}</span>
 										</li>
 									))}
@@ -169,25 +169,25 @@ export default function PricingPage() {
 			</section>
 
 			{/* FAQs */}
-			<section className="py-24 md:py-32 border-t border-border/40">
+			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="text-center mb-16">
-						<div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-sm text-muted-foreground mb-6">
+					<div className="mb-16 text-center">
+						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-muted-foreground text-sm">
 							<HelpCircle className="size-3.5" />
 							<span>FAQ</span>
 						</div>
-						<h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+						<h2 className="font-bold text-3xl tracking-tight md:text-4xl">
 							Frequently asked questions
 						</h2>
 					</div>
-					<div className="grid gap-4 md:grid-cols-2 max-w-4xl mx-auto">
+					<div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-2">
 						{faqs.map(({ q, a }) => (
 							<div
 								key={q}
-								className="rounded-xl border border-border/60 bg-card/30 backdrop-blur-sm p-6"
+								className="rounded-xl border border-border/60 bg-card/30 p-6 backdrop-blur-sm"
 							>
-								<h3 className="font-medium mb-2">{q}</h3>
-								<p className="text-sm text-muted-foreground">{a}</p>
+								<h3 className="mb-2 font-medium">{q}</h3>
+								<p className="text-muted-foreground text-sm">{a}</p>
 							</div>
 						))}
 					</div>
@@ -195,21 +195,21 @@ export default function PricingPage() {
 			</section>
 
 			{/* CTA */}
-			<section className="py-24 md:py-32 border-t border-border/40">
+			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative rounded-3xl border border-border/60 bg-card/30 backdrop-blur-sm p-12 md:p-16 text-center max-w-4xl mx-auto overflow-hidden">
+					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
 						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
 						<div className="relative">
-							<h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
 								Still have questions?
 							</h2>
-							<p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
 								Our team is here to help. Reach out and we'll get back to you
 								within 24 hours.
 							</p>
 							<Button
 								size="lg"
-								className="h-11 px-8 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+								className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
 								asChild
 							>
 								<Link to="/contact">Contact Sales</Link>

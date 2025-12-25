@@ -53,9 +53,5 @@ export function ZeroInit({ children }: { children: React.ReactNode }) {
 		[userID, activeOrganizationId, init, storageKey],
 	);
 
-	return (
-		<ZeroProvider key={storageKey} {...options}>
-			{children}
-		</ZeroProvider>
-	);
+	return <ZeroProvider {...options}>{children}</ZeroProvider>;
 }

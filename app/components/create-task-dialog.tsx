@@ -18,7 +18,7 @@ import { matterType } from "../db/helpers";
 import { createTaskSchema } from "../lib/validations/matter";
 import { InputField, TextareaField } from "./forms";
 import {
-	AssigneeSelect,
+	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "./matter-field-selectors";
@@ -65,7 +65,6 @@ export function CreateTaskDialog({
 	// Block reservation and cache seeding
 	useShortIdSeeder(workspaceId, open);
 
-	// Adapt members for AssigneeSelect shape (ensure stable id)
 	const assigneeMembers = useMemo(
 		() =>
 			members.map((m) => ({
@@ -218,10 +217,10 @@ export function CreateTaskDialog({
 								onChange={priorityControl.change as any}
 								showLabel
 							/>
-							<AssigneeSelect
-								value={assigneeControl.value || null}
+							<MemberSelect
+								value={assigneeControl.value || ""}
 								members={assigneeMembers}
-								onChange={assigneeControl.change as any}
+								onChange={assigneeControl.change}
 								align="start"
 								showLabel
 							/>{" "}

@@ -34,6 +34,17 @@ import {
 	Priority,
 } from "~/lib/matter-constants";
 import { cn } from "~/lib/utils";
+import type { Route } from "./+types/requests";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Requests - ${params.orgSlug}`,
+	},
+	{
+		name: "description",
+		content: "Manage and track your requests efficiently in KaamSync.",
+	},
+];
 
 export default function RequestsPage() {
 	const { orgSlug } = useOrgLoaderData();
@@ -65,7 +76,7 @@ export default function RequestsPage() {
 			<div className="flex h-[60vh] items-center justify-center">
 				<div className="text-center">
 					<Send className="mx-auto size-12 text-muted-foreground/50" />
-					<p className="mt-2 text-sm text-muted-foreground">
+					<p className="mt-2 text-muted-foreground text-sm">
 						Loading requests...
 					</p>
 				</div>
@@ -87,7 +98,7 @@ export default function RequestsPage() {
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
 			>
-				<div className="flex items-center justify-between border-b bg-background px-4 h-12">
+				<div className="flex h-12 items-center justify-between border-b bg-background px-4">
 					<div className="flex items-center gap-2">
 						<SidebarTrigger className="lg:hidden" />
 						<Send className="size-4 text-amber-500" />
@@ -95,7 +106,7 @@ export default function RequestsPage() {
 					</div>
 					<div className="flex items-center gap-2">
 						{loadedCount > 0 && (
-							<span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+							<span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 text-xs dark:text-amber-400">
 								{loadedCount}
 								{hasMore && "+"}
 							</span>
@@ -153,14 +164,14 @@ export default function RequestsPage() {
 										<Item className="w-full" key={matter.id}>
 											<ItemContent className="flex-col gap-2">
 												<div className="flex items-center gap-2">
-													<span className="text-xs font-mono text-muted-foreground/70">
+													<span className="font-mono text-muted-foreground/70 text-xs">
 														{matter.workspaceCode}-{matter.shortID}
 													</span>
 													{matter.priority != null &&
 														matter.priority !== Priority.NONE && (
 															<span
 																className={cn(
-																	"inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors",
+																	"inline-flex items-center rounded px-1.5 py-0.5 font-semibold text-[9px] uppercase tracking-wider transition-colors",
 																	getPriorityBadge(matter.priority),
 																)}
 															>
@@ -168,7 +179,7 @@ export default function RequestsPage() {
 															</span>
 														)}
 												</div>
-												<ItemTitle className="line-clamp-2 text-sm font-normal leading-snug text-foreground/90 transition-colors group-hover:text-foreground">
+												<ItemTitle className="line-clamp-2 font-normal text-foreground/90 text-sm leading-snug transition-colors group-hover:text-foreground">
 													{matter.title}
 												</ItemTitle>
 												<ItemDescription className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-muted-foreground/70">
@@ -205,15 +216,18 @@ export default function RequestsPage() {
 				</div>
 			</ResizablePanel>
 
-			<ResizableHandle />
+			{!isMobile && (
+				<>
+					<ResizableHandle />
 
-			<ResizablePanel
-				className="hidden md:block"
-				defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
-				minSize={DETAIL_PANEL_MIN_SIZE}
-			>
-				<Outlet />
-			</ResizablePanel>
+					<ResizablePanel
+						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
+						minSize={DETAIL_PANEL_MIN_SIZE}
+					>
+						<Outlet />
+					</ResizablePanel>
+				</>
+			)}
 		</ResizablePanelGroup>
 	);
 }

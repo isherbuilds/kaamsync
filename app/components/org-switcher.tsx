@@ -83,12 +83,12 @@ export function OrgSwitcher({
 						side={isMobile ? "bottom" : "right"}
 						sideOffset={6}
 					>
-						<DropdownMenuItem asChild className="p-2">
+						{/* <DropdownMenuItem asChild className="p-2">
 							<Link className="cursor-pointer" to={`/${currentOrg.slug}`}>
 								<HomeIcon className="size-4" />
 								<div>Home</div>
 							</Link>
-						</DropdownMenuItem>
+						</DropdownMenuItem> */}
 
 						<DropdownMenuItem asChild className="p-2">
 							<Link

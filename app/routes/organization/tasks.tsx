@@ -35,6 +35,18 @@ import {
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 
+import type { Route } from "./+types/tasks";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Tasks - ${params.orgSlug}`,
+	},
+	{
+		name: "description",
+		content: `Manage and view tasks assigned to you in organization ${params.orgSlug}.`,
+	},
+];
+
 export default function TasksPage() {
 	const { orgSlug } = useOrgLoaderData();
 
@@ -65,7 +77,7 @@ export default function TasksPage() {
 			<div className="flex h-[60vh] items-center justify-center">
 				<div className="text-center">
 					<CheckCircle2 className="mx-auto size-12 text-muted-foreground/50" />
-					<p className="mt-2 text-sm text-muted-foreground">Loading tasks...</p>
+					<p className="mt-2 text-muted-foreground text-sm">Loading tasks...</p>
 				</div>
 			</div>
 		);
@@ -85,7 +97,7 @@ export default function TasksPage() {
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
 			>
-				<div className="flex items-center justify-between border-b bg-background px-4 h-12">
+				<div className="flex h-12 items-center justify-between border-b bg-background px-4">
 					<div className="flex items-center gap-2">
 						<SidebarTrigger className="lg:hidden" />
 						<CheckCircle2 className="size-4 text-blue-500" />
@@ -93,7 +105,7 @@ export default function TasksPage() {
 					</div>
 					<div className="flex items-center gap-2">
 						{loadedCount > 0 && (
-							<span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-600 dark:text-blue-400">
+							<span className="rounded-full bg-blue-500/10 px-2 py-0.5 font-medium text-blue-600 text-xs dark:text-blue-400">
 								{loadedCount}
 								{hasMore && "+"}
 							</span>
@@ -136,7 +148,7 @@ export default function TasksPage() {
 										to={`/${orgSlug}/${isMobile ? "" : "tasks/"}matter/${matter.workspaceCode}-${matter.shortID}`}
 										className={({ isActive }) =>
 											cn(
-												"group relative block rounded transition-all duration-200 ",
+												"group relative block rounded transition-all duration-200",
 												isActive
 													? "bg-blue-50/60 dark:bg-blue-900/30"
 													: "hover:bg-muted/50",
@@ -149,12 +161,12 @@ export default function TasksPage() {
 												<CustomAvatar name={author?.usersTable?.name} />
 
 												{/* COL 2: ID + Title */}
-												<ItemTitle className="flex-1 min-w-0 line-clamp-2 text-sm font-light text-foreground">
+												<ItemTitle className="line-clamp-2 min-w-0 flex-1 font-light text-foreground text-sm">
 													{matter.workspaceCode}-{matter.shortID} {matter.title}
 												</ItemTitle>
 
 												{/* COL 3: Stats (Status, Priority, Time) */}
-												<div className="flex flex-col items-end gap-1 shrink-0">
+												<div className="flex shrink-0 flex-col items-end gap-1">
 													{/* Top: Status */}
 													{matter.status && (
 														<StatusIcon
@@ -173,10 +185,10 @@ export default function TasksPage() {
 														{matter.dueDate && (
 															<span
 																className={cn(
-																	"text-xs text-muted-foreground",
+																	"text-muted-foreground text-xs",
 																	(matter.dueDate < Date.now() ||
 																		priority === Priority.URGENT) &&
-																		"text-red-600 font-medium",
+																		"font-medium text-red-600",
 																)}
 															>
 																{formatCompactRelativeDate(matter.dueDate)}
@@ -194,15 +206,18 @@ export default function TasksPage() {
 				</div>
 			</ResizablePanel>
 
-			<ResizableHandle />
+			{!isMobile && (
+				<>
+					<ResizableHandle />
 
-			<ResizablePanel
-				className="hidden md:block"
-				defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
-				minSize={DETAIL_PANEL_MIN_SIZE}
-			>
-				<Outlet />
-			</ResizablePanel>
+					<ResizablePanel
+						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
+						minSize={DETAIL_PANEL_MIN_SIZE}
+					>
+						<Outlet />
+					</ResizablePanel>
+				</>
+			)}
 		</ResizablePanelGroup>
 	);
 }

@@ -108,6 +108,7 @@ export const auth = betterAuth({
 				// });
 			},
 		}),
+		// lastLoginMethod(),
 	],
 	user: {
 		modelName: "usersTable",

@@ -41,9 +41,9 @@ export default function ContactPage() {
 			{/* Hero */}
 			<section className="py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="max-w-3xl mx-auto text-center mb-16">
-						<p className="text-sm font-medium text-primary mb-4">Contact</p>
-						<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+					<div className="mx-auto mb-16 max-w-3xl text-center">
+						<p className="mb-4 font-medium text-primary text-sm">Contact</p>
+						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
 							Get in touch
 						</h1>
 						<p className="text-lg text-muted-foreground">
@@ -51,7 +51,7 @@ export default function ContactPage() {
 						</p>
 					</div>
 
-					<div className="grid gap-12 lg:grid-cols-2 max-w-5xl mx-auto">
+					<div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-2">
 						{/* Contact Methods */}
 						<div className="space-y-6">
 							{contactMethods.map(
@@ -59,14 +59,14 @@ export default function ContactPage() {
 									<a
 										key={title}
 										href={href}
-										className="flex gap-4 items-start p-6 rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm hover:bg-card/50 transition-colors"
+										className="flex items-start gap-4 rounded-2xl border border-border/60 bg-card/30 p-6 backdrop-blur-sm transition-colors hover:bg-card/50"
 									>
-										<div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+										<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
 											<Icon className="size-5 text-primary" />
 										</div>
 										<div>
-											<h3 className="font-medium mb-1">{title}</h3>
-											<p className="text-sm text-muted-foreground">
+											<h3 className="mb-1 font-medium">{title}</h3>
+											<p className="text-muted-foreground text-sm">
 												{description}
 											</p>
 										</div>
@@ -74,9 +74,9 @@ export default function ContactPage() {
 								),
 							)}
 
-							<div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
-								<h3 className="font-medium mb-2">Looking for support?</h3>
-								<p className="text-sm text-muted-foreground mb-4">
+							<div className="rounded-2xl border border-border/60 bg-card/30 p-6 backdrop-blur-sm">
+								<h3 className="mb-2 font-medium">Looking for support?</h3>
+								<p className="mb-4 text-muted-foreground text-sm">
 									Check out our help center for quick answers to common
 									questions.
 								</p>
@@ -91,8 +91,8 @@ export default function ContactPage() {
 						</div>
 
 						{/* Contact Form */}
-						<div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-8">
-							<h2 className="text-xl font-semibold mb-6">Send us a message</h2>
+						<div className="rounded-2xl border border-border/60 bg-card/30 p-8 backdrop-blur-sm">
+							<h2 className="mb-6 font-semibold text-xl">Send us a message</h2>
 							<form className="space-y-5">
 								<div className="grid gap-4 sm:grid-cols-2">
 									<div className="space-y-2">
@@ -144,12 +144,12 @@ export default function ContactPage() {
 									<Textarea
 										id="message"
 										placeholder="Tell us how we can help..."
-										className="min-h-[120px] rounded-lg border-border/60 bg-background/50 resize-none"
+										className="min-h-[120px] resize-none rounded-lg border-border/60 bg-background/50"
 									/>
 								</div>
 								<Button
 									type="submit"
-									className="w-full h-10 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+									className="h-10 w-full rounded-lg bg-foreground text-background hover:bg-foreground/90"
 								>
 									Send Message
 								</Button>
@@ -160,21 +160,21 @@ export default function ContactPage() {
 			</section>
 
 			{/* Enterprise CTA */}
-			<section className="py-24 md:py-32 border-t border-border/40">
+			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative rounded-3xl border border-border/60 bg-card/30 backdrop-blur-sm p-12 md:p-16 text-center max-w-4xl mx-auto overflow-hidden">
+					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
 						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
 						<div className="relative">
-							<h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
 								Enterprise needs?
 							</h2>
-							<p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
 								For larger deployments, custom integrations, or security
 								requirements, let's schedule a call.
 							</p>
 							<Button
 								size="lg"
-								className="h-11 px-8 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+								className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
 								asChild
 							>
 								<Link to="/contact">Schedule a Demo</Link>

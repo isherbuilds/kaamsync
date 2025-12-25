@@ -6,7 +6,7 @@ import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import {
-	AssigneeSelect,
+	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter-field-selectors";
@@ -18,6 +18,16 @@ import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
+
+export const meta: Route.MetaFunction = ({ params }) => [
+	{
+		title: `Matter ${params.matterKey}`,
+	},
+	{
+		name: "description",
+		content: `Details and activity for matter ${params.matterKey}.`,
+	},
+];
 
 const TIMELINE_TYPE_COLORS: Record<string, string> = {
 	comment: "bg-blue-500",
@@ -69,22 +79,11 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	// Determine admin privileges - direct lookup
 	const userId = authSession.user.id;
-	let isAdmin = false;
-	let canEdit = false;
-	for (let i = 0; i < members.length; i++) {
-		// biome-ignore lint/suspicious/noExplicitAny: Zero query types
-		const m = members[i] as any;
-		if (m.userId === userId) {
-			isAdmin = m.role === "admin" || m.role === "owner";
-			break;
-		}
-	}
-
-	// Define canEdit based on user role/ownership
-	if (matter) {
-		canEdit =
-			matter.authorId === userId || matter.assigneeId === userId || isAdmin;
-	}
+	const member = members.find((m: any) => m.userId === userId);
+	const isAdmin = member?.role === "admin" || member?.role === "owner";
+	const canEdit =
+		matter &&
+		(matter.authorId === userId || matter.assigneeId === userId || isAdmin);
 
 	// Handler functions - z is stable so no useCallback needed
 	const handleStatusChange = (newStatusId: string) => {
@@ -117,18 +116,23 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		);
 	};
 
+	const handleBack = () => {
+		// window.history.state?.idx is specific to how React Router tracks history index
+		if (window.history.state && window.history.state.idx > 0) {
+			navigate(-1);
+		} else {
+			navigate(`/${orgSlug}`);
+		}
+	};
+
 	// Early return after all hooks
 	if (!matter) {
 		return (
 			<div className="flex h-screen items-center justify-center p-4">
 				<div className="text-center">
-					<p className="text-lg font-semibold">Task not found</p>
-					<Button
-						onClick={() => navigate(`/${orgSlug}`)}
-						className="mt-4"
-						size="lg"
-					>
-						Back to Tasks
+					<p className="font-semibold text-lg">Task not found</p>
+					<Button onClick={handleBack} className="mt-4" size="lg">
+						Back
 					</Button>
 				</div>
 			</div>
@@ -139,17 +143,17 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		<div className="@container flex h-full flex-col bg-background">
 			{/* Compact header - mobile optimized */}
 			<header className="flex h-12 shrink-0 items-center justify-between border-b px-3 md:px-4">
-				<div className="flex items-center gap-2 text-muted-foreground min-w-0">
+				<div className="flex min-w-0 items-center gap-2 text-muted-foreground">
 					<Button
 						variant="ghost"
 						size="sm"
 						className="h-8 px-2"
-						onClick={() => navigate(`/${orgSlug}`)}
+						onClick={handleBack}
 					>
 						<ChevronRight className="size-4 rotate-180" />
-						<span className="hidden sm:inline ml-1">Back</span>
+						<span className="ml-1 hidden sm:inline">Back</span>
 					</Button>
-					<span className="font-mono text-sm font-medium text-foreground truncate">
+					<span className="truncate font-medium font-mono text-foreground text-sm">
 						{matter.workspaceCode}-{matter.shortID}
 					</span>
 				</div>
@@ -163,11 +167,11 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				</div>
 			</header>
 
-			<div className="flex flex-1 flex-col overflow-hidden @3xl:flex-row">
+			<div className="flex flex-1 @3xl:flex-row flex-col overflow-hidden">
 				{/* Main Content */}
-				<div className="flex-1 overflow-y-auto pb-20 @3xl:pb-6">
-					<div className="mx-auto max-w-3xl px-4 py-4 @3xl:px-8 @3xl:py-8">
-						<div className="space-y-4 @3xl:space-y-6">
+				<div className="flex-1 overflow-y-auto @3xl:pb-6 pb-20">
+					<div className="mx-auto max-w-3xl @3xl:px-8 px-4 @3xl:py-8 py-4">
+						<div className="@3xl:space-y-6 space-y-4">
 							{/* Admin approval banner - mobile visible */}
 							<AdminApproveSection
 								isVisible={matter.type === "request"}
@@ -178,12 +182,12 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 							/>
 
 							{/* Title */}
-							<h1 className="text-xl font-bold @3xl:text-2xl">
+							<h1 className="font-bold @3xl:text-2xl text-xl">
 								{matter.title}
 							</h1>
 
 							{/* Quick properties - mobile horizontal scroll */}
-							<div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 @3xl:hidden">
+							<div className="-mx-4 flex @3xl:hidden gap-2 overflow-x-auto px-4 pb-2">
 								<PropertyPill label="Status">
 									<StatusSelect
 										value={matter.statusId || ""}
@@ -201,8 +205,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 									/>
 								</PropertyPill>
 								<PropertyPill label="Assignee">
-									<AssigneeSelect
-										value={matter.assigneeId || null}
+									<MemberSelect
+										value={matter.assigneeId || ""}
 										members={members}
 										onChange={handleAssign}
 										showLabel
@@ -212,11 +216,11 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 							{/* Description */}
 							{matter.description ? (
-								<p className="text-sm leading-relaxed text-foreground/80 whitespace-pre-wrap">
+								<p className="whitespace-pre-wrap text-foreground/80 text-sm leading-relaxed">
 									{matter.description}
 								</p>
 							) : (
-								<p className="text-sm italic text-muted-foreground">
+								<p className="text-muted-foreground text-sm italic">
 									No description
 								</p>
 							)}
@@ -225,7 +229,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 							{/* Activity */}
 							<div className="space-y-4">
-								<h2 className="text-sm font-semibold">Activity</h2>
+								<h2 className="font-semibold text-sm">Activity</h2>
 								<CommentInput />
 								<TaskTimeline
 									matterId={matter.id}
@@ -238,7 +242,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				</div>
 
 				{/* Desktop Sidebar */}
-				<aside className="hidden w-72 shrink-0 overflow-y-auto border-l bg-muted/5 p-4 @3xl:block">
+				<aside className="@3xl:block hidden w-72 shrink-0 overflow-y-auto border-l bg-muted/5 p-4">
 					<div className="space-y-6">
 						<AdminApproveSection
 							isVisible={matter.type === "request"}
@@ -249,7 +253,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						/>
 
 						<div className="space-y-2">
-							<h3 className="text-xs font-medium text-muted-foreground">
+							<h3 className="font-medium text-muted-foreground text-xs">
 								Properties
 							</h3>
 							<PropertyRow label="Status">
@@ -271,8 +275,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								/>
 							</PropertyRow>
 							<PropertyRow label="Assignee">
-								<AssigneeSelect
-									value={matter.assigneeId || null}
+								<MemberSelect
+									value={matter.assigneeId || ""}
 									members={members}
 									onChange={handleAssign}
 									showLabel
@@ -284,15 +288,15 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						<Separator />
 
 						<div className="space-y-2">
-							<h3 className="text-xs font-medium text-muted-foreground">
+							<h3 className="font-medium text-muted-foreground text-xs">
 								Labels
 							</h3>
 							{matter.type === "request" ? (
-								<span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-2 py-0.5 text-xs font-medium text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-950/30 dark:text-yellow-400">
+								<span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-2 py-0.5 font-medium text-xs text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-950/30 dark:text-yellow-400">
 									Request
 								</span>
 							) : (
-								<span className="text-sm text-muted-foreground/50 italic">
+								<span className="text-muted-foreground/50 text-sm italic">
 									None
 								</span>
 							)}
@@ -300,7 +304,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 						<Separator />
 
-						<div className="space-y-2 text-xs text-muted-foreground">
+						<div className="space-y-2 text-muted-foreground text-xs">
 							<h3 className="font-medium">Details</h3>
 							<div className="flex justify-between">
 								<span>Created</span>
@@ -331,8 +335,8 @@ function PropertyPill({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="flex items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5 shrink-0">
-			<span className="text-xs text-muted-foreground">{label}</span>
+		<div className="flex shrink-0 items-center gap-2 rounded-full border bg-muted/50 px-3 py-1.5">
+			<span className="text-muted-foreground text-xs">{label}</span>
 			{children}
 		</div>
 	);
@@ -347,7 +351,7 @@ function PropertyRow({
 }) {
 	return (
 		<div className="flex items-center justify-between rounded-md px-2 py-1 hover:bg-muted/50">
-			<span className="w-20 shrink-0 text-sm text-muted-foreground">
+			<span className="w-20 shrink-0 text-muted-foreground text-sm">
 				{label}
 			</span>
 			<div className="flex-1">{children}</div>
@@ -362,7 +366,7 @@ function CommentInput() {
 			<Textarea
 				placeholder="Add a comment..."
 				rows={2}
-				className="resize-none text-sm min-h-[60px]"
+				className="min-h-15 resize-none text-sm"
 			/>
 			<Button type="submit" size="sm" className="shrink-0 self-end">
 				Send
@@ -404,7 +408,7 @@ function TaskTimeline({
 	if (timeline.length === 0) {
 		return (
 			<div className="space-y-4">
-				<p className="text-sm text-muted-foreground italic">No activity yet</p>
+				<p className="text-muted-foreground text-sm italic">No activity yet</p>
 			</div>
 		);
 	}
@@ -456,7 +460,7 @@ const TimelineEntry = memo(function TimelineEntry({
 		userId ? memberMap.get(userId) || "Unknown User" : "Unassigned";
 	let content: React.ReactNode = null;
 	if (entry.type === "comment") {
-		content = <p className="text-sm whitespace-pre-wrap">{entry.content}</p>;
+		content = <p className="whitespace-pre-wrap text-sm">{entry.content}</p>;
 	} else if (entry.type === "created") {
 		content = <p className="text-sm">Created this task</p>;
 	} else if (entry.type === "status_change") {
@@ -482,7 +486,7 @@ const TimelineEntry = memo(function TimelineEntry({
 	return (
 		<div className="relative flex gap-3">
 			{!isLast && (
-				<div className="absolute left-[15px] top-8 bottom-0 w-px bg-border" />
+				<div className="absolute top-8 bottom-0 left-3.75 w-px bg-border" />
 			)}
 			<div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-background">
 				{userImage ? (
@@ -492,22 +496,22 @@ const TimelineEntry = memo(function TimelineEntry({
 						className="size-full rounded-full object-cover"
 					/>
 				) : (
-					<span className="text-[10px] font-semibold">
+					<span className="font-semibold text-[10px]">
 						{getInitials(userName)}
 					</span>
 				)}
 			</div>
 			<div className="flex-1 pb-4">
-				<div className="flex items-center gap-2 mb-1">
-					<span className="text-sm font-medium">{userName}</span>
+				<div className="mb-1 flex items-center gap-2">
+					<span className="font-medium text-sm">{userName}</span>
 					<div
 						className={`size-1 rounded-full ${TIMELINE_TYPE_COLORS[entry.type] || "bg-muted"}`}
 					/>
-					<span className="text-xs text-muted-foreground">
+					<span className="text-muted-foreground text-xs">
 						{formatTimelineDate(entry.createdAt || Date.now())}
 					</span>
 				</div>
-				<div className="rounded-md bg-muted/30 border px-3 py-2">{content}</div>
+				<div className="rounded-md border bg-muted/30 px-3 py-2">{content}</div>
 			</div>
 		</div>
 	);
@@ -560,15 +564,15 @@ function AdminApproveSection({
 
 	return (
 		<div className="rounded-md border border-green-200 bg-green-50 p-4 dark:border-green-900/50 dark:bg-green-950/20">
-			<h3 className="mb-2 text-sm font-medium text-green-900 dark:text-green-100">
+			<h3 className="mb-2 font-medium text-green-900 text-sm dark:text-green-100">
 				Pending Approval
 			</h3>
-			<p className="mb-3 text-xs text-green-800 dark:text-green-200">
+			<p className="mb-3 text-green-800 text-xs dark:text-green-200">
 				This request needs your approval to proceed.
 			</p>
 			<Button
 				onClick={approve}
-				className="w-full bg-green-600 hover:bg-green-700 text-white"
+				className="w-full bg-green-600 text-white hover:bg-green-700"
 				size="sm"
 				disabled={isSubmitting}
 			>

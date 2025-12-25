@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { and, asc, eq, sql } from "drizzle-orm";
 import {
-	membershipRole,
+	orgRole as membershipRole,
 	membershipStatus,
 	statusType,
 	workspaceRole,

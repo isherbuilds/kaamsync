@@ -59,14 +59,14 @@ export default function AboutPage() {
 			{/* Hero */}
 			<section className="py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="max-w-3xl mx-auto text-center">
-						<p className="text-sm font-medium text-primary mb-4">About Us</p>
-						<h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
+					<div className="mx-auto max-w-3xl text-center">
+						<p className="mb-4 font-medium text-primary text-sm">About Us</p>
+						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
 							Building the future
 							<br />
 							of work management
 						</h1>
-						<p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+						<p className="mx-auto max-w-2xl text-lg text-muted-foreground">
 							We started KaamSync because we believed teams deserve better tools
 							— ones that feel good to use and actually help you get things
 							done.
@@ -76,15 +76,15 @@ export default function AboutPage() {
 			</section>
 
 			{/* Stats */}
-			<section className="py-16 border-y border-border/40">
+			<section className="border-border/40 border-y py-16">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
+					<div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 text-center md:grid-cols-4">
 						{stats.map(({ value, label }) => (
 							<div key={label}>
-								<div className="text-4xl md:text-5xl font-bold mb-1">
+								<div className="mb-1 font-bold text-4xl md:text-5xl">
 									{value}
 								</div>
-								<div className="text-sm text-muted-foreground">{label}</div>
+								<div className="text-muted-foreground text-sm">{label}</div>
 							</div>
 						))}
 					</div>
@@ -94,13 +94,13 @@ export default function AboutPage() {
 			{/* Mission */}
 			<section className="py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+					<div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
 						<div>
-							<div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-sm text-muted-foreground mb-6">
+							<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-muted-foreground text-sm">
 								<Zap className="size-3.5" />
 								<span>Our Story</span>
 							</div>
-							<h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-6">
+							<h2 className="mb-6 font-bold text-3xl tracking-tight md:text-4xl">
 								Born from frustration with bloated tools
 							</h2>
 							<div className="space-y-4 text-muted-foreground">
@@ -122,10 +122,10 @@ export default function AboutPage() {
 							</div>
 						</div>
 						<div className="relative">
-							<div className="aspect-square rounded-3xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden flex items-center justify-center">
+							<div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-border/60 bg-card/30 backdrop-blur-sm">
 								<div className="text-center">
-									<Building2 className="size-16 mx-auto mb-4 text-muted-foreground/50" />
-									<p className="text-sm text-muted-foreground">Founded 2023</p>
+									<Building2 className="mx-auto mb-4 size-16 text-muted-foreground/50" />
+									<p className="text-muted-foreground text-sm">Founded 2023</p>
 								</div>
 							</div>
 						</div>
@@ -134,24 +134,24 @@ export default function AboutPage() {
 			</section>
 
 			{/* Values */}
-			<section className="py-24 md:py-32 border-t border-border/40">
+			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="text-center mb-16">
-						<p className="text-sm font-medium text-primary mb-4">Our Values</p>
-						<h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+					<div className="mb-16 text-center">
+						<p className="mb-4 font-medium text-primary text-sm">Our Values</p>
+						<h2 className="font-bold text-3xl tracking-tight md:text-4xl">
 							What we believe in
 						</h2>
 					</div>
-					<div className="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+					<div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
 						{values.map(({ icon: Icon, title, description }) => (
 							<div
 								key={title}
-								className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-8"
+								className="rounded-2xl border border-border/60 bg-card/30 p-8 backdrop-blur-sm"
 							>
-								<div className="size-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+								<div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-primary/10">
 									<Icon className="size-5 text-primary" />
 								</div>
-								<h3 className="text-lg font-semibold mb-2">{title}</h3>
+								<h3 className="mb-2 font-semibold text-lg">{title}</h3>
 								<p className="text-muted-foreground">{description}</p>
 							</div>
 						))}
@@ -160,28 +160,28 @@ export default function AboutPage() {
 			</section>
 
 			{/* Team */}
-			<section className="py-24 md:py-32 border-t border-border/40">
+			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="text-center mb-16">
-						<p className="text-sm font-medium text-primary mb-4">Our Team</p>
-						<h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+					<div className="mb-16 text-center">
+						<p className="mb-4 font-medium text-primary text-sm">Our Team</p>
+						<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
 							The people behind KaamSync
 						</h2>
-						<p className="text-muted-foreground max-w-xl mx-auto">
+						<p className="mx-auto max-w-xl text-muted-foreground">
 							A small, focused team obsessed with building the best work
 							management experience.
 						</p>
 					</div>
-					<div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4 max-w-4xl mx-auto">
+					<div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2 md:grid-cols-4">
 						{team.map(({ name, role, initials }) => (
 							<div key={name} className="text-center">
-								<div className="size-24 rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
-									<span className="text-xl font-semibold text-muted-foreground">
+								<div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm">
+									<span className="font-semibold text-muted-foreground text-xl">
 										{initials}
 									</span>
 								</div>
 								<h3 className="font-medium">{name}</h3>
-								<p className="text-sm text-muted-foreground">{role}</p>
+								<p className="text-muted-foreground text-sm">{role}</p>
 							</div>
 						))}
 					</div>
@@ -189,22 +189,22 @@ export default function AboutPage() {
 			</section>
 
 			{/* CTA */}
-			<section className="py-24 md:py-32 border-t border-border/40">
+			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative rounded-3xl border border-border/60 bg-card/30 backdrop-blur-sm p-12 md:p-16 text-center max-w-4xl mx-auto overflow-hidden">
+					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
 						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
 						<div className="relative">
-							<h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
 								Join us on our journey
 							</h2>
-							<p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
+							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
 								We're always looking for talented people who share our passion
 								for building great products.
 							</p>
-							<div className="flex flex-col sm:flex-row gap-3 justify-center">
+							<div className="flex flex-col justify-center gap-3 sm:flex-row">
 								<Button
 									size="lg"
-									className="h-11 px-8 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+									className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
 									asChild
 								>
 									<Link to="/signup">Start Using KaamSync</Link>
@@ -212,7 +212,7 @@ export default function AboutPage() {
 								<Button
 									size="lg"
 									variant="outline"
-									className="h-11 px-8 rounded-lg border-border/60"
+									className="h-11 rounded-lg border-border/60 px-8"
 									asChild
 								>
 									<Link to="/contact">Contact Us</Link>

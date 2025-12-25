@@ -123,7 +123,10 @@ export function VirtualizedList<T>({
 		<div
 			ref={parentRef}
 			className={`h-full w-full overflow-auto ${className}`}
-			style={{ contain: "strict" }}
+			style={{
+				contain: "strict",
+				scrollbarWidth: "thin",
+			}}
 		>
 			<div
 				style={{

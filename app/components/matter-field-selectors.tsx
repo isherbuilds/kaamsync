@@ -235,14 +235,14 @@ export function StatusSelect({
 }
 
 // Assignee Selector
-interface AssigneeSelectProps extends BaseSelectProps {
-	value: string | null;
+interface MemberSelectProps extends BaseSelectProps {
+	value: string;
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query return types are complex
 	members: any[];
-	onChange: (userId: string | null) => void;
+	onChange: (userId: string) => void;
 }
 
-export function AssigneeSelect({
+export function MemberSelect({
 	value,
 	members,
 	onChange,
@@ -250,11 +250,11 @@ export function AssigneeSelect({
 	className,
 	showLabel,
 	align,
-}: AssigneeSelectProps) {
+}: MemberSelectProps) {
 	const current = members.find((m) => m.userId === value);
-	const user = current?.user ?? current?.usersTable;
-	const displayName = user?.name || user?.email || current?.userId || "?";
-	const avatar = user?.image ?? undefined;
+	const user = current?.usersTable ?? current?.user ?? {};
+	const displayName = user.name || user.email || current?.userId || "None";
+	const avatar = user.image;
 
 	return (
 		<SelectPopover
@@ -281,7 +281,7 @@ export function AssigneeSelect({
 						</div>
 					)}
 					{showLabel && (
-						<span className="text-sm">{displayName || "Unassigned"}</span>
+						<span className="text-sm">{displayName || "None"}</span>
 					)}
 				</button>
 			}
@@ -294,14 +294,14 @@ export function AssigneeSelect({
 			{(close) => (
 				<>
 					<CommandItem
-						value="unassigned"
+						value="none"
 						onSelect={() => {
-							onChange(null);
+							onChange("");
 							close();
 						}}
 					>
 						<User className="mr-2 size-4 text-muted-foreground" />
-						<span>Unassigned</span>
+						<span>None</span>
 						{!value && <Check className="ml-auto size-4" />}
 					</CommandItem>
 					{members.map((member) => {

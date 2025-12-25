@@ -18,8 +18,9 @@ export default [
 	route("join", "routes/join.tsx"),
 
 	layout("routes/organization/layout.tsx", [
-		// index("routes/organization/index.tsx"),
-		route(":orgSlug", "routes/organization/index.tsx"),
+		route(":orgSlug", "routes/organization/tasks.tsx", {
+			id: "routes/organization/$orgSlug",
+		}),
 		route(":orgSlug/tasks", "routes/organization/tasks.tsx", [
 			route("matter/:matterKey", "routes/organization/matter.$matterKey.tsx", {
 				id: "routes/organization/$orgSlug/tasks/matter/:matterKey",

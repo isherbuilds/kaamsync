@@ -177,7 +177,7 @@ export function canDeleteMatter(role?: WorkspaceRole | null): boolean {
  * Organization-level roles (from Better Auth).
  * These control org-wide permissions like creating workspaces.
  */
-export type OrgRole = "owner" | "admin" | "member" | "guest";
+export type OrgRole = "owner" | "admin" | "member";
 
 /**
  * Check if org role can create workspaces

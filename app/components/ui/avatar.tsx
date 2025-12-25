@@ -54,7 +54,7 @@ function CustomAvatar({
 	className,
 }: {
 	name?: string;
-	avatar?: string;
+	avatar?: string | null;
 	className?: string;
 }) {
 	return (
