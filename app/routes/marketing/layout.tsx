@@ -30,7 +30,7 @@ const FooterLink = ({
 }) => (
 	<Link
 		to={to}
-		className="text-sm text-muted-foreground/80 hover:text-foreground transition-colors duration-200"
+		className="text-muted-foreground/80 text-sm transition-colors duration-200 hover:text-foreground"
 	>
 		{children}
 	</Link>
@@ -42,9 +42,9 @@ export default function MarketingLayout() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<header className="fixed inset-x-0 top-0 z-50">
-				<nav className="flex items-center justify-between p-4 md:px-6 bg-background/60 gap-2 backdrop-blur-xl border-b border-border/40">
+				<nav className="flex items-center justify-between gap-2 border-border/40 border-b bg-background/60 p-4 backdrop-blur-xl md:px-6">
 					<div className="flex md:flex-1">
-						<Link to="/" className="-m-1.5 p-1.5 flex items-center gap-2.5">
+						<Link to="/" className="-m-1.5 flex items-center gap-2.5 p-1.5">
 							<div className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-primary/80 text-primary-foreground">
 								<Zap className="size-4" />
 							</div>
@@ -60,24 +60,24 @@ export default function MarketingLayout() {
 							<Link
 								key={to}
 								to={to}
-								className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+								className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
 							>
 								{label}
 							</Link>
 						))}
 					</div>
 
-					<div className="flex flex-1 justify-end gap-2 md:gap-4 items-center">
+					<div className="flex flex-1 items-center justify-end gap-2 md:gap-4">
 						<Link
 							to="/login"
-							className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+							className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
 						>
 							Log in
 						</Link>
 						<Button
 							asChild
 							size="sm"
-							className="h-8 px-4 rounded-lg bg-foreground text-background hover:bg-foreground/90"
+							className="h-8 rounded-lg bg-foreground px-4 text-background hover:bg-foreground/90"
 						>
 							<Link to="/signup">Sign up</Link>
 						</Button>
@@ -94,14 +94,14 @@ export default function MarketingLayout() {
 
 				{/* Mobile menu panel */}
 				<div
-					className={`fixed inset-0 z-40 bg-background md:hidden transition-opacity duration-200 ease-in-out ${
+					className={`fixed inset-0 z-40 bg-background transition-opacity duration-200 ease-in-out md:hidden ${
 						open
-							? "opacity-100 pointer-events-auto"
-							: "opacity-0 pointer-events-none"
+							? "pointer-events-auto opacity-100"
+							: "pointer-events-none opacity-0"
 					}`}
 					style={{ top: "60px" }} // Approximate header height offset to ensure it doesn't overlap weirdly if z-index fails, but mainly relying on padding
 				>
-					<div className="flex flex-col h-full w-full p-6">
+					<div className="flex h-full w-full flex-col p-6">
 						<div className="flex-1 overflow-y-auto">
 							<div className="flex flex-col gap-4">
 								{navLinks.map(({ to, label }) => (
@@ -109,26 +109,26 @@ export default function MarketingLayout() {
 										key={to}
 										to={to}
 										onClick={() => setOpen(false)}
-										className="text-2xl text-foreground hover:bg-muted/50 transition-colors"
+										className="text-2xl text-foreground transition-colors hover:bg-muted/50"
 									>
 										{label}
 									</Link>
 								))}
 							</div>
 
-							<div className="mt-8 pt-8 border-t border-border/40 space-y-4">
+							<div className="mt-8 space-y-4 border-border/40 border-t pt-8">
 								<div className="grid grid-cols-2 gap-4">
 									<Link
 										to="/login"
 										onClick={() => setOpen(false)}
-										className="flex items-center justify-center rounded-xl px-3 py-3 text-base font-medium text-foreground bg-muted/50 hover:bg-muted transition-colors"
+										className="flex items-center justify-center rounded-xl bg-muted/50 px-3 py-3 font-medium text-base text-foreground transition-colors hover:bg-muted"
 									>
 										Log in
 									</Link>
 									<Link
 										to="/signup"
 										onClick={() => setOpen(false)}
-										className="flex items-center justify-center rounded-xl px-3 py-3 text-base font-medium bg-foreground text-background hover:bg-foreground/90 transition-colors"
+										className="flex items-center justify-center rounded-xl bg-foreground px-3 py-3 font-medium text-background text-base transition-colors hover:bg-foreground/90"
 									>
 										Get Started
 									</Link>
@@ -143,30 +143,30 @@ export default function MarketingLayout() {
 				<Outlet />
 			</main>
 
-			<footer className="border-t border-border/40 mt-24">
-				<div className="container mx-auto px-4 md:px-6 py-16">
+			<footer className="mt-24 border-border/40 border-t">
+				<div className="container mx-auto px-4 py-16 md:px-6">
 					<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
-						<div className="lg:col-span-2 space-y-4">
+						<div className="space-y-4 lg:col-span-2">
 							<Link to="/" className="flex items-center gap-2.5">
 								<div className="flex size-7 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-primary/10 text-primary">
 									<Zap className="size-4" />
 								</div>
 								<span className="font-semibold">KaamSync</span>
 							</Link>
-							<p className="text-sm text-muted-foreground/80 max-w-xs leading-relaxed">
+							<p className="max-w-xs text-muted-foreground/80 text-sm leading-relaxed">
 								The modern way for teams to manage tasks, approvals, and
 								operations. Built for clarity.
 							</p>
 						</div>
 						<div className="space-y-4">
-							<h4 className="text-sm font-medium">Product</h4>
+							<h4 className="font-medium text-sm">Product</h4>
 							<div className="flex flex-col gap-3">
 								<FooterLink to="/pricing">Pricing</FooterLink>
 								<FooterLink to="/about">About</FooterLink>
 							</div>
 						</div>
 						<div className="space-y-4">
-							<h4 className="text-sm font-medium">Resources</h4>
+							<h4 className="font-medium text-sm">Resources</h4>
 							<div className="flex flex-col gap-3">
 								<FooterLink to="/contact">Contact</FooterLink>
 								<FooterLink to="/terms">Terms</FooterLink>
@@ -174,7 +174,7 @@ export default function MarketingLayout() {
 							</div>
 						</div>
 						<div className="space-y-4">
-							<h4 className="text-sm font-medium">Connect</h4>
+							<h4 className="font-medium text-sm">Connect</h4>
 							<div className="flex flex-col gap-3">
 								<FooterLink to="/twitter">Twitter</FooterLink>
 								<FooterLink to="/linkedin">LinkedIn</FooterLink>

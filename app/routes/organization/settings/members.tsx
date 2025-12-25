@@ -134,8 +134,8 @@ export default function OrgMembersPage() {
 		<>
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-lg font-semibold md:text-2xl">Members</h1>
-					<p className="hidden text-xs text-muted-foreground md:block">
+					<h1 className="font-semibold text-lg md:text-2xl">Members</h1>
+					<p className="hidden text-muted-foreground text-xs md:block">
 						Manage your organization's team and access levels.
 					</p>
 				</div>
@@ -187,7 +187,7 @@ export default function OrgMembersPage() {
 								</div>
 								<Button
 									type="submit"
-									className="w-full h-10"
+									className="h-10 w-full"
 									disabled={isPending}
 								>
 									{isPending ? "Sending..." : "Send Invitation"}
@@ -198,9 +198,9 @@ export default function OrgMembersPage() {
 				)}
 			</div>
 
-			<div className="grid lg:grid-cols-3 gap-4">
+			<div className="grid gap-4 lg:grid-cols-3">
 				{/* Members List - Takes 2 cols on desktop */}
-				<div className="border rounded-xl bg-card shadow-sm overflow-hidden lg:col-span-2">
+				<div className="overflow-hidden rounded-xl border bg-card shadow-sm lg:col-span-2">
 					<div className="divide-y divide-border/50">
 						{members?.map((m) => {
 							const isSelf = m.userId === currentUser.id;
@@ -209,40 +209,40 @@ export default function OrgMembersPage() {
 							return (
 								<div
 									key={m.id}
-									className="flex items-center justify-between p-4 group hover:bg-muted/30 transition-colors overflow-hidden"
+									className="group flex items-center justify-between overflow-hidden p-4 transition-colors hover:bg-muted/30"
 								>
 									{/* Left: Avatar + Info */}
-									<div className="flex items-center gap-3 flex-1 overflow-hidden">
+									<div className="flex flex-1 items-center gap-3 overflow-hidden">
 										<CustomAvatar
 											avatar={m.usersTable?.image}
 											name={m.usersTable?.name}
 										/>
 										<div className="truncate">
-											<span className="text-sm font-medium flex items-center gap-2">
+											<span className="flex items-center gap-2 font-medium text-sm">
 												{m.usersTable?.name || "Pending User"}
 												{isSelf && (
 													<Badge
 														variant="secondary"
-														className="text-[10px] h-4 px-1"
+														className="h-4 px-1 text-[10px]"
 													>
 														You
 													</Badge>
 												)}
 											</span>
-											<span className="block text-xs text-muted-foreground truncate">
+											<span className="block truncate text-muted-foreground text-xs">
 												{m.usersTable?.email}
 											</span>
 										</div>
 									</div>
 
 									{/* Right: Role + Actions */}
-									<div className="flex items-center gap-2 ml-4">
+									<div className="ml-4 flex items-center gap-2">
 										<Badge
 											variant="outline"
-											className="hidden sm:flex capitalize font-normal text-[10px] bg-muted/50"
+											className="hidden bg-muted/50 font-normal text-[10px] capitalize sm:flex"
 										>
 											{m.role === "admin" || m.role === "owner" ? (
-												<ShieldCheck className="size-3 mr-1" />
+												<ShieldCheck className="mr-1 size-3" />
 											) : null}
 											{m.role}
 										</Badge>
@@ -274,7 +274,7 @@ export default function OrgMembersPage() {
 														className="text-destructive focus:bg-destructive/10 focus:text-destructive"
 														onClick={() => removeMember(m.id)}
 													>
-														<Trash2 className="size-4 mr-2" />
+														<Trash2 className="mr-2 size-4" />
 														Remove Member
 													</DropdownMenuItem>
 												</DropdownMenuContent>
@@ -293,10 +293,10 @@ export default function OrgMembersPage() {
 					{invites?.map((i) => (
 						<div
 							key={i.id}
-							className="group relative flex flex-col p-4 rounded-xl border bg-muted/20 text-sm shadow-sm"
+							className="group relative flex flex-col rounded-xl border bg-muted/20 p-4 text-sm shadow-sm"
 						>
-							<div className="flex justify-between items-start mb-2">
-								<div className="p-2 rounded-full bg-background border">
+							<div className="mb-2 flex items-start justify-between">
+								<div className="rounded-full border bg-background p-2">
 									<Mail className="size-4 text-muted-foreground" />
 								</div>
 								{isAdminOrOwner && (
@@ -310,11 +310,11 @@ export default function OrgMembersPage() {
 									</Button>
 								)}
 							</div>
-							<p className="font-medium truncate mb-1">{i.email}</p>
+							<p className="mb-1 truncate font-medium">{i.email}</p>
 							<div className="flex items-center gap-2">
 								<Badge
 									variant="outline"
-									className="text-[10px] uppercase font-bold tracking-tighter h-5"
+									className="h-5 font-bold text-[10px] uppercase tracking-tighter"
 								>
 									{i.role}
 								</Badge>
@@ -325,8 +325,8 @@ export default function OrgMembersPage() {
 						</div>
 					))}
 					{invites?.length === 0 && (
-						<div className="border border-dashed rounded-xl p-8 text-center">
-							<p className="text-xs text-muted-foreground">
+						<div className="rounded-xl border border-dashed p-8 text-center">
+							<p className="text-muted-foreground text-xs">
 								No pending invitations
 							</p>
 						</div>

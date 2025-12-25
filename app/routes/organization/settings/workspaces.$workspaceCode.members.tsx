@@ -115,11 +115,11 @@ export default function WorkspaceMembersPage() {
 		<>
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-lg font-semibold md:text-2xl">
+					<h1 className="font-semibold text-lg md:text-2xl">
 						{workspace?.name} Members
 					</h1>
 
-					<p className="hidden text-xs text-muted-foreground md:block">
+					<p className="hidden text-muted-foreground text-xs md:block">
 						Manage members who have access to this workspace.
 					</p>
 				</div>
@@ -146,7 +146,7 @@ export default function WorkspaceMembersPage() {
 										onChange={(val) =>
 											form.update({ name: fields.userId.name, value: val })
 										}
-										className="w-full border rounded-md p-2 bg-muted/50"
+										className="w-full rounded-md border bg-muted/50 p-2"
 									/>
 									<input
 										type="hidden"
@@ -155,14 +155,14 @@ export default function WorkspaceMembersPage() {
 									/>
 								</CustomChildrenField>
 
-								<div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
+								<div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
 									{getCollectionProps(fields.role, {
 										type: "radio",
 										options: Object.values(workspaceRole),
 									}).map((props) => (
 										<label key={props.value} className="flex-1 cursor-pointer">
-											<input {...props} className="sr-only peer" />
-											<span className="block text-center py-1.5 rounded-md text-xs font-medium capitalize transition-all peer-checked:bg-background peer-checked:shadow-sm">
+											<input {...props} className="peer sr-only" />
+											<span className="block rounded-md py-1.5 text-center font-medium text-xs capitalize transition-all peer-checked:bg-background peer-checked:shadow-sm">
 												{props.value}
 											</span>
 										</label>
@@ -179,18 +179,18 @@ export default function WorkspaceMembersPage() {
 
 			<br />
 
-			<section className="flex-1 space-y-4 w-full rounded-xl border">
+			<section className="w-full flex-1 space-y-4 rounded-xl border">
 				<div className="divide-y divide-border/50">
 					{memberships.map((m) => (
 						<div
 							key={m.id}
-							className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors group"
+							className="group flex items-center justify-between p-4 transition-colors hover:bg-muted/20"
 						>
-							<div className="flex items-center gap-3 flex-1 overflow-hidden">
+							<div className="flex flex-1 items-center gap-3 overflow-hidden">
 								<CustomAvatar avatar={m.user?.image} name={m.user?.name} />
 								<div className="truncate">
-									<p className="text-sm font-medium truncate">{m.user?.name}</p>
-									<p className="text-xs text-muted-foreground truncate">
+									<p className="truncate font-medium text-sm">{m.user?.name}</p>
+									<p className="truncate text-muted-foreground text-xs">
 										{m.user?.email}
 									</p>
 								</div>
@@ -199,7 +199,7 @@ export default function WorkspaceMembersPage() {
 							<div className="flex items-center gap-4">
 								<Badge
 									variant="secondary"
-									className="h-5 px-2 text-[10px] font-normal uppercase bg-muted/50 text-muted-foreground border-transparent"
+									className="h-5 border-transparent bg-muted/50 px-2 font-normal text-[10px] text-muted-foreground uppercase"
 								>
 									{m.role}
 								</Badge>
@@ -238,7 +238,7 @@ export default function WorkspaceMembersPage() {
 													})
 												}
 											>
-												<Trash2 className="size-4 mr-2" /> Remove
+												<Trash2 className="mr-2 size-4" /> Remove
 											</DropdownMenuItem>
 										</DropdownMenuContent>
 									</DropdownMenu>
