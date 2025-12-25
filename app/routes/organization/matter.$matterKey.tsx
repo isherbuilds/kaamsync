@@ -22,7 +22,10 @@ import type { Route } from "./+types/matter.$matterKey";
 export const meta: Route.MetaFunction = ({ params }) => [
 	{
 		title: `Matter ${params.matterKey}`,
-		description: `Details and activity for matter ${params.matterKey}.`,
+	},
+	{
+		name: "description",
+		content: `Details and activity for matter ${params.matterKey}.`,
 	},
 ];
 

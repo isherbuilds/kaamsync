@@ -40,7 +40,10 @@ import type { Route } from "./+types/tasks";
 export const meta: Route.MetaFunction = ({ params }) => [
 	{
 		title: `Tasks - ${params.orgSlug}`,
-		description: "Manage your tasks and assignments within the organization.",
+	},
+	{
+		name: "description",
+		content: `Manage and view tasks assigned to you in organization ${params.orgSlug}.`,
 	},
 ];
 

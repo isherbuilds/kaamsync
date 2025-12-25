@@ -41,7 +41,10 @@ import type { Route } from "./+types/$workspaceCode";
 export const meta: Route.MetaFunction = ({ params }) => [
 	{
 		title: `Workspace - ${params.workspaceCode}`,
-		description: "Manage your workspace tasks and requests.",
+	},
+	{
+		name: "description",
+		content: `Workspace ${params.workspaceCode} overview and tasks management.`,
 	},
 ];
 
