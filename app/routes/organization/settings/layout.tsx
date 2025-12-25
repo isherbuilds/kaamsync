@@ -14,7 +14,7 @@ export default function OrganizationSettingsLayout() {
 	// const { authSession } = useOrgLoaderData();
 
 	return (
-		<div className="flex flex-col h-full">
+		<main className="flex flex-col h-full">
 			<div className="flex items-center gap-2  border-b bg-background px-4 h-12 lg:hidden">
 				<SidebarTrigger />
 				<Link to="../" className="flex items-center gap-2">
@@ -27,6 +27,6 @@ export default function OrganizationSettingsLayout() {
 					<Outlet />
 				</div>
 			</div>
-		</div>
+		</main>
 	);
 }

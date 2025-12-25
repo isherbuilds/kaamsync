@@ -148,7 +148,7 @@ export default function OrgMembersPage() {
 								<span className="hidden sm:inline">Invite Member</span>
 							</Button>
 						</DialogTrigger>
-						<DialogContent className="sm:max-w-106.25">
+						<DialogContent className="sm:max-w-96">
 							<DialogHeader>
 								<DialogTitle>Invite team member</DialogTitle>
 								<DialogDescription>
