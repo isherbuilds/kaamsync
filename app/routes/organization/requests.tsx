@@ -39,7 +39,10 @@ import type { Route } from "./+types/requests";
 export const meta: Route.MetaFunction = ({ params }) => [
 	{
 		title: `Requests - ${params.orgSlug}`,
-		description: "Manage your requests within the organization.",
+	},
+	{
+		name: "description",
+		content: "Manage and track your requests efficiently in KaamSync.",
 	},
 ];
 

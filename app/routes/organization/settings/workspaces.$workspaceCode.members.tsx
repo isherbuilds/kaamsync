@@ -1,18 +1,17 @@
 import { getCollectionProps, getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { MoreVerticalIcon, TrashIcon, UserPlusIcon } from "lucide-react";
+import { MoreVertical, Trash2, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
-import { z as zod } from "zod";
+import { z } from "zod";
 import { CustomChildrenField } from "~/components/forms";
 import { MemberSelect } from "~/components/matter-field-selectors";
-// UI Components
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { CustomAvatar } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -27,173 +26,127 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { type WorkspaceRole, workspaceRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 
-// 1. Define a Schema for Conform
-const addMemberSchema = zod.object({
-	userId: zod.string({ error: "Please select a user" }),
-	role: zod.enum(workspaceRole),
+const addMemberSchema = z.object({
+	userId: z.string().min(1, "Select a user"),
+	role: z.enum(workspaceRole),
 });
 
 export default function WorkspaceMembersPage() {
 	const { authSession } = useOrgLoaderData();
-	const z = useZero();
-
 	const { workspaceCode } = useParams();
-	const [addMemberOpen, setAddMemberOpen] = useState(false);
+	const zr = useZero();
+	const [open, setOpen] = useState(false);
 
-	// 2. Optimized Query
 	const [workspace] = useQuery(
 		queries.getWorkspaceByCode({ code: workspaceCode ?? "" }),
 		CACHE_LONG,
 	);
-
-	// 3. Get Organization Members
 	const [orgMembers] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 
-	// 4. Derived State
-	const workspaceMembers = workspace?.memberships ?? [];
-	const currentMembership = workspaceMembers.find(
-		(m) => m.userId === authSession.user.id,
+	const memberships = useMemo(() => workspace?.memberships ?? [], [workspace]);
+	const isManager = useMemo(
+		() =>
+			memberships.find((m) => m.userId === authSession.user.id)?.role ===
+			"manager",
+		[memberships, authSession],
 	);
-	const isManager = currentMembership?.role === "manager";
 
-	const availableOrgMembers = useMemo(() => {
-		const existingIds = new Set(workspaceMembers.map((m) => m.userId));
+	const availableUsers = useMemo(() => {
+		const existingIds = new Set(memberships.map((m) => m.userId));
 		return orgMembers?.filter((m) => !existingIds.has(m.userId)) ?? [];
-	}, [orgMembers, workspaceMembers]);
+	}, [orgMembers, memberships]);
 
-	// 5. Conform Form Setup
 	const [form, fields] = useForm({
-		id: "add-member",
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: addMemberSchema });
-		},
-		defaultValue: {
-			role: workspaceRole.viewer,
-		},
+		id: "ws-add-member",
+		onValidate: ({ formData }) =>
+			parseWithZod(formData, { schema: addMemberSchema }),
+		defaultValue: { role: "member" },
 		onSubmit: async (event, { submission }) => {
 			event.preventDefault();
-
-			console.log("Submission:", submission);
-
 			if (submission?.status !== "success" || !workspace) return;
 
-			const { userId, role } = submission.value;
+			zr.mutate(
+				mutators.workspace.addMember({
+					workspaceId: workspace.id,
+					userId: submission.value.userId,
+					role: submission.value.role as WorkspaceRole,
+				}),
+			);
 
-			try {
-				await z.mutate(
-					mutators.workspace.addMember({
-						workspaceId: workspace.id,
-						userId,
-						role,
-					}),
-				);
-				toast.success("Member added");
-				setAddMemberOpen(false);
-			} catch (_e) {
-				toast.error("Failed to add member");
-			}
+			toast.success("Member added to workspace");
+			setOpen(false);
 		},
 	});
 
-	// Actions
-	const handleUpdateRole = async (userId: string, role: WorkspaceRole) => {
+	const handleRemove = async (member: {
+		userId: string;
+		role: WorkspaceRole;
+	}) => {
 		if (!workspace) return;
-		try {
-			await z.mutate(
-				mutators.workspace.updateMemberRole({
-					workspaceId: workspace.id,
-					userId,
-					role,
-				}),
-			);
-			toast.success(`Role updated to ${role}`);
-		} catch (_e) {
-			toast.error("Failed to update role");
-		}
-	};
+		zr.mutate(
+			mutators.workspace.removeMember({
+				workspaceId: workspace.id,
+				userId: member.userId,
+			}),
+		);
 
-	const handleRemoveMember = async (userId: string) => {
-		if (!workspace) return;
-
-		const memberToRestore = workspaceMembers.find((m) => m.userId === userId);
-		if (!memberToRestore) return;
-
-		// Optimistic mutation call
-		try {
-			await z.mutate(
-				mutators.workspace.removeMember({
-					workspaceId: workspace.id,
-					userId,
-				}),
-			);
-
-			toast("Member removed", {
-				action: {
-					label: "Undo",
-					onClick: () => {
-						z.mutate(
-							mutators.workspace.addMember({
-								workspaceId: workspace.id,
-								userId: memberToRestore.userId,
-								role: memberToRestore.role as WorkspaceRole,
-							}),
-						);
-					},
-				},
-			});
-		} catch (_e) {
-			toast.error("Failed to remove member");
-		}
+		toast("Member removed", {
+			action: {
+				label: "Undo",
+				onClick: () =>
+					zr.mutate(
+						mutators.workspace.addMember({
+							workspaceId: workspace.id,
+							userId: member.userId,
+							role: member.role as WorkspaceRole,
+						}),
+					),
+			},
+		});
 	};
 
 	return (
-		<div className="flex flex-1 flex-col gap-4 w-full">
-			<header className="flex items-center justify-between">
+		<>
+			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">
-						Workspace Members
+					<h1 className="text-lg font-semibold md:text-2xl">
+						{workspace?.name} Members
 					</h1>
-					<p className="text-muted-foreground text-sm">
-						Manage access for the{" "}
-						<span className="font-medium text-foreground">
-							{workspace?.name}
-						</span>{" "}
-						workspace.
+
+					<p className="hidden text-xs text-muted-foreground md:block">
+						Manage members who have access to this workspace.
 					</p>
 				</div>
 
 				{isManager && (
-					<Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
+					<Dialog open={open} onOpenChange={setOpen}>
 						<DialogTrigger asChild>
-							<Button size="sm" className="gap-2">
-								<UserPlusIcon className="size-4" />
-								Add Member
+							<Button size="sm">
+								<UserPlus className="size-4" /> Add Member
 							</Button>
 						</DialogTrigger>
 						<DialogContent>
 							<DialogHeader>
 								<DialogTitle>Add Workspace Member</DialogTitle>
 								<DialogDescription>
-									Invite someone from your organization to this workspace.
+									Only members of your organization can be added.
 								</DialogDescription>
 							</DialogHeader>
-
 							<form {...getFormProps(form)} className="space-y-6">
 								<CustomChildrenField labelProps={{ children: "Select Member" }}>
 									<MemberSelect
-										members={availableOrgMembers}
+										members={availableUsers}
 										value={fields.userId.value ?? ""}
-										onChange={(value) =>
-											form.update({ name: fields.userId.name, value })
+										onChange={(val) =>
+											form.update({ name: fields.userId.name, value: val })
 										}
-										showLabel
-										align="start"
-										className="w-full rounded-md border bg-muted px-2"
+										className="w-full border rounded-md p-2 bg-muted/50"
 									/>
 									<input
 										type="hidden"
@@ -202,24 +155,19 @@ export default function WorkspaceMembersPage() {
 									/>
 								</CustomChildrenField>
 
-								<div
-									role="radiogroup"
-									aria-label="Role"
-									className="flex gap-2 justify-between"
-								>
+								<div className="grid grid-cols-3 gap-2 p-1 bg-muted rounded-lg">
 									{getCollectionProps(fields.role, {
 										type: "radio",
 										options: Object.values(workspaceRole),
 									}).map((props) => (
 										<label key={props.value} className="flex-1 cursor-pointer">
 											<input {...props} className="sr-only peer" />
-											<span className="block capitalize text-sm rounded py-1 text-center transition-all duration-150 bg-muted hover:bg-primary hover:text-white peer-checked:bg-primary peer-checked:text-white shadow-sm">
+											<span className="block text-center py-1.5 rounded-md text-xs font-medium capitalize transition-all peer-checked:bg-background peer-checked:shadow-sm">
 												{props.value}
 											</span>
 										</label>
 									))}
 								</div>
-
 								<Button type="submit" className="w-full">
 									Add to Workspace
 								</Button>
@@ -227,96 +175,79 @@ export default function WorkspaceMembersPage() {
 						</DialogContent>
 					</Dialog>
 				)}
-			</header>
+			</div>
 
-			<div className="rounded-lg border bg-card overflow-hidden">
-				<div className="divide-y">
-					{workspaceMembers.length === 0 && (
-						<div className="p-8 text-center text-muted-foreground text-sm">
-							No members found.
+			<br />
+
+			<section className="flex-1 space-y-4 w-full rounded-xl border">
+				<div className="divide-y divide-border/50">
+					{memberships.map((m) => (
+						<div
+							key={m.id}
+							className="flex items-center justify-between p-4 hover:bg-muted/20 transition-colors group"
+						>
+							<div className="flex items-center gap-3 flex-1 overflow-hidden">
+								<CustomAvatar avatar={m.user?.image} name={m.user?.name} />
+								<div className="truncate">
+									<p className="text-sm font-medium truncate">{m.user?.name}</p>
+									<p className="text-xs text-muted-foreground truncate">
+										{m.user?.email}
+									</p>
+								</div>
+							</div>
+
+							<div className="flex items-center gap-4">
+								<Badge
+									variant="secondary"
+									className="h-5 px-2 text-[10px] font-normal uppercase bg-muted/50 text-muted-foreground border-transparent"
+								>
+									{m.role}
+								</Badge>
+
+								{isManager && m.userId !== authSession.user.id && (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button variant="ghost" size="icon" className="size-6">
+												<MoreVertical className="size-4" />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end" className="w-44">
+											{Object.values(workspaceRole).map((role) => (
+												<DropdownMenuItem
+													key={role}
+													onClick={() =>
+														zr.mutate(
+															mutators.workspace.updateMemberRole({
+																workspaceId: workspace!.id,
+																userId: m.userId,
+																role: role as WorkspaceRole,
+															}),
+														)
+													}
+												>
+													Make {role}
+												</DropdownMenuItem>
+											))}
+											<DropdownMenuSeparator />
+											<DropdownMenuItem
+												className="text-destructive"
+												onClick={() =>
+													handleRemove({
+														userId: m.userId,
+														role: m.role as WorkspaceRole,
+													})
+												}
+											>
+												<Trash2 className="size-4 mr-2" /> Remove
+											</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)}
+							</div>
 						</div>
-					)}
-					{workspaceMembers.map((member) => (
-						<MemberRow
-							key={member.id}
-							member={member}
-							isManager={isManager}
-							onUpdateRole={(role) => handleUpdateRole(member.userId, role)}
-							onRemove={() => handleRemoveMember(member.userId)}
-						/>
 					))}
 				</div>
-			</div>
-		</div>
-	);
-}
-
-// --- Sub-components ---
-
-interface MemberRowProps {
-	member: any; // Ideally import this type from your Zero schema
-	isManager: boolean;
-	onUpdateRole: (role: WorkspaceRole) => void;
-	onRemove: () => void;
-}
-
-function MemberRow({
-	member,
-	isManager,
-	onUpdateRole,
-	onRemove,
-}: MemberRowProps) {
-	return (
-		<div className="flex items-center justify-between p-4 transition-colors hover:bg-muted/40 group">
-			<div className="flex items-center gap-3">
-				<Avatar className="h-9 w-9 border border-border/50">
-					<AvatarImage src={member.user?.image ?? undefined} />
-					<AvatarFallback className="text-xs">
-						{member.user?.name?.[0] ?? member.user?.email?.[0]}
-					</AvatarFallback>
-				</Avatar>
-				<div className="flex flex-col">
-					<span className="text-sm font-medium leading-none">
-						{member.user?.name || "Unknown"}
-					</span>
-					<span className="text-xs text-muted-foreground mt-1">
-						{member.user?.email}
-					</span>
-				</div>
-			</div>
-
-			<div className="flex items-center gap-3">
-				<Badge
-					variant="secondary"
-					className="capitalize font-normal px-2 py-0 h-5 text-[10px] bg-muted/50 text-muted-foreground border-transparent"
-				>
-					{member.role}
-				</Badge>
-
-				{isManager && (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button size="icon" variant="ghost" aria-label="Member actions">
-								<MoreVerticalIcon className="size-4" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="w-44">
-							{Object.values(workspaceRole).map((role) => (
-								<DropdownMenuItem key={role} onClick={() => onUpdateRole(role)}>
-									Make {role.charAt(0).toUpperCase() + role.slice(1)}
-								</DropdownMenuItem>
-							))}
-							<DropdownMenuItem
-								className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-								onClick={onRemove}
-							>
-								<TrashIcon className="size-4 text-destructive" />
-								Remove
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				)}
-			</div>
-		</div>
+			</section>
+		</>
 	);
 }

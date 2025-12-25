@@ -1,13 +1,28 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery } from "@rocicorp/zero/react";
-import { MoreVerticalIcon, UserPlusIcon, XIcon } from "lucide-react";
+import {
+	Mail,
+	MoreVertical,
+	ShieldCheck,
+	Trash2,
+	User as UserIcon,
+	UserPlus,
+	X,
+} from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+
+// UI Components
+import {
+	Avatar,
+	AvatarFallback,
+	AvatarImage,
+	CustomAvatar,
+} from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -22,26 +37,41 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Input } from "~/components/ui/input";
-import { orgRole } from "~/db/helpers.js";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "~/components/ui/select";
+import { useOrgLoaderData } from "~/hooks/use-loader-data";
+// Auth & Hooks
 import { authClient } from "~/lib/auth-client";
 
 const inviteSchema = z.object({
-	email: z.email("Invalid email"),
-	role: z.enum(orgRole).default(orgRole.member),
+	email: z.email("Please enter a valid work email"),
+	role: z.enum(["admin", "member"]),
 });
 
-export default function MembersPage() {
-	const [inviteOpen, setInviteOpen] = useState(false);
+export default function OrgMembersPage() {
+	const { authSession } = useOrgLoaderData();
 	const [isPending, startTransition] = useTransition();
-	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
-	const [invitations] = useQuery(
-		queries.getOrganizationInvitations(),
-		CACHE_LONG,
-	);
+	const [inviteOpen, setInviteOpen] = useState(false);
 
+	// Data
+	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
+	const [invites] = useQuery(queries.getOrganizationInvitations(), CACHE_LONG);
+
+	const currentUser = authSession.user;
+	const currentMember = members?.find((m) => m.userId === currentUser.id);
+	const isAdminOrOwner =
+		currentMember?.role === "admin" || currentMember?.role === "owner";
+
+	// Form logic
 	const [form, fields] = useForm({
 		id: "invite-member",
 		defaultValue: { role: "member" },
@@ -51,175 +81,258 @@ export default function MembersPage() {
 			event.preventDefault();
 			if (submission?.status !== "success") return;
 
-			const { error } = await authClient.organization.inviteMember(
-				submission.value,
-			);
-			if (error) return toast.error(error.message);
-			setInviteOpen(false);
-			toast.success("Invitation sent");
-			form.reset();
+			startTransition(async () => {
+				const { error } = await authClient.organization.inviteMember({
+					email: submission.value.email,
+					role: submission.value.role,
+				});
+
+				if (error) {
+					toast.error(error.message || "Failed to send invitation");
+				} else {
+					toast.success(`Invitation sent to ${submission.value.email}`);
+					setInviteOpen(false);
+					form.reset();
+				}
+			});
 		},
 	});
 
-	const runAction = (
-		name: string,
-		fn: () => Promise<{ error?: { message?: string } | null }>,
-	) => {
+	// Action Handlers
+	const updateRole = (memberId: string, newRole: "admin" | "member") => {
 		startTransition(async () => {
-			const { error } = await fn();
-			error
-				? toast.error(error?.message || `Failed to ${name}`)
-				: toast.success(`${name} successful`);
+			const { error } = await authClient.organization.updateMemberRole({
+				memberId, // Better Auth needs the member record ID
+				role: newRole,
+			});
+			if (error) toast.error(error.message);
+			else toast.success("Role updated");
+		});
+	};
+
+	const removeMember = (memberId: string) => {
+		startTransition(async () => {
+			const { error } = await authClient.organization.removeMember({
+				memberIdOrEmail: memberId,
+			});
+			if (error) toast.error(error.message);
+			else toast.success("Member removed from organization");
+		});
+	};
+
+	const cancelInvite = (invitationId: string) => {
+		startTransition(async () => {
+			const { error } = await authClient.organization.cancelInvitation({
+				invitationId,
+			});
+			if (error) toast.error(error.message);
+			else toast.success("Invitation cancelled");
 		});
 	};
 
 	return (
-		<div className="flex flex-col gap-6">
+		<>
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-xl font-semibold">Organization Members</h1>
-					<p className="text-sm text-muted-foreground">
-						Manage organization members and invites.
+					<h1 className="text-lg font-semibold md:text-2xl">Members</h1>
+					<p className="hidden text-xs text-muted-foreground md:block">
+						Manage your organization's team and access levels.
 					</p>
 				</div>
-				<Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
-					<DialogTrigger asChild>
-						<Button size="sm">
-							<UserPlusIcon className="size-4" />
-							Invite
-						</Button>
-					</DialogTrigger>
-					<DialogContent>
-						<DialogHeader>
-							<DialogTitle>Invite Member</DialogTitle>
-							<DialogDescription>
-								Invite a new member to your organization by entering their email
-								address below.
-							</DialogDescription>
-						</DialogHeader>
-						<form {...getFormProps(form)} className="space-y-4">
-							<Input
-								{...getInputProps(fields.email, { type: "email" })}
-								placeholder="email@example.com"
-							/>
-							<div className="flex gap-2">
-								{Object.values(orgRole).map((r) => (
-									<Button
-										key={r}
-										type="button"
-										size="sm"
-										variant={fields.role.value === r ? "default" : "outline"}
-										onClick={() =>
-											form.update({ name: fields.role.name, value: r })
-										}
-										className="flex-1 capitalize"
-									>
-										{r}
-									</Button>
-								))}
-							</div>
-							<Button type="submit" className="w-full" disabled={isPending}>
-								Send Invite
+
+				{isAdminOrOwner && (
+					<Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+						<DialogTrigger asChild>
+							<Button size="sm">
+								<UserPlus className="size-4" />
+								<span className="hidden sm:inline">Invite Member</span>
 							</Button>
-						</form>
-					</DialogContent>
-				</Dialog>
+						</DialogTrigger>
+						<DialogContent className="sm:max-w-106.25">
+							<DialogHeader>
+								<DialogTitle>Invite team member</DialogTitle>
+								<DialogDescription>
+									They will receive an email to join your organization.
+								</DialogDescription>
+							</DialogHeader>
+							<form {...getFormProps(form)} className="space-y-4 pt-4">
+								<div className="space-y-2">
+									<Input
+										{...getInputProps(fields.email, { type: "email" })}
+										placeholder="name@company.com"
+										className="h-10"
+										autoFocus
+									/>
+									{fields.email.errors && (
+										<p className="text-[10px] text-destructive">
+											{fields.email.errors}
+										</p>
+									)}
+								</div>
+								<div className="space-y-2">
+									<Select
+										onValueChange={(val) =>
+											form.update({ name: fields.role.name, value: val })
+										}
+										defaultValue={fields.role.value}
+									>
+										<SelectTrigger className="h-10 capitalize">
+											<SelectValue placeholder="Select a role" />
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="member">Member</SelectItem>
+											<SelectItem value="admin">Admin</SelectItem>
+										</SelectContent>
+									</Select>
+								</div>
+								<Button
+									type="submit"
+									className="w-full h-10"
+									disabled={isPending}
+								>
+									{isPending ? "Sending..." : "Send Invitation"}
+								</Button>
+							</form>
+						</DialogContent>
+					</Dialog>
+				)}
 			</div>
 
-			<div className="grid gap-6 md:grid-cols-3 items-start overflow-y-auto">
-				<div className="md:col-span-2 border rounded-lg divide-y bg-card">
-					{members?.map((m) => (
-						<div key={m.id} className="flex items-center justify-between p-4">
-							<div className="flex items-center gap-3">
-								<Avatar className="h-8 w-8">
-									<AvatarImage src={m.usersTable?.image || ""} />
-									<AvatarFallback>{m.usersTable?.email[0]}</AvatarFallback>
-								</Avatar>
-								<div className="text-sm">
-									<div className="font-medium">
-										{m.usersTable?.name || "Pending"}
+			<div className="grid lg:grid-cols-3 gap-4">
+				{/* Members List - Takes 2 cols on desktop */}
+				<div className="border rounded-xl bg-card shadow-sm overflow-hidden lg:col-span-2">
+					<div className="divide-y divide-border/50">
+						{members?.map((m) => {
+							const isSelf = m.userId === currentUser.id;
+							const canEdit = isAdminOrOwner && !isSelf && m.role !== "owner";
+
+							return (
+								<div
+									key={m.id}
+									className="flex items-center justify-between p-4 group hover:bg-muted/30 transition-colors overflow-hidden"
+								>
+									{/* Left: Avatar + Info */}
+									<div className="flex items-center gap-3 flex-1 overflow-hidden">
+										<CustomAvatar
+											avatar={m.usersTable?.image}
+											name={m.usersTable?.name}
+										/>
+										<div className="truncate">
+											<span className="text-sm font-medium flex items-center gap-2">
+												{m.usersTable?.name || "Pending User"}
+												{isSelf && (
+													<Badge
+														variant="secondary"
+														className="text-[10px] h-4 px-1"
+													>
+														You
+													</Badge>
+												)}
+											</span>
+											<span className="block text-xs text-muted-foreground truncate">
+												{m.usersTable?.email}
+											</span>
+										</div>
 									</div>
-									<div className="text-muted-foreground text-xs">
-										{m.usersTable?.email}
+
+									{/* Right: Role + Actions */}
+									<div className="flex items-center gap-2 ml-4">
+										<Badge
+											variant="outline"
+											className="hidden sm:flex capitalize font-normal text-[10px] bg-muted/50"
+										>
+											{m.role === "admin" || m.role === "owner" ? (
+												<ShieldCheck className="size-3 mr-1" />
+											) : null}
+											{m.role}
+										</Badge>
+
+										{canEdit && (
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="size-8"
+													>
+														<MoreVertical className="size-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end" className="w-48">
+													<DropdownMenuItem
+														onClick={() =>
+															updateRole(
+																m.id,
+																m.role === "admin" ? "member" : "admin",
+															)
+														}
+													>
+														Change to {m.role === "admin" ? "Member" : "Admin"}
+													</DropdownMenuItem>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem
+														className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+														onClick={() => removeMember(m.id)}
+													>
+														<Trash2 className="size-4 mr-2" />
+														Remove Member
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										)}
 									</div>
 								</div>
-							</div>
-							<div className="flex items-center gap-2">
-								<Badge variant="secondary" className="text-[10px] uppercase">
-									{m.role}
-								</Badge>
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button size="icon" variant="ghost" className="h-8 w-8">
-											<MoreVerticalIcon className="h-4 w-4" />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem
-											onClick={() =>
-												runAction("Update", () =>
-													authClient.organization.updateMemberRole({
-														memberId: m.userId,
-														role:
-															m.role === orgRole.admin
-																? orgRole.member
-																: orgRole.admin,
-													}),
-												)
-											}
-										>
-											Make {m.role === orgRole.admin ? "Member" : "Admin"}
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											className="text-destructive"
-											onClick={() =>
-												runAction("Remove", () =>
-													authClient.organization.removeMember({
-														memberIdOrEmail: m.userId,
-													}),
-												)
-											}
-										>
-											Remove
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div>
-						</div>
-					))}
+							);
+						})}
+					</div>
 				</div>
 
-				<div className="border rounded-lg bg-muted/30 p-4 space-y-3">
-					<h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-						Pending
-					</h3>
-					{invitations?.map((i) => (
+				{/* Invites Sidebar - Takes 1 col */}
+
+				<div className="space-y-2">
+					{invites?.map((i) => (
 						<div
 							key={i.id}
-							className="flex items-center justify-between bg-card border rounded p-2 text-xs"
+							className="group relative flex flex-col p-4 rounded-xl border bg-muted/20 text-sm shadow-sm"
 						>
-							<div className="truncate pr-2">
-								<div className="font-medium truncate">{i.email}</div>
-								<div className="text-muted-foreground capitalize">{i.role}</div>
+							<div className="flex justify-between items-start mb-2">
+								<div className="p-2 rounded-full bg-background border">
+									<Mail className="size-4 text-muted-foreground" />
+								</div>
+								{isAdminOrOwner && (
+									<Button
+										variant="ghost"
+										size="icon"
+										className="size-6"
+										onClick={() => cancelInvite(i.id)}
+									>
+										<X className="size-4" />
+									</Button>
+								)}
 							</div>
-							<Button
-								size="icon"
-								variant="ghost"
-								className="h-6 w-6 shrink-0"
-								onClick={() =>
-									runAction("Cancel", () =>
-										authClient.organization.cancelInvitation({
-											invitationId: i.id,
-										}),
-									)
-								}
-							>
-								<XIcon className="h-3 w-3" />
-							</Button>
+							<p className="font-medium truncate mb-1">{i.email}</p>
+							<div className="flex items-center gap-2">
+								<Badge
+									variant="outline"
+									className="text-[10px] uppercase font-bold tracking-tighter h-5"
+								>
+									{i.role}
+								</Badge>
+								<span className="text-[10px] text-muted-foreground">
+									Expires soon
+								</span>
+							</div>
 						</div>
 					))}
+					{invites?.length === 0 && (
+						<div className="border border-dashed rounded-xl p-8 text-center">
+							<p className="text-xs text-muted-foreground">
+								No pending invitations
+							</p>
+						</div>
+					)}
 				</div>
 			</div>
-		</div>
+		</>
 	);
 }

@@ -37,7 +37,10 @@ export const links: Route.LinksFunction = () => [
 export const meta: Route.MetaFunction = () => [
 	{
 		title: "KaamSync - Organize Your Work Seamlessly",
-		description:
+	},
+	{
+		name: "description",
+		content:
 			"KaamSync helps teams manage tasks, collaborate, and boost productivity all in one place.",
 	},
 ];

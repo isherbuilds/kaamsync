@@ -296,6 +296,7 @@ export function MemberSelect({
 					<CommandItem
 						value="none"
 						onSelect={() => {
+							onChange("");
 							close();
 						}}
 					>
