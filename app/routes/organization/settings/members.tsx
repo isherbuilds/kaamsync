@@ -6,7 +6,6 @@ import {
 	MoreVertical,
 	ShieldCheck,
 	Trash2,
-	User as UserIcon,
 	UserPlus,
 	X,
 } from "lucide-react";
@@ -17,12 +16,7 @@ import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
 
 // UI Components
-import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-	CustomAvatar,
-} from "~/components/ui/avatar";
+import { CustomAvatar } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
