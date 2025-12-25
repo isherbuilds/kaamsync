@@ -140,19 +140,24 @@ export default function WorkspaceMembersPage() {
 							</DialogHeader>
 							<form {...getFormProps(form)} className="space-y-6">
 								<CustomChildrenField labelProps={{ children: "Select Member" }}>
-									<MemberSelect
-										members={availableUsers}
-										value={fields.userId.value ?? ""}
-										onChange={(val) =>
-											form.update({ name: fields.userId.name, value: val })
-										}
-										className="w-full rounded-md border bg-muted/50 p-2"
-									/>
-									<input
-										type="hidden"
-										name={fields.userId.name}
-										value={fields.userId.value ?? ""}
-									/>
+									{(id) => (
+										<>
+											<MemberSelect
+												members={availableUsers}
+												value={fields.userId.value ?? ""}
+												onChange={(val) =>
+													form.update({ name: fields.userId.name, value: val })
+												}
+												className="w-full rounded-md border bg-muted/50 p-2"
+											/>
+											<input
+												id={id}
+												type="hidden"
+												name={fields.userId.name}
+												value={fields.userId.value ?? ""}
+											/>
+										</>
+									)}
 								</CustomChildrenField>
 
 								<div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
@@ -216,9 +221,10 @@ export default function WorkspaceMembersPage() {
 												<DropdownMenuItem
 													key={role}
 													onClick={() =>
+														workspace &&
 														zr.mutate(
 															mutators.workspace.updateMemberRole({
-																workspaceId: workspace!.id,
+																workspaceId: workspace.id,
 																userId: m.userId,
 																role: role as WorkspaceRole,
 															}),

@@ -571,7 +571,7 @@ const TaskRow = memo(function TaskRow({
 				{/* Assignee */}
 				<div className="relative z-10">
 					<MemberSelect
-						value={assigneeId || null}
+						value={assigneeId || ""}
 						members={members}
 						onChange={handleAssignee}
 						align="end"

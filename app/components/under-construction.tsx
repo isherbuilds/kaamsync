@@ -1,5 +1,3 @@
-import { Badge } from "./ui/badge.js";
-
 type Props = {
 	message?: string;
 	route?: string;
@@ -13,13 +11,13 @@ export default function UnderConstruction({
 }: Props) {
 	return (
 		<section
-			className={`h-full flex flex-col md:items-center max-w-3xl mx-auto gap-4 justify-center p-6 ${className} -translate-y-24`}
+			className={`mx-auto flex h-full max-w-3xl flex-col justify-center gap-4 p-6 md:items-center ${className} -translate-y-24`}
 			aria-label={message}
 		>
-			<div className="bg-primary/90 rounded w-fit text-primary-foreground px-3 py-1 text-base">
+			<div className="w-fit rounded bg-primary/90 px-3 py-1 text-base text-primary-foreground">
 				{route}
 			</div>
-			<h1 className="font-extrabold text-5xl flex items-center justify-center gap-2">
+			<h1 className="flex items-center justify-center gap-2 font-extrabold text-5xl">
 				{message}
 			</h1>
 			<p className="md:text-xl">

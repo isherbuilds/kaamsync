@@ -64,17 +64,24 @@ export function CustomChildrenField({
 }: {
 	labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
 	className?: string;
-	children: React.ReactNode;
+	// Accept either React nodes or a render-prop that receives the generated id
+	children: React.ReactNode | ((id: string) => React.ReactNode);
 	errors?: ListOfErrors;
 }) {
 	const fallbackId = useId();
 	const id = fallbackId;
 	const errorId = errors?.length ? `${id}-error` : undefined;
+	const isFn = typeof children === "function";
 
 	return (
 		<div className={cn(className, "flex flex-col gap-2")}>
-			{labelProps && <Label htmlFor={id} {...labelProps} />}
-			{children}
+			{labelProps &&
+				(isFn ? (
+					<Label htmlFor={id} {...labelProps} />
+				) : (
+					<Label {...labelProps} />
+				))}
+			{isFn ? (children as (id: string) => React.ReactNode)(id) : children}
 			{errorId ? <ErrorList errors={errors} id={errorId} /> : null}
 		</div>
 	);
