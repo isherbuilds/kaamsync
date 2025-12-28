@@ -74,6 +74,40 @@ async function canModifyMatter(tx: MutatorTx, ctx: Context, matterId: string) {
 	};
 }
 
+async function canModifyDeletedMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
+	assertLoggedIn(ctx);
+	const matter = await tx.run(
+		zql.mattersTable
+			.where("id", matterId)
+			.where("orgId", ctx.activeOrganizationId ?? "")
+			.where("deletedAt", "IS NOT", null)
+			.one(),
+	);
+
+	if (!matter) {
+		throw new Error("Matter not found");
+	}
+
+	const membership = await getWorkspaceMembership(tx, ctx, matter.workspaceId);
+	if (!membership) {
+		throw new Error("Not a member of this workspace");
+	}
+
+	const isAuthor = matter.authorId === ctx.userId;
+	const isAssignee = matter.assigneeId === ctx.userId;
+	const isManager = membership.role === "manager";
+
+	return {
+		matter,
+		membership,
+		canModify: isAuthor || isAssignee || isManager,
+	};
+}
+
 // ============================================================================
 // MUTATORS
 // ============================================================================
@@ -231,7 +265,7 @@ export const mutators = defineMutators({
 		restore: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				const { canModify } = await canModifyDeletedMatter(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error("Not allowed to restore this matter");
 				}

@@ -1,11 +1,11 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod/v4";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import { ListTodo, Plus } from "lucide-react";
 import { memo, useState } from "react";
 import { toast } from "sonner";
-import { mutators } from "zero/mutators.js";
+import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
@@ -50,6 +50,7 @@ export const CreateTaskDialog = memo(
 
 		const [form, fields] = useForm({
 			id: "create-task",
+			constraint: getZodConstraint(createTaskSchema),
 			defaultValue: {
 				priority: Priority.NONE.toString(),
 				statusId: statuses.find((s) => s.isDefault)?.id || statuses[0]?.id,

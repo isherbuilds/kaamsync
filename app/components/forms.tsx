@@ -1,6 +1,6 @@
 import type { VariantProps } from "class-variance-authority";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { type ReactNode, useId, useState } from "react";
+import { useId, useState } from "react";
 import type { buttonVariants } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -13,7 +13,6 @@ import {
 	InputGroupInput,
 	InputGroupText,
 } from "./ui/input-group";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group.js";
 import { Textarea } from "./ui/textarea";
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined;

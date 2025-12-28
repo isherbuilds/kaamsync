@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod/v4";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import { GitPullRequest } from "lucide-react";
@@ -51,6 +51,7 @@ export const CreateRequestDialog = memo(
 
 		const [form, fields] = useForm({
 			id: "create-request-dialog",
+			constraint: getZodConstraint(createRequestSchema),
 			defaultValue: {
 				priority: Priority.NONE.toString(),
 			},
@@ -87,7 +88,7 @@ export const CreateRequestDialog = memo(
 						clientShortID,
 						statusId: defaultStatus.id,
 					}),
-				).server.catch(() => toast.error("Failed to create task"));
+				).server.catch(() => toast.error("Failed to create request"));
 
 				toast.success("Request submitted for approval");
 				close();

@@ -1,7 +1,7 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { CalendarIcon, ChevronDown, ListTodoIcon } from "lucide-react";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
@@ -82,11 +82,9 @@ export default function WorkspaceIndex() {
 	const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
 
 	// Reset if switching workspace
-	const lastWs = useRef(workspaceId);
-	if (lastWs.current !== workspaceId) {
+	useEffect(() => {
 		setCollapsed(new Set());
-		lastWs.current = workspaceId;
-	}
+	}, [workspaceId]);
 
 	const toggleGroup = useCallback((id: string) => {
 		setCollapsed((prev) => {

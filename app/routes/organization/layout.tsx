@@ -16,7 +16,7 @@ import { AppSidebar } from "~/components/app-sidebar";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
-import { ZeroInit } from "~/components/zero-init.js";
+import { ZeroInit } from "~/components/zero-init";
 import type { AuthSession } from "~/lib/auth-client";
 import { authClient } from "~/lib/auth-client";
 import { getAuthSessionSWR } from "~/lib/offline-auth";

@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod/v4";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useZero } from "@rocicorp/zero/react";
 import { memo, useRef } from "react";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ export const CreateWorkspaceDialog = memo(
 
 		const [form, fields] = useForm({
 			id: "create-workspace-dialog",
+			constraint: getZodConstraint(createWorkspaceSchema),
 			onValidate: ({ formData }) =>
 				parseWithZod(formData, { schema: createWorkspaceSchema }),
 			onSubmit: async (e, { submission }) => {
@@ -67,7 +68,7 @@ export const CreateWorkspaceDialog = memo(
 							inputProps={{
 								...getInputProps(fields.name, { type: "text" }),
 								autoFocus: true,
-								placeholder: "Engineering",
+								placeholder: "Secondary Space",
 								onInput: (e) => {
 									const name = e.currentTarget.value;
 									// If the user hasn't typed in 'code' yet, keep it in sync
@@ -89,8 +90,7 @@ export const CreateWorkspaceDialog = memo(
 							<InputField
 								inputProps={{
 									...getInputProps(fields.code, { type: "text" }),
-									placeholder: "ENG",
-									maxLength: 3,
+									placeholder: "SEC",
 									className: "font-mono uppercase",
 									onInput: () => {
 										isManual.current = true;
