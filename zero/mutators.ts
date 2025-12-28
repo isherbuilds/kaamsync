@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { defineMutator, defineMutators } from "@rocicorp/zero";
 import { z } from "zod";
 import {
+	approvalStatus,
 	matterType,
 	membershipStatus,
 	type WorkspaceRole,
@@ -227,6 +228,58 @@ export const mutators = defineMutators({
 			},
 		),
 
+		restore: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				if (!canModify) {
+					throw new Error("Not allowed to restore this matter");
+				}
+
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					deletedAt: null,
+					updatedAt: Date.now(),
+				});
+			},
+		),
+
+		archive: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				if (!canModify) {
+					throw new Error("Not allowed to archive this matter");
+				}
+
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					archived: true,
+					archivedAt: Date.now(),
+					archivedBy: ctx.userId,
+					updatedAt: Date.now(),
+				});
+			},
+		),
+
+		unarchive: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				if (!canModify) {
+					throw new Error("Not allowed to unarchive this matter");
+				}
+
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					archived: false,
+					archivedAt: null,
+					archivedBy: null,
+					updatedAt: Date.now(),
+				});
+			},
+		),
+
 		approve: defineMutator(
 			z.object({ id: z.string(), note: z.string().optional() }),
 			async ({ tx, ctx, args }) => {
@@ -250,12 +303,23 @@ export const mutators = defineMutators({
 				// Permission: Only managers can approve
 				await assertManager(tx, ctx, matter.workspaceId);
 
+				// Find a default task status (not request status) to assign
+				const taskStatuses = await tx.run(
+					zql.statusesTable
+						.where("workspaceId", matter.workspaceId)
+						.where("isRequestStatus", false),
+				);
+				const defaultStatus =
+					taskStatuses.find((s) => s.isDefault) ?? taskStatuses[0];
+
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					approvalStatus: "APPROVED",
+					type: matterType.task, // Convert request to task
+					approvalStatus: approvalStatus.approved,
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
+					statusId: defaultStatus?.id ?? matter.statusId, // Assign task status
 					updatedAt: Date.now(),
 				});
 			},
@@ -286,7 +350,7 @@ export const mutators = defineMutators({
 
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					approvalStatus: "REJECTED",
+					approvalStatus: approvalStatus.rejected,
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,

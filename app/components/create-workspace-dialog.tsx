@@ -1,96 +1,118 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { parseWithZod } from "@conform-to/zod/v4";
 import { useZero } from "@rocicorp/zero/react";
+import { memo, useRef } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
-import { sanitizeSlug } from "~/lib/utils";
 import { createWorkspaceSchema } from "../lib/validations/organization";
 import { InputField } from "./forms";
 import { Button } from "./ui/button";
 import {
 	Dialog,
 	DialogContent,
-	DialogFooter,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "./ui/dialog";
 
-interface CreateWorkspaceDialogProps {
-	open: boolean;
-	onOpenChange: (open: boolean) => void;
-	onCreated?: (workspace: { name: string }) => void;
-}
+// Simple derivation logic
+const deriveCode = (name: string) =>
+	name
+		.replace(/[^a-zA-Z]/g, "")
+		.substring(0, 3)
+		.toUpperCase();
 
-import { memo } from "react";
+export const CreateWorkspaceDialog = memo(
+	({
+		open,
+		onOpenChange,
+	}: {
+		open: boolean;
+		onOpenChange: (o: boolean) => void;
+	}) => {
+		const zr = useZero();
+		const isManual = useRef(false);
 
-export const CreateWorkspaceDialog = memo(function CreateWorkspaceDialog({
-	open,
-	onOpenChange,
-	onCreated,
-}: CreateWorkspaceDialogProps) {
-	const z = useZero();
+		const [form, fields] = useForm({
+			id: "create-workspace-dialog",
+			onValidate: ({ formData }) =>
+				parseWithZod(formData, { schema: createWorkspaceSchema }),
+			onSubmit: async (e, { submission }) => {
+				e.preventDefault();
+				if (submission?.status !== "success") return;
 
-	const [form, fields] = useForm({
-		constraint: getZodConstraint(createWorkspaceSchema),
-		shouldValidate: "onBlur",
-		shouldRevalidate: "onInput",
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: createWorkspaceSchema });
-		},
-		async onSubmit(event, { formData }) {
-			event.preventDefault();
-			const submission = parseWithZod(formData, {
-				schema: createWorkspaceSchema,
-			});
-			if (submission.status === "success") {
-				try {
-					const slug = sanitizeSlug(submission.value.name);
-					const code = slug.substring(0, 3).toUpperCase();
+				zr.mutate(mutators.workspace.create(submission.value));
+				toast.success("Workspace created");
+				close();
+			},
+		});
 
-					await z.mutate(
-						mutators.workspace.create({
-							name: submission.value.name,
-							code,
-						}),
-					);
+		const close = () => {
+			onOpenChange(false);
+			isManual.current = false;
+		};
 
-					toast.success("Workspace created successfully");
-					onCreated?.(submission.value);
-					onOpenChange(false);
-				} catch (error) {
-					toast.error(
-						error instanceof Error
-							? error.message
-							: "Failed to create workspace",
-					);
-				}
-			}
-		},
-	});
+		return (
+			<Dialog open={open} onOpenChange={(o) => !o && close()}>
+				<DialogContent className="max-w-90 p-4">
+					<DialogHeader className="gap-2">
+						<DialogTitle>New Workspace</DialogTitle>
+						<DialogDescription className="text-xs">
+							Give your workspace a name and a unique 3-letter code.
+						</DialogDescription>
+					</DialogHeader>
 
-	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-sm mx-auto">
-				<DialogHeader>
-					<DialogTitle>Create Workspace</DialogTitle>
-				</DialogHeader>
-				<form {...getFormProps(form)} className="space-y-4">
-					<InputField
-						labelProps={{ children: "Workspace Name" }}
-						inputProps={{
-							...getInputProps(fields.name, { type: "text" }),
-							autoFocus: true,
-							placeholder: "General",
-						}}
-						errors={fields.name.errors}
-					/>
-					<DialogFooter>
-						<Button type="submit" className="w-full">
-							Create
-						</Button>
-					</DialogFooter>
-				</form>
-			</DialogContent>
-		</Dialog>
-	);
-});
+					<form {...getFormProps(form)} className="space-y-4">
+						<InputField
+							inputProps={{
+								...getInputProps(fields.name, { type: "text" }),
+								autoFocus: true,
+								placeholder: "Engineering",
+								onInput: (e) => {
+									const name = e.currentTarget.value;
+									// If the user hasn't typed in 'code' yet, keep it in sync
+									if (!isManual.current) {
+										form.update({
+											name: fields.code.name,
+											value: deriveCode(name),
+										});
+									}
+									// If name is cleared, allow auto-fill to start over
+									if (!name) isManual.current = false;
+								},
+							}}
+							labelProps={{ children: "Name" }}
+							errors={fields.name.errors}
+						/>
+
+						<div className="grid grid-cols-2 gap-4">
+							<InputField
+								inputProps={{
+									...getInputProps(fields.code, { type: "text" }),
+									placeholder: "ENG",
+									maxLength: 3,
+									className: "font-mono uppercase",
+									onInput: () => {
+										isManual.current = true;
+									}, // Once they type here, auto-fill stops
+								}}
+								errors={fields.code.errors}
+							/>
+							{/* Real-time Preview */}
+							<div className="flex h-9 items-center rounded-md border border-dashed bg-muted/20 px-3 font-mono text-muted-foreground text-xs uppercase">
+								{fields.code.value || "???"}-101
+							</div>
+						</div>
+
+						<div className="flex justify-end gap-2 pt-2">
+							<Button type="button" variant="ghost" onClick={close}>
+								Cancel
+							</Button>
+							<Button type="submit">Create Workspace</Button>
+						</div>
+					</form>
+				</DialogContent>
+			</Dialog>
+		);
+	},
+);

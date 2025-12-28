@@ -1,266 +1,190 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { parseWithZod } from "@conform-to/zod/v4";
+import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
-import { CalendarIcon, MessageSquareIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { GitPullRequest } from "lucide-react";
+import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
-import { cn } from "~/lib/utils";
-import { createRequestSchema } from "../lib/validations/matter";
-import { InputField, TextareaField } from "./forms";
+import { createRequestSchema } from "~/lib/validations/matter";
+import { matterType, workspaceRole } from "../db/helpers";
 import { MemberSelect, PrioritySelect } from "./matter-field-selectors";
 import { Button } from "./ui/button";
 import {
 	Dialog,
 	DialogContent,
-	DialogFooter,
-	DialogHeader,
+	DialogDescription,
 	DialogTitle,
 	DialogTrigger,
 } from "./ui/dialog";
 
-type WorkspaceMember = {
-	userId: string;
-	user?: {
-		id: string;
-		name?: string;
-		email?: string;
-	};
-};
-
-type CreateRequestDialogProps = {
+interface CreateRequestDialogProps {
 	workspaceId: string;
 	workspaceCode: string;
-	workspaceName: string;
-	onCreated?: (request: { title: string }) => void;
-	workspaceMembers: readonly WorkspaceMember[];
 	triggerButton?: React.ReactNode;
-};
+	workspaceMembers: readonly Row["workspaceMembershipsTable"][];
+	statuses: readonly Row["statusesTable"][];
+}
 
-export function CreateRequestDialog({
-	workspaceId,
-	workspaceCode,
-	workspaceName,
-	onCreated,
-	workspaceMembers,
-	triggerButton,
-}: CreateRequestDialogProps) {
-	const z = useZero();
-	const [open, setOpen] = useState(false);
-	const [priority, setPriority] = useState<PriorityValue>(Priority.MEDIUM);
-	const [dueDate, setDueDate] = useState<string>("");
-	const [assigneeId, setAssigneeId] = useState<string | undefined>(undefined);
+export const CreateRequestDialog = memo(
+	({
+		workspaceId,
+		workspaceCode,
+		triggerButton,
+		workspaceMembers,
+		statuses,
+	}: CreateRequestDialogProps) => {
+		const z = useZero();
 
-	// Best-effort seeding when dialog opens and online
-	useShortIdSeeder(workspaceId, open);
+		const [open, setOpen] = useState(false);
 
-	// Adapt members for AssigneeSelect shape
-	const assigneeMembers = useMemo(
-		() =>
-			workspaceMembers.map((m) => ({
-				id: m.user?.id || m.userId,
-				userId: m.user?.id || m.userId,
-				user: m.user,
-			})),
-		[workspaceMembers],
-	);
+		const onlyManagers = useMemo(
+			() => workspaceMembers.filter((m) => m.role === workspaceRole.manager),
+			[workspaceMembers],
+		);
 
-	const [form, fields] = useForm({
-		constraint: getZodConstraint(createRequestSchema),
-		shouldValidate: "onBlur",
-		shouldRevalidate: "onInput",
-		defaultValue: {
-			priority: Priority.MEDIUM,
-		},
-		onValidate({ formData }) {
-			return parseWithZod(formData, { schema: createRequestSchema });
-		},
-		async onSubmit(event, { formData }) {
-			event.preventDefault();
-			const submission = parseWithZod(formData, {
-				schema: createRequestSchema,
-			});
-			if (submission.status !== "success") return;
-			try {
-				const statuses = await z.query.statusesTable
-					.where("workspaceId", workspaceId)
-					.where("deletedAt", "IS", null)
-					.run();
-				const defaultStatus = statuses.find((s) => s.isDefault) || statuses[0];
+		// High-performance Short ID pre-fetching
+		useShortIdSeeder(workspaceId, open);
+
+		const [form, fields] = useForm({
+			id: "create-request-dialog",
+			defaultValue: {
+				priority: Priority.NONE.toString(),
+			},
+			onValidate: ({ formData }) =>
+				parseWithZod(formData, { schema: createRequestSchema }),
+			onSubmit: (e, { submission }) => {
+				e.preventDefault();
+				if (submission?.status !== "success") return;
+
+				const { title, description, assigneeId, priority, dueDate } =
+					submission.value;
+
+				const clientShortID = getAndIncrementNextShortId(workspaceId);
+
+				// Use default status or first available
+				const defaultStatus = statuses.find((s) => s.isDefault) ?? statuses[0];
 				if (!defaultStatus) {
-					toast.error("No status found for workspace");
+					toast.error("No status available in workspace");
 					return;
 				}
-				const clientShortID = getAndIncrementNextShortId(workspaceId);
+
 				z.mutate(
 					mutators.matter.create({
+						title,
+						description,
 						workspaceId,
 						workspaceCode,
-						title: submission.value.title,
-						description: submission.value.description,
-						type: "request",
-						statusId: defaultStatus.id,
+						assigneeId,
+						type: matterType.request,
 						priority,
-						assigneeId: assigneeId || undefined,
-						dueDate: submission.value.dueDate
-							? new Date(submission.value.dueDate).getTime()
-							: undefined,
+						dueDate: dueDate
+							? new Date(dueDate).getTime()
+							: Date.now() + 7 * 24 * 60 * 60 * 1000,
 						clientShortID,
+						statusId: defaultStatus.id,
 					}),
-				);
-				toast.success("Request created successfully");
-				onCreated?.(submission.value);
-				setOpen(false);
-				form.reset();
-				setPriority(Priority.MEDIUM);
-				setDueDate("");
-				setAssigneeId(undefined);
-			} catch (error) {
-				toast.error(
-					error instanceof Error ? error.message : "Failed to create request",
-				);
-			}
-		},
-	});
+				).server.catch(() => toast.error("Failed to create task"));
 
-	return (
-		<Dialog open={open} onOpenChange={setOpen}>
-			<DialogTrigger asChild>
-				{triggerButton || (
-					<Button size="sm" variant="secondary" className="gap-1.5">
-						<MessageSquareIcon className="size-4" />
-						<span className="hidden sm:inline">New Request</span>
-					</Button>
-				)}
-			</DialogTrigger>
-			<DialogContent className="border-none bg-muted p-0 shadow-2xl sm:max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
-				<DialogHeader className="border-b px-3 sm:px-4 py-3 shrink-0">
-					<div className="flex items-center gap-2">
-						<MessageSquareIcon className="size-4 sm:size-5 text-purple-500 shrink-0" />
-						<DialogTitle className="text-sm sm:text-base font-semibold">
-							Submit New Request
-						</DialogTitle>
-					</div>
-				</DialogHeader>
+				toast.success("Request submitted for approval");
+				close();
+			},
+		});
 
-				<form {...getFormProps(form)} className="flex flex-col flex-1 min-h-0">
-					<div className="space-y-4 p-3 sm:p-4 overflow-y-auto flex-1">
-						{/* Info Banner */}
-						<div className="rounded-lg border border-purple-200 bg-purple-50 p-3 dark:border-purple-900 dark:bg-purple-950/20">
-							<p className="text-purple-900 text-xs leading-relaxed dark:text-purple-300">
-								💡 Submit a request for review. A manager will review and
-								convert it into a task, or reach out if more details are needed.
-							</p>
+		const close = () => {
+			setOpen(false);
+			form.reset();
+		};
+
+		return (
+			<Dialog onOpenChange={setOpen} open={open}>
+				<DialogTrigger asChild>
+					{triggerButton || (
+						<Button variant="outline" size="sm" className="gap-2">
+							<GitPullRequest className="size-4" />
+							New Request
+						</Button>
+					)}
+				</DialogTrigger>
+
+				<DialogContent className="max-w-2xl overflow-hidden border-none p-0 shadow-2xl focus:outline-none">
+					<DialogTitle className="sr-only">New Request</DialogTitle>
+					<DialogDescription className="sr-only">
+						Create a new approval request for this workspace
+					</DialogDescription>
+
+					<form {...getFormProps(form)} className="flex flex-col bg-background">
+						<div className="space-y-4 p-6">
+							<div className="flex items-center gap-2 font-bold text-[10px] text-orange-500 uppercase tracking-tighter">
+								<GitPullRequest className="size-3" /> {workspaceCode} / New
+								Approval Request
+							</div>
+
+							<input
+								{...getInputProps(fields.title, { type: "text" })}
+								key={fields.title.key}
+								autoFocus
+								placeholder="What needs approval?"
+								className="w-full bg-transparent font-semibold text-xl outline-none placeholder:text-muted-foreground/30"
+							/>
+
+							<textarea
+								{...getInputProps(fields.description, { type: "text" })}
+								key={fields.description.key}
+								placeholder="Provide context for the managers..."
+								className="min-h-35 w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/30"
+							/>
 						</div>
 
-						{/* Hidden inputs */}
-						<input
-							{...getInputProps(fields.priority, { type: "hidden" })}
-							value={priority}
-						/>
+						<div className="flex items-center justify-between border-t bg-muted/5 px-4 py-3">
+							<div className="flex items-center gap-2">
+								<PrioritySelect
+									name={fields.priority.name}
+									value={Number(fields.priority.value) as PriorityValue}
+									onChange={(v) =>
+										form.update({
+											name: fields.priority.name,
+											value: v.toString(),
+										})
+									}
+									showLabel
+									className="h-7 border bg-background px-2"
+								/>
 
-						{/* Title */}
-						<InputField
-							labelProps={{
-								htmlFor: fields.title.id,
-								children: "What do you need help with?",
-								className: "text-xs",
-							}}
-							inputProps={{
-								...getInputProps(fields.title, { type: "text" }),
-								autoFocus: true,
-								placeholder: "Describe your request...",
-								className: cn(
-									"w-full rounded-md border bg-background px-3 py-2 text-sm outline-none transition-all",
-									"placeholder:text-muted-foreground",
-									"focus-visible:ring-2 focus-visible:ring-ring/50",
-									fields.title.errors && "border-destructive",
-								),
-							}}
-							errors={fields.title.errors}
-						/>
-
-						{/* Description */}
-						<TextareaField
-							labelProps={{
-								htmlFor: fields.description.id,
-								children: (
-									<>
-										Additional Details{" "}
-										<span className="text-muted-foreground">(optional)</span>
-									</>
-								),
-								className: "text-xs",
-							}}
-							textareaProps={{
-								...getInputProps(fields.description, { type: "text" }),
-								placeholder:
-									"Provide more context to help us understand your needs...",
-								rows: 4,
-								className: cn(
-									"w-full resize-none rounded-md border bg-background px-3 py-2 text-sm outline-none transition-all",
-									"placeholder:text-muted-foreground",
-									"focus-visible:ring-2 focus-visible:ring-ring/50",
-									fields.description.errors && "border-destructive",
-								),
-							}}
-							errors={fields.description.errors}
-						/>
-
-						{/* Metadata Row */}
-						<div className="flex flex-wrap items-start sm:items-center gap-2">
-							{/* Priority */}
-							<PrioritySelect
-								value={priority}
-								onChange={setPriority}
-								showLabel
-							/>
-
-							{/* Assignee */}
-							<MemberSelect
-								value={assigneeId || ""}
-								members={assigneeMembers}
-								onChange={(val) => setAssigneeId(val || undefined)}
-								align="start"
-								showLabel
-							/>
-
-							{/* Due Date */}
-							<div className="flex items-center gap-1.5">
-								<CalendarIcon className="size-3 text-muted-foreground" />
-								<input
-									{...getInputProps(fields.dueDate, { type: "date" })}
-									className={cn(
-										"h-8 w-36 cursor-pointer rounded-md border-none bg-slate-400/10 px-2 py-1 text-sm outline-none transition-all",
-										"focus-visible:ring-2 focus-visible:ring-ring/50",
-										dueDate ? "text-foreground" : "text-muted-foreground",
-									)}
-									onChange={(e) => setDueDate(e.target.value)}
-									value={dueDate}
+								<MemberSelect
+									name={fields.assigneeId.name}
+									value={fields.assigneeId.value}
+									members={onlyManagers}
+									onChange={(v) =>
+										form.update({
+											name: fields.assigneeId.name,
+											value: v ?? undefined,
+										})
+									}
+									showLabel
+									className="h-7 border bg-background px-2"
 								/>
 							</div>
-						</div>
-					</div>
 
-					<DialogFooter className="border-t px-3 sm:px-4 py-3 shrink-0">
-						<div className="flex w-full items-center justify-between gap-2">
-							<p className="text-muted-foreground text-xs hidden sm:block">
-								Press{" "}
-								<kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium font-mono text-[10px] text-muted-foreground">
-									Esc
-								</kbd>{" "}
-								to cancel
-							</p>
-							<Button size="sm" type="submit" className="ml-auto">
-								Submit Request
-							</Button>
+							<div className="flex items-center gap-3">
+								<Button type="button" variant="ghost" size="sm" onClick={close}>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									size="sm"
+									className="bg-orange-600 hover:bg-orange-700"
+								>
+									Submit Request
+								</Button>
+							</div>
 						</div>
-					</DialogFooter>
-				</form>
-			</DialogContent>
-		</Dialog>
-	);
-}
+					</form>
+				</DialogContent>
+			</Dialog>
+		);
+	},
+);

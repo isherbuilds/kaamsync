@@ -1,14 +1,16 @@
 import { Menu, X, Zap } from "lucide-react";
 import { useState } from "react";
 import { Link, Outlet, redirect } from "react-router";
-import { ColorSchemeToggle } from "~/components/color-scheme-toggle.js";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 
 export async function clientLoader() {
 	const session = await authClient.getSession();
+
 	if (!session?.data) return null;
+
 	const orgs = await authClient.organization.list();
+
 	return orgs.data?.length
 		? redirect(`/${orgs.data[0]?.slug}/tasks`)
 		: redirect("/join");
