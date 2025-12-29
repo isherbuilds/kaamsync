@@ -19,7 +19,6 @@ import { VirtualizedList } from "~/components/virtualized-list";
 import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
-import { usePermissions } from "~/hooks/use-permissions";
 import {
 	DETAIL_PANEL_MIN_SIZE,
 	getDetailPanelSize,
@@ -67,8 +66,6 @@ export default function TasksPage() {
 	} = useInfiniteMatters({
 		queryType: "userAssigned",
 	});
-
-	usePermissions();
 
 	// Load members once for the entire list - cached by Zero
 	const [members] = useQuery(queries.getOrganizationMembers(), {

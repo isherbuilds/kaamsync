@@ -30,7 +30,8 @@ export const createMatterSchema = z.object({
 	title: matterTitleSchema,
 	description: matterDescriptionSchema,
 	statusId: z.string().optional(),
-	assigneeId: z.string(),
+	// TODO: Think this through more - should unassigned be allowed?
+	assigneeId: z.string().nullable(),
 	priority: z.number().int().min(0).max(4).default(Priority.NONE),
 	dueDate: z.string().optional(),
 });
