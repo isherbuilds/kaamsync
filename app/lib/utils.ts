@@ -58,7 +58,8 @@ export function formatCompactRelativeDate(
 	const now = nowDate || new Date();
 	const timestamp = new Date(date).getTime();
 
-	if (!timestamp || Number.isNaN(timestamp)) return "Invalid Date";
+	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp))
+		return "Invalid Date";
 
 	if (isToday(timestamp, now)) return "Today";
 	if (isTomorrow(timestamp, now)) return "Tomorrow";
@@ -83,7 +84,8 @@ export function formatCompactRelativeDate(
  * Shows: just now, Xm ago, Xh ago, Xd ago, or "Mon DD" for older dates.
  */
 export function formatTimelineDate(timestamp: number): string {
-	if (!timestamp || Number.isNaN(timestamp) || timestamp < 0) return "";
+	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp) || timestamp < 0)
+		return "";
 
 	const date = new Date(timestamp);
 	const now = Date.now();
@@ -115,14 +117,15 @@ export function formatTimelineDate(timestamp: number): string {
 	if (days > 0) return `${days}d ago`;
 	if (hours > 0) return `${hours}h ago`;
 	if (minutes > 0) return `${minutes}m ago`;
-	return "just now";
+	return "Just Now";
 }
 
 /**
  * Format an absolute date (e.g., for created/updated timestamps).
  */
 export function formatDate(ms: number): string {
-	if (!ms || Number.isNaN(ms)) return "";
+	if (!Number.isFinite(ms) || Number.isNaN(ms)) return "";
+
 	try {
 		return new Date(ms).toLocaleDateString(undefined, {
 			month: "numeric",
