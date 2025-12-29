@@ -58,6 +58,8 @@ export function formatCompactRelativeDate(
 	const now = nowDate || new Date();
 	const timestamp = new Date(date).getTime();
 
+	if (!timestamp || Number.isNaN(timestamp)) return "Invalid Date";
+
 	if (isToday(timestamp, now)) return "Today";
 	if (isTomorrow(timestamp, now)) return "Tomorrow";
 
@@ -70,10 +72,10 @@ export function formatCompactRelativeDate(
 	if (diffHours < 24) return `${diffHours}hrs`;
 
 	const diffDays = Math.floor(diffMs / MS_DAY);
-	if (diffDays < 7) return `${diffDays}days`;
+	if (diffDays < 7) return `${diffDays}D`;
 
 	const diffWeeks = Math.floor(diffDays / 7);
-	return `${diffWeeks}weeks`;
+	return `${diffWeeks}W`;
 }
 
 /**

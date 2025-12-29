@@ -44,6 +44,7 @@ export const CreateTaskDialog = memo(
 	}: CreateTaskDialogProps) => {
 		const z = useZero();
 		const [open, setOpen] = useState(false);
+		const [isSubmitting, setIsSubmitting] = useState(false);
 
 		// Pre-fetches a block of Short IDs from the server when dialog opens
 		useShortIdSeeder(workspaceId, open);
@@ -66,6 +67,7 @@ export const CreateTaskDialog = memo(
 
 				const clientShortID = getAndIncrementNextShortId(workspaceId);
 
+				setIsSubmitting(true);
 				z.mutate(
 					mutators.matter.create({
 						workspaceId,
@@ -85,7 +87,8 @@ export const CreateTaskDialog = memo(
 						setOpen(false);
 						form.reset();
 					})
-					.catch(() => toast.error("Failed to create task"));
+					.catch(() => toast.error("Failed to create task"))
+					.finally(() => setIsSubmitting(false));
 			},
 		});
 
@@ -164,7 +167,7 @@ export const CreateTaskDialog = memo(
 
 								<MemberSelect
 									name={fields.assigneeId.name}
-									value={fields.assigneeId.value ?? null}
+									value={fields.assigneeId.value ?? undefined}
 									members={workspaceMembers}
 									onChange={(v) =>
 										form.update({
@@ -194,8 +197,9 @@ export const CreateTaskDialog = memo(
 									type="submit"
 									size="sm"
 									className="h-8 px-4 font-medium"
+									disabled={isSubmitting}
 								>
-									Create Task
+									{isSubmitting ? "Creating..." : "Create Task"}
 								</Button>
 							</div>
 						</div>

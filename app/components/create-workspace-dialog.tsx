@@ -1,7 +1,7 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useZero } from "@rocicorp/zero/react";
-import { memo, useRef } from "react";
+import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { createWorkspaceSchema } from "../lib/validations/organization";
@@ -32,6 +32,7 @@ export const CreateWorkspaceDialog = memo(
 	}) => {
 		const zr = useZero();
 		const isManual = useRef(false);
+		const [isSubmitting, setIsSubmitting] = useState(false);
 
 		const [form, fields] = useForm({
 			id: "create-workspace-dialog",
@@ -42,12 +43,14 @@ export const CreateWorkspaceDialog = memo(
 				e.preventDefault();
 				if (submission?.status !== "success") return;
 
+				setIsSubmitting(true);
 				zr.mutate(mutators.workspace.create(submission.value))
 					.server.then(() => {
 						toast.success("Workspace created");
 						close();
 					})
-					.catch(() => toast.error("Failed to create workspace"));
+					.catch(() => toast.error("Failed to create workspace"))
+					.finally(() => setIsSubmitting(false));
 			},
 		});
 
@@ -113,7 +116,9 @@ export const CreateWorkspaceDialog = memo(
 							<Button type="button" variant="ghost" onClick={close}>
 								Cancel
 							</Button>
-							<Button type="submit">Create Workspace</Button>
+							<Button type="submit" disabled={isSubmitting}>
+								{isSubmitting ? "Creating..." : "Create Workspace"}
+							</Button>
 						</div>
 					</form>
 				</DialogContent>

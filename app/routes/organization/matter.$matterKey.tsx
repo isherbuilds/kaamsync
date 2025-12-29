@@ -140,11 +140,13 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 	const handleArchive = () => {
 		if (!matter) return;
 		if (matter.archived) {
-			z.mutate(mutators.matter.unarchive({ id: matter.id }));
-			toast.success("Matter unarchived");
+			z.mutate(mutators.matter.unarchive({ id: matter.id }))
+				.server.then(() => toast.success("Matter unarchived"))
+				.catch(() => toast.error("Failed to unarchive matter"));
 		} else {
-			z.mutate(mutators.matter.archive({ id: matter.id }));
-			toast.success("Matter archived");
+			z.mutate(mutators.matter.archive({ id: matter.id }))
+				.server.then(() => toast.success("Matter archived"))
+				.catch(() => toast.error("Failed to archive matter"));
 		}
 	};
 
@@ -465,7 +467,7 @@ function CommentInput({ matterId }: { matterId: string }) {
 
 	// Sanitize comment: trim, collapse whitespace, enforce max length
 	const sanitizeComment = (text: string) => {
-		return text.trim().replace(/\s+/g, " ").slice(0, 5000);
+		return text.trim().slice(0, 5000);
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {

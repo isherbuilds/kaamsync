@@ -4,6 +4,7 @@ import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import { GitPullRequest } from "lucide-react";
 import { memo, useMemo, useState } from "react";
+import { Form } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
@@ -40,6 +41,7 @@ export const CreateRequestDialog = memo(
 		const z = useZero();
 
 		const [open, setOpen] = useState(false);
+		const [isSubmitting, setIsSubmitting] = useState(false);
 
 		const onlyManagers = useMemo(
 			() => workspaceMembers.filter((m) => m.role === workspaceRole.manager),
@@ -59,6 +61,7 @@ export const CreateRequestDialog = memo(
 				parseWithZod(formData, { schema: createRequestSchema }),
 			onSubmit: (e, { submission }) => {
 				e.preventDefault();
+
 				if (submission?.status !== "success") return;
 
 				const { title, description, assigneeId, priority, dueDate } =
@@ -73,6 +76,7 @@ export const CreateRequestDialog = memo(
 					return;
 				}
 
+				setIsSubmitting(true);
 				z.mutate(
 					mutators.matter.create({
 						title,
@@ -94,7 +98,8 @@ export const CreateRequestDialog = memo(
 						setOpen(false);
 						form.reset();
 					})
-					.catch(() => toast.error("Failed to create request"));
+					.catch(() => toast.error("Failed to create request"))
+					.finally(() => setIsSubmitting(false));
 			},
 		});
 
@@ -181,8 +186,9 @@ export const CreateRequestDialog = memo(
 									type="submit"
 									size="sm"
 									className="bg-orange-600 hover:bg-orange-700"
+									disabled={isSubmitting}
 								>
-									Submit Request
+									{isSubmitting ? "Submitting..." : "Submit Request"}
 								</Button>
 							</div>
 						</div>
