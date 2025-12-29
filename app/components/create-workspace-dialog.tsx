@@ -42,9 +42,12 @@ export const CreateWorkspaceDialog = memo(
 				e.preventDefault();
 				if (submission?.status !== "success") return;
 
-				zr.mutate(mutators.workspace.create(submission.value));
-				toast.success("Workspace created");
-				close();
+				zr.mutate(mutators.workspace.create(submission.value))
+					.server.then(() => {
+						toast.success("Workspace created");
+						close();
+					})
+					.catch(() => toast.error("Failed to create workspace"));
 			},
 		});
 

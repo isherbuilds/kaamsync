@@ -187,9 +187,9 @@ export const CreateTaskDialog = memo(
 							</div>
 
 							<div className="flex items-center justify-end gap-3">
-								<span className="hidden text-[10px] text-muted-foreground lg:block">
+								{/* <span className="hidden text-[10px] text-muted-foreground lg:block">
 									<kbd className="font-sans">⌘</kbd> Enter
-								</span>
+								</span> */}
 								<Button
 									type="submit"
 									size="sm"

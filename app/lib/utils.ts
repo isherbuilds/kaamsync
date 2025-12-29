@@ -25,9 +25,9 @@ const MS_HOUR = 60 * MS_MINUTE;
 const MS_DAY = 24 * MS_HOUR;
 
 /** Check if timestamp is today */
-function isToday(timestamp: number | Date): boolean {
+function isToday(timestamp: number | Date, referenceDate?: Date): boolean {
 	const date = new Date(timestamp);
-	const today = new Date();
+	const today = referenceDate ?? new Date();
 	return (
 		date.getDate() === today.getDate() &&
 		date.getMonth() === today.getMonth() &&
@@ -36,9 +36,9 @@ function isToday(timestamp: number | Date): boolean {
 }
 
 /** Check if timestamp is tomorrow */
-function isTomorrow(timestamp: number | Date): boolean {
+function isTomorrow(timestamp: number | Date, referenceDate?: Date): boolean {
 	const date = new Date(timestamp);
-	const tomorrow = new Date();
+	const tomorrow = referenceDate ? new Date(referenceDate) : new Date();
 	tomorrow.setDate(tomorrow.getDate() + 1);
 	return (
 		date.getDate() === tomorrow.getDate() &&
@@ -58,8 +58,8 @@ export function formatCompactRelativeDate(
 	const now = nowDate || new Date();
 	const timestamp = new Date(date).getTime();
 
-	if (isToday(timestamp)) return "Today";
-	if (isTomorrow(timestamp)) return "Tomorrow";
+	if (isToday(timestamp, now)) return "Today";
+	if (isTomorrow(timestamp, now)) return "Tomorrow";
 
 	const diffMs = timestamp - now.getTime();
 

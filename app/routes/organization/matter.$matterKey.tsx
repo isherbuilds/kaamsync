@@ -150,9 +150,12 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	const handleDelete = () => {
 		if (!matter) return;
-		z.mutate(mutators.matter.delete({ id: matter.id }));
-		toast.success("Matter deleted");
-		navigate(`/${orgSlug}`);
+		z.mutate(mutators.matter.delete({ id: matter.id }))
+			.server.then(() => {
+				toast.success("Matter deleted");
+				navigate(`/${orgSlug}`);
+			})
+			.catch(() => toast.error("Failed to delete matter"));
 	};
 
 	const handleBack = () => {
@@ -659,11 +662,15 @@ function AdminApproveSection({
 	if (!isVisible || !isAdmin) return null;
 
 	const handleApprove = () => {
-		z.mutate(mutators.matter.approve({ id: matterId }));
+		z.mutate(mutators.matter.approve({ id: matterId }))
+			.server.then(() => toast.success("Request approved"))
+			.catch(() => toast.error("Failed to approve request"));
 	};
 
 	const handleReject = () => {
-		z.mutate(mutators.matter.reject({ id: matterId }));
+		z.mutate(mutators.matter.reject({ id: matterId }))
+			.server.then(() => toast.success("Request rejected"))
+			.catch(() => toast.error("Failed to reject request"));
 	};
 
 	if (approvalStatus === "rejected") {
