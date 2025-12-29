@@ -1,6 +1,6 @@
 import type { Row } from "@rocicorp/zero";
 import { Check, User } from "lucide-react";
-import { forwardRef, memo, useMemo, useState } from "react";
+import { forwardRef, memo, useCallback, useMemo, useState } from "react";
 import { renderPriorityIcon } from "~/components/icons";
 import { CustomAvatar } from "~/components/ui/avatar";
 import {
@@ -84,6 +84,14 @@ export const PrioritySelect = memo(
 		const [open, setOpen] = useState(false);
 		const current = PRIORITIES.find((p) => p.value === value) ?? PRIORITIES[4];
 
+		const handleSelect = useCallback(
+			(priorityValue: PriorityValue) => {
+				onChange(priorityValue);
+				setOpen(false);
+			},
+			[onChange],
+		);
+
 		return (
 			<Popover open={open} onOpenChange={setOpen}>
 				<input type="hidden" name={name} value={value ?? Priority.NONE} />
@@ -111,10 +119,7 @@ export const PrioritySelect = memo(
 									<CommandItem
 										key={p.value}
 										value={p.label}
-										onSelect={() => {
-											onChange(p.value);
-											setOpen(false);
-										}}
+										onSelect={() => handleSelect(p.value)}
 										className="text-xs"
 									>
 										<div className={cn("mr-2", getPriorityColor(p.value))}>
@@ -161,6 +166,14 @@ export const StatusSelect = memo(
 		const statusType = (current?.type || "not_started") as StatusType;
 		const Icon = STATUS_TYPE_ICONS[statusType];
 
+		const handleSelect = useCallback(
+			(statusId: string) => {
+				onChange(statusId);
+				setOpen(false);
+			},
+			[onChange],
+		);
+
 		return (
 			<Popover open={open} onOpenChange={setOpen}>
 				<input type="hidden" name={name} value={value ?? ""} />
@@ -196,10 +209,7 @@ export const StatusSelect = memo(
 										<CommandItem
 											key={s.id}
 											value={s.name}
-											onSelect={() => {
-												onChange(s.id);
-												setOpen(false);
-											}}
+											onSelect={() => handleSelect(s.id)}
 											className="text-xs"
 										>
 											<SIcon
@@ -242,6 +252,14 @@ export const MemberSelect = memo(
 		// Check both user and usersTable for compatibility
 		const user = currentMember?.user ?? currentMember?.usersTable;
 
+		const handleSelect = useCallback(
+			(userId: string | null) => {
+				onChange(userId);
+				setOpen(false);
+			},
+			[onChange],
+		);
+
 		return (
 			<Popover open={open} onOpenChange={setOpen}>
 				<input type="hidden" name={name} value={value ?? ""} />
@@ -279,10 +297,7 @@ export const MemberSelect = memo(
 							<CommandGroup>
 								<CommandItem
 									value="unassigned"
-									onSelect={() => {
-										onChange(null);
-										setOpen(false);
-									}}
+									onSelect={() => handleSelect(null)}
 									className="text-xs"
 								>
 									<User className="mr-2 size-3.5 opacity-50" />
@@ -296,10 +311,7 @@ export const MemberSelect = memo(
 										<CommandItem
 											key={m.userId}
 											value={u.name}
-											onSelect={() => {
-												onChange(m.userId);
-												setOpen(false);
-											}}
+											onSelect={() => handleSelect(m.userId)}
 											className="text-xs"
 										>
 											<CustomAvatar

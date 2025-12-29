@@ -88,17 +88,15 @@ export const CreateRequestDialog = memo(
 						clientShortID,
 						statusId: defaultStatus.id,
 					}),
-				).server.catch(() => toast.error("Failed to create request"));
-
-				toast.success("Request submitted for approval");
-				close();
+				)
+					.server.then(() => {
+						toast.success("Request submitted for approval");
+						setOpen(false);
+						form.reset();
+					})
+					.catch(() => toast.error("Failed to create request"));
 			},
 		});
-
-		const close = () => {
-			setOpen(false);
-			form.reset();
-		};
 
 		return (
 			<Dialog onOpenChange={setOpen} open={open}>
@@ -171,7 +169,12 @@ export const CreateRequestDialog = memo(
 							</div>
 
 							<div className="flex items-center gap-3">
-								<Button type="button" variant="ghost" size="sm" onClick={close}>
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									onClick={() => setOpen(false)}
+								>
 									Cancel
 								</Button>
 								<Button

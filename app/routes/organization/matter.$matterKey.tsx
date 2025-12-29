@@ -20,7 +20,6 @@ import {
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter-field-selectors";
-import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,
@@ -51,13 +50,6 @@ export const meta: Route.MetaFunction = ({ params }) => [
 		content: `Details and activity for matter ${params.matterKey}.`,
 	},
 ];
-
-const TIMELINE_TYPE_COLORS: Record<string, string> = {
-	comment: "bg-blue-500",
-	created: "bg-green-500",
-	status_change: "bg-purple-500",
-	assigned: "bg-orange-500",
-};
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 	const matterKey = params.matterKey;
@@ -107,19 +99,43 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		);
 	}, [matter, statuses]);
 
-	// 3. Handlers
+	// 3. State & Loading
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [isUpdating, setIsUpdating] = useState({
+		status: false,
+		priority: false,
+		assignee: false,
+	});
 
-	const handleStatusChange = (s: string) =>
-		matter &&
-		z.mutate(mutators.matter.updateStatus({ id: matter.id, statusId: s }));
+	const handleStatusChange = (s: string) => {
+		if (!matter) return;
+		setIsUpdating((prev) => ({ ...prev, status: true }));
+		z.mutate(
+			mutators.matter.updateStatus({ id: matter.id, statusId: s }),
+		).server.finally(() =>
+			setIsUpdating((prev) => ({ ...prev, status: false })),
+		);
+	};
 
-	const handleAssign = (u: string | null) =>
-		matter &&
-		z.mutate(mutators.matter.assign({ id: matter.id, assigneeId: u }));
+	const handleAssign = (u: string | null) => {
+		if (!matter) return;
+		setIsUpdating((prev) => ({ ...prev, assignee: true }));
+		z.mutate(
+			mutators.matter.assign({ id: matter.id, assigneeId: u }),
+		).server.finally(() =>
+			setIsUpdating((prev) => ({ ...prev, assignee: false })),
+		);
+	};
 
-	const handlePriorityChange = (p: PriorityValue) =>
-		matter && z.mutate(mutators.matter.update({ id: matter.id, priority: p }));
+	const handlePriorityChange = (p: PriorityValue) => {
+		if (!matter) return;
+		setIsUpdating((prev) => ({ ...prev, priority: true }));
+		z.mutate(
+			mutators.matter.update({ id: matter.id, priority: p }),
+		).server.finally(() =>
+			setIsUpdating((prev) => ({ ...prev, priority: false })),
+		);
+	};
 
 	const handleArchive = () => {
 		if (!matter) return;
@@ -144,7 +160,26 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		else navigate(`/${orgSlug}`);
 	};
 
-	if (!matter) return null;
+	if (!matter) {
+		return (
+			<div className="flex h-full flex-col bg-background">
+				<header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+					<div className="h-4 w-16 animate-pulse rounded bg-muted" />
+					<div className="h-4 w-24 animate-pulse rounded bg-muted" />
+				</header>
+				<div className="flex-1 p-8">
+					<div className="mx-auto max-w-3xl space-y-6">
+						<div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
+						<div className="space-y-2">
+							<div className="h-4 w-full animate-pulse rounded bg-muted" />
+							<div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
+							<div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
+						</div>
+					</div>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="@container flex h-full flex-col bg-background">
@@ -241,7 +276,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 											value={matter.statusId}
 											statuses={filteredStatuses}
 											onChange={handleStatusChange}
-											disabled={!canEdit}
+											disabled={!canEdit || isUpdating.status}
 											showLabel
 										/>
 									</PropertyPill>
@@ -252,7 +287,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 											Number(matter.priority ?? Priority.NONE) as PriorityValue
 										}
 										onChange={handlePriorityChange}
-										disabled={!canEdit}
+										disabled={!canEdit || isUpdating.priority}
 										showLabel
 									/>
 								</PropertyPill>
@@ -261,7 +296,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 										value={matter.assigneeId}
 										members={members as readonly MemberSelectorItem[]}
 										onChange={handleAssign}
-										disabled={!canEdit}
+										disabled={!canEdit || isUpdating.assignee}
 										showLabel
 									/>
 								</PropertyPill>
@@ -279,7 +314,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 							<div className="space-y-4">
 								<h2 className="font-semibold text-sm">Activity</h2>
-								<CommentInput />
+								<CommentInput matterId={matter.id} />
 								<TaskTimeline
 									matterId={matter.id}
 									members={members}
@@ -304,7 +339,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 										value={matter.statusId}
 										statuses={filteredStatuses}
 										onChange={handleStatusChange}
-										disabled={!canEdit}
+										disabled={!canEdit || isUpdating.status}
 										showLabel
 										className="h-8 w-full justify-start border bg-background px-2"
 									/>
@@ -316,7 +351,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 										Number(matter.priority ?? Priority.NONE) as PriorityValue
 									}
 									onChange={handlePriorityChange}
-									disabled={!canEdit}
+									disabled={!canEdit || isUpdating.priority}
 									showLabel
 									className="h-8 w-full justify-start border bg-background px-2"
 								/>
@@ -326,7 +361,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 									value={matter.assigneeId}
 									members={members as readonly MemberSelectorItem[]}
 									onChange={handleAssign}
-									disabled={!canEdit}
+									disabled={!canEdit || isUpdating.assignee}
 									showLabel
 									className="h-8 w-full justify-start border bg-background px-2"
 								/>
@@ -420,16 +455,60 @@ function PropertyRow({
 	);
 }
 
-function CommentInput() {
+function CommentInput({ matterId }: { matterId: string }) {
+	const z = useZero();
+	const [content, setContent] = useState("");
+	const [isSubmitting, setIsSubmitting] = useState(false);
+
+	// Sanitize comment: trim, collapse whitespace, enforce max length
+	const sanitizeComment = (text: string) => {
+		return text.trim().replace(/\s+/g, " ").slice(0, 5000);
+	};
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		const sanitized = sanitizeComment(content);
+		if (!sanitized || isSubmitting) return;
+
+		setIsSubmitting(true);
+		z.mutate(mutators.timeline.addComment({ matterId, content: sanitized }))
+			.server.then(() => {
+				setContent("");
+				toast.success("Comment added");
+			})
+			.catch((err) => {
+				toast.error("Failed to add comment");
+				console.error("Comment mutation failed:", err);
+			})
+			.finally(() => setIsSubmitting(false));
+	};
+
+	// Support Cmd/Ctrl+Enter to submit
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+			e.preventDefault();
+			handleSubmit(e);
+		}
+	};
+
 	return (
-		<form onSubmit={(e) => e.preventDefault()} className="flex gap-2">
+		<form onSubmit={handleSubmit} className="flex gap-2">
 			<Textarea
-				placeholder="Add a comment..."
+				value={content}
+				onChange={(e) => setContent(e.target.value)}
+				onKeyDown={handleKeyDown}
+				placeholder="Add a comment... (⌘+Enter to submit)"
 				rows={2}
 				className="min-h-15 resize-none text-sm"
+				disabled={isSubmitting}
 			/>
-			<Button type="submit" size="sm" className="shrink-0 self-end">
-				Send
+			<Button
+				type="submit"
+				size="sm"
+				className="shrink-0 self-end"
+				disabled={!content.trim() || isSubmitting}
+			>
+				{isSubmitting ? "..." : "Send"}
 			</Button>
 		</form>
 	);

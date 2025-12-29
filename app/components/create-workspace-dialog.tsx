@@ -51,6 +51,8 @@ export const CreateWorkspaceDialog = memo(
 		const close = () => {
 			onOpenChange(false);
 			isManual.current = false;
+			// Reset the form when closing to clear validation state and values
+			form.reset();
 		};
 
 		return (

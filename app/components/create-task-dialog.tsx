@@ -66,7 +66,6 @@ export const CreateTaskDialog = memo(
 
 				const clientShortID = getAndIncrementNextShortId(workspaceId);
 
-				// Fire mutation - dialog closes optimistically, errors show toast
 				z.mutate(
 					mutators.matter.create({
 						workspaceId,
@@ -80,10 +79,13 @@ export const CreateTaskDialog = memo(
 						dueDate: dueDate ? new Date(dueDate).getTime() : undefined,
 						clientShortID,
 					}),
-				).server.catch(() => toast.error("Failed to create task"));
-
-				setOpen(false);
-				toast.success(`${workspaceCode}-${clientShortID} created`);
+				)
+					.server.then(() => {
+						toast.success(`${workspaceCode}-${clientShortID} created`);
+						setOpen(false);
+						form.reset();
+					})
+					.catch(() => toast.error("Failed to create task"));
 			},
 		});
 

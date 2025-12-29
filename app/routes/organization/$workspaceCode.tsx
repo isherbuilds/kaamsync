@@ -56,6 +56,15 @@ type ListItem = HeaderItem | TaskItem;
 
 const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
+// Dialog props shared between task/request creation components
+type DialogProps = {
+	workspaceId: string;
+	workspaceCode: string;
+	workspaceName: string;
+	workspaceMembers: readonly Row["workspaceMembershipsTable"][];
+	statuses: readonly Status[];
+};
+
 export default function WorkspaceIndex() {
 	const { orgSlug, authSession } = useOrgLoaderData();
 	const { workspaceCode } = useParams();
@@ -79,15 +88,18 @@ export default function WorkspaceIndex() {
 		...CACHE_NAV,
 	});
 
-	const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+	// Tracks statuses that have been manually toggled from their default expanded/collapsed state
+	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
+		new Set(),
+	);
 
 	// Reset if switching workspace
 	useEffect(() => {
-		setCollapsed(new Set());
+		setToggledStatuses(new Set());
 	}, [workspaceId]);
 
 	const toggleGroup = useCallback((id: string) => {
-		setCollapsed((prev) => {
+		setToggledStatuses((prev) => {
 			const next = new Set(prev);
 			next.has(id) ? next.delete(id) : next.add(id);
 			return next;
@@ -126,11 +138,10 @@ export default function WorkspaceIndex() {
 
 		for (const g of sortedGroups) {
 			const isCompletedType = COLLAPSED_TYPES.has(g.status.type);
-			const isExpanded = collapsed.has(g.status.id)
+			const isExpanded = toggledStatuses.has(g.status.id)
 				? isCompletedType
 				: !isCompletedType;
 
-			sticky.push(items.length);
 			items.push({
 				type: "header",
 				id: `h-${g.status.id}`,
@@ -151,7 +162,7 @@ export default function WorkspaceIndex() {
 			}
 		}
 		return { flatItems: items, activeCount: active, stickyIndices: sticky };
-	}, [matters, statuses, collapsed]);
+	}, [matters, statuses, toggledStatuses]);
 
 	const onPriority = useCallback(
 		(id: string, p: PriorityValue) =>
@@ -247,6 +258,15 @@ export default function WorkspaceIndex() {
 	);
 }
 
+interface HeaderProps {
+	name: string;
+	count: number;
+	isManager: boolean;
+	canRequest: boolean;
+	dialogProps: DialogProps;
+	requestDialogProps: DialogProps;
+}
+
 const Header = memo(
 	({
 		name,
@@ -255,7 +275,7 @@ const Header = memo(
 		canRequest,
 		dialogProps,
 		requestDialogProps,
-	}: any) => (
+	}: HeaderProps) => (
 		<div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
 			<div className="flex min-w-0 items-center gap-2">
 				<SidebarTrigger className="-ml-1 lg:hidden" />
@@ -317,6 +337,16 @@ const GroupHeader = memo(
 	},
 );
 
+interface TaskRowProps {
+	item: TaskItem;
+	orgSlug: string;
+	members: readonly Row["workspaceMembershipsTable"][];
+	statuses: readonly Status[];
+	onPriority: (id: string, p: PriorityValue) => void;
+	onStatus: (id: string, s: string) => void;
+	onAssign: (id: string, u: string | null) => void;
+}
+
 const TaskRow = memo(
 	({
 		item,
@@ -326,10 +356,25 @@ const TaskRow = memo(
 		onPriority,
 		onStatus,
 		onAssign,
-	}: any) => {
+	}: TaskRowProps) => {
 		const { task, isCompleted } = item as TaskItem;
 		const taskCode = `${task.workspaceCode}-${task.shortID}`;
 		const link = `/${orgSlug}/matter/${taskCode}`;
+
+		const handlePriority = useCallback(
+			(p: PriorityValue) => onPriority(task.id, p),
+			[onPriority, task.id],
+		);
+
+		const handleStatus = useCallback(
+			(s: string) => onStatus(task.id, s),
+			[onStatus, task.id],
+		);
+
+		const handleAssign = useCallback(
+			(u: string | null) => onAssign(task.id, u),
+			[onAssign, task.id],
+		);
 
 		return (
 			<div className="group relative flex h-11 items-center border-transparent border-b transition-colors hover:border-border/50 hover:bg-muted/30">
@@ -339,7 +384,7 @@ const TaskRow = memo(
 					<div className="flex shrink-0 items-center gap-3">
 						<PrioritySelect
 							value={task.priority as PriorityValue}
-							onChange={(p) => onPriority(task.id, p)}
+							onChange={handlePriority}
 							className="z-20 p-2"
 							align="start"
 						/>
@@ -352,7 +397,7 @@ const TaskRow = memo(
 						<StatusSelect
 							value={task.statusId}
 							statuses={statuses}
-							onChange={(s) => onStatus(task.id, s)}
+							onChange={handleStatus}
 							align="start"
 						/>
 					</div>
@@ -373,7 +418,7 @@ const TaskRow = memo(
 						<MemberSelect
 							value={task.assigneeId}
 							members={members}
-							onChange={(u) => onAssign(task.id, u)}
+							onChange={handleAssign}
 							align="end"
 							className="z-20 p-0"
 						/>
@@ -400,8 +445,20 @@ function DueDateBadge({ date }: { date: number }) {
 	);
 }
 
+interface WorkspaceEmptyStateProps {
+	isManager: boolean;
+	canRequest: boolean;
+	dialogProps: DialogProps;
+	requestDialogProps: DialogProps;
+}
+
 const WorkspaceEmptyState = memo(
-	({ isManager, canRequest, dialogProps, requestDialogProps }: any) => (
+	({
+		isManager,
+		canRequest,
+		dialogProps,
+		requestDialogProps,
+	}: WorkspaceEmptyStateProps) => (
 		<div className="flex h-full items-center justify-center p-8">
 			<EmptyStateCard
 				icon={ListTodoIcon}

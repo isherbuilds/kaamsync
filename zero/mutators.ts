@@ -343,6 +343,14 @@ export const mutators = defineMutators({
 						.where("workspaceId", matter.workspaceId)
 						.where("isRequestStatus", false),
 				);
+
+				// Explicit validation: abort if no task statuses exist in workspace
+				if (!taskStatuses || taskStatuses.length === 0) {
+					throw new Error(
+						`Cannot convert request to task: no task statuses configured in workspace ${matter.workspaceId} (action: approve request ${args.id})`,
+					);
+				}
+
 				const defaultStatus =
 					taskStatuses.find((s) => s.isDefault) ?? taskStatuses[0];
 
@@ -353,7 +361,7 @@ export const mutators = defineMutators({
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
-					statusId: defaultStatus?.id ?? matter.statusId, // Assign task status
+					statusId: defaultStatus.id, // Assign task status (guaranteed to exist)
 					updatedAt: Date.now(),
 				});
 			},
