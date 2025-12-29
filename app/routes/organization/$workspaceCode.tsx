@@ -1,13 +1,12 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { CalendarIcon, ChevronDown, ListTodoIcon } from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
-import { CreateRequestDialog } from "~/components/create-request-dialog";
-import { CreateTaskDialog } from "~/components/create-task-dialog";
+import { MatterDialog } from "~/components/matter-dialog";
 import {
 	MemberSelect,
 	PrioritySelect,
@@ -19,14 +18,19 @@ import { Button } from "~/components/ui/button";
 import { EmptyStateCard } from "~/components/ui/empty-state";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
-import type { WorkspaceRole } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import {
-	COMPLETED_STATUS_TYPES,
+	type HeaderItem,
+	type ListItem,
+	type TaskItem,
+	useGroupedTasks,
+} from "~/hooks/use-grouped-tasks";
+import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { usePermissions } from "~/hooks/use-permissions";
+import {
+	// COMPLETED_STATUS_TYPES,
 	type PriorityValue,
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
-	STATUS_TYPE_ORDER,
 	type StatusType,
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
@@ -39,34 +43,19 @@ export const meta: Route.MetaFunction = ({ params }) => [
 type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
 type Status = Row["statusesTable"];
 
-type HeaderItem = {
-	type: "header";
-	id: string;
-	status: Status;
-	count: number;
-	isExpanded: boolean;
-};
-type TaskItem = {
-	type: "task";
-	id: string;
-	task: Matter;
-	isCompleted: boolean;
-};
-type ListItem = HeaderItem | TaskItem;
-
-const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
-
-// Dialog props shared between task/request creation components
-type DialogProps = {
+// Header and EmptyState props
+type ActionProps = {
+	isManager: boolean;
+	canRequest: boolean;
 	workspaceId: string;
 	workspaceCode: string;
-	workspaceName: string;
-	workspaceMembers: readonly Row["workspaceMembershipsTable"][];
-	statuses: readonly Status[];
+	taskStatuses: readonly Status[];
+	requestStatuses: readonly Status[];
+	members: readonly Row["workspaceMembershipsTable"][];
 };
 
 export default function WorkspaceIndex() {
-	const { orgSlug, authSession } = useOrgLoaderData();
+	const { orgSlug } = useOrgLoaderData();
 	const { workspaceCode } = useParams();
 	const z = useZero();
 
@@ -88,81 +77,14 @@ export default function WorkspaceIndex() {
 		...CACHE_NAV,
 	});
 
-	// Tracks statuses that have been manually toggled from their default expanded/collapsed state
-	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
-		new Set(),
+	// 2. Logic extraction using custom hooks
+	const { flatItems, activeCount, stickyIndices, toggleGroup } =
+		useGroupedTasks(matters as Matter[], statuses, workspaceId);
+
+	const { isManager, canCreateRequests } = usePermissions(
+		workspaceId,
+		workspace?.memberships,
 	);
-
-	// Reset if switching workspace
-	useEffect(() => {
-		setToggledStatuses(new Set());
-	}, [workspaceId]);
-
-	const toggleGroup = useCallback((id: string) => {
-		setToggledStatuses((prev) => {
-			const next = new Set(prev);
-			next.has(id) ? next.delete(id) : next.add(id);
-			return next;
-		});
-	}, []);
-
-	// 2. Transformation
-	const { flatItems, activeCount, stickyIndices } = useMemo(() => {
-		if (!matters.length || !statuses.length)
-			return { flatItems: [], activeCount: 0, stickyIndices: [] };
-
-		const groups = new Map<
-			string,
-			{ status: Status; tasks: Matter[]; order: number }
-		>();
-		let active = 0;
-
-		for (const m of matters) {
-			const s = m.status;
-			if (!s) continue;
-			let g = groups.get(s.id);
-			if (!g) {
-				const type = (s.type ?? "not_started") as StatusType;
-				g = { status: s, tasks: [], order: STATUS_TYPE_ORDER[type] ?? 99 };
-				groups.set(s.id, g);
-			}
-			g.tasks.push(m as Matter);
-			if (!COLLAPSED_TYPES.has(s.type)) active++;
-		}
-
-		const sortedGroups = Array.from(groups.values()).sort(
-			(a, b) => a.order - b.order,
-		);
-		const items: ListItem[] = [];
-		const sticky: number[] = [];
-
-		for (const g of sortedGroups) {
-			const isCompletedType = COLLAPSED_TYPES.has(g.status.type);
-			const isExpanded = toggledStatuses.has(g.status.id)
-				? isCompletedType
-				: !isCompletedType;
-
-			items.push({
-				type: "header",
-				id: `h-${g.status.id}`,
-				status: g.status,
-				count: g.tasks.length,
-				isExpanded,
-			});
-
-			if (isExpanded) {
-				for (const t of g.tasks) {
-					items.push({
-						type: "task",
-						id: t.id,
-						task: t,
-						isCompleted: isCompletedType,
-					});
-				}
-			}
-		}
-		return { flatItems: items, activeCount: active, stickyIndices: sticky };
-	}, [matters, statuses, toggledStatuses]);
 
 	const onPriority = useCallback(
 		(id: string, p: PriorityValue) =>
@@ -181,7 +103,6 @@ export default function WorkspaceIndex() {
 	);
 
 	// Filter statuses for task-only view (exclude request statuses)
-	// Must be before early return to avoid conditional hooks
 	const taskStatuses = useMemo(
 		() => statuses.filter((s) => !s.isRequestStatus),
 		[statuses],
@@ -193,42 +114,34 @@ export default function WorkspaceIndex() {
 
 	if (!workspace) return null;
 
-	const membership = workspace.memberships?.find(
-		(m) => m.userId === authSession.user.id,
-	);
-	const role = membership?.role as WorkspaceRole;
-
-	const dialogProps = {
-		workspaceId: workspace.id,
-		workspaceCode: workspace.code,
-		workspaceName: workspace.name,
-		workspaceMembers: workspace.memberships ?? [],
-		statuses: taskStatuses,
-	};
-
-	const requestDialogProps = {
-		...dialogProps,
-		statuses: requestStatuses.length > 0 ? requestStatuses : taskStatuses,
-	};
-
 	return (
 		<div className="flex h-full flex-col overflow-hidden bg-background">
 			<Header
 				name={workspace.name}
 				count={activeCount}
-				isManager={role === "manager"}
-				canRequest={role === "manager" || role === "member"}
-				dialogProps={dialogProps}
-				requestDialogProps={requestDialogProps}
+				isManager={isManager}
+				canRequest={canCreateRequests}
+				workspaceId={workspace.id}
+				workspaceCode={workspace.code}
+				taskStatuses={taskStatuses}
+				requestStatuses={
+					requestStatuses.length > 0 ? requestStatuses : taskStatuses
+				}
+				members={workspace.memberships ?? []}
 			/>
 
 			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
 					<WorkspaceEmptyState
-						isManager={role === "manager"}
-						canRequest={role === "manager" || role === "member"}
-						dialogProps={dialogProps}
-						requestDialogProps={requestDialogProps}
+						isManager={isManager}
+						canRequest={canCreateRequests}
+						workspaceId={workspace.id}
+						workspaceCode={workspace.code}
+						taskStatuses={taskStatuses}
+						requestStatuses={
+							requestStatuses.length > 0 ? requestStatuses : taskStatuses
+						}
+						members={workspace.memberships ?? []}
 					/>
 				) : (
 					<VirtualizedList
@@ -258,13 +171,9 @@ export default function WorkspaceIndex() {
 	);
 }
 
-interface HeaderProps {
+interface HeaderProps extends ActionProps {
 	name: string;
 	count: number;
-	isManager: boolean;
-	canRequest: boolean;
-	dialogProps: DialogProps;
-	requestDialogProps: DialogProps;
 }
 
 const Header = memo(
@@ -273,8 +182,11 @@ const Header = memo(
 		count,
 		isManager,
 		canRequest,
-		dialogProps,
-		requestDialogProps,
+		workspaceId,
+		workspaceCode,
+		taskStatuses,
+		requestStatuses,
+		members,
 	}: HeaderProps) => (
 		<div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
 			<div className="flex min-w-0 items-center gap-2">
@@ -288,8 +200,24 @@ const Header = memo(
 				</Badge>
 			</div>
 			<div className="flex items-center gap-2">
-				{isManager && <CreateTaskDialog {...dialogProps} />}
-				{canRequest && <CreateRequestDialog {...requestDialogProps} />}
+				{isManager && (
+					<MatterDialog
+						type="task"
+						workspaceId={workspaceId}
+						workspaceCode={workspaceCode}
+						statuses={taskStatuses}
+						workspaceMembers={members}
+					/>
+				)}
+				{canRequest && (
+					<MatterDialog
+						type="request"
+						workspaceId={workspaceId}
+						workspaceCode={workspaceCode}
+						statuses={requestStatuses}
+						workspaceMembers={members}
+					/>
+				)}
 			</div>
 		</div>
 	),
@@ -445,20 +373,16 @@ function DueDateBadge({ date }: { date: number }) {
 	);
 }
 
-interface WorkspaceEmptyStateProps {
-	isManager: boolean;
-	canRequest: boolean;
-	dialogProps: DialogProps;
-	requestDialogProps: DialogProps;
-}
-
 const WorkspaceEmptyState = memo(
 	({
 		isManager,
 		canRequest,
-		dialogProps,
-		requestDialogProps,
-	}: WorkspaceEmptyStateProps) => (
+		workspaceId,
+		workspaceCode,
+		taskStatuses,
+		requestStatuses,
+		members,
+	}: ActionProps) => (
 		<div className="flex h-full items-center justify-center p-8">
 			<EmptyStateCard
 				icon={ListTodoIcon}
@@ -466,10 +390,22 @@ const WorkspaceEmptyState = memo(
 				description="No active tasks in this workspace. Rest easy or create a new one."
 			>
 				<div className="flex gap-2">
-					{isManager && <CreateTaskDialog {...dialogProps} />}
+					{isManager && (
+						<MatterDialog
+							type="task"
+							workspaceId={workspaceId}
+							workspaceCode={workspaceCode}
+							statuses={taskStatuses}
+							workspaceMembers={members}
+						/>
+					)}
 					{canRequest && (
-						<CreateRequestDialog
-							{...requestDialogProps}
+						<MatterDialog
+							type="request"
+							workspaceId={workspaceId}
+							workspaceCode={workspaceCode}
+							statuses={requestStatuses}
+							workspaceMembers={members}
 							triggerButton={
 								<Button size="sm" variant="outline">
 									Request

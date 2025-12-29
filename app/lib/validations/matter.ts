@@ -26,21 +26,12 @@ export const matterDescriptionSchema = z
 	)
 	.optional();
 
-export const createTaskSchema = z.object({
-	// workspaceId: z.string().min(1, "Workspace ID is required"),
+export const createMatterSchema = z.object({
 	title: matterTitleSchema,
 	description: matterDescriptionSchema,
-	statusId: z.string().min(1, "Status is required"),
+	statusId: z.string().optional(),
 	assigneeId: z.string(),
 	priority: z.number().int().min(0).max(4).default(Priority.NONE),
-	dueDate: z.string().optional(),
-});
-
-export const createRequestSchema = z.object({
-	title: matterTitleSchema,
-	description: matterDescriptionSchema,
-	assigneeId: z.string(),
-	priority: z.number().int().min(0).max(4).default(Priority.MEDIUM),
 	dueDate: z.string().optional(),
 });
 

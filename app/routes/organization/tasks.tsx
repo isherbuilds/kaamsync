@@ -1,5 +1,7 @@
+import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -17,6 +19,7 @@ import { VirtualizedList } from "~/components/virtualized-list";
 import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
+import { usePermissions } from "~/hooks/use-permissions";
 import {
 	DETAIL_PANEL_MIN_SIZE,
 	getDetailPanelSize,
@@ -63,14 +66,23 @@ export default function TasksPage() {
 		loadMore,
 	} = useInfiniteMatters({
 		queryType: "userAssigned",
-		// enabled: true, // Auto-enabled when logged in, handled by Zero
 	});
+
+	usePermissions();
 
 	// Load members once for the entire list - cached by Zero
 	const [members] = useQuery(queries.getOrganizationMembers(), {
 		// enabled: Boolean(queryCtx.activeOrganizationId), // Zero handles this via implicit context
 		...CACHE_LONG,
 	});
+
+	// Memoize sorted tasks - must be before early return
+	const sortedTasks = useMemo(() => {
+		if (!tasks) return [];
+		return [...tasks].sort((a, b) =>
+			compareStatuses(a.status || {}, b.status || {}),
+		);
+	}, [tasks]);
 
 	if (!tasks) {
 		return (
@@ -83,10 +95,6 @@ export default function TasksPage() {
 		);
 	}
 
-	// Direct sort - tasks is already an array from useInfiniteMatters
-	const sortedTasks = [...tasks].sort((a, b) =>
-		compareStatuses(a.status || {}, b.status || {}),
-	);
 	const taskCount = sortedTasks.length;
 
 	return (
@@ -131,7 +139,9 @@ export default function TasksPage() {
 							estimateSize={60}
 							className="p-1"
 							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
-							renderItem={(matter) => {
+							renderItem={(
+								matter: Row["mattersTable"] & { status: Row["statusesTable"] },
+							) => {
 								const priority = (matter.priority ??
 									Priority.NONE) as PriorityValue;
 								const statusType =
@@ -146,7 +156,7 @@ export default function TasksPage() {
 										key={matter.id}
 										prefetch="intent"
 										to={`/${orgSlug}/${isMobile ? "" : "tasks/"}matter/${matter.workspaceCode}-${matter.shortID}`}
-										className={({ isActive }) =>
+										className={({ isActive }: { isActive: boolean }) =>
 											cn(
 												"group relative block rounded transition-all duration-200",
 												isActive
@@ -161,7 +171,7 @@ export default function TasksPage() {
 												<CustomAvatar name={author?.usersTable?.name} />
 
 												{/* COL 2: ID + Title */}
-												<ItemTitle className="line-clamp-2 min-w-0 flex-1 font-light text-foreground text-sm">
+												<ItemTitle className="line-clamp-2 min-w-0 flex-1 font-normal text-foreground text-sm">
 													{matter.workspaceCode}-{matter.shortID} {matter.title}
 												</ItemTitle>
 

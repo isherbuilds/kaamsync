@@ -1,6 +1,13 @@
 import type { Row } from "@rocicorp/zero";
 import { Check, User } from "lucide-react";
-import { forwardRef, memo, useCallback, useMemo, useState } from "react";
+import {
+	type ButtonHTMLAttributes,
+	forwardRef,
+	memo,
+	useCallback,
+	useMemo,
+	useState,
+} from "react";
 import { renderPriorityIcon } from "~/components/icons";
 import { CustomAvatar } from "~/components/ui/avatar";
 import {
@@ -32,6 +39,7 @@ export type MemberSelectorItem = {
 	userId: string;
 	user?: Row["usersTable"]; // Workspace query shape
 	usersTable?: Row["usersTable"]; // Org query shape
+	role?: string;
 };
 
 type StatusRow = Row["statusesTable"];
@@ -46,8 +54,12 @@ interface SelectorProps<T> {
 	className?: string;
 }
 
+interface SelectorTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+	label: string;
+}
+
 const SelectorTrigger = memo(
-	forwardRef<HTMLButtonElement, any>(
+	forwardRef<HTMLButtonElement, SelectorTriggerProps>(
 		({ children, label, className, disabled, onClick, ...props }, ref) => (
 			<button
 				ref={ref}

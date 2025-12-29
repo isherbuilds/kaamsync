@@ -1,3 +1,4 @@
+import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import {
 	Archive,
@@ -39,6 +40,7 @@ import { Separator } from "~/components/ui/separator";
 import { Textarea } from "~/components/ui/textarea";
 import { parseMatterKey } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { usePermissions } from "~/hooks/use-permissions";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { cn, formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
@@ -60,7 +62,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 }
 
 export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
-	const { authSession, orgSlug } = useOrgLoaderData();
+	const { orgSlug } = useOrgLoaderData();
 	const { parsed } = loaderData;
 	const navigate = useNavigate();
 	const z = useZero();
@@ -73,21 +75,24 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	// Inferred types from Zero queries
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
+	const [workspaceMemberships] = useQuery(
+		queries.getWorkspaceMembers({ workspaceId: matter?.workspaceId || "" }),
+		{ enabled: !!matter?.workspaceId, ...CACHE_LONG },
+	);
 	const [statuses] = useQuery(
 		queries.getWorkspaceStatuses({ workspaceId: matter?.workspaceId || "" }),
 		{ enabled: !!matter?.workspaceId, ...CACHE_LONG },
 	);
 
-	// 2. State & Permissions
-	const userId = authSession.user.id;
-	const isAdmin = useMemo(() => {
-		const m = members.find((m) => m.userId === userId);
-		return m?.role === "admin" || m?.role === "owner";
-	}, [members, userId]);
-
-	const canEdit =
-		!!matter &&
-		(matter.authorId === userId || matter.assigneeId === userId || isAdmin);
+	// 2. Permissions
+	const perms = usePermissions(matter?.workspaceId, workspaceMemberships);
+	// Org-level elevation: managers in workspace or owners/admins in org have full access
+	const authRole = perms.role as string;
+	const isAdmin =
+		perms.isManager || authRole === "admin" || authRole === "owner";
+	const canEdit = matter
+		? perms.canEditMatter(matter.authorId, matter.assigneeId) || isAdmin
+		: false;
 
 	// Filter statuses based on matter type (task vs request)
 	const filteredStatuses = useMemo(() => {
@@ -526,7 +531,7 @@ function TaskTimeline({
 }: {
 	matterId: string;
 	members: readonly any[];
-	statuses: readonly any[];
+	statuses: readonly Row["statusesTable"][];
 }) {
 	const [timeline] = useQuery(
 		queries.getMatterTimelines({ matterId }),
@@ -573,7 +578,12 @@ const TimelineEntry = memo(function TimelineEntry({
 	isLast,
 	statusMap,
 	memberMap,
-}: any) {
+}: {
+	entry: any;
+	isLast: boolean;
+	statusMap: Map<string, string>;
+	memberMap: Map<string, string>;
+}) {
 	const userName = entry.user?.name || "User";
 	const userImage = entry.user?.image;
 
