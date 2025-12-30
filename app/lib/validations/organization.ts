@@ -266,7 +266,7 @@ export const orgOnboardingSchema = z.discriminatedUnion("intent", [
 // Team validation schemas
 export const teamNameSchema = z
 	.string({ message: "Team name is required." })
-	.min(MIN_NAME_LENGTH, "Name must be at least 2 characters.")
+	.min(MIN_NAME_LENGTH, "Name must be at least 4 characters.")
 	.max(MAX_NAME_LENGTH, "Name must be at most 64 characters.")
 	.trim();
 
