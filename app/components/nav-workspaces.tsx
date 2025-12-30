@@ -60,8 +60,12 @@ export function NavWorkspaces({
 								<StableLink
 									to={`/${orgSlug}/${workspace.code}`}
 									prefetch="intent"
-									onClick={() => setTimeout(() => setOpenMobile(false), 100)}
-									viewTransition
+									onClick={
+										isMobile
+											? () => setTimeout(() => setOpenMobile(false), 100)
+											: undefined
+									}
+									// viewTransition
 								>
 									{workspace.name}
 								</StableLink>

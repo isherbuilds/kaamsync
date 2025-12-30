@@ -79,6 +79,22 @@ export const statusType = {
 	rejected: "rejected",
 } as const;
 
+// Status types specific to requests (approval workflow)
+export const REQUEST_STATUS_TYPES = new Set([
+	statusType.pendingApproval,
+	statusType.approved,
+	statusType.rejected,
+]);
+
+// Status types specific to tasks
+export const TASK_STATUS_TYPES = new Set([
+	statusType.backlog,
+	statusType.notStarted,
+	statusType.started,
+	statusType.completed,
+	statusType.canceled,
+]);
+
 export const approvalStatus = {
 	pending: "pending",
 	approved: "approved",

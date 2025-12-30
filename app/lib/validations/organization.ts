@@ -162,7 +162,6 @@ export const reservedWorkspaceSlugs = [
 	"requests",
 	"matters",
 	"projects",
-	"boards",
 	"workflows",
 	"templates",
 	"channels",
@@ -271,6 +270,12 @@ export const workspaceNameSchema = z
 	.max(MAX_NAME_LENGTH, "Name must be at most 64 characters.")
 	.trim();
 
+export const workspaceCodeSchema = z
+	.string()
+	.toUpperCase()
+	.trim()
+	.length(3, "Code must be exactly 3 characters.");
+
 export const createWorkspaceSchema = z.object({
 	name: workspaceNameSchema.refine(
 		(name) => {
@@ -285,38 +290,13 @@ export const createWorkspaceSchema = z.object({
 			message: "This name generates a reserved URL.",
 		},
 	),
+	code: workspaceCodeSchema,
+	visibility: z.enum(["public", "private"]).optional(),
 });
 
 export const updateWorkspaceSchema = z.object({
 	workspaceId: z.string(),
-	name: workspaceNameSchema,
-});
-
-// Board validation schemas
-export const boardNameSchema = z
-	.string({ message: "Board name is required." })
-	.min(MIN_NAME_LENGTH, "Name must be at least 2 characters.")
-	.max(MAX_NAME_LENGTH, "Name must be at most 64 characters.")
-	.trim();
-
-export const boardCodeSchema = z
-	.string()
-	.toUpperCase()
-	.trim()
-	.regex(/^[A-Z0-9]{2,6}$/, {
-		message: `Code must be ${MIN_CODE_LENGTH}-${MAX_CODE_LENGTH} uppercase letters or numbers.`,
-	})
-	.optional();
-
-export const createBoardSchema = z.object({
-	name: boardNameSchema,
-	visibility: z.enum(["public", "private"]),
-	code: boardCodeSchema,
-});
-
-export const updateBoardSchema = z.object({
-	boardId: z.string(),
-	name: boardNameSchema.optional(),
+	name: workspaceNameSchema.optional(),
+	code: workspaceCodeSchema,
 	visibility: z.enum(["public", "private"]).optional(),
-	code: boardCodeSchema,
 });

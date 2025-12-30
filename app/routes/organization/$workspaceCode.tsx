@@ -1,18 +1,12 @@
+import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import {
-	CalendarIcon,
-	ChevronDown,
-	ListTodoIcon,
-	MessageSquareIcon,
-	PlusIcon,
-} from "lucide-react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CalendarIcon, ChevronDown, ListTodoIcon } from "lucide-react";
+import { memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
-import { CACHE_NAV, CACHE_STATIC } from "zero/query-cache-policy";
-import { CreateRequestDialog } from "~/components/create-request-dialog";
-import { CreateTaskDialog } from "~/components/create-task-dialog";
+import { CACHE_NAV } from "zero/query-cache-policy";
+import { MatterDialog } from "~/components/matter-dialog";
 import {
 	MemberSelect,
 	PrioritySelect,
@@ -24,306 +18,152 @@ import { Button } from "~/components/ui/button";
 import { EmptyStateCard } from "~/components/ui/empty-state";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
-import type { WorkspaceRole } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import {
-	COMPLETED_STATUS_TYPES,
+	type HeaderItem,
+	type ListItem,
+	type TaskItem,
+	useGroupedTasks,
+} from "~/hooks/use-grouped-tasks";
+import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { usePermissions } from "~/hooks/use-permissions";
+import {
+	// COMPLETED_STATUS_TYPES,
 	type PriorityValue,
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
-	STATUS_TYPE_ORDER,
 	type StatusType,
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
-
 import type { Route } from "./+types/$workspaceCode";
 
 export const meta: Route.MetaFunction = ({ params }) => [
-	{
-		title: `Workspace - ${params.workspaceCode}`,
-	},
-	{
-		name: "description",
-		content: `Workspace ${params.workspaceCode} overview and tasks management.`,
-	},
+	{ title: `${params.workspaceCode} - Tasks` },
 ];
 
-// Status types that should be collapsed by default
-const COLLAPSED_STATUS_TYPES = new Set<StatusType>(COMPLETED_STATUS_TYPES);
+type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
+type Status = Row["statusesTable"];
 
-// Item types for the flat virtual list
-type HeaderItem = {
-	type: "header";
-	id: string;
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	status: any;
-	count: number;
-	isCompleted: boolean;
-	isExpanded: boolean;
-};
-
-type TaskItem = {
-	type: "task";
-	id: string;
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	task: any;
-	isCompleted: boolean;
-};
-
-type ListItem = HeaderItem | TaskItem;
-
-// Pre-grouped data structure to avoid recalculation
-type StatusGroup = {
-	statusId: string;
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	status: any;
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	tasks: any[];
-	isCompleted: boolean;
-	order: number;
+// Header and EmptyState props
+type ActionProps = {
+	isManager: boolean;
+	canRequest: boolean;
+	workspaceId: string;
+	workspaceCode: string;
+	taskStatuses: readonly Status[];
+	requestStatuses: readonly Status[];
+	members: readonly Row["workspaceMembershipsTable"][];
 };
 
 export default function WorkspaceIndex() {
-	const { orgSlug, authSession } = useOrgLoaderData();
-	const params = useParams();
+	const { orgSlug } = useOrgLoaderData();
+	const { workspaceCode } = useParams();
 	const z = useZero();
 
-	const { workspaceCode } = params;
-
-	// Workspace list query
-	const [workspacesData] = useQuery(queries.getWorkspacesList(), CACHE_NAV);
-
-	// Find workspace - simple find, no memoization needed for small arrays
-	const workspace = workspacesData.find((w) => w.code === workspaceCode);
+	// 1. Data Fetching
+	const [workspaces] = useQuery(queries.getWorkspacesList(), CACHE_NAV);
+	const workspace = useMemo(
+		() => workspaces.find((w) => w.code === workspaceCode),
+		[workspaces, workspaceCode],
+	);
 	const workspaceId = workspace?.id ?? "";
 
-	// Get matters - Use workspace ID directly
-	// TODO: Analyze if useCachedQuery is beneficial here
-	const [allMatters] = useQuery(queries.getWorkspaceMatters({ workspaceId }), {
-		enabled: Boolean(workspaceId),
+	const [matters] = useQuery(queries.getWorkspaceMatters({ workspaceId }), {
+		enabled: !!workspaceId,
 		...CACHE_NAV,
 	});
 
-	// Get members (cached longer)
-	const [members] = useQuery(queries.getOrganizationMembers(), {
-		enabled: Boolean(authSession.session.activeOrganizationId),
-		...CACHE_STATIC,
-	});
-
-	// Get statuses
 	const [statuses] = useQuery(queries.getWorkspaceStatuses({ workspaceId }), {
-		enabled: Boolean(workspaceId),
+		enabled: !!workspaceId,
 		...CACHE_NAV,
 	});
 
-	// Track collapsed groups (inverse logic - track what's collapsed, not expanded)
-	// This way we only store the minority case (completed/canceled are collapsed)
-	const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
-		new Set(),
+	// 2. Logic extraction using custom hooks
+	const { flatItems, activeCount, stickyIndices, toggleGroup } =
+		useGroupedTasks(matters as Matter[], statuses, workspaceId);
+
+	const { isManager, canCreateRequests } = usePermissions(
+		workspaceId,
+		workspace?.memberships,
 	);
 
-	// Track which workspace we've seen to reset collapsed state on workspace change
-	const prevWorkspaceRef = useRef(workspaceId);
-	useEffect(() => {
-		if (workspaceId && prevWorkspaceRef.current !== workspaceId) {
-			prevWorkspaceRef.current = workspaceId;
-			setCollapsedGroups(new Set());
-		}
-	}, [workspaceId]);
-
-	const toggleGroup = useCallback((statusId: string) => {
-		// Use startTransition to keep UI responsive during group toggle
-		setCollapsedGroups((prev) => {
-			const next = new Set(prev);
-			if (next.has(statusId)) {
-				next.delete(statusId);
-			} else {
-				next.add(statusId);
-			}
-			return next;
-		});
-	}, []);
-
-	// Single-pass: group, sort, flatten, compute active count & sticky indices
-	const { flatItems, activeCount, stickyIndices } = useMemo(() => {
-		const items: ListItem[] = [];
-		const sticky: number[] = [];
-		let active = 0;
-
-		if (allMatters.length === 0) {
-			return { flatItems: items, activeCount: 0, stickyIndices: sticky };
-		}
-
-		// Group tasks by status ID
-		const groupMap = new Map<string, StatusGroup>();
-
-		for (const task of allMatters) {
-			const statusId = task.status?.id || "no-status";
-			let group = groupMap.get(statusId);
-
-			if (!group) {
-				const statusType = (task.status?.type ?? "not_started") as StatusType;
-				group = {
-					statusId,
-					status: task.status,
-					tasks: [],
-					isCompleted: COLLAPSED_STATUS_TYPES.has(statusType),
-					order: STATUS_TYPE_ORDER[statusType] ?? 99,
-				};
-				groupMap.set(statusId, group);
-			}
-
-			group.tasks.push(task);
-			if (!group.isCompleted) active++;
-		}
-
-		// Sort groups by status order
-		const groups = Array.from(groupMap.values());
-		groups.sort((a, b) => a.order - b.order);
-
-		// Build flat items list with sticky indices in one pass
-		for (const group of groups) {
-			// User toggled state takes precedence, otherwise collapse completed types
-			const isCollapsed = collapsedGroups.has(group.statusId)
-				? !group.isCompleted // If toggled and was completed type → expand
-				: group.isCompleted; // Default: completed types collapsed
-			const isExpanded = !isCollapsed;
-
-			// Track sticky index (header position)
-			sticky.push(items.length);
-
-			items.push({
-				type: "header",
-				id: `header-${group.statusId}`,
-				status: group.status,
-				count: group.tasks.length,
-				isCompleted: group.isCompleted,
-				isExpanded,
-			});
-
-			if (isExpanded) {
-				for (const task of group.tasks) {
-					items.push({
-						type: "task",
-						id: task.id,
-						task,
-						isCompleted: group.isCompleted,
-					});
-				}
-			}
-		}
-
-		return { flatItems: items, activeCount: active, stickyIndices: sticky };
-	}, [allMatters, collapsedGroups]);
-
-	// Mutator callbacks - useCallback here is justified since these are passed to
-	// many memoized child components and z reference is stable
-	const handlePriorityChange = useCallback(
-		(taskId: string, priority: PriorityValue) => {
-			z.mutate(mutators.matter.update({ id: taskId, priority }));
-		},
+	const onPriority = useCallback(
+		(id: string, p: PriorityValue) =>
+			z.mutate(mutators.matter.update({ id, priority: p })),
+		[z],
+	);
+	const onStatus = useCallback(
+		(id: string, s: string) =>
+			z.mutate(mutators.matter.updateStatus({ id, statusId: s })),
+		[z],
+	);
+	const onAssign = useCallback(
+		(id: string, u: string | null) =>
+			z.mutate(mutators.matter.assign({ id, assigneeId: u })),
 		[z],
 	);
 
-	const handleStatusChange = useCallback(
-		(taskId: string, statusId: string) => {
-			z.mutate(mutators.matter.updateStatus({ id: taskId, statusId }));
-		},
-		[z],
+	// Filter statuses for task-only view (exclude request statuses)
+	const taskStatuses = useMemo(
+		() => statuses.filter((s) => !s.isRequestStatus),
+		[statuses],
+	);
+	const requestStatuses = useMemo(
+		() => statuses.filter((s) => s.isRequestStatus),
+		[statuses],
 	);
 
-	const handleAssigneeChange = useCallback(
-		(taskId: string, userId: string | null) => {
-			z.mutate(mutators.matter.assign({ id: taskId, assigneeId: userId }));
-		},
-		[z],
-	);
-
-	if (!workspace) {
-		return null;
-	}
-
-	// User permissions
-	const userMembership = workspace.memberships?.find(
-		(m) => m.userId === authSession.user.id,
-	);
-	const userRole = userMembership?.role as WorkspaceRole;
-	const isManager = userRole === "manager";
-	const canCreateRequest = isManager || userRole === "member";
-
-	const dialogProps = {
-		workspaceId: workspace.id,
-		workspaceCode: workspace.code,
-		workspaceName: workspace.name,
-		workspaceMembers: workspace.memberships || [],
-	};
+	if (!workspace) return null;
 
 	return (
-		<div className="flex h-full flex-col">
-			{/* Header */}
-			<div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b bg-background px-3 md:h-12 md:px-4">
-				<div className="flex min-w-0 items-center gap-2">
-					<SidebarTrigger className="-ml-1 shrink-0 lg:hidden" />
-					<h5 className="truncate font-semibold text-base">{workspace.name}</h5>
-					<Badge
-						variant="outline"
-						className="hidden shrink-0 text-xs tabular-nums sm:inline-flex"
-					>
-						{activeCount} active
-					</Badge>
-					<span className="text-muted-foreground text-xs sm:hidden">
-						({activeCount})
-					</span>
-				</div>
-				<div className="flex items-center gap-1.5 md:gap-2">
-					{isManager && (
-						<CreateTaskDialog {...dialogProps} statuses={statuses} />
-					)}
-					{canCreateRequest && <CreateRequestDialog {...dialogProps} />}
-				</div>
-			</div>
-			{/* Task List - Virtualized */}
+		<div className="flex h-full flex-col overflow-hidden bg-background">
+			<Header
+				name={workspace.name}
+				count={activeCount}
+				isManager={isManager}
+				canRequest={canCreateRequests}
+				workspaceId={workspace.id}
+				workspaceCode={workspace.code}
+				taskStatuses={taskStatuses}
+				requestStatuses={
+					requestStatuses.length > 0 ? requestStatuses : taskStatuses
+				}
+				members={workspace.memberships ?? []}
+			/>
+
 			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
 					<WorkspaceEmptyState
 						isManager={isManager}
-						canCreateRequest={canCreateRequest}
-						dialogProps={dialogProps}
-						statuses={statuses}
+						canRequest={canCreateRequests}
+						workspaceId={workspace.id}
+						workspaceCode={workspace.code}
+						taskStatuses={taskStatuses}
+						requestStatuses={
+							requestStatuses.length > 0 ? requestStatuses : taskStatuses
+						}
+						members={workspace.memberships ?? []}
 					/>
 				) : (
 					<VirtualizedList
 						items={flatItems}
 						getItemKey={(item) => item.id}
-						estimateSize={40} // Average size (header=40, task=48)
+						estimateSize={44}
 						stickyIndices={stickyIndices}
-						renderItem={(item: ListItem) => {
-							if (item.type === "header") {
-								return (
-									<GroupHeader
-										key={item.id}
-										status={item.status}
-										status_id={item.status?.id || "no-status"}
-										count={item.count}
-										isExpanded={item.isExpanded}
-										onToggle={toggleGroup}
-									/>
-								);
-							}
-							return (
+						renderItem={(item: ListItem) =>
+							item.type === "header" ? (
+								<GroupHeader item={item} onToggle={toggleGroup} />
+							) : (
 								<TaskRow
-									key={item.id}
-									task={item.task}
+									item={item}
 									orgSlug={orgSlug}
-									members={members}
-									statuses={statuses}
-									isCompleted={item.isCompleted}
-									onPriorityChange={handlePriorityChange}
-									onStatusChange={handleStatusChange}
-									onAssigneeChange={handleAssigneeChange}
+									members={workspace.memberships ?? []}
+									statuses={taskStatuses}
+									onPriority={onPriority}
+									onStatus={onStatus}
+									onAssign={onAssign}
 								/>
-							);
-						}}
+							)
+						}
 					/>
 				)}
 			</div>
@@ -331,280 +171,250 @@ export default function WorkspaceIndex() {
 	);
 }
 
-// Empty state component
-const WorkspaceEmptyState = memo(function WorkspaceEmptyState({
-	isManager,
-	canCreateRequest,
-	dialogProps,
-	statuses,
-}: {
-	isManager: boolean;
-	canCreateRequest: boolean;
-	// biome-ignore lint/suspicious/noExplicitAny: Props type
-	dialogProps: any;
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	statuses: any[];
-}) {
-	return (
-		<EmptyStateCard
-			icon={ListTodoIcon}
-			title="No tasks yet"
-			description="Get started by creating your first task or submitting a request."
-		>
-			{isManager && (
-				<CreateTaskDialog
-					{...dialogProps}
-					statuses={statuses}
-					triggerButton={
-						<Button size="default" className="gap-2">
-							<PlusIcon className="size-4" />
-							Create Your First Task
-						</Button>
-					}
-				/>
-			)}
-			{canCreateRequest && (
-				<CreateRequestDialog
-					{...dialogProps}
-					triggerButton={
-						<Button size="default" variant="secondary" className="gap-2">
-							<MessageSquareIcon className="size-4" />
-							Submit a Request
-						</Button>
-					}
-				/>
-			)}
-		</EmptyStateCard>
-	);
-});
-
-// Group Header Component - uses status_id to avoid inline arrow function in onClick
-const GroupHeader = memo(function GroupHeader({
-	status,
-	status_id,
-	count,
-	isExpanded,
-	onToggle,
-}: {
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	status: any;
-	status_id: string;
+interface HeaderProps extends ActionProps {
+	name: string;
 	count: number;
-	isExpanded: boolean;
-	onToggle: (statusId: string) => void;
-}) {
-	const statusType = (status?.type ?? "not_started") as StatusType;
-	const StatusIcon = STATUS_TYPE_ICONS[statusType];
-	const statusColor = STATUS_TYPE_COLORS[statusType];
-	const label = status?.name || "Unknown";
+}
 
-	const handleClick = useCallback(
-		() => onToggle(status_id),
-		[onToggle, status_id],
-	);
-
-	return (
-		<button
-			type="button"
-			className="flex h-10 w-full cursor-pointer select-none items-center gap-2 border-b bg-muted px-4 hover:bg-muted"
-			onClick={handleClick}
-		>
-			<ChevronDown
-				className={cn(
-					"size-4 text-muted-foreground transition-transform",
-					!isExpanded && "-rotate-90",
-				)}
-			/>
-			<div className="flex min-w-0 flex-1 items-center gap-2">
-				{StatusIcon && (
-					<StatusIcon className={cn("size-4 shrink-0", statusColor)} />
-				)}
-				<span className="truncate font-medium text-sm">{label}</span>
-			</div>
-			<Badge
-				variant="secondary"
-				className="h-5 min-w-5 shrink-0 justify-center px-1.5 text-[10px] tabular-nums"
-			>
-				{count}
-			</Badge>
-		</button>
-	);
-});
-
-// Task row - optimized with bound handlers to avoid inline arrow functions
-const TaskRow = memo(function TaskRow({
-	task,
-	orgSlug,
-	members,
-	statuses,
-	isCompleted,
-	onPriorityChange,
-	onStatusChange,
-	onAssigneeChange,
-}: {
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	task: any;
-	orgSlug: string;
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	members: any[];
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query type
-	statuses: any[];
-	isCompleted: boolean;
-	onPriorityChange: (taskId: string, priority: PriorityValue) => void;
-	onStatusChange: (taskId: string, statusId: string) => void;
-	onAssigneeChange: (taskId: string, userId: string | null) => void;
-}) {
-	const {
-		id: taskId,
+const Header = memo(
+	({
+		name,
+		count,
+		isManager,
+		canRequest,
+		workspaceId,
 		workspaceCode,
-		shortID,
-		priority,
-		statusId,
-		assigneeId,
-		title,
-		dueDate,
-	} = task;
-	const linkTo = `/${orgSlug}/matter/${workspaceCode}-${shortID}`;
-	const taskCode = `${workspaceCode}-${shortID}`;
+		taskStatuses,
+		requestStatuses,
+		members,
+	}: HeaderProps) => (
+		<div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
+			<div className="flex min-w-0 items-center gap-2">
+				<SidebarTrigger className="-ml-1 lg:hidden" />
+				<h1 className="truncate font-semibold text-sm">{name}</h1>
+				<Badge
+					variant="secondary"
+					className="h-4 px-1.5 py-0 text-[10px] tabular-nums"
+				>
+					{count}
+				</Badge>
+			</div>
+			<div className="flex items-center gap-2">
+				{isManager && (
+					<MatterDialog
+						type="task"
+						workspaceId={workspaceId}
+						workspaceCode={workspaceCode}
+						statuses={taskStatuses}
+						workspaceMembers={members}
+					/>
+				)}
+				{canRequest && (
+					<MatterDialog
+						type="request"
+						workspaceId={workspaceId}
+						workspaceCode={workspaceCode}
+						statuses={requestStatuses}
+						workspaceMembers={members}
+					/>
+				)}
+			</div>
+		</div>
+	),
+);
 
-	// Bind taskId once - these don't need useCallback since memo comparison handles it
-	const handlePriority = (p: PriorityValue) => onPriorityChange(taskId, p);
-	const handleStatus = (s: string) => onStatusChange(taskId, s);
-	const handleAssignee = (u: string | null) => onAssigneeChange(taskId, u);
+const GroupHeader = memo(
+	({
+		item,
+		onToggle,
+	}: {
+		item: HeaderItem;
+		onToggle: (id: string) => void;
+	}) => {
+		const { status, count, isExpanded } = item;
+		const Icon =
+			STATUS_TYPE_ICONS[status.type as StatusType] ||
+			STATUS_TYPE_ICONS.not_started;
 
-	return (
-		<div className="group relative border-border/40 border-b transition-colors last:border-0 hover:bg-muted/50 active:bg-muted/70">
-			<StableLink
-				to={linkTo}
-				className={cn("absolute inset-0 z-0", isCompleted && "opacity-60")}
-			/>
+		return (
+			<button
+				type="button"
+				onClick={() => onToggle(status.id)}
+				className="sticky top-0 z-20 flex h-11 w-full items-center gap-2 border-b bg-background/95 px-4 backdrop-blur transition-colors hover:bg-muted/50"
+			>
+				<ChevronDown
+					className={cn(
+						"size-3.5 text-muted-foreground transition-transform",
+						!isExpanded && "-rotate-90",
+					)}
+				/>
+				<Icon
+					className={cn(
+						"size-4",
+						STATUS_TYPE_COLORS[status.type as StatusType],
+					)}
+				/>
+				<span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+					{status.name}
+				</span>
+				<span className="ml-1 text-muted-foreground/40 text-xs tabular-nums">
+					{count}
+				</span>
+			</button>
+		);
+	},
+);
 
-			{/* Mobile Layout */}
-			<div className="flex flex-col gap-1.5 px-3 py-3 md:hidden">
-				{/* Top row: Priority + Title + Assignee */}
-				<div className="flex items-center gap-2">
-					<div className="relative z-10 shrink-0">
+interface TaskRowProps {
+	item: TaskItem;
+	orgSlug: string;
+	members: readonly Row["workspaceMembershipsTable"][];
+	statuses: readonly Status[];
+	onPriority: (id: string, p: PriorityValue) => void;
+	onStatus: (id: string, s: string) => void;
+	onAssign: (id: string, u: string | null) => void;
+}
+
+const TaskRow = memo(
+	({
+		item,
+		orgSlug,
+		members,
+		statuses,
+		onPriority,
+		onStatus,
+		onAssign,
+	}: TaskRowProps) => {
+		const { task, isCompleted } = item as TaskItem;
+		const taskCode = `${task.workspaceCode}-${task.shortID}`;
+		const link = `/${orgSlug}/matter/${taskCode}`;
+
+		const handlePriority = useCallback(
+			(p: PriorityValue) => onPriority(task.id, p),
+			[onPriority, task.id],
+		);
+
+		const handleStatus = useCallback(
+			(s: string) => onStatus(task.id, s),
+			[onStatus, task.id],
+		);
+
+		const handleAssign = useCallback(
+			(u: string | null) => onAssign(task.id, u),
+			[onAssign, task.id],
+		);
+
+		return (
+			<div className="group relative flex h-11 items-center border-transparent border-b transition-colors hover:border-border/50 hover:bg-muted/30">
+				<StableLink to={link} className="absolute inset-0 z-10" />
+
+				<div className="relative flex w-full items-center gap-3 px-3">
+					<div className="flex shrink-0 items-center gap-3">
 						<PrioritySelect
-							value={(priority ?? 4) as PriorityValue}
+							value={task.priority as PriorityValue}
 							onChange={handlePriority}
+							className="z-20 p-2"
 							align="start"
 						/>
+						<span className="hidden w-14 font-mono text-[10px] text-muted-foreground/50 md:inline">
+							{taskCode}
+						</span>
 					</div>
-					<p
-						className={cn(
-							"min-w-0 flex-1 truncate font-medium text-foreground/90 text-sm",
-							isCompleted && "text-muted-foreground line-through",
-						)}
-					>
-						{title}
-					</p>
-					<div className="relative z-10 shrink-0">
-						<MemberSelect
-							value={assigneeId || ""}
-							members={members}
-							onChange={handleAssignee}
-							align="end"
-						/>
-					</div>
-				</div>
-				{/* Bottom row: Code + Status + Due Date */}
-				<div className="flex items-center gap-2 pl-7">
-					<span className="font-mono text-[11px] text-muted-foreground/60">
-						{taskCode}
-					</span>
-					<div className="relative z-10">
+
+					<div className="z-20 shrink-0">
 						<StatusSelect
-							value={statusId || ""}
+							value={task.statusId}
 							statuses={statuses}
 							onChange={handleStatus}
 							align="start"
 						/>
 					</div>
-					{dueDate && (
-						<div className="relative z-10 ml-auto">
-							<DueDateBadge date={dueDate} compact />
-						</div>
-					)}
+
+					<div className="min-w-0 flex-1">
+						<span
+							className={cn(
+								"block truncate text-[13px]",
+								isCompleted && "text-muted-foreground line-through opacity-50",
+							)}
+						>
+							{task.title}
+						</span>
+					</div>
+
+					<div className="flex shrink-0 items-center gap-4">
+						{task.dueDate && <DueDateBadge date={task.dueDate} />}
+						<MemberSelect
+							value={task.assigneeId}
+							members={members}
+							onChange={handleAssign}
+							align="end"
+							className="z-20 p-0"
+						/>
+					</div>
 				</div>
 			</div>
+		);
+	},
+);
 
-			{/* Desktop Layout */}
-			<div className="hidden grid-cols-[auto_5rem_auto_1fr_auto_auto] items-center gap-3 px-4 py-2.5 text-sm md:grid">
-				{/* Priority */}
-				<div className="relative z-10">
-					<PrioritySelect
-						value={(priority ?? 4) as PriorityValue}
-						onChange={handlePriority}
-						align="start"
-					/>
-				</div>
-
-				{/* ID */}
-				<div className="pointer-events-none relative z-10 font-mono text-muted-foreground/50 text-xs">
-					{taskCode}
-				</div>
-
-				{/* Status */}
-				<div className="relative z-10">
-					<StatusSelect
-						value={statusId || ""}
-						statuses={statuses}
-						onChange={handleStatus}
-						align="start"
-					/>
-				</div>
-
-				{/* Title */}
-				<div className="pointer-events-none relative z-10 min-w-0">
-					<p
-						className={cn(
-							"truncate font-medium text-foreground/90",
-							isCompleted && "text-muted-foreground line-through",
-						)}
-					>
-						{title}
-					</p>
-				</div>
-
-				{/* Due Date */}
-				<div className="relative z-10">
-					{dueDate && <DueDateBadge date={dueDate} />}
-				</div>
-
-				{/* Assignee */}
-				<div className="relative z-10">
-					<MemberSelect
-						value={assigneeId || ""}
-						members={members}
-						onChange={handleAssignee}
-						align="end"
-					/>
-				</div>
-			</div>
-		</div>
-	);
-});
-
-function DueDateBadge({ date, compact }: { date: number; compact?: boolean }) {
+function DueDateBadge({ date }: { date: number }) {
 	const label = formatCompactRelativeDate(date);
-	const colorClass =
-		label === "Overdue"
-			? "text-destructive font-medium"
-			: label === "Today"
-				? "text-orange-500 font-medium"
-				: label === "Tomorrow"
-					? "text-blue-500"
-					: "text-muted-foreground";
-
+	const isOverdue = label === "Overdue";
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1.5 rounded-md px-2 py-1 text-xs transition-colors hover:bg-muted",
-				colorClass,
+				"flex items-center gap-1 text-[10px]",
+				isOverdue ? "text-destructive" : "text-muted-foreground/60",
 			)}
 		>
-			{!compact && <CalendarIcon className="size-3" />}
+			<CalendarIcon className="size-3" />
 			<span>{label}</span>
 		</div>
 	);
 }
+
+const WorkspaceEmptyState = memo(
+	({
+		isManager,
+		canRequest,
+		workspaceId,
+		workspaceCode,
+		taskStatuses,
+		requestStatuses,
+		members,
+	}: ActionProps) => (
+		<div className="flex h-full items-center justify-center p-8">
+			<EmptyStateCard
+				icon={ListTodoIcon}
+				title="All clear"
+				description="No active tasks in this workspace. Rest easy or create a new one."
+			>
+				<div className="flex gap-2">
+					{isManager && (
+						<MatterDialog
+							type="task"
+							workspaceId={workspaceId}
+							workspaceCode={workspaceCode}
+							statuses={taskStatuses}
+							workspaceMembers={members}
+						/>
+					)}
+					{canRequest && (
+						<MatterDialog
+							type="request"
+							workspaceId={workspaceId}
+							workspaceCode={workspaceCode}
+							statuses={requestStatuses}
+							workspaceMembers={members}
+							triggerButton={
+								<Button size="sm" variant="outline">
+									Request
+								</Button>
+							}
+						/>
+					)}
+				</div>
+			</EmptyStateCard>
+		</div>
+	),
+);

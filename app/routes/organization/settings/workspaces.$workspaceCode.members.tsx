@@ -63,7 +63,7 @@ export default function WorkspaceMembersPage() {
 	}, [orgMembers, memberships]);
 
 	const [form, fields] = useForm({
-		id: "ws-add-member",
+		id: "workspaces-add-member",
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: addMemberSchema }),
 		defaultValue: { role: "member" },
@@ -140,24 +140,16 @@ export default function WorkspaceMembersPage() {
 							</DialogHeader>
 							<form {...getFormProps(form)} className="space-y-6">
 								<CustomChildrenField labelProps={{ children: "Select Member" }}>
-									{(id) => (
-										<>
-											<MemberSelect
-												members={availableUsers}
-												value={fields.userId.value ?? ""}
-												onChange={(val) =>
-													form.update({ name: fields.userId.name, value: val })
-												}
-												className="w-full rounded-md border bg-muted/50 p-2"
-											/>
-											<input
-												id={id}
-												type="hidden"
-												name={fields.userId.name}
-												value={fields.userId.value ?? ""}
-											/>
-										</>
-									)}
+									<MemberSelect
+										members={availableUsers}
+										value={fields.userId.value}
+										onChange={(val) =>
+											form.update({ name: fields.userId.name, value: val })
+										}
+										className="w-full rounded-md border bg-muted/50 p-2"
+										name={fields.userId.name}
+										showLabel
+									/>
 								</CustomChildrenField>
 
 								<div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">

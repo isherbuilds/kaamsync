@@ -1,10 +1,4 @@
 import { type ClassValue, clsx } from "clsx";
-import {
-	formatDistanceToNow,
-	isToday,
-	isTomorrow,
-	isYesterday,
-} from "date-fns";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -22,13 +16,116 @@ export function sanitizeSlug(value: string) {
 		.slice(0, MAX_SLUG_LENGTH);
 }
 
-// * Date Formatters Formatter
+// ============================================================================
+// Date Formatting Utilities (using native Intl - no date-fns dependency)
+// ============================================================================
 
-// --- Absolute Date Formatter ---
-export function formatDate(ms: number): string {
-	if (!ms || Number.isNaN(ms)) {
+const MS_MINUTE = 60 * 1000;
+const MS_HOUR = 60 * MS_MINUTE;
+const MS_DAY = 24 * MS_HOUR;
+
+/** Check if timestamp is today */
+function isToday(timestamp: number | Date, referenceDate?: Date): boolean {
+	const date = new Date(timestamp);
+	const today = referenceDate ?? new Date();
+	return (
+		date.getDate() === today.getDate() &&
+		date.getMonth() === today.getMonth() &&
+		date.getFullYear() === today.getFullYear()
+	);
+}
+
+/** Check if timestamp is tomorrow */
+function isTomorrow(timestamp: number | Date, referenceDate?: Date): boolean {
+	const date = new Date(timestamp);
+	const tomorrow = referenceDate ? new Date(referenceDate) : new Date();
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	return (
+		date.getDate() === tomorrow.getDate() &&
+		date.getMonth() === tomorrow.getMonth() &&
+		date.getFullYear() === tomorrow.getFullYear()
+	);
+}
+
+/**
+ * Format a date for due date display (compact relative format).
+ * Shows: Today, Tomorrow, Overdue, Xhrs, Xdays, Xweeks
+ */
+export function formatCompactRelativeDate(
+	date: Date | number | string,
+	nowDate?: Date,
+): string {
+	const now = nowDate || new Date();
+	const timestamp = new Date(date).getTime();
+
+	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp))
+		return "Invalid Date";
+
+	if (isToday(timestamp, now)) return "Today";
+	if (isTomorrow(timestamp, now)) return "Tomorrow";
+
+	const diffMs = timestamp - now.getTime();
+
+	// Past dates (including yesterday) are overdue
+	if (diffMs < 0) return "Overdue";
+
+	const diffHours = Math.floor(diffMs / MS_HOUR);
+	if (diffHours < 24) return `${diffHours}hrs`;
+
+	const diffDays = Math.floor(diffMs / MS_DAY);
+	if (diffDays < 7) return `${diffDays}D`;
+
+	const diffWeeks = Math.floor(diffDays / 7);
+	return `${diffWeeks}W`;
+}
+
+/**
+ * Format a timestamp for timeline/activity display.
+ * Shows: just now, Xm ago, Xh ago, Xd ago, or "Mon DD" for older dates.
+ */
+export function formatTimelineDate(timestamp: number): string {
+	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp) || timestamp < 0)
 		return "";
+
+	const date = new Date(timestamp);
+	const now = Date.now();
+	const diff = now - timestamp;
+
+	// Future dates - show absolute date
+	if (diff < 0) {
+		return date.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year:
+				date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+		});
 	}
+
+	const minutes = Math.floor(diff / MS_MINUTE);
+	const hours = Math.floor(diff / MS_HOUR);
+	const days = Math.floor(diff / MS_DAY);
+
+	if (days > 7) {
+		return date.toLocaleDateString("en-US", {
+			month: "short",
+			day: "numeric",
+			year:
+				date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+		});
+	}
+
+	if (days > 0) return `${days}d ago`;
+	if (hours > 0) return `${hours}h ago`;
+	if (minutes > 0) return `${minutes}m ago`;
+	return "Just Now";
+}
+
+/**
+ * Format an absolute date (e.g., for created/updated timestamps).
+ */
+export function formatDate(ms: number): string {
+	if (!Number.isFinite(ms) || Number.isNaN(ms)) return "";
+
 	try {
 		return new Date(ms).toLocaleDateString(undefined, {
 			month: "numeric",
@@ -40,89 +137,9 @@ export function formatDate(ms: number): string {
 	}
 }
 
-// --- Absolute Date Formatter ---
-export function formatDateTime(ms: number): string {
-	if (!ms || Number.isNaN(ms)) {
-		return "";
-	}
-
-	return new Date(ms).toLocaleString();
-}
-
-// --- Relative Date Formatter ---
-export function formatRelativeDate(timestamp: number, due?: boolean): string {
-	const date = timestamp;
-
-	if (isToday(date)) {
-		return "Today";
-	}
-	if (isYesterday(date)) {
-		return due ? "Overdue" : "Yesterday";
-	}
-
-	return formatDistanceToNow(date);
-}
-
-// --- Relative Date Formatter ---
-export function formatRelativeDateTime(timestamp: number): string {
-	const now = new Date();
-	const date = new Date(timestamp);
-	const diffMs = now.getTime() - date.getTime();
-	const diffMinutes = Math.floor(diffMs / (1000 * 60));
-
-	if (diffMinutes < 60) {
-		return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`;
-	}
-
-	const diffHours = Math.floor(diffMinutes / 60);
-
-	if (diffHours < 24) {
-		return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-	}
-
-	const diffDays = Math.floor(diffHours / 24);
-	return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-}
-
-export function formatCompactRelativeDate(
-	date: Date | number | string,
-	nowDate?: Date,
-): string {
-	const now = nowDate || new Date();
-
-	if (isToday(date)) {
-		return "Today";
-	}
-
-	if (isYesterday(date)) {
-		return "Overdue";
-	}
-
-	if (isTomorrow(date)) {
-		return "Tomorrow";
-	}
-
-	const diffMs = new Date(date).getTime() - now.getTime();
-	const isPastDate = diffMs < 0;
-	const absDiffMs = Math.abs(diffMs);
-	const diffHours = Math.floor(absDiffMs / (1000 * 60 * 60));
-	const diffDays = Math.floor(absDiffMs / (1000 * 60 * 60 * 24));
-
-	if (isPastDate) {
-		return "Overdue";
-	}
-
-	if (diffHours < 24) {
-		return `${diffHours}hrs`;
-	}
-
-	if (diffDays < 7) {
-		return `${diffDays}days`;
-	}
-
-	const diffWeeks = Math.floor(diffDays / 7);
-	return `${diffWeeks}weeks`;
-}
+// ============================================================================
+// Other Utilities
+// ============================================================================
 
 /**
  * Get initials from a name (e.g., "John Doe" -> "JD")
@@ -135,46 +152,4 @@ export function getInitials(name: string): string {
 		.join("")
 		.toUpperCase()
 		.slice(0, 2);
-}
-
-/**
- * Format a timestamp to a human-readable relative date string
- * Shows "just now", "Xm ago", "Xh ago", "Xd ago" for recent dates,
- * falls back to "Mon DD" or "Mon DD, YYYY" for older dates
- */
-export function formatTimelineDate(timestamp: number): string {
-	if (!timestamp || Number.isNaN(timestamp) || timestamp < 0) {
-		return "";
-	}
-
-	const date = new Date(timestamp);
-	const now = Date.now();
-	const diff = now - timestamp;
-
-	// Handle future dates
-	if (diff < 0) {
-		return date.toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-			year:
-				date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-		});
-	}
-
-	const seconds = Math.floor(diff / 1000);
-	const minutes = Math.floor(seconds / 60);
-	const hours = Math.floor(minutes / 60);
-	const days = Math.floor(hours / 24);
-	if (days > 7) {
-		return date.toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-			year:
-				date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-		});
-	}
-	if (days > 0) return `${days}d ago`;
-	if (hours > 0) return `${hours}h ago`;
-	if (minutes > 0) return `${minutes}m ago`;
-	return "just now";
 }

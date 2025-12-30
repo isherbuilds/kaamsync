@@ -6,6 +6,10 @@ import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+	build: {
+		outDir: "build/client",
+	},
+
 	plugins: [
 		tailwindcss(),
 		{
@@ -24,8 +28,10 @@ export default defineConfig({
 			strategies: "injectManifest",
 			srcDir: "app",
 			filename: "service-worker.ts",
+			injectRegister: "inline",
 			injectManifest: {
 				// Pre-cache built client assets and html; exclude dev/HMR modules.
+				globDirectory: "build/client",
 				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webp,txt}"],
 			},
 			devOptions: {

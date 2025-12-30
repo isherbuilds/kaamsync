@@ -1,6 +1,6 @@
 import type { VariantProps } from "class-variance-authority";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { type ReactNode, useId, useState } from "react";
+import { useId, useState } from "react";
 import type { buttonVariants } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -13,7 +13,6 @@ import {
 	InputGroupInput,
 	InputGroupText,
 } from "./ui/input-group";
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group.js";
 import { Textarea } from "./ui/textarea";
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined;
@@ -140,60 +139,6 @@ export function InputGroupField({
 		</div>
 	);
 }
-
-// export function RadioField({
-// 	labelProps,
-// 	inputProps,
-// 	errors,
-// 	className,
-// 	items,
-// }: {
-// 	labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
-// 	inputProps: React.InputHTMLAttributes<HTMLInputElement>;
-// 	errors?: ListOfErrors;
-// 	className?: string;
-// 	items: {
-// 		value: string;
-// 		label: string;
-// 		Icon?: React.ElementType;
-// 	}[];
-// }) {
-// 	const fallbackId = useId();
-// 	const id = inputProps.id || fallbackId;
-// 	const errorId = errors?.length ? `${id}-error` : undefined;
-
-// 	return (
-// 		<div className={cn(className, "flex flex-col gap-2")}>
-// 			{labelProps && <Label htmlFor={id} {...labelProps} />}
-// 			<RadioGroup className="grid-cols-2 min-w-75 max-w-96" defaultValue="1">
-// 				{items.map((item) => (
-// 					<div
-// 						key={`${id}-${item.value}`}
-// 						className="relative flex flex-col gap-4 rounded-lg border border-input p-4 shadow-sm shadow-black/5 has-data-[state=checked]:border-ring"
-// 					>
-// 						<div className="flex justify-between gap-2">
-// 							<RadioGroupItem
-// 								id={`${id}-${item.value}`}
-// 								value={item.value}
-// 								className="order-1 after:absolute after:inset-0"
-// 							/>
-// 							{item.Icon && (
-// 								<item.Icon
-// 									className="opacity-60"
-// 									size={16}
-// 									strokeWidth={2}
-// 									aria-hidden="true"
-// 								/>
-// 							)}
-// 						</div>
-// 						<Label htmlFor={`${id}-${item.value}`}>{item.label}</Label>
-// 					</div>
-// 				))}
-// 			</RadioGroup>
-// 			{errorId ? <ErrorList errors={errors} id={errorId} /> : null}
-// 		</div>
-// 	);
-// }
 
 export function PasswordField({
 	labelProps,

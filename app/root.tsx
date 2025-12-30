@@ -65,24 +65,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		if (typeof window === "undefined" || import.meta.env.DEV) return;
-		const register = () =>
-			import("virtual:pwa-register").then(({ registerSW }) => {
-				registerSW({ immediate: true });
-			});
-
-		const useIdle = typeof window.requestIdleCallback === "function";
-		// Defer SW registration to idle to keep first paint responsive.
-		const handle = useIdle
-			? window.requestIdleCallback(register, { timeout: 2000 })
-			: window.setTimeout(register, 1000);
-
-		return () => {
-			if (useIdle && typeof window.cancelIdleCallback === "function") {
-				window.cancelIdleCallback(handle as number);
-			} else {
-				window.clearTimeout(handle as number);
-			}
-		};
+		// Register service worker immediately so it installs even on prerendered/static pages
+		import("virtual:pwa-register").then(({ registerSW }) => {
+			registerSW({ immediate: true });
+		});
 	}, []);
 
 	return (
@@ -99,16 +85,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				/>
 				<ColorSchemeScript nonce={nonce} />
 				<Meta />
-				{/* {import.meta.env.DEV && (
+				{import.meta.env.DEV && (
 					<script
 						crossOrigin="anonymous"
 						src="//unpkg.com/react-scan/dist/auto.global"
 					/>
-				)} */}
+				)}
 				<Links />
 			</head>
 			<body className="min-h-screen overflow-y-auto">
-				{/* <ZeroInit>{children}</ZeroInit> */}
 				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />

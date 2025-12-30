@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { defineMutator, defineMutators } from "@rocicorp/zero";
 import { z } from "zod";
 import {
+	approvalStatus,
 	matterType,
 	membershipStatus,
 	type WorkspaceRole,
@@ -50,6 +51,40 @@ async function canModifyMatter(tx: MutatorTx, ctx: Context, matterId: string) {
 			.where("id", matterId)
 			.where("orgId", ctx.activeOrganizationId ?? "")
 			.where("deletedAt", "IS", null)
+			.one(),
+	);
+
+	if (!matter) {
+		throw new Error("Matter not found");
+	}
+
+	const membership = await getWorkspaceMembership(tx, ctx, matter.workspaceId);
+	if (!membership) {
+		throw new Error("Not a member of this workspace");
+	}
+
+	const isAuthor = matter.authorId === ctx.userId;
+	const isAssignee = matter.assigneeId === ctx.userId;
+	const isManager = membership.role === "manager";
+
+	return {
+		matter,
+		membership,
+		canModify: isAuthor || isAssignee || isManager,
+	};
+}
+
+async function canModifyDeletedMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
+	assertLoggedIn(ctx);
+	const matter = await tx.run(
+		zql.mattersTable
+			.where("id", matterId)
+			.where("orgId", ctx.activeOrganizationId ?? "")
+			.where("deletedAt", "IS NOT", null)
 			.one(),
 	);
 
@@ -227,6 +262,58 @@ export const mutators = defineMutators({
 			},
 		),
 
+		restore: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyDeletedMatter(tx, ctx, args.id);
+				if (!canModify) {
+					throw new Error("Not allowed to restore this matter");
+				}
+
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					deletedAt: null,
+					updatedAt: Date.now(),
+				});
+			},
+		),
+
+		archive: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				if (!canModify) {
+					throw new Error("Not allowed to archive this matter");
+				}
+
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					archived: true,
+					archivedAt: Date.now(),
+					archivedBy: ctx.userId,
+					updatedAt: Date.now(),
+				});
+			},
+		),
+
+		unarchive: defineMutator(
+			z.object({ id: z.string() }),
+			async ({ tx, ctx, args }) => {
+				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				if (!canModify) {
+					throw new Error("Not allowed to unarchive this matter");
+				}
+
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					archived: false,
+					archivedAt: null,
+					archivedBy: null,
+					updatedAt: Date.now(),
+				});
+			},
+		),
+
 		approve: defineMutator(
 			z.object({ id: z.string(), note: z.string().optional() }),
 			async ({ tx, ctx, args }) => {
@@ -250,12 +337,31 @@ export const mutators = defineMutators({
 				// Permission: Only managers can approve
 				await assertManager(tx, ctx, matter.workspaceId);
 
+				// Find a default task status (not request status) to assign
+				const taskStatuses = await tx.run(
+					zql.statusesTable
+						.where("workspaceId", matter.workspaceId)
+						.where("isRequestStatus", false),
+				);
+
+				// Explicit validation: abort if no task statuses exist in workspace
+				if (!taskStatuses || taskStatuses.length === 0) {
+					throw new Error(
+						`Cannot convert request to task: no task statuses configured in workspace ${matter.workspaceId} (action: approve request ${args.id})`,
+					);
+				}
+
+				const defaultStatus =
+					taskStatuses.find((s) => s.isDefault) ?? taskStatuses[0];
+
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					approvalStatus: "APPROVED",
+					type: matterType.task, // Convert request to task
+					approvalStatus: approvalStatus.approved,
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
+					statusId: defaultStatus.id, // Assign task status (guaranteed to exist)
 					updatedAt: Date.now(),
 				});
 			},
@@ -286,7 +392,7 @@ export const mutators = defineMutators({
 
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					approvalStatus: "REJECTED",
+					approvalStatus: approvalStatus.rejected,
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,

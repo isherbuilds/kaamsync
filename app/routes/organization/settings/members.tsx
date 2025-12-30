@@ -68,7 +68,7 @@ export default function OrgMembersPage() {
 
 	// Form logic
 	const [form, fields] = useForm({
-		id: "invite-member",
+		id: "org-invite-member",
 		defaultValue: { role: "member" },
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: inviteSchema }),
@@ -87,7 +87,6 @@ export default function OrgMembersPage() {
 				} else {
 					toast.success(`Invitation sent to ${submission.value.email}`);
 					setInviteOpen(false);
-					form.reset();
 				}
 			});
 		},

@@ -1,5 +1,7 @@
+import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { CalendarIcon, Clock, Loader2, Send, UserIcon } from "lucide-react";
+import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -71,6 +73,14 @@ export default function RequestsPage() {
 		...CACHE_LONG,
 	});
 
+	// Memoize sorted requests to prevent expensive re-sorting on every render
+	const sortedRequests = useMemo(() => {
+		if (!requests) return [];
+		return [...requests].sort((a, b) =>
+			compareStatuses(a.status || {}, b.status || {}),
+		);
+	}, [requests]);
+
 	if (!requests) {
 		return (
 			<div className="flex h-[60vh] items-center justify-center">
@@ -84,10 +94,6 @@ export default function RequestsPage() {
 		);
 	}
 
-	// Direct sort - requests is already an array from useInfiniteMatters
-	const sortedRequests = [...requests].sort((a, b) =>
-		compareStatuses(a.status || {}, b.status || {}),
-	);
 	const requestCount = sortedRequests.length;
 
 	return (
@@ -131,7 +137,9 @@ export default function RequestsPage() {
 							getItemKey={(item) => item.id}
 							estimateSize={100}
 							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
-							renderItem={(matter) => {
+							renderItem={(
+								matter: Row["mattersTable"] & { status?: Row["statusesTable"] },
+							) => {
 								const assignee = members?.find(
 									(m) => m.userId === matter.assigneeId,
 								);
@@ -144,7 +152,7 @@ export default function RequestsPage() {
 									: null;
 								return (
 									<NavLink
-										className={({ isActive }) =>
+										className={({ isActive }: { isActive: boolean }) =>
 											cn(
 												"group relative block transition-all duration-200",
 												isActive

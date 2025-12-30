@@ -1,4 +1,4 @@
-import UnderConstruction from "~/components/under-construction.js";
+import UnderConstruction from "~/components/under-construction";
 
 export default function Settings() {
 	return (
