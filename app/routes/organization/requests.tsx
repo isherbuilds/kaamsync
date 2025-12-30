@@ -165,15 +165,15 @@ export default function RequestsPage() {
 										prefetch="viewport"
 										to={
 											isMobile
-												? `/${orgSlug}/matter/${matter.workspaceCode}-${matter.shortID}`
-												: `/${orgSlug}/requests/matter/${matter.workspaceCode}-${matter.shortID}`
+												? `/${orgSlug}/matter/${matter.teamCode}-${matter.shortID}`
+												: `/${orgSlug}/requests/matter/${matter.teamCode}-${matter.shortID}`
 										}
 									>
 										<Item className="w-full" key={matter.id}>
 											<ItemContent className="flex-col gap-2">
 												<div className="flex items-center gap-2">
 													<span className="font-mono text-muted-foreground/70 text-xs">
-														{matter.workspaceCode}-{matter.shortID}
+														{matter.teamCode}-{matter.shortID}
 													</span>
 													{matter.priority != null &&
 														matter.priority !== Priority.NONE && (

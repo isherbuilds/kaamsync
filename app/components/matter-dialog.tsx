@@ -10,7 +10,7 @@ import { useShortIdSeeder } from "~/hooks/use-short-id";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
 import { createMatterSchema } from "~/lib/validations/matter";
-import { matterType, workspaceRole } from "../db/helpers";
+import { matterType, teamRole } from "../db/helpers";
 // import { InputField, TextareaField } from "./forms";
 import {
 	MemberSelect,
@@ -29,20 +29,20 @@ import {
 
 interface MatterDialogProps {
 	type: "task" | "request";
-	workspaceId: string;
-	workspaceCode: string;
+	teamId: string;
+	teamCode: string;
 	statuses: readonly Row["statusesTable"][];
-	workspaceMembers: readonly MemberSelectorItem[];
+	teamMembers: readonly MemberSelectorItem[];
 	triggerButton?: React.ReactNode;
 }
 
 export const MatterDialog = memo(
 	({
 		type,
-		workspaceId,
-		workspaceCode,
+		teamId,
+		teamCode,
 		statuses,
-		workspaceMembers,
+		teamMembers,
 		triggerButton,
 	}: MatterDialogProps) => {
 		const z = useZero();
@@ -60,13 +60,13 @@ export const MatterDialog = memo(
 		const filteredMembers = useMemo(
 			() =>
 				isRequest
-					? workspaceMembers.filter((m) => m.role === workspaceRole.manager)
-					: workspaceMembers,
-			[isRequest, workspaceMembers],
+					? teamMembers.filter((m) => m.role === teamRole.manager)
+					: teamMembers,
+			[isRequest, teamMembers],
 		);
 
 		// Pre-fetches a block of Short IDs from the server when dialog opens
-		useShortIdSeeder(workspaceId, open);
+		useShortIdSeeder(teamId, open);
 
 		const [form, fields] = useForm({
 			id: `create-matter-${type}`,
@@ -84,13 +84,13 @@ export const MatterDialog = memo(
 				const { title, description, statusId, assigneeId, priority, dueDate } =
 					submission.value;
 
-				const clientShortID = getAndIncrementNextShortId(workspaceId);
+				const clientShortID = getAndIncrementNextShortId(teamId);
 
 				setIsSubmitting(true);
 				z.mutate(
 					mutators.matter.create({
-						workspaceId,
-						workspaceCode,
+						teamId,
+						teamCode,
 						title,
 						description,
 						type: isRequest ? matterType.request : matterType.task,
@@ -113,7 +113,7 @@ export const MatterDialog = memo(
 						toast.success(
 							isRequest
 								? "Request submitted for approval"
-								: `${workspaceCode}-${clientShortID} created`,
+								: `${teamCode}-${clientShortID} created`,
 						);
 						setOpen(false);
 						form.reset();
@@ -152,7 +152,7 @@ export const MatterDialog = memo(
 							<div
 								className={`flex items-center gap-2 font-bold text-[10px] uppercase tracking-tighter ${accentColor}`}
 							>
-								<Icon className="size-3" /> {workspaceCode} / {label}
+								<Icon className="size-3" /> {teamCode} / {label}
 							</div>
 
 							{/* <InputField

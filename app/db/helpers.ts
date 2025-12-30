@@ -19,11 +19,11 @@ export const commonColumns = {
 const MATTER_KEY_REGEX = /^([A-Z0-9]+)-(\d+)$/;
 
 /**
- * Generate matter display key from workspace code and shortID
+ * Generate matter display key from team code and shortID
  * @example getMatterKey("HOSP1", 1234) // Returns: "HOSP1-1234"
  */
-export function getMatterKey(workspaceCode: string, shortID: number): string {
-	return `${workspaceCode}-${shortID}`;
+export function getMatterKey(teamCode: string, shortID: number): string {
+	return `${teamCode}-${shortID}`;
 }
 
 /**
@@ -51,7 +51,7 @@ export const matterType = {
 	task: "task",
 } as const;
 
-export const workspaceVisibility = {
+export const teamVisibility = {
 	private: "private",
 	public: "public",
 } as const;
@@ -101,13 +101,13 @@ export const approvalStatus = {
 	rejected: "rejected",
 } as const;
 
-export const workspaceRole = {
+export const teamRole = {
 	viewer: "viewer", // Read-only access
 	member: "member", // Can create requests, limited task creation
-	manager: "manager", // Can create tasks, approve requests, manage workspace
+	manager: "manager", // Can create tasks, approve requests, manage team
 } as const;
 
-export type WorkspaceRole = (typeof workspaceRole)[keyof typeof workspaceRole];
+export type TeamRole = (typeof teamRole)[keyof typeof teamRole];
 
 export const watcherReason = {
 	oversight: "oversight", // For principals watching accountants

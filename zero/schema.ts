@@ -478,11 +478,11 @@ const mattersTable = {
       customType: null as unknown as string,
       serverName: "org_id",
     },
-    workspaceId: {
+    teamId: {
       type: "string",
       optional: false,
       customType: null as unknown as string,
-      serverName: "workspace_id",
+      serverName: "team_id",
     },
     authorId: {
       type: "string",
@@ -502,11 +502,11 @@ const mattersTable = {
       customType: null as unknown as string,
       serverName: "status_id",
     },
-    workspaceCode: {
+    teamCode: {
       type: "string",
       optional: false,
       customType: null as unknown as string,
-      serverName: "workspace_code",
+      serverName: "team_code",
     },
     title: {
       type: "string",
@@ -778,11 +778,11 @@ const statusesTable = {
       optional: false,
       customType: null as unknown as string,
     },
-    workspaceId: {
+    teamId: {
       type: "string",
       optional: false,
       customType: null as unknown as string,
-      serverName: "workspace_id",
+      serverName: "team_id",
     },
     name: {
       type: "string",
@@ -848,6 +848,177 @@ const statusesTable = {
   },
   primaryKey: ["id"],
   serverName: "statuses",
+} as const;
+const teamMembershipsTable = {
+  name: "teamMembershipsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    teamId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "team_id",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    role: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    status: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    canCreateTasks: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_create_tasks",
+    },
+    canCreateRequests: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_create_requests",
+    },
+    canApproveRequests: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_approve_requests",
+    },
+    canManageMembers: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_manage_members",
+    },
+    canManageTeam: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_manage_team",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "team_memberships",
+} as const;
+const teamsTable = {
+  name: "teamsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    name: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    slug: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    code: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    icon: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    description: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    nextShortId: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "next_short_id",
+    },
+    visibility: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    archived: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    archivedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "archived_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "teams",
 } as const;
 const timelinesTable = {
   name: "timelinesTable",
@@ -1044,177 +1215,6 @@ const verificationsTable = {
   primaryKey: ["id"],
   serverName: "verifications_table",
 } as const;
-const workspaceMembershipsTable = {
-  name: "workspaceMembershipsTable",
-  columns: {
-    id: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    workspaceId: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-      serverName: "workspace_id",
-    },
-    userId: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-      serverName: "user_id",
-    },
-    orgId: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-      serverName: "org_id",
-    },
-    role: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    status: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    canCreateTasks: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-      serverName: "can_create_tasks",
-    },
-    canCreateRequests: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-      serverName: "can_create_requests",
-    },
-    canApproveRequests: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-      serverName: "can_approve_requests",
-    },
-    canManageMembers: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-      serverName: "can_manage_members",
-    },
-    canManageWorkspace: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-      serverName: "can_manage_workspace",
-    },
-    createdAt: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
-      serverName: "created_at",
-    },
-    updatedAt: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
-      serverName: "updated_at",
-    },
-    deletedAt: {
-      type: "number",
-      optional: true,
-      customType: null as unknown as number,
-      serverName: "deleted_at",
-    },
-  },
-  primaryKey: ["id"],
-  serverName: "workspace_memberships",
-} as const;
-const workspacesTable = {
-  name: "workspacesTable",
-  columns: {
-    id: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    orgId: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-      serverName: "org_id",
-    },
-    name: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    slug: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    code: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    icon: {
-      type: "string",
-      optional: true,
-      customType: null as unknown as string,
-    },
-    description: {
-      type: "string",
-      optional: true,
-      customType: null as unknown as string,
-    },
-    nextShortId: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
-      serverName: "next_short_id",
-    },
-    visibility: {
-      type: "string",
-      optional: false,
-      customType: null as unknown as string,
-    },
-    archived: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-    },
-    archivedAt: {
-      type: "number",
-      optional: true,
-      customType: null as unknown as number,
-      serverName: "archived_at",
-    },
-    createdAt: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
-      serverName: "created_at",
-    },
-    updatedAt: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
-      serverName: "updated_at",
-    },
-    deletedAt: {
-      type: "number",
-      optional: true,
-      customType: null as unknown as number,
-      serverName: "deleted_at",
-    },
-  },
-  primaryKey: ["id"],
-  serverName: "workspaces",
-} as const;
 const accountsTableRelationships = {
   usersTable: [
     {
@@ -1368,11 +1368,11 @@ const matterWatchersTableRelationships = {
   ],
 } as const;
 const mattersTableRelationships = {
-  workspace: [
+  team: [
     {
-      sourceField: ["workspaceId"],
+      sourceField: ["teamId"],
       destField: ["id"],
-      destSchema: "workspacesTable",
+      destSchema: "teamsTable",
       cardinality: "one",
     },
   ],
@@ -1532,19 +1532,19 @@ const organizationsTableRelationships = {
       cardinality: "many",
     },
   ],
-  workspaces: [
+  teams: [
     {
       sourceField: ["id"],
       destField: ["orgId"],
-      destSchema: "workspacesTable",
+      destSchema: "teamsTable",
       cardinality: "many",
     },
   ],
-  workspaceMemberships: [
+  teamMemberships: [
     {
       sourceField: ["id"],
       destField: ["orgId"],
-      destSchema: "workspaceMembershipsTable",
+      destSchema: "teamMembershipsTable",
       cardinality: "many",
     },
   ],
@@ -1576,11 +1576,11 @@ const sessionsTableRelationships = {
   ],
 } as const;
 const statusesTableRelationships = {
-  workspace: [
+  team: [
     {
-      sourceField: ["workspaceId"],
+      sourceField: ["teamId"],
       destField: ["id"],
-      destSchema: "workspacesTable",
+      destSchema: "teamsTable",
       cardinality: "one",
     },
   ],
@@ -1597,6 +1597,66 @@ const statusesTableRelationships = {
       sourceField: ["id"],
       destField: ["statusId"],
       destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+} as const;
+const teamMembershipsTableRelationships = {
+  team: [
+    {
+      sourceField: ["teamId"],
+      destField: ["id"],
+      destSchema: "teamsTable",
+      cardinality: "one",
+    },
+  ],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
+const teamsTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  statuses: [
+    {
+      sourceField: ["id"],
+      destField: ["teamId"],
+      destSchema: "statusesTable",
+      cardinality: "many",
+    },
+  ],
+  matters: [
+    {
+      sourceField: ["id"],
+      destField: ["teamId"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+  memberships: [
+    {
+      sourceField: ["id"],
+      destField: ["teamId"],
+      destSchema: "teamMembershipsTable",
       cardinality: "many",
     },
   ],
@@ -1652,11 +1712,11 @@ const usersTableRelationships = {
       cardinality: "many",
     },
   ],
-  workspaceMemberships: [
+  teamMemberships: [
     {
       sourceField: ["id"],
       destField: ["userId"],
-      destSchema: "workspaceMembershipsTable",
+      destSchema: "teamMembershipsTable",
       cardinality: "many",
     },
   ],
@@ -1749,66 +1809,6 @@ const usersTableRelationships = {
     },
   ],
 } as const;
-const workspaceMembershipsTableRelationships = {
-  workspace: [
-    {
-      sourceField: ["workspaceId"],
-      destField: ["id"],
-      destSchema: "workspacesTable",
-      cardinality: "one",
-    },
-  ],
-  user: [
-    {
-      sourceField: ["userId"],
-      destField: ["id"],
-      destSchema: "usersTable",
-      cardinality: "one",
-    },
-  ],
-  organization: [
-    {
-      sourceField: ["orgId"],
-      destField: ["id"],
-      destSchema: "organizationsTable",
-      cardinality: "one",
-    },
-  ],
-} as const;
-const workspacesTableRelationships = {
-  organization: [
-    {
-      sourceField: ["orgId"],
-      destField: ["id"],
-      destSchema: "organizationsTable",
-      cardinality: "one",
-    },
-  ],
-  statuses: [
-    {
-      sourceField: ["id"],
-      destField: ["workspaceId"],
-      destSchema: "statusesTable",
-      cardinality: "many",
-    },
-  ],
-  matters: [
-    {
-      sourceField: ["id"],
-      destField: ["workspaceId"],
-      destSchema: "mattersTable",
-      cardinality: "many",
-    },
-  ],
-  memberships: [
-    {
-      sourceField: ["id"],
-      destField: ["workspaceId"],
-      destSchema: "workspaceMembershipsTable",
-      cardinality: "many",
-    },
-  ],
-} as const;
 /**
  * The Zero schema object.
  * This type is auto-generated from your Drizzle schema definition.
@@ -1828,11 +1828,11 @@ export const schema = {
     organizationsTable: organizationsTable,
     sessionsTable: sessionsTable,
     statusesTable: statusesTable,
+    teamMembershipsTable: teamMembershipsTable,
+    teamsTable: teamsTable,
     timelinesTable: timelinesTable,
     usersTable: usersTable,
     verificationsTable: verificationsTable,
-    workspaceMembershipsTable: workspaceMembershipsTable,
-    workspacesTable: workspacesTable,
   },
   relationships: {
     accountsTable: accountsTableRelationships,
@@ -1848,10 +1848,10 @@ export const schema = {
     organizationsTable: organizationsTableRelationships,
     sessionsTable: sessionsTableRelationships,
     statusesTable: statusesTableRelationships,
+    teamMembershipsTable: teamMembershipsTableRelationships,
+    teamsTable: teamsTableRelationships,
     timelinesTable: timelinesTableRelationships,
     usersTable: usersTableRelationships,
-    workspaceMembershipsTable: workspaceMembershipsTableRelationships,
-    workspacesTable: workspacesTableRelationships,
   },
   enableLegacyQueries: false,
   enableLegacyMutators: false,
@@ -1954,6 +1954,20 @@ export type SessionsTable = Row["sessionsTable"];
  */
 export type StatusesTable = Row["statusesTable"];
 /**
+ * Represents a row from the "teamMembershipsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["teamMembershipsTable"] instead from "@rocicorp/zero".
+ */
+export type TeamMembershipsTable = Row["teamMembershipsTable"];
+/**
+ * Represents a row from the "teamsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["teamsTable"] instead from "@rocicorp/zero".
+ */
+export type TeamsTable = Row["teamsTable"];
+/**
  * Represents a row from the "timelinesTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  *
@@ -1974,20 +1988,6 @@ export type UsersTable = Row["usersTable"];
  * @deprecated Use Row["verificationsTable"] instead from "@rocicorp/zero".
  */
 export type VerificationsTable = Row["verificationsTable"];
-/**
- * Represents a row from the "workspaceMembershipsTable" table.
- * This type is auto-generated from your Drizzle schema definition.
- *
- * @deprecated Use Row["workspaceMembershipsTable"] instead from "@rocicorp/zero".
- */
-export type WorkspaceMembershipsTable = Row["workspaceMembershipsTable"];
-/**
- * Represents a row from the "workspacesTable" table.
- * This type is auto-generated from your Drizzle schema definition.
- *
- * @deprecated Use Row["workspacesTable"] instead from "@rocicorp/zero".
- */
-export type WorkspacesTable = Row["workspacesTable"];
 
 /**
  * Represents the ZQL query builder.

@@ -22,7 +22,7 @@ import {
 	SidebarRail,
 } from "~/components/ui/sidebar";
 import { ColorSchemeToggle } from "./color-scheme-toggle";
-import { NavWorkspaces } from "./nav-workspaces";
+import { NavTeams } from "./nav-teams";
 
 // Main navigation items
 const navMain = [
@@ -71,7 +71,7 @@ export function AppSidebar({
 	// membership,
 	selectedOrg,
 	authUser,
-	workspaces,
+	teams,
 	...props
 }: {
 	organizations: {
@@ -90,7 +90,7 @@ export function AppSidebar({
 		email: string;
 		avatar?: string;
 	};
-	workspaces: {
+	teams: {
 		id: string;
 		name: string;
 		code: string;
@@ -112,9 +112,7 @@ export function AppSidebar({
 					items={isSettings ? navSettings : navMain}
 					orgSlug={selectedOrg.slug}
 				/>
-				{!isSettings && (
-					<NavWorkspaces workspaces={workspaces} orgSlug={selectedOrg.slug} />
-				)}
+				{!isSettings && <NavTeams teams={teams} orgSlug={selectedOrg.slug} />}
 			</SidebarContent>
 			<SidebarFooter className="flex-row items-center">
 				<NavUser user={authUser} />

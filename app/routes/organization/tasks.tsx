@@ -152,7 +152,7 @@ export default function TasksPage() {
 									<NavLink
 										key={matter.id}
 										prefetch="intent"
-										to={`/${orgSlug}/${isMobile ? "" : "tasks/"}matter/${matter.workspaceCode}-${matter.shortID}`}
+										to={`/${orgSlug}/${isMobile ? "" : "tasks/"}matter/${matter.teamCode}-${matter.shortID}`}
 										className={({ isActive }: { isActive: boolean }) =>
 											cn(
 												"group relative block rounded transition-all duration-200",
@@ -169,7 +169,7 @@ export default function TasksPage() {
 
 												{/* COL 2: ID + Title */}
 												<ItemTitle className="line-clamp-2 min-w-0 flex-1 font-normal text-foreground text-sm">
-													{matter.workspaceCode}-{matter.shortID} {matter.title}
+													{matter.teamCode}-{matter.shortID} {matter.title}
 												</ItemTitle>
 
 												{/* COL 3: Stats (Status, Priority, Time) */}

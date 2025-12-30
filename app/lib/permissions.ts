@@ -1,57 +1,57 @@
 /**
  * Unified permission system for KaamSync.
- * Consolidates workspace and organization permission logic into a single source of truth.
+ * Consolidates team and organization permission logic into a single source of truth.
  * Keep simple and fast - just role checks, no complex logic.
  */
 
-import { type WorkspaceRole, workspaceRole } from "~/db/helpers";
+import { type TeamRole, teamRole } from "~/db/helpers";
 
 // ============================================================================
 // WORKSPACE ROLES & PERMISSIONS
 // ============================================================================
 
-export type { WorkspaceRole };
+export type { TeamRole };
 
 /**
- * Workspace permission flags computed from role.
+ * Team permission flags computed from role.
  */
-export type WorkspaceRolePermissions = {
+export type TeamRolePermissions = {
 	canCreateTasks: boolean;
 	canCreateRequests: boolean;
 	canApproveRequests: boolean;
 	canManageMembers: boolean;
-	canManageWorkspace: boolean;
+	canManageTeam: boolean;
 };
 
 /**
- * Get default permissions for a workspace role.
+ * Get default permissions for a team role.
  * Used to compute permission flags from role for membership records.
  */
-export function getRolePermissions(role: string): WorkspaceRolePermissions {
+export function getRolePermissions(role: string): TeamRolePermissions {
 	switch (role) {
-		case workspaceRole.manager:
+		case teamRole.manager:
 			return {
 				canCreateTasks: true,
 				canCreateRequests: true,
 				canApproveRequests: true,
 				canManageMembers: true,
-				canManageWorkspace: true,
+				canManageTeam: true,
 			};
-		case workspaceRole.member:
+		case teamRole.member:
 			return {
 				canCreateTasks: false,
 				canCreateRequests: true,
 				canApproveRequests: false,
 				canManageMembers: false,
-				canManageWorkspace: false,
+				canManageTeam: false,
 			};
-		case workspaceRole.viewer:
+		case teamRole.viewer:
 			return {
 				canCreateTasks: false,
 				canCreateRequests: false,
 				canApproveRequests: false,
 				canManageMembers: false,
-				canManageWorkspace: false,
+				canManageTeam: false,
 			};
 		default:
 			return {
@@ -59,38 +59,38 @@ export function getRolePermissions(role: string): WorkspaceRolePermissions {
 				canCreateRequests: true,
 				canApproveRequests: false,
 				canManageMembers: false,
-				canManageWorkspace: false,
+				canManageTeam: false,
 			};
 	}
 }
 
 /**
- * Workspace permission context loaded per-workspace.
+ * Team permission context loaded per-team.
  * Kept minimal and fast - just role + computed permissions.
  */
-export type WorkspacePermissions = {
-	workspaceId: string;
-	role: WorkspaceRole;
-} & WorkspaceRolePermissions;
+export type TeamPermissions = {
+	teamId: string;
+	role: TeamRole;
+} & TeamRolePermissions;
 
 /**
- * Compute permissions from workspace role.
+ * Compute permissions from team role.
  * Fast pure function, no DB calls.
  *
  * Why keep both role AND permission flags?
  * 1. Security: Can't be faked client-side (computed server-side)
  * 2. Performance: No extra DB query per permission check
  * 3. Flexibility: Can override defaults (temp elevated access)
- * 4. Clarity: Explicit what user can do in this workspace
+ * 4. Clarity: Explicit what user can do in this team
  */
-export function computeWorkspacePermissions(
-	workspaceId: string,
-	role: WorkspaceRole,
-): WorkspacePermissions {
+export function computeTeamPermissions(
+	teamId: string,
+	role: TeamRole,
+): TeamPermissions {
 	const perms = getRolePermissions(role);
 
 	return {
-		workspaceId,
+		teamId,
 		role,
 		...perms,
 	};
@@ -103,46 +103,46 @@ export function computeWorkspacePermissions(
 /**
  * Check if role can approve requests
  */
-export function canApproveRequests(role?: WorkspaceRole | null): boolean {
-	return role === workspaceRole.manager;
+export function canApproveRequests(role?: TeamRole | null): boolean {
+	return role === teamRole.manager;
 }
 
 /**
  * Check if role can create tasks directly (without approval)
  */
-export function canCreateTasks(role?: WorkspaceRole | null): boolean {
-	return role === workspaceRole.manager;
+export function canCreateTasks(role?: TeamRole | null): boolean {
+	return role === teamRole.manager;
 }
 
 /**
  * Check if role can create requests (needs approval)
  */
-export function canCreateRequests(role?: WorkspaceRole | null): boolean {
-	return role === workspaceRole.manager || role === workspaceRole.member;
+export function canCreateRequests(role?: TeamRole | null): boolean {
+	return role === teamRole.manager || role === teamRole.member;
 }
 
 /**
- * Check if role can manage workspace members
+ * Check if role can manage team members
  */
-export function canManageMembers(role?: WorkspaceRole | null): boolean {
-	return role === workspaceRole.manager;
+export function canManageMembers(role?: TeamRole | null): boolean {
+	return role === teamRole.manager;
 }
 
 /**
- * Check if role can manage workspace settings
+ * Check if role can manage team settings
  */
-export function canManageWorkspace(role?: WorkspaceRole | null): boolean {
-	return role === workspaceRole.manager;
+export function canManageTeam(role?: TeamRole | null): boolean {
+	return role === teamRole.manager;
 }
 
 /**
- * Check if role can view workspace
+ * Check if role can view team
  */
-export function canViewWorkspace(role?: WorkspaceRole | null): boolean {
+export function canViewTeam(role?: TeamRole | null): boolean {
 	return (
-		role === workspaceRole.manager ||
-		role === workspaceRole.member ||
-		role === workspaceRole.viewer
+		role === teamRole.manager ||
+		role === teamRole.member ||
+		role === teamRole.viewer
 	);
 }
 
@@ -150,23 +150,22 @@ export function canViewWorkspace(role?: WorkspaceRole | null): boolean {
  * Check if role can edit matters
  */
 export function canEditMatter(
-	role?: WorkspaceRole | null,
+	role?: TeamRole | null,
 	isAuthor?: boolean,
 	isAssignee?: boolean,
 ): boolean {
 	// Managers can edit all, members can edit their own
 	return (
-		role === workspaceRole.manager ||
-		(role === workspaceRole.member &&
-			(isAuthor === true || isAssignee === true))
+		role === teamRole.manager ||
+		(role === teamRole.member && (isAuthor === true || isAssignee === true))
 	);
 }
 
 /**
  * Check if role can delete matters
  */
-export function canDeleteMatter(role?: WorkspaceRole | null): boolean {
-	return role === workspaceRole.manager;
+export function canDeleteMatter(role?: TeamRole | null): boolean {
+	return role === teamRole.manager;
 }
 
 // ============================================================================
@@ -175,14 +174,14 @@ export function canDeleteMatter(role?: WorkspaceRole | null): boolean {
 
 /**
  * Organization-level roles (from Better Auth).
- * These control org-wide permissions like creating workspaces.
+ * These control org-wide permissions like creating teams.
  */
 export type OrgRole = "owner" | "admin" | "member";
 
 /**
- * Check if org role can create workspaces
+ * Check if org role can create teams
  */
-export function canCreateWorkspaces(role?: OrgRole | null): boolean {
+export function canCreateTeams(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin";
 }
 

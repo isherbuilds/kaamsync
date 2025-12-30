@@ -2,7 +2,7 @@ import "dotenv/config";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { db } from "~/db";
-import { workspacesTable } from "~/db/schema";
+import { teamsTable } from "~/db/schema";
 import { industries } from "./seeds/data/industries";
 import { createMatters } from "./seeds/generators/matters";
 import { createOrganization } from "./seeds/generators/organizations";
@@ -25,17 +25,17 @@ export async function seed() {
 	const sharedUsers = [adminUser, ...sharedPool].filter(Boolean);
 	console.log("✅ Created shared users pool");
 
-	// Global set of workspace codes to ensure uniqueness across industries
+	// Global set of team codes to ensure uniqueness across industries
 	const globalUsedCodes = new Set<string>();
 
 	// Pre-populate with existing codes from DB to avoid collisions on re-seed
-	const existingWorkspaces = await db
-		.select({ code: workspacesTable.code })
-		.from(workspacesTable);
-	for (const w of existingWorkspaces) {
+	const existingTeams = await db
+		.select({ code: teamsTable.code })
+		.from(teamsTable);
+	for (const w of existingTeams) {
 		if (w.code) globalUsedCodes.add(w.code);
 	}
-	console.log(`🔍 Found ${globalUsedCodes.size} existing workspace codes`);
+	console.log(`🔍 Found ${globalUsedCodes.size} existing team codes`);
 
 	let totalMatters = 0;
 
@@ -43,20 +43,18 @@ export async function seed() {
 	for (const industryConfig of industries) {
 		console.log(`\n🚀 Processing Industry: ${industryConfig.industry}`);
 
-		const { workspaces } = await createOrganization(
+		const { teams } = await createOrganization(
 			industryConfig,
 			sharedUsers as any[],
 			globalUsedCodes,
 		);
 
-		// Distribute matters across workspaces
-		const mattersPerWorkspace = Math.floor(
-			MATTERS_PER_INDUSTRY / workspaces.length,
-		);
+		// Distribute matters across teams
+		const mattersPerTeam = Math.floor(MATTERS_PER_INDUSTRY / teams.length);
 
-		for (const workspace of workspaces) {
-			await createMatters(workspace, mattersPerWorkspace);
-			totalMatters += mattersPerWorkspace;
+		for (const team of teams) {
+			await createMatters(team, mattersPerTeam);
+			totalMatters += mattersPerTeam;
 		}
 	}
 

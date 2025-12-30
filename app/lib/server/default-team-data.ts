@@ -1,5 +1,5 @@
 /**
- * Default labels and statuses for new workspaces.
+ * Default labels and statuses for new teams.
  * Shared between server-side seeding and client-side mutators.
  */
 

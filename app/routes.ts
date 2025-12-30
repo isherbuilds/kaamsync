@@ -32,7 +32,7 @@ export default [
 			}),
 		]),
 
-		route(":orgSlug/:workspaceCode", "routes/organization/$workspaceCode.tsx"),
+		route(":orgSlug/:teamCode", "routes/organization/$teamCode.tsx"),
 		route(
 			":orgSlug/matter/:matterKey",
 			"routes/organization/matter.$matterKey.tsx",
@@ -45,12 +45,12 @@ export default [
 			route("billing", "routes/organization/settings/billing.tsx"),
 			route("integrations", "routes/organization/settings/integrations.tsx"),
 			route(
-				"workspaces/:workspaceCode",
-				"routes/organization/settings/workspaces.$workspaceCode.tsx",
+				"teams/:teamCode",
+				"routes/organization/settings/teams.$teamCode.tsx",
 			),
 			route(
-				"workspaces/:workspaceCode/members",
-				"routes/organization/settings/workspaces.$workspaceCode.members.tsx",
+				"teams/:teamCode/members",
+				"routes/organization/settings/teams.$teamCode.members.tsx",
 			),
 		]),
 	]),

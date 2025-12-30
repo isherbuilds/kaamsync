@@ -6,8 +6,8 @@ import { db } from "~/db/index";
 import {
 	matterLabelsTable,
 	mattersTable,
+	teamsTable,
 	timelinesTable,
-	workspacesTable,
 } from "~/db/schema";
 import { Priority } from "~/lib/matter-constants";
 import {
@@ -17,7 +17,7 @@ import {
 	randomPickMultiple,
 } from "../utils";
 
-type WorkspaceData = {
+type TeamData = {
 	id: string;
 	orgId: string;
 	code: string;
@@ -34,7 +34,7 @@ type Matter = typeof mattersTable.$inferInsert;
 type MatterLabel = typeof matterLabelsTable.$inferInsert;
 type Timeline = typeof timelinesTable.$inferInsert;
 
-export async function createMatters(workspace: WorkspaceData, count: number) {
+export async function createMatters(team: TeamData, count: number) {
 	const now = new Date();
 	const oneYearAgo = new Date(
 		now.getFullYear() - 1,
@@ -46,7 +46,7 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 	const [maxResult] = await db
 		.select({ maxShortId: max(mattersTable.shortID) })
 		.from(mattersTable)
-		.where(eq(mattersTable.workspaceId, workspace.id));
+		.where(eq(mattersTable.teamId, team.id));
 
 	let currentShortId = (maxResult?.maxShortId ?? 0) + 1;
 
@@ -54,16 +54,14 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 	// We don't have the status objects here, just IDs.
 	// Optimization: We know from organization generator that we pushed task statuses then request statuses.
 	// 6 task statuses, 3 request statuses.
-	const taskStatuses = workspace.statusIds.slice(0, 6);
-	const requestStatuses = workspace.statusIds.slice(6);
+	const taskStatuses = team.statusIds.slice(0, 6);
+	const requestStatuses = team.statusIds.slice(6);
 
 	const mattersBatch: Matter[] = [];
 	const matterLabelsBatch: MatterLabel[] = [];
 	const timelinesBatch: Timeline[] = [];
 
-	console.log(
-		`    Creating ${count} matters for workspace ${workspace.code}...`,
-	);
+	console.log(`    Creating ${count} matters for team ${team.code}...`);
 
 	for (let i = 0; i < count; i++) {
 		const isRequestType = Math.random() < 0.3; // 30% requests, 70% tasks
@@ -71,13 +69,12 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 
 		// Pick title from config
 		const titleBase = isRequestType
-			? randomPick(workspace.wsConfig.requestTypes)
-			: randomPick(workspace.wsConfig.taskTypes);
+			? randomPick(team.wsConfig.requestTypes)
+			: randomPick(team.wsConfig.taskTypes);
 		const title = `${titleBase} - ${faker.word.words(2)}`;
 
-		const author = randomPick(workspace.memberIds);
-		const assignee =
-			Math.random() < 0.8 ? randomPick(workspace.memberIds) : null;
+		const author = randomPick(team.memberIds);
+		const assignee = Math.random() < 0.8 ? randomPick(team.memberIds) : null;
 
 		const selectedStatusId = isRequestType
 			? randomPick(requestStatuses)
@@ -104,11 +101,11 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 				approvalStatusValue = approvalStatus.pending;
 			} else if (approvalRand < 0.85) {
 				approvalStatusValue = approvalStatus.approved;
-				approvedBy = randomPick(workspace.memberIds);
+				approvedBy = randomPick(team.memberIds);
 				approvedAt = randomDate(createdAt, now);
 			} else {
 				approvalStatusValue = approvalStatus.rejected;
-				approvedBy = randomPick(workspace.memberIds);
+				approvedBy = randomPick(team.memberIds);
 				approvedAt = randomDate(createdAt, now);
 				rejectionReason = faker.lorem.sentence();
 			}
@@ -120,9 +117,9 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 		mattersBatch.push({
 			id: matterId,
 			shortID: currentShortId++,
-			orgId: workspace.orgId,
-			workspaceId: workspace.id,
-			workspaceCode: workspace.code,
+			orgId: team.orgId,
+			teamId: team.id,
+			teamCode: team.code,
 			authorId: author,
 			assigneeId: assignee,
 			statusId: selectedStatusId,
@@ -160,7 +157,7 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 		// Add Labels
 		if (Math.random() < 0.6) {
 			const labelCount = 1 + Math.floor(Math.random() * 3);
-			const selectedLabels = randomPickMultiple(workspace.labelIds, labelCount);
+			const selectedLabels = randomPickMultiple(team.labelIds, labelCount);
 			selectedLabels.forEach((labelId) => {
 				matterLabelsBatch.push({
 					matterId,
@@ -203,7 +200,7 @@ export async function createMatters(workspace: WorkspaceData, count: number) {
 
 	// Update nextShortId
 	await db
-		.update(workspacesTable)
+		.update(teamsTable)
 		.set({ nextShortId: currentShortId })
-		.where(eq(workspacesTable.id, workspace.id));
+		.where(eq(teamsTable.id, team.id));
 }

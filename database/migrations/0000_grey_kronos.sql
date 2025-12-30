@@ -99,11 +99,11 @@ CREATE TABLE "matters" (
 	"id" text PRIMARY KEY NOT NULL,
 	"short_id" integer NOT NULL,
 	"org_id" text NOT NULL,
-	"workspace_id" text NOT NULL,
+	"team_id" text NOT NULL,
 	"author_id" text NOT NULL,
 	"assignee_id" text,
 	"status_id" text NOT NULL,
-	"workspace_code" varchar(50) NOT NULL,
+	"team_code" varchar(50) NOT NULL,
 	"title" varchar(500) NOT NULL,
 	"description" text,
 	"type" varchar(50) NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE "sessions_table" (
 --> statement-breakpoint
 CREATE TABLE "statuses" (
 	"id" text PRIMARY KEY NOT NULL,
-	"workspace_id" text NOT NULL,
+	"team_id" text NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"color" varchar(50),
 	"type" varchar(50) NOT NULL,
@@ -170,6 +170,40 @@ CREATE TABLE "statuses" (
 	"archived" boolean,
 	"is_request_status" boolean,
 	"creator_id" text,
+	"created_at" timestamp with time zone NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "team_memberships" (
+	"id" text PRIMARY KEY NOT NULL,
+	"team_id" text NOT NULL,
+	"user_id" text NOT NULL,
+	"org_id" text NOT NULL,
+	"role" varchar(50) NOT NULL,
+	"status" varchar(20) NOT NULL,
+	"can_create_tasks" boolean,
+	"can_create_requests" boolean,
+	"can_approve_requests" boolean,
+	"can_manage_members" boolean,
+	"can_manage_team" boolean,
+	"created_at" timestamp with time zone NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "teams" (
+	"id" text PRIMARY KEY NOT NULL,
+	"org_id" text NOT NULL,
+	"name" varchar(255) NOT NULL,
+	"slug" varchar(255) NOT NULL,
+	"code" varchar(50) NOT NULL,
+	"icon" varchar(255),
+	"description" text,
+	"next_short_id" integer NOT NULL,
+	"visibility" varchar(20) NOT NULL,
+	"archived" boolean,
+	"archived_at" timestamp with time zone,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	"deleted_at" timestamp with time zone
@@ -216,40 +250,6 @@ CREATE TABLE "verifications_table" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "workspace_memberships" (
-	"id" text PRIMARY KEY NOT NULL,
-	"workspace_id" text NOT NULL,
-	"user_id" text NOT NULL,
-	"org_id" text NOT NULL,
-	"role" varchar(50) NOT NULL,
-	"status" varchar(20) NOT NULL,
-	"can_create_tasks" boolean,
-	"can_create_requests" boolean,
-	"can_approve_requests" boolean,
-	"can_manage_members" boolean,
-	"can_manage_workspace" boolean,
-	"created_at" timestamp with time zone NOT NULL,
-	"updated_at" timestamp with time zone NOT NULL,
-	"deleted_at" timestamp with time zone
-);
---> statement-breakpoint
-CREATE TABLE "workspaces" (
-	"id" text PRIMARY KEY NOT NULL,
-	"org_id" text NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"slug" varchar(255) NOT NULL,
-	"code" varchar(50) NOT NULL,
-	"icon" varchar(255),
-	"description" text,
-	"next_short_id" integer NOT NULL,
-	"visibility" varchar(20) NOT NULL,
-	"archived" boolean,
-	"archived_at" timestamp with time zone,
-	"created_at" timestamp with time zone NOT NULL,
-	"updated_at" timestamp with time zone NOT NULL,
-	"deleted_at" timestamp with time zone
-);
---> statement-breakpoint
 ALTER TABLE "accounts_table" ADD CONSTRAINT "accounts_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_uploader_id_users_table_id_fk" FOREIGN KEY ("uploader_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -267,7 +267,7 @@ ALTER TABLE "matter_watchers" ADD CONSTRAINT "matter_watchers_matter_id_matters_
 ALTER TABLE "matter_watchers" ADD CONSTRAINT "matter_watchers_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matter_watchers" ADD CONSTRAINT "matter_watchers_added_by_users_table_id_fk" FOREIGN KEY ("added_by") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matters" ADD CONSTRAINT "matters_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "matters" ADD CONSTRAINT "matters_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "matters" ADD CONSTRAINT "matters_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matters" ADD CONSTRAINT "matters_author_id_users_table_id_fk" FOREIGN KEY ("author_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matters" ADD CONSTRAINT "matters_assignee_id_users_table_id_fk" FOREIGN KEY ("assignee_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matters" ADD CONSTRAINT "matters_status_id_statuses_id_fk" FOREIGN KEY ("status_id") REFERENCES "public"."statuses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -275,14 +275,14 @@ ALTER TABLE "matters" ADD CONSTRAINT "matters_approved_by_users_table_id_fk" FOR
 ALTER TABLE "members_table" ADD CONSTRAINT "members_table_organization_id_organizations_table_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "members_table" ADD CONSTRAINT "members_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions_table" ADD CONSTRAINT "sessions_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "statuses" ADD CONSTRAINT "statuses_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "statuses" ADD CONSTRAINT "statuses_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "statuses" ADD CONSTRAINT "statuses_creator_id_users_table_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_memberships" ADD CONSTRAINT "team_memberships_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_memberships" ADD CONSTRAINT "team_memberships_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "team_memberships" ADD CONSTRAINT "team_memberships_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "teams" ADD CONSTRAINT "teams_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "timelines" ADD CONSTRAINT "timelines_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "timelines" ADD CONSTRAINT "timelines_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workspace_memberships" ADD CONSTRAINT "workspace_memberships_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workspace_memberships" ADD CONSTRAINT "workspace_memberships_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workspace_memberships" ADD CONSTRAINT "workspace_memberships_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "workspaces" ADD CONSTRAINT "workspaces_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "accountsTable_userId_idx" ON "accounts_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "attachments_matter_idx" ON "attachments" USING btree ("matter_id");--> statement-breakpoint
 CREATE INDEX "invitationsTable_organizationId_idx" ON "invitations_table" USING btree ("organization_id");--> statement-breakpoint
@@ -297,35 +297,35 @@ CREATE INDEX "matter_views_user_activity_idx" ON "matter_views" USING btree ("us
 CREATE INDEX "matter_watchers_matter_idx" ON "matter_watchers" USING btree ("matter_id");--> statement-breakpoint
 CREATE INDEX "matter_watchers_user_idx" ON "matter_watchers" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "matter_watchers_added_by_idx" ON "matter_watchers" USING btree ("added_by");--> statement-breakpoint
-CREATE UNIQUE INDEX "matters_workspace_short_id_unique" ON "matters" USING btree ("workspace_id","short_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "matters_workspace_code_short_id_unique" ON "matters" USING btree ("workspace_code","short_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "matters_team_short_id_unique" ON "matters" USING btree ("team_id","short_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "matters_team_code_short_id_unique" ON "matters" USING btree ("team_code","short_id");--> statement-breakpoint
 CREATE INDEX "matters_short_id_idx" ON "matters" USING btree ("short_id");--> statement-breakpoint
-CREATE INDEX "matters_workspace_idx" ON "matters" USING btree ("workspace_id");--> statement-breakpoint
-CREATE INDEX "matters_workspace_archived_updated_idx" ON "matters" USING btree ("workspace_id","archived","updated_at");--> statement-breakpoint
-CREATE INDEX "matters_workspace_status_updated_idx" ON "matters" USING btree ("workspace_id","status_id","updated_at");--> statement-breakpoint
+CREATE INDEX "matters_team_idx" ON "matters" USING btree ("team_id");--> statement-breakpoint
+CREATE INDEX "matters_team_archived_updated_idx" ON "matters" USING btree ("team_id","archived","updated_at");--> statement-breakpoint
+CREATE INDEX "matters_team_status_updated_idx" ON "matters" USING btree ("team_id","status_id","updated_at");--> statement-breakpoint
 CREATE INDEX "matters_assignee_archived_idx" ON "matters" USING btree ("assignee_id","archived");--> statement-breakpoint
-CREATE INDEX "matters_workspace_priority_archived_idx" ON "matters" USING btree ("workspace_id","priority","archived");--> statement-breakpoint
+CREATE INDEX "matters_team_priority_archived_idx" ON "matters" USING btree ("team_id","priority","archived");--> statement-breakpoint
 CREATE INDEX "matters_due_date_idx" ON "matters" USING btree ("due_date");--> statement-breakpoint
 CREATE INDEX "matters_org_archived_updated_idx" ON "matters" USING btree ("org_id","archived","updated_at");--> statement-breakpoint
 CREATE INDEX "matters_author_idx" ON "matters" USING btree ("author_id");--> statement-breakpoint
-CREATE INDEX "matters_workspace_assignee_archived_idx" ON "matters" USING btree ("workspace_id","assignee_id","archived");--> statement-breakpoint
+CREATE INDEX "matters_team_assignee_archived_idx" ON "matters" USING btree ("team_id","assignee_id","archived");--> statement-breakpoint
 CREATE INDEX "matters_type_approval_idx" ON "matters" USING btree ("type","approval_status");--> statement-breakpoint
-CREATE INDEX "matters_workspace_type_idx" ON "matters" USING btree ("workspace_id","type");--> statement-breakpoint
+CREATE INDEX "matters_team_type_idx" ON "matters" USING btree ("team_id","type");--> statement-breakpoint
 CREATE INDEX "matters_approved_by_idx" ON "matters" USING btree ("approved_by");--> statement-breakpoint
 CREATE INDEX "matters_converted_to_task_idx" ON "matters" USING btree ("converted_to_task_id");--> statement-breakpoint
 CREATE INDEX "matters_converted_from_request_idx" ON "matters" USING btree ("converted_from_request_id");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "sessionsTable_userId_idx" ON "sessions_table" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "statuses_workspace_position_idx" ON "statuses" USING btree ("workspace_id","position");--> statement-breakpoint
+CREATE INDEX "statuses_team_position_idx" ON "statuses" USING btree ("team_id","position");--> statement-breakpoint
+CREATE INDEX "team_memberships_team_idx" ON "team_memberships" USING btree ("team_id");--> statement-breakpoint
+CREATE INDEX "team_memberships_user_idx" ON "team_memberships" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "team_memberships_org_user_idx" ON "team_memberships" USING btree ("org_id","user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "team_memberships_team_user_unique" ON "team_memberships" USING btree ("team_id","user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "teams_org_slug_unique" ON "teams" USING btree ("org_id","slug");--> statement-breakpoint
+CREATE UNIQUE INDEX "teams_org_code_unique" ON "teams" USING btree ("org_id","code");--> statement-breakpoint
+CREATE INDEX "teams_org_archived_idx" ON "teams" USING btree ("org_id","archived");--> statement-breakpoint
+CREATE INDEX "teams_org_code_idx" ON "teams" USING btree ("org_id","code");--> statement-breakpoint
 CREATE INDEX "timelines_matter_created_idx" ON "timelines" USING btree ("matter_id","created_at");--> statement-breakpoint
 CREATE INDEX "timelines_user_idx" ON "timelines" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "verificationsTable_identifier_idx" ON "verifications_table" USING btree ("identifier");--> statement-breakpoint
-CREATE INDEX "workspace_memberships_workspace_idx" ON "workspace_memberships" USING btree ("workspace_id");--> statement-breakpoint
-CREATE INDEX "workspace_memberships_user_idx" ON "workspace_memberships" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "workspace_memberships_org_user_idx" ON "workspace_memberships" USING btree ("org_id","user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "workspace_memberships_workspace_user_unique" ON "workspace_memberships" USING btree ("workspace_id","user_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "workspaces_org_slug_unique" ON "workspaces" USING btree ("org_id","slug");--> statement-breakpoint
-CREATE UNIQUE INDEX "workspaces_org_code_unique" ON "workspaces" USING btree ("org_id","code");--> statement-breakpoint
-CREATE INDEX "workspaces_org_archived_idx" ON "workspaces" USING btree ("org_id","archived");--> statement-breakpoint
-CREATE INDEX "workspaces_org_code_idx" ON "workspaces" USING btree ("org_id","code");
+CREATE INDEX "verificationsTable_identifier_idx" ON "verifications_table" USING btree ("identifier");

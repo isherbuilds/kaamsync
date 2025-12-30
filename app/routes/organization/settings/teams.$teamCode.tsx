@@ -1,4 +1,4 @@
-export default function WorkspaceWorkspaceCode() {
+export default function TeamTeamCode() {
 	return (
 		<div>
 			<h1>Unknown Route</h1>

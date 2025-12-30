@@ -35,17 +35,17 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 export function useGroupedTasks(
 	matters: readonly Matter[],
 	statuses: readonly Status[],
-	workspaceId: string,
+	teamId: string,
 ) {
 	// Tracks statuses that have been manually toggled
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
 		new Set(),
 	);
 
-	// Reset toggles when workspace changes
+	// Reset toggles when team changes
 	useEffect(() => {
 		setToggledStatuses(new Set());
-	}, [workspaceId]);
+	}, [teamId]);
 
 	const toggleGroup = useCallback((id: string) => {
 		setToggledStatuses((prev) => {

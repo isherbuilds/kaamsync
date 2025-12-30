@@ -138,7 +138,7 @@ export const reservedSlugs = [
 	"ai",
 ];
 
-export const reservedWorkspaceSlugs = [
+export const reservedTeamSlugs = [
 	// Organization-level Settings & Management
 	"settings",
 	"members",
@@ -200,7 +200,7 @@ export const reservedWorkspaceSlugs = [
 	"imports",
 	"backup",
 
-	// Authentication (should not be workspaces)
+	// Authentication (should not be teams)
 	"login",
 	"signup",
 	"register",
@@ -254,7 +254,7 @@ export const orgOnboardingSchema = z.discriminatedUnion("intent", [
 		intent: z.literal("create"),
 		name: orgNameSchema,
 		slug: slugSchema,
-		// workspaceName: z.string().min(4).max(32).trim(),
+		// teamName: z.string().min(4).max(32).trim(),
 	}),
 	z.object({
 		intent: z.literal("join"),
@@ -263,40 +263,40 @@ export const orgOnboardingSchema = z.discriminatedUnion("intent", [
 	}),
 ]);
 
-// Workspace validation schemas
-export const workspaceNameSchema = z
-	.string({ message: "Workspace name is required." })
+// Team validation schemas
+export const teamNameSchema = z
+	.string({ message: "Team name is required." })
 	.min(MIN_NAME_LENGTH, "Name must be at least 2 characters.")
 	.max(MAX_NAME_LENGTH, "Name must be at most 64 characters.")
 	.trim();
 
-export const workspaceCodeSchema = z
+export const teamCodeSchema = z
 	.string()
 	.toUpperCase()
 	.trim()
 	.length(3, "Code must be exactly 3 characters.");
 
-export const createWorkspaceSchema = z.object({
-	name: workspaceNameSchema.refine(
+export const createTeamSchema = z.object({
+	name: teamNameSchema.refine(
 		(name) => {
 			const slug = name
 				.toLowerCase()
 				.trim()
 				.replace(/[^a-z0-9]+/g, "-")
 				.replace(/^-+|-+$/g, "");
-			return !reservedWorkspaceSlugs.includes(slug);
+			return !reservedTeamSlugs.includes(slug);
 		},
 		{
 			message: "This name generates a reserved URL.",
 		},
 	),
-	code: workspaceCodeSchema,
+	code: teamCodeSchema,
 	visibility: z.enum(["public", "private"]).optional(),
 });
 
-export const updateWorkspaceSchema = z.object({
-	workspaceId: z.string(),
-	name: workspaceNameSchema.optional(),
-	code: workspaceCodeSchema,
+export const updateTeamSchema = z.object({
+	teamId: z.string(),
+	name: teamNameSchema.optional(),
+	code: teamCodeSchema,
 	visibility: z.enum(["public", "private"]).optional(),
 });

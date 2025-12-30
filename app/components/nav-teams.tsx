@@ -19,14 +19,14 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "~/components/ui/sidebar";
-import { CreateWorkspaceDialog } from "./create-workspace-dialog";
+import { CreateTeamDialog } from "./create-team-dialog";
 import { StableLink } from "./stable-link";
 
-export function NavWorkspaces({
-	workspaces,
+export function NavTeams({
+	teams,
 	orgSlug,
 }: {
-	workspaces: {
+	teams: {
 		id: string;
 		name: string;
 		code: string;
@@ -35,30 +35,30 @@ export function NavWorkspaces({
 	orgSlug: string;
 }) {
 	const { isMobile, setOpenMobile } = useSidebar();
-	const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
+	const [createTeamOpen, setCreateTeamOpen] = useState(false);
 	const params = useParams();
-	const activeCode = params.workspaceCode;
+	const activeCode = params.teamCode;
 
 	return (
 		<>
 			<SidebarGroup>
 				<SidebarGroupLabel className="relative">
-					<span>Workspaces</span>
-					<SidebarMenuAction onClick={() => setCreateWorkspaceOpen(true)}>
+					<span>Teams</span>
+					<SidebarMenuAction onClick={() => setCreateTeamOpen(true)}>
 						<Plus />
-						<span className="sr-only">Create Workspace</span>
+						<span className="sr-only">Create Team</span>
 					</SidebarMenuAction>
 				</SidebarGroupLabel>
 				<SidebarMenu>
-					{workspaces?.map((workspace) => (
-						<SidebarMenuItem key={workspace.id}>
+					{teams?.map((team) => (
+						<SidebarMenuItem key={team.id}>
 							<SidebarMenuButton
-								tooltip={workspace.name}
-								isActive={workspace.code === activeCode}
+								tooltip={team.name}
+								isActive={team.code === activeCode}
 								asChild
 							>
 								<StableLink
-									to={`/${orgSlug}/${workspace.code}`}
+									to={`/${orgSlug}/${team.code}`}
 									prefetch="intent"
 									onClick={
 										isMobile
@@ -67,7 +67,7 @@ export function NavWorkspaces({
 									}
 									// viewTransition
 								>
-									{workspace.name}
+									{team.name}
 								</StableLink>
 							</SidebarMenuButton>
 
@@ -83,11 +83,11 @@ export function NavWorkspaces({
 									className="rounded-md border"
 									side={isMobile ? "bottom" : "right"}
 								>
-									<DropdownMenuLabel>{workspace.name}</DropdownMenuLabel>
+									<DropdownMenuLabel>{team.name}</DropdownMenuLabel>
 									<hr />
 									<DropdownMenuItem asChild>
 										<StableLink
-											to={`/${orgSlug}/settings/workspaces/${workspace.code}/members`}
+											to={`/${orgSlug}/settings/teams/${team.code}/members`}
 											prefetch="intent"
 											className="flex w-full items-center"
 										>
@@ -98,7 +98,7 @@ export function NavWorkspaces({
 
 									<DropdownMenuItem asChild>
 										<StableLink
-											to={`/${orgSlug}/settings/workspaces/${workspace.code}`}
+											to={`/${orgSlug}/settings/teams/${team.code}`}
 											prefetch="intent"
 											className="flex w-full items-center"
 										>
@@ -109,7 +109,7 @@ export function NavWorkspaces({
 									{/* <DropdownMenuSeparator />
 									<DropdownMenuItem>
 										<Trash2 className="text-muted-foreground" />
-										<span>Delete Workspace</span>
+										<span>Delete Team</span>
 									</DropdownMenuItem> */}
 								</DropdownMenuContent>
 							</DropdownMenu>
@@ -118,9 +118,9 @@ export function NavWorkspaces({
 				</SidebarMenu>
 			</SidebarGroup>
 
-			<CreateWorkspaceDialog
-				open={createWorkspaceOpen}
-				onOpenChange={setCreateWorkspaceOpen}
+			<CreateTeamDialog
+				open={createTeamOpen}
+				onOpenChange={setCreateTeamOpen}
 			/>
 		</>
 	);

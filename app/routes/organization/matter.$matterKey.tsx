@@ -75,18 +75,18 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	// Inferred types from Zero queries
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
-	const [workspaceMemberships] = useQuery(
-		queries.getWorkspaceMembers({ workspaceId: matter?.workspaceId || "" }),
-		{ enabled: !!matter?.workspaceId, ...CACHE_LONG },
+	const [teamMemberships] = useQuery(
+		queries.getTeamMembers({ teamId: matter?.teamId || "" }),
+		{ enabled: !!matter?.teamId, ...CACHE_LONG },
 	);
 	const [statuses] = useQuery(
-		queries.getWorkspaceStatuses({ workspaceId: matter?.workspaceId || "" }),
-		{ enabled: !!matter?.workspaceId, ...CACHE_LONG },
+		queries.getTeamStatuses({ teamId: matter?.teamId || "" }),
+		{ enabled: !!matter?.teamId, ...CACHE_LONG },
 	);
 
 	// 2. Permissions
-	const perms = usePermissions(matter?.workspaceId, workspaceMemberships);
-	// Org-level elevation: managers in workspace or owners/admins in org have full access
+	const perms = usePermissions(matter?.teamId, teamMemberships);
+	// Org-level elevation: managers in team or owners/admins in org have full access
 	const authRole = perms.role as string;
 	const isAdmin =
 		perms.isManager || authRole === "admin" || authRole === "owner";
@@ -205,7 +205,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						<span className="ml-1 hidden sm:inline">Back</span>
 					</Button>
 					<span className="truncate font-medium font-mono text-foreground text-sm">
-						{matter.workspaceCode}-{matter.shortID}
+						{matter.teamCode}-{matter.shortID}
 					</span>
 				</div>
 				<div className="flex items-center gap-1">
@@ -408,8 +408,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 					<DialogHeader>
 						<DialogTitle>Delete Matter</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete {matter.workspaceCode}-
-							{matter.shortID}? This action cannot be easily undone.
+							Are you sure you want to delete {matter.teamCode}-{matter.shortID}
+							? This action cannot be easily undone.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter className="gap-2 sm:gap-0">

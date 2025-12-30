@@ -4,33 +4,33 @@ import { zql } from "zero/schema";
 import { peekNextShortId, seedNextShortId } from "~/lib/short-id-cache";
 
 /**
- * Hook to seed the short ID cache for a workspace.
+ * Hook to seed the short ID cache for a team.
  * Allocates a block from the server if needed and seeds the local cache.
  */
-export function useShortIdSeeder(workspaceId: string, enabled = true) {
+export function useShortIdSeeder(teamId: string, enabled = true) {
 	const z = useZero();
-	// Remember the last workspace we seeded so we can re-seed when it changes
-	const seededWorkspace = useRef<string | null>(null);
+	// Remember the last team we seeded so we can re-seed when it changes
+	const seededTeam = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (!enabled) return;
 
-		// If there's no workspace selected, clear the seeded marker and exit
-		if (!workspaceId) {
-			seededWorkspace.current = null;
+		// If there's no team selected, clear the seeded marker and exit
+		if (!teamId) {
+			seededTeam.current = null;
 			return;
 		}
 
-		// Already seeded for this workspace — skip
-		if (seededWorkspace.current === workspaceId) return;
+		// Already seeded for this team — skip
+		if (seededTeam.current === teamId) return;
 		if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
 		(async () => {
 			try {
-				// Seed cache from latest local matter in THIS workspace to ensure continuity
+				// Seed cache from latest local matter in THIS team to ensure continuity
 				const matters = await z.run(
 					zql.mattersTable
-						.where("workspaceId", "=", workspaceId)
+						.where("teamId", "=", teamId)
 						.where("deletedAt", "IS", null)
 						.orderBy("shortID", "desc")
 						.limit(1),
@@ -38,17 +38,17 @@ export function useShortIdSeeder(workspaceId: string, enabled = true) {
 
 				// Fetched highest shortID (efficient due to index)
 				const proposed = (matters[0]?.shortID ?? 0) + 1;
-				const current = peekNextShortId(workspaceId) ?? 0;
+				const current = peekNextShortId(teamId) ?? 0;
 
 				if (proposed > current) {
-					seedNextShortId(workspaceId, proposed);
+					seedNextShortId(teamId, proposed);
 				}
 
-				// Mark this workspace as seeded
-				seededWorkspace.current = workspaceId;
+				// Mark this team as seeded
+				seededTeam.current = teamId;
 			} catch (err) {
 				console.error("Failed to seed short ID cache:", err);
 			}
 		})();
-	}, [enabled, workspaceId, z]);
+	}, [enabled, teamId, z]);
 }

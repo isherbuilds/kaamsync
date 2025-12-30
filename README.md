@@ -17,9 +17,9 @@ Built with a modern, performance-focused stack:
 
 Based on our robust schema design:
 
-### 🏢 Organization & Workspaces
+### 🏢 Organization & Teams
 - Multi-tenant architecture with **Organizations**.
-- **Workspaces** for granular team separation (e.g., "Maintenance", "Logistics").
+- **Teams** for granular team separation (e.g., "Maintenance", "Logistics").
 - Role-based access control (Manager, Member, Viewer).
 
 ### 📋 Matters (Tasks & Requests)
@@ -30,7 +30,7 @@ The core unit of work is a "Matter", which can be:
 
 ### 🔄 Workflows
 - **Request/Approval**: Built-in workflow for submitting requests and getting manager approval.
-- **Status Tracking**: Customizable statuses per workspace.
+- **Status Tracking**: Customizable statuses per team.
 - **Timelines**: Complete audit log of every action (creation, status changes, comments).
 
 ### 👁️ Oversight

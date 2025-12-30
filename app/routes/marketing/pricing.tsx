@@ -22,7 +22,7 @@ const plans = [
 		features: [
 			"Up to 5 team members",
 			"Unlimited tasks",
-			"Basic workspaces",
+			"Basic teams",
 			"7-day activity history",
 			"Email support",
 		],
@@ -39,7 +39,7 @@ const plans = [
 		features: [
 			"Unlimited team members",
 			"Unlimited tasks",
-			"Advanced workspaces",
+			"Advanced teams",
 			"Unlimited history",
 			"Priority support",
 			"Custom fields",

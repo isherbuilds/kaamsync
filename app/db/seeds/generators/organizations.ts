@@ -4,8 +4,8 @@ import {
 	orgRole as membershipRole,
 	membershipStatus,
 	statusType,
-	workspaceRole,
-	workspaceVisibility,
+	teamRole,
+	teamVisibility,
 } from "~/db/helpers";
 import { db } from "~/db/index";
 import {
@@ -13,9 +13,9 @@ import {
 	membersTable,
 	organizationsTable,
 	statusesTable,
+	teamMembershipsTable,
+	teamsTable,
 	type usersTable,
-	workspaceMembershipsTable,
-	workspacesTable,
 } from "~/db/schema";
 import type { IndustryConfig } from "../data/industries";
 import { randomDate, randomPickMultiple } from "../utils";
@@ -99,7 +99,7 @@ export async function createOrganization(
 	// Explicitly Upsert Admin as Owner
 	const adminUser = sharedUsers[0]; // Assumption based on seed.ts
 	if (adminUser) {
-		// Ensure Admin is in orgMemberIds for workspace association
+		// Ensure Admin is in orgMemberIds for team association
 		if (!orgMemberIds.includes(adminUser.id)) {
 			orgMemberIds.push(adminUser.id);
 		}
@@ -134,10 +134,10 @@ export async function createOrganization(
 		}
 	}
 
-	// 3. Workspaces
-	const workspaceData = [];
+	// 3. Teams
+	const teamData = [];
 
-	for (const wsConfig of config.workspaces) {
+	for (const wsConfig of config.teams) {
 		// Generate base code: First 3 letters of name, uppercase
 		let baseCode = wsConfig.name
 			.replace(/[^a-zA-Z]/g, "")
@@ -155,32 +155,32 @@ export async function createOrganization(
 		}
 		usedCodes.add(code);
 
-		const workspaceId = createId();
+		const teamId = createId();
 
-		// Create Workspace
-		const [workspace] = await db
-			.insert(workspacesTable)
+		// Create Team
+		const [team] = await db
+			.insert(teamsTable)
 			.values({
-				id: workspaceId,
+				id: teamId,
 				orgId: org.id,
 				name: wsConfig.name,
 				slug: `${config.slug}-${wsConfig.name.toLowerCase().replace(/\s+/g, "-")}`,
 				code, // New short code
 				icon: wsConfig.icon,
 				description: wsConfig.description,
-				visibility: workspaceVisibility.private,
+				visibility: teamVisibility.private,
 				nextShortId: 1,
 				archived: false,
 				createdAt: randomDate(oneYearAgo, now),
 				updatedAt: now,
 			})
 			.onConflictDoUpdate({
-				target: [workspacesTable.orgId, workspacesTable.slug],
+				target: [teamsTable.orgId, teamsTable.slug],
 				set: { name: sql`EXCLUDED.name` },
 			})
 			.returning();
 
-		const actualWorkspaceId = workspace.id;
+		const actualTeamId = team.id;
 
 		// 4. Labels
 		const labelColors = [
@@ -237,7 +237,7 @@ export async function createOrganization(
 		const existingStatuses = await db
 			.select()
 			.from(statusesTable)
-			.where(eq(statusesTable.workspaceId, actualWorkspaceId))
+			.where(eq(statusesTable.teamId, actualTeamId))
 			.orderBy(asc(statusesTable.position));
 		let statusIds: string[] = [];
 
@@ -315,7 +315,7 @@ export async function createOrganization(
 				statusIds.push(statusId);
 				return {
 					id: statusId,
-					workspaceId: actualWorkspaceId,
+					teamId: actualTeamId,
 					name: status.name,
 					color: status.color,
 					type: status.type,
@@ -330,47 +330,47 @@ export async function createOrganization(
 			await db.insert(statusesTable).values(statusValues).onConflictDoNothing();
 		}
 
-		// 6. Workspace Memberships
-		// All org members added to all workspaces for simplicity in seed
+		// 6. Team Memberships
+		// All org members added to all teams for simplicity in seed
 		const membershipValues = [];
 		const adminUser = sharedUsers[0]; // Assumption based on seed.ts
 
-		// Add all org members to workspace
+		// Add all org members to team
 		for (const userId of orgMemberIds) {
 			const isOrgOwner = userId === orgMemberIds[0]; // First org member is owner
 			const isSharedAdmin = adminUser && userId === adminUser.id;
 
-			let role = workspaceRole.member as
-				| typeof workspaceRole.member
-				| typeof workspaceRole.manager;
+			let role = teamRole.member as
+				| typeof teamRole.member
+				| typeof teamRole.manager;
 			if (isOrgOwner || isSharedAdmin) {
-				role = workspaceRole.manager; // Ensure org owner and shared admin are managers
+				role = teamRole.manager; // Ensure org owner and shared admin are managers
 			}
 
 			membershipValues.push({
 				id: createId(),
-				workspaceId: actualWorkspaceId,
+				teamId: actualTeamId,
 				userId,
 				orgId: org.id,
 				role,
 				status: membershipStatus.active,
 				canCreateTasks: true,
 				canCreateRequests: true,
-				canApproveRequests: role === workspaceRole.manager,
-				canManageMembers: role === workspaceRole.manager,
-				canManageWorkspace: role === workspaceRole.manager,
+				canApproveRequests: role === teamRole.manager,
+				canManageMembers: role === teamRole.manager,
+				canManageTeam: role === teamRole.manager,
 				createdAt: randomDate(oneYearAgo, now),
 				updatedAt: now,
 			});
 		}
 
 		await db
-			.insert(workspaceMembershipsTable)
+			.insert(teamMembershipsTable)
 			.values(membershipValues)
 			.onConflictDoNothing();
 
-		workspaceData.push({
-			id: actualWorkspaceId,
+		teamData.push({
+			id: actualTeamId,
 			orgId: org.id,
 			code,
 			statusIds,
@@ -382,6 +382,6 @@ export async function createOrganization(
 
 	return {
 		org,
-		workspaces: workspaceData,
+		teams: teamData,
 	};
 }
