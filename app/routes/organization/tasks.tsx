@@ -1,7 +1,7 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { CheckCircle2 } from "lucide-react";
-import { useMemo } from "react";
+import { Activity, useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -111,6 +111,9 @@ export default function TasksPage() {
 						<h5 className="font-semibold">Tasks</h5>
 					</div>
 					<div className="flex items-center gap-2">
+						<span className="rounded-full bg-blue-500/10 px-2 py-0.5 font-medium text-blue-600 text-xs dark:text-blue-400">
+							{taskCount}
+						</span>
 						{/* {loadedCount > 0 && (
 							<span className="rounded-full bg-blue-500/10 px-2 py-0.5 font-medium text-blue-600 text-xs dark:text-blue-400">
 								{loadedCount}

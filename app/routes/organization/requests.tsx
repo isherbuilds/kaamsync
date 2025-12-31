@@ -1,6 +1,6 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
-import { CalendarIcon, Clock, Loader2, Send, UserIcon } from "lucide-react";
+import { CalendarIcon, Clock, Send, UserIcon } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
@@ -19,7 +19,7 @@ import {
 } from "~/components/ui/resizable";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
-import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
+// import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
 import {
@@ -67,7 +67,7 @@ export default function RequestsPage() {
 	// 	enabled: true, // Zero handles context check
 	// });
 
-	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
+	const [requests] = useQuery(queries.getPendingRequests({}), {
 		...CACHE_LONG,
 	});
 
@@ -117,7 +117,7 @@ export default function RequestsPage() {
 					<div className="flex items-center gap-2">
 						{/* {loadedCount > 0 && ( */}
 						<span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 text-xs dark:text-amber-400">
-							{requests.length}
+							{requestCount}
 							{/* {hasMore && "+"} */}
 						</span>
 						{/* )} */}
