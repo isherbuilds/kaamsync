@@ -188,7 +188,7 @@ export function useInfiniteMatters(
 			setAccumulatedItems((prev) => {
 				const existingIds = new Set(prev.map((item) => item.id));
 				const newItems = currentPage.filter(
-					(item) => !existingIds.has(item.id),
+					(item) => item && "id" in item && !existingIds.has(item.id),
 				);
 				return [...prev, ...newItems];
 			});

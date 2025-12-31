@@ -2,7 +2,6 @@ import { createId } from "@paralleldrive/cuid2";
 import { defineMutator, defineMutators } from "@rocicorp/zero";
 import { z } from "zod";
 import {
-	approvalStatus,
 	matterType,
 	membershipStatus,
 	type TeamRole,
@@ -161,11 +160,22 @@ export const mutators = defineMutators({
 					priority: args.priority ?? 4, // Default to none (4)
 					dueDate: args.dueDate,
 					archived: false,
-					approvalStatus:
-						args.type === matterType.request ? "pending" : undefined,
 					createdAt: now,
 					updatedAt: now,
 				};
+
+				// If request, override statusId with pending_approval status
+				if (args.type === matterType.request) {
+					const pendingStatus = await tx.run(
+						zql.statusesTable
+							.where("teamId", args.teamId)
+							.where("type", "pending_approval")
+							.one(),
+					);
+					if (pendingStatus) {
+						baseInsert.statusId = pendingStatus.id;
+					}
+				}
 
 				// Allocate short ID (handles both client and server logic)
 				await allocateShortID(tx, args.teamId, baseInsert, args.clientShortID);
@@ -328,7 +338,7 @@ export const mutators = defineMutators({
 				const taskStatuses = await tx.run(
 					zql.statusesTable
 						.where("teamId", matter.teamId)
-						.where("isRequestStatus", false),
+						.where("type", "NOT IN", ["pending_approval", "rejected"]),
 				);
 
 				// Explicit validation: abort if no task statuses exist in team
@@ -344,7 +354,6 @@ export const mutators = defineMutators({
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					type: matterType.task, // Convert request to task
-					approvalStatus: approvalStatus.approved,
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
@@ -373,12 +382,20 @@ export const mutators = defineMutators({
 				// Permission: Only managers can reject
 				await assertManager(tx, ctx, matter.teamId);
 
+				// Find rejected status
+				const rejectedStatus = await tx.run(
+					zql.statusesTable
+						.where("teamId", matter.teamId)
+						.where("type", "rejected")
+						.one(),
+				);
+
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					approvalStatus: approvalStatus.rejected,
 					approvedBy: ctx.userId,
 					approvedAt: Date.now(),
 					rejectionReason: args.note ?? null,
+					statusId: rejectedStatus?.id ?? matter.statusId, // Best effort fallback
 					updatedAt: Date.now(),
 				});
 			},
@@ -482,7 +499,7 @@ export const mutators = defineMutators({
 					position: i,
 					isDefault: status.isDefault,
 					archived: false,
-					isRequestStatus: false,
+					isRequestStatus: status.isRequestStatus,
 					creatorId: ctx.userId,
 					createdAt: now,
 					updatedAt: now,
@@ -660,7 +677,6 @@ export const mutators = defineMutators({
 					position: args.position,
 					isDefault: false,
 					archived: false,
-					isRequestStatus: false,
 					color: args.color,
 					createdAt: now,
 					updatedAt: now,

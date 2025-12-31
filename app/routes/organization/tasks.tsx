@@ -1,7 +1,7 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
 import { CheckCircle2 } from "lucide-react";
-import { Activity, useMemo } from "react";
+import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -78,9 +78,9 @@ export default function TasksPage() {
 	// Memoize sorted tasks - must be before early return
 	const sortedTasks = useMemo(() => {
 		if (!tasks) return [];
-		return [...tasks].sort((a, b) =>
-			compareStatuses(a.status || {}, b.status || {}),
-		);
+		return [...tasks]
+			.filter((t) => t)
+			.sort((a, b) => compareStatuses(a.status || {}, b.status || {}));
 	}, [tasks]);
 
 	if (!tasks) {

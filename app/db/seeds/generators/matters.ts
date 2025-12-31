@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { createId } from "@paralleldrive/cuid2";
 import { eq, max } from "drizzle-orm";
-import { approvalStatus, matterType, timelineEventType } from "~/db/helpers";
+import { matterType, timelineEventType } from "~/db/helpers";
 import { db } from "~/db/index";
 import {
 	matterLabelsTable,
@@ -90,21 +90,20 @@ export async function createMatters(team: TeamData, count: number) {
 
 		const createdAt = randomDate(oneYearAgo, now);
 
-		// Approval logic for requests
-		let approvalStatusValue = null,
-			approvedBy = null,
+		// Approval logic for requests (managed via statusId now)
+		let approvedBy = null,
 			approvedAt = null,
 			rejectionReason = null;
 		if (isRequestType) {
 			const approvalRand = Math.random();
-			if (approvalRand < 0.5) {
-				approvalStatusValue = approvalStatus.pending;
-			} else if (approvalRand < 0.85) {
-				approvalStatusValue = approvalStatus.approved;
+			// 50% Pending (no extra fields)
+			// 35% Approved
+			if (approvalRand >= 0.5 && approvalRand < 0.85) {
 				approvedBy = randomPick(team.memberIds);
 				approvedAt = randomDate(createdAt, now);
-			} else {
-				approvalStatusValue = approvalStatus.rejected;
+			}
+			// 15% Rejected
+			else if (approvalRand >= 0.85) {
 				approvedBy = randomPick(team.memberIds);
 				approvedAt = randomDate(createdAt, now);
 				rejectionReason = faker.lorem.sentence();
@@ -128,12 +127,9 @@ export async function createMatters(team: TeamData, count: number) {
 			type,
 			priority,
 			source: "seed",
-			approvalStatus: approvalStatusValue,
 			approvedBy,
 			approvedAt,
 			rejectionReason,
-			convertedToTaskId: null,
-			convertedFromRequestId: null,
 			dueDate:
 				Math.random() < 0.5
 					? randomDate(

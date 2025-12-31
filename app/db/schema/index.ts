@@ -133,7 +133,6 @@ export const statusesTable = pgTable(
 		// Metadata
 		isDefault: boolean("is_default"),
 		archived: boolean("archived"),
-		isRequestStatus: boolean("is_request_status"), // True for REQUEST-specific statuses
 
 		creatorId: text("creator_id").references(() => usersTable.id),
 
@@ -207,12 +206,9 @@ export const mattersTable = pgTable(
 		source: varchar("source", { length: 50 }),
 
 		// REQUEST approval workflow
-		approvalStatus: varchar("approval_status", { length: 50 }), // 'pending', 'approved', 'rejected' (only for request type)
 		approvedBy: text("approved_by").references(() => usersTable.id), // Who approved/rejected
 		approvedAt: timestamp("approved_at", { withTimezone: true }),
 		rejectionReason: text("rejection_reason"),
-		convertedToTaskId: text("converted_to_task_id"), // When REQUEST becomes TASK
-		convertedFromRequestId: text("converted_from_request_id"), // Parent REQUEST if this is converted TASK
 
 		// Dates
 		dueDate: timestamp("due_date", { withTimezone: true }),
@@ -266,13 +262,9 @@ export const mattersTable = pgTable(
 			table.archived,
 		),
 		// New indexes for REQUEST/TASK workflow
-		index("matters_type_approval_idx").on(table.type, table.approvalStatus),
+		// New indexes for REQUEST/TASK workflow
 		index("matters_team_type_idx").on(table.teamId, table.type),
 		index("matters_approved_by_idx").on(table.approvedBy),
-		index("matters_converted_to_task_idx").on(table.convertedToTaskId),
-		index("matters_converted_from_request_idx").on(
-			table.convertedFromRequestId,
-		),
 	],
 );
 
@@ -613,22 +605,6 @@ export const mattersRelations = relations(mattersTable, ({ one, many }) => ({
 		fields: [mattersTable.approvedBy],
 		references: [usersTable.id],
 		relationName: "approvedMatters",
-	}),
-	convertedTask: one(mattersTable, {
-		fields: [mattersTable.convertedToTaskId],
-		references: [mattersTable.id],
-		relationName: "convertedToTask",
-	}),
-	convertedFromMatters: many(mattersTable, {
-		relationName: "convertedToTask",
-	}),
-	parentRequest: one(mattersTable, {
-		fields: [mattersTable.convertedFromRequestId],
-		references: [mattersTable.id],
-		relationName: "convertedFromRequest",
-	}),
-	convertedToMatters: many(mattersTable, {
-		relationName: "convertedFromRequest",
 	}),
 }));
 

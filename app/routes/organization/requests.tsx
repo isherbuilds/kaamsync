@@ -67,7 +67,7 @@ export default function RequestsPage() {
 	// 	enabled: true, // Zero handles context check
 	// });
 
-	const [requests] = useQuery(queries.getPendingRequests({}), {
+	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
 		...CACHE_LONG,
 	});
 
@@ -190,6 +190,22 @@ export default function RequestsPage() {
 																{getPriorityLabel(matter.priority)}
 															</span>
 														)}
+													{/* Show status badge for requests (especially Pending/Rejected) */}
+													{matter.status && (
+														<span
+															className={cn(
+																"inline-flex items-center rounded border px-1.5 py-0.5 font-medium text-[9px] uppercase tracking-wider",
+																matter.status.type === "pending_approval" &&
+																	"border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-400",
+																matter.status.type === "rejected" &&
+																	"border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400",
+																matter.status.type === "approved" &&
+																	"border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-400",
+															)}
+														>
+															{matter.status.name}
+														</span>
+													)}
 												</div>
 												<ItemTitle className="line-clamp-2 font-normal text-foreground/90 text-sm leading-snug transition-colors group-hover:text-foreground">
 													{matter.title}

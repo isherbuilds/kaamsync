@@ -95,12 +95,6 @@ export const TASK_STATUS_TYPES = new Set([
 	statusType.canceled,
 ]);
 
-export const approvalStatus = {
-	pending: "pending",
-	approved: "approved",
-	rejected: "rejected",
-} as const;
-
 export const teamRole = {
 	viewer: "viewer", // Read-only access
 	member: "member", // Can create requests, limited task creation

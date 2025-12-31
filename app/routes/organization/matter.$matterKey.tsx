@@ -99,9 +99,11 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		if (!matter) return statuses;
 		// Requests use request statuses, tasks use task statuses
 		const isRequest = matter.type === "request";
-		return statuses.filter((s) =>
-			isRequest ? s.isRequestStatus : !s.isRequestStatus,
-		);
+		return statuses.filter((s) => {
+			const isRequestStatus =
+				s.type === "pending_approval" || s.type === "rejected";
+			return isRequest ? isRequestStatus : !isRequestStatus;
+		});
 	}, [matter, statuses]);
 
 	// 3. State & Loading
@@ -269,7 +271,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								isVisible={matter.type === "request"}
 								isAdmin={isAdmin}
 								matterId={matter.id}
-								approvalStatus={matter.approvalStatus}
+								statusType={matter.status?.type}
 								z={z}
 							/>
 
@@ -662,13 +664,13 @@ function AdminApproveSection({
 	isVisible,
 	isAdmin,
 	matterId,
-	approvalStatus,
+	statusType,
 	z,
 }: {
 	isVisible: boolean;
 	isAdmin: boolean;
 	matterId: string;
-	approvalStatus?: string | null;
+	statusType?: string | null;
 	z: any;
 }) {
 	if (!isVisible || !isAdmin) return null;
@@ -685,7 +687,7 @@ function AdminApproveSection({
 			.catch(() => toast.error("Failed to reject request"));
 	};
 
-	if (approvalStatus === "rejected") {
+	if (statusType === "rejected") {
 		return (
 			<div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
 				<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">

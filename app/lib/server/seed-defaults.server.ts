@@ -130,7 +130,6 @@ export async function seedTeamDefaults({
 		position: status.position,
 		isDefault: status.isDefault,
 		archived: false,
-		isRequestStatus: false,
 		createdAt: now,
 		updatedAt: now,
 	}));

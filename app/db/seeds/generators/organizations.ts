@@ -290,21 +290,18 @@ export async function createOrganization(
 					color: "#f59e0b",
 					type: statusType.pendingApproval,
 					isDefault: false,
-					isRequestStatus: true,
 				},
 				{
 					name: "Approved",
 					color: "#22c55e",
 					type: statusType.approved,
 					isDefault: false,
-					isRequestStatus: true,
 				},
 				{
 					name: "Rejected",
 					color: "#ef4444",
 					type: statusType.rejected,
 					isDefault: false,
-					isRequestStatus: true,
 				},
 			];
 
@@ -321,7 +318,6 @@ export async function createOrganization(
 					type: status.type,
 					position: i,
 					isDefault: status.isDefault,
-					isRequestStatus: (status as any).isRequestStatus ?? false,
 					creatorId: orgMemberIds[0],
 					createdAt: now,
 					updatedAt: now,

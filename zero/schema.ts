@@ -533,12 +533,6 @@ const mattersTable = {
       optional: true,
       customType: null as unknown as string,
     },
-    approvalStatus: {
-      type: "string",
-      optional: true,
-      customType: null as unknown as string,
-      serverName: "approval_status",
-    },
     approvedBy: {
       type: "string",
       optional: true,
@@ -556,18 +550,6 @@ const mattersTable = {
       optional: true,
       customType: null as unknown as string,
       serverName: "rejection_reason",
-    },
-    convertedToTaskId: {
-      type: "string",
-      optional: true,
-      customType: null as unknown as string,
-      serverName: "converted_to_task_id",
-    },
-    convertedFromRequestId: {
-      type: "string",
-      optional: true,
-      customType: null as unknown as string,
-      serverName: "converted_from_request_id",
     },
     dueDate: {
       type: "number",
@@ -814,12 +796,6 @@ const statusesTable = {
       type: "boolean",
       optional: true,
       customType: null as unknown as boolean,
-    },
-    isRequestStatus: {
-      type: "boolean",
-      optional: true,
-      customType: null as unknown as boolean,
-      serverName: "is_request_status",
     },
     creatorId: {
       type: "string",
@@ -1462,38 +1438,6 @@ const mattersTableRelationships = {
       destField: ["id"],
       destSchema: "usersTable",
       cardinality: "one",
-    },
-  ],
-  convertedTask: [
-    {
-      sourceField: ["convertedToTaskId"],
-      destField: ["id"],
-      destSchema: "mattersTable",
-      cardinality: "one",
-    },
-  ],
-  convertedFromMatters: [
-    {
-      sourceField: ["id"],
-      destField: ["convertedToTaskId"],
-      destSchema: "mattersTable",
-      cardinality: "many",
-    },
-  ],
-  parentRequest: [
-    {
-      sourceField: ["convertedFromRequestId"],
-      destField: ["id"],
-      destSchema: "mattersTable",
-      cardinality: "one",
-    },
-  ],
-  convertedToMatters: [
-    {
-      sourceField: ["id"],
-      destField: ["convertedFromRequestId"],
-      destSchema: "mattersTable",
-      cardinality: "many",
     },
   ],
 } as const;

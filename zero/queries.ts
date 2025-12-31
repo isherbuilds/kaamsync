@@ -175,8 +175,9 @@ export const queries = defineQueries({
 		withOrg(zql.mattersTable, ctx)
 			.where("authorId", ctx.userId)
 			.where("type", matterType.request)
+			// Show all requests regardless of status
 			.whereExists("status", (w) =>
-				w.where("type", "NOT IN", [statusType.rejected]),
+				w.where("type", "IN", [statusType.pendingApproval]),
 			)
 			.related("assignee")
 			.related("status")
@@ -189,7 +190,9 @@ export const queries = defineQueries({
 		({ ctx, args: { teamId } }) =>
 			withTeamAccess(zql.mattersTable, ctx, teamId)
 				.where("type", matterType.request)
-				.where("approvalStatus", statusType.pendingApproval)
+				.whereExists("status", (w) =>
+					w.where("type", statusType.pendingApproval),
+				)
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -399,9 +402,11 @@ export const queries = defineQueries({
 			let q = withOrg(zql.mattersTable, ctx)
 				.where("authorId", ctx.userId)
 				.where("type", matterType.request)
-			.whereExists("status", (w) =>
-				w.where("type", "NOT IN", [statusType.rejected]),
-			)
+				.whereExists("status", (w) =>
+					w.where("type", "IN", [statusType.pendingApproval]),
+				)
+				.related("assignee")
+				.related("status")
 				.related("labels", (q) => q.related("label"));
 
 			if (cursor) {

@@ -104,11 +104,17 @@ export default function TeamIndex() {
 
 	// Filter statuses for task-only view (exclude request statuses)
 	const taskStatuses = useMemo(
-		() => statuses.filter((s) => !s.isRequestStatus),
+		() =>
+			statuses.filter(
+				(s) => s.type !== "pending_approval" && s.type !== "rejected",
+			),
 		[statuses],
 	);
 	const requestStatuses = useMemo(
-		() => statuses.filter((s) => s.isRequestStatus),
+		() =>
+			statuses.filter(
+				(s) => s.type === "pending_approval" || s.type === "rejected",
+			),
 		[statuses],
 	);
 

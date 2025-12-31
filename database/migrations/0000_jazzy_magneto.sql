@@ -109,12 +109,9 @@ CREATE TABLE "matters" (
 	"type" varchar(50) NOT NULL,
 	"priority" smallint DEFAULT 4 NOT NULL,
 	"source" varchar(50),
-	"approval_status" varchar(50),
 	"approved_by" text,
 	"approved_at" timestamp with time zone,
 	"rejection_reason" text,
-	"converted_to_task_id" text,
-	"converted_from_request_id" text,
 	"due_date" timestamp with time zone,
 	"start_date" timestamp with time zone,
 	"completed_at" timestamp with time zone,
@@ -168,7 +165,6 @@ CREATE TABLE "statuses" (
 	"position" integer NOT NULL,
 	"is_default" boolean,
 	"archived" boolean,
-	"is_request_status" boolean,
 	"creator_id" text,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
@@ -309,11 +305,8 @@ CREATE INDEX "matters_due_date_idx" ON "matters" USING btree ("due_date");--> st
 CREATE INDEX "matters_org_archived_updated_idx" ON "matters" USING btree ("org_id","archived","updated_at");--> statement-breakpoint
 CREATE INDEX "matters_author_idx" ON "matters" USING btree ("author_id");--> statement-breakpoint
 CREATE INDEX "matters_team_assignee_archived_idx" ON "matters" USING btree ("team_id","assignee_id","archived");--> statement-breakpoint
-CREATE INDEX "matters_type_approval_idx" ON "matters" USING btree ("type","approval_status");--> statement-breakpoint
 CREATE INDEX "matters_team_type_idx" ON "matters" USING btree ("team_id","type");--> statement-breakpoint
 CREATE INDEX "matters_approved_by_idx" ON "matters" USING btree ("approved_by");--> statement-breakpoint
-CREATE INDEX "matters_converted_to_task_idx" ON "matters" USING btree ("converted_to_task_id");--> statement-breakpoint
-CREATE INDEX "matters_converted_from_request_idx" ON "matters" USING btree ("converted_from_request_id");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "sessionsTable_userId_idx" ON "sessions_table" USING btree ("user_id");--> statement-breakpoint

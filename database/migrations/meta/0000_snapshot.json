@@ -1,5 +1,5 @@
 {
-  "id": "74d26a53-9764-4e05-9c18-a3d4a3b2773d",
+  "id": "9335b5e8-6fe4-49dd-a55f-739e9fce3a29",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1098,12 +1098,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "approval_status": {
-          "name": "approval_status",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "approved_by": {
           "name": "approved_by",
           "type": "text",
@@ -1118,18 +1112,6 @@
         },
         "rejection_reason": {
           "name": "rejection_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "converted_to_task_id": {
-          "name": "converted_to_task_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "converted_from_request_id": {
-          "name": "converted_from_request_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1460,27 +1442,6 @@
           "method": "btree",
           "with": {}
         },
-        "matters_type_approval_idx": {
-          "name": "matters_type_approval_idx",
-          "columns": [
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "approval_status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "matters_team_type_idx": {
           "name": "matters_team_type_idx",
           "columns": [
@@ -1507,36 +1468,6 @@
           "columns": [
             {
               "expression": "approved_by",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "matters_converted_to_task_idx": {
-          "name": "matters_converted_to_task_idx",
-          "columns": [
-            {
-              "expression": "converted_to_task_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "matters_converted_from_request_idx": {
-          "name": "matters_converted_from_request_idx",
-          "columns": [
-            {
-              "expression": "converted_from_request_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1947,12 +1878,6 @@
         },
         "archived": {
           "name": "archived",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_request_status": {
-          "name": "is_request_status",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false
