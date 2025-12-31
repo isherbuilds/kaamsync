@@ -1,13 +1,13 @@
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
-import { memo } from "react";
 import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils";
 
-function ItemGroup({ className, ...props }: React.ComponentProps<"ul">) {
+function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
-		<ul
+		<div
+			role="list"
 			data-slot="item-group"
 			className={cn("group/item-group flex flex-col", className)}
 			{...props}
@@ -50,7 +50,7 @@ const itemVariants = cva(
 	},
 );
 
-const Item = memo(function Item({
+function Item({
 	className,
 	variant = "default",
 	size = "default",
@@ -58,7 +58,7 @@ const Item = memo(function Item({
 	...props
 }: React.ComponentProps<"div"> &
 	VariantProps<typeof itemVariants> & { asChild?: boolean }) {
-	const Comp = asChild ? SlotPrimitive.Slot : "div";
+	const Comp = asChild ? Slot : "div";
 	return (
 		<Comp
 			data-slot="item"
@@ -68,7 +68,7 @@ const Item = memo(function Item({
 			{...props}
 		/>
 	);
-});
+}
 
 const itemMediaVariants = cva(
 	"flex shrink-0 items-center justify-center gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none",
@@ -87,21 +87,23 @@ const itemMediaVariants = cva(
 	},
 );
 
-const ItemMedia = ({
+function ItemMedia({
 	className,
 	variant = "default",
 	...props
-}: React.ComponentProps<"div"> & VariantProps<typeof itemMediaVariants>) => (
-	<div
-		data-slot="item-media"
-		data-variant={variant}
-		className={cn(itemMediaVariants({ variant, className }))}
-		{...props}
-	/>
-);
+}: React.ComponentProps<"div"> & VariantProps<typeof itemMediaVariants>) {
+	return (
+		<div
+			data-slot="item-media"
+			data-variant={variant}
+			className={cn(itemMediaVariants({ variant, className }))}
+			{...props}
+		/>
+	);
+}
 
-const ItemContent = memo(
-	({ className, ...props }: React.ComponentProps<"div">) => (
+function ItemContent({ className, ...props }: React.ComponentProps<"div">) {
+	return (
 		<div
 			data-slot="item-content"
 			className={cn(
@@ -110,64 +112,71 @@ const ItemContent = memo(
 			)}
 			{...props}
 		/>
-	),
-);
+	);
+}
 
-const ItemTitle = ({ className, ...props }: React.ComponentProps<"div">) => (
-	<div
-		data-slot="item-title"
-		className={cn(
-			"flex w-fit items-center gap-2 font-medium text-sm leading-snug",
-			className,
-		)}
-		{...props}
-	/>
-);
+function ItemTitle({ className, ...props }: React.ComponentProps<"div">) {
+	return (
+		<div
+			data-slot="item-title"
+			className={cn(
+				"flex w-fit items-center gap-2 font-medium text-sm leading-snug",
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
 
-const ItemDescription = ({
-	className,
-	...props
-}: React.ComponentProps<"p">) => (
-	<p
-		data-slot="item-description"
-		className={cn(
-			"line-clamp-2 text-balance font-normal text-muted-foreground text-sm leading-normal",
-			"[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
-			className,
-		)}
-		{...props}
-	/>
-);
+function ItemDescription({ className, ...props }: React.ComponentProps<"p">) {
+	return (
+		<p
+			data-slot="item-description"
+			className={cn(
+				"line-clamp-2 text-balance font-normal text-muted-foreground text-sm leading-normal",
+				"[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
 
-const ItemActions = ({ className, ...props }: React.ComponentProps<"div">) => (
-	<div
-		data-slot="item-actions"
-		className={cn("flex items-center gap-2", className)}
-		{...props}
-	/>
-);
+function ItemActions({ className, ...props }: React.ComponentProps<"div">) {
+	return (
+		<div
+			data-slot="item-actions"
+			className={cn("flex items-center gap-2", className)}
+			{...props}
+		/>
+	);
+}
 
-const ItemHeader = ({ className, ...props }: React.ComponentProps<"div">) => (
-	<div
-		data-slot="item-header"
-		className={cn(
-			"flex basis-full items-center justify-between gap-2",
-			className,
-		)}
-		{...props}
-	/>
-);
+function ItemHeader({ className, ...props }: React.ComponentProps<"div">) {
+	return (
+		<div
+			data-slot="item-header"
+			className={cn(
+				"flex basis-full items-center justify-between gap-2",
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
 
-const ItemFooter = ({ className, ...props }: React.ComponentProps<"div">) => (
-	<div
-		data-slot="item-footer"
-		className={cn(
-			"flex basis-full items-center justify-between gap-2",
-			className,
-		)}
-		{...props}
-	/>
-);
+function ItemFooter({ className, ...props }: React.ComponentProps<"div">) {
+	return (
+		<div
+			data-slot="item-footer"
+			className={cn(
+				"flex basis-full items-center justify-between gap-2",
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
 
 export {
 	Item,

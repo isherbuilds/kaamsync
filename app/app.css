@@ -48,7 +48,6 @@ body {
 	--color-info: var(--info);
 	--color-success: var(--success);
 	--color-warning: var(--warning);
-	--color-info: var(--info);
 	--color-brand-tasks: var(--brand-tasks);
 	--color-brand-requests: var(--brand-requests);
 	--color-priority-urgent: var(--priority-urgent);

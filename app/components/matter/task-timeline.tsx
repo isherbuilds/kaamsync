@@ -117,7 +117,7 @@ const TimelineEntry = memo(function TimelineEntry({
 	return (
 		<div className="relative flex gap-3">
 			{!isLast && (
-				<div className="absolute top-8 bottom-0 left-3.75 w-px bg-border" />
+				<div className="absolute top-8 bottom-0 left-4 w-px bg-border" />
 			)}
 			<div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-background">
 				{userImage ? (
