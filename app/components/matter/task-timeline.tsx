@@ -113,6 +113,12 @@ const TimelineEntry = memo(function TimelineEntry({
 				</span>
 			</p>
 		);
+	else
+		content = (
+			<p className="text-muted-foreground text-sm italic">
+				Unknown activity type
+			</p>
+		);
 
 	return (
 		<div className="relative flex gap-3">
@@ -123,7 +129,7 @@ const TimelineEntry = memo(function TimelineEntry({
 				{userImage ? (
 					<img
 						src={userImage}
-						alt=""
+						alt={userName}
 						className="size-full rounded-full object-cover"
 					/>
 				) : (
