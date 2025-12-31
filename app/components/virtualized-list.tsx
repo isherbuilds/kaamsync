@@ -3,11 +3,11 @@ import {
 	type Range,
 	useVirtualizer,
 } from "@tanstack/react-virtual";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { itemSizeCache } from "~/lib/lru-cache";
 
 interface VirtualizedListProps<T> {
-	items: T[];
+	items: readonly T[];
 	renderItem: (
 		item: T,
 		index: number,
@@ -22,7 +22,7 @@ interface VirtualizedListProps<T> {
 	stickyIndices?: number[];
 }
 
-export function VirtualizedList<T>({
+export const VirtualizedList = memo(function VirtualizedList<T>({
 	items,
 	renderItem,
 	estimateSize = 56,
@@ -93,10 +93,14 @@ export function VirtualizedList<T>({
 			virtualizer.measureElement(el);
 			const idx = Number((el as HTMLElement).dataset.index);
 			if (Number.isNaN(idx)) return;
-			const { items: itms, getItemKey: gk } = stableRef.current;
+			const { items: itms, getItemKey: gk = stableRef.current.getItemKey } =
+				stableRef.current;
 			if (gk && itms[idx]) {
+				const key = gk(itms[idx], idx);
 				const h = el.getBoundingClientRect().height;
-				if (h > 0) itemSizeCache.set(gk(itms[idx], idx), h);
+				if (h > 0 && itemSizeCache.get(key) !== h) {
+					itemSizeCache.set(key, h);
+				}
 			}
 		},
 		[virtualizer],
@@ -164,4 +168,8 @@ export function VirtualizedList<T>({
 			</div>
 		</div>
 	);
+}) as typeof ParentVirtualizedList;
+
+function ParentVirtualizedList<T>(_props: VirtualizedListProps<T>) {
+	return null;
 }

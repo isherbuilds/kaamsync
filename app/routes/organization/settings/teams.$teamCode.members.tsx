@@ -141,7 +141,10 @@ export default function TeamMembersPage() {
 										members={availableUsers}
 										value={fields.userId.value}
 										onChange={(val) =>
-											form.update({ name: fields.userId.name, value: val })
+											form.update({
+												name: fields.userId.name,
+												value: val ?? undefined,
+											})
 										}
 										className="w-full rounded-md border bg-muted/50 p-2"
 										name={fields.userId.name}

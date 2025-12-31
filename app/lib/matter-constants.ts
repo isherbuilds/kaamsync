@@ -32,25 +32,24 @@ export const PRIORITY_LABELS: Record<PriorityValue, string> = {
 
 // Priority Colors for cards (keyed by numeric value)
 export const PRIORITY_COLORS: Record<PriorityValue, string> = {
-	[Priority.URGENT]: "text-red-600 dark:text-red-400",
-	[Priority.HIGH]: "text-orange-600 dark:text-orange-400",
-	[Priority.MEDIUM]: "text-blue-600 dark:text-blue-400",
-	[Priority.LOW]: "text-gray-600 dark:text-gray-400",
-	[Priority.NONE]: "text-gray-500 dark:text-gray-500",
+	[Priority.URGENT]: "text-priority-urgent",
+	[Priority.HIGH]: "text-priority-high",
+	[Priority.MEDIUM]: "text-priority-medium",
+	[Priority.LOW]: "text-priority-low",
+	[Priority.NONE]: "text-priority-none",
 };
 
 // Priority Badge styles (keyed by numeric value)
 export const PRIORITY_BADGE: Record<PriorityValue, string> = {
 	[Priority.URGENT]:
-		"bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900",
+		"bg-priority-urgent/10 text-priority-urgent border-priority-urgent/20",
 	[Priority.HIGH]:
-		"bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-900",
+		"bg-priority-high/10 text-priority-high border-priority-high/20",
 	[Priority.MEDIUM]:
-		"bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900",
-	[Priority.LOW]:
-		"bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950/20 dark:text-gray-400 dark:border-gray-900",
+		"bg-priority-medium/10 text-priority-medium border-priority-medium/20",
+	[Priority.LOW]: "bg-priority-low/10 text-priority-low border-priority-low/20",
 	[Priority.NONE]:
-		"bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-950/20 dark:text-gray-500 dark:border-gray-900",
+		"bg-priority-none/10 text-priority-none border-priority-none/20",
 };
 
 // Helper to get priority color
@@ -117,14 +116,14 @@ export const STATUS_TYPE_LABELS: Record<StatusType, string> = {
 
 // Status Type Colors (default colors, can be customized per status)
 export const STATUS_TYPE_COLORS: Record<StatusType, string> = {
-	backlog: "text-gray-500 dark:text-gray-600",
-	not_started: "text-gray-400 dark:text-gray-600",
-	started: "text-yellow-400 dark:text-yellow-600",
-	completed: "text-green-500 dark:text-green-600",
-	canceled: "text-gray-600 dark:text-gray-600",
-	pending_approval: "text-yellow-600 dark:text-yellow-600",
-	approved: "text-green-500 dark:text-green-600",
-	rejected: "text-red-500 dark:text-red-600",
+	backlog: "text-muted-foreground",
+	not_started: "text-muted-foreground",
+	started: "text-status-progress",
+	completed: "text-status-completed",
+	canceled: "text-muted-foreground",
+	pending_approval: "text-status-pending",
+	approved: "text-status-approved",
+	rejected: "text-status-rejected",
 };
 
 // Hardcoded type order for grouping/sorting

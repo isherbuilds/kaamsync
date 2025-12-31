@@ -1,20 +1,22 @@
-import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import {
 	Archive,
 	ArchiveRestore,
-	CheckCircle2,
 	ChevronRight,
 	MoreHorizontal,
 	Star,
 	Trash2,
 } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
+import { AdminApproveSection } from "~/components/matter/admin-approve-section";
+import { CommentInput } from "~/components/matter/comment-input";
+import { PropertyPill, PropertyRow } from "~/components/matter/properties";
+import { TaskTimeline } from "~/components/matter/task-timeline";
 import {
 	MemberSelect,
 	type MemberSelectorItem,
@@ -37,20 +39,14 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Separator } from "~/components/ui/separator";
-import { Textarea } from "~/components/ui/textarea";
 import { parseMatterKey } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
-import { cn, formatTimelineDate, getInitials } from "~/lib/utils";
 import type { Route } from "./+types/matter.$matterKey";
 
 export const meta: Route.MetaFunction = ({ params }) => [
 	{ title: `Matter ${params.matterKey}` },
-	{
-		name: "description",
-		content: `Details and activity for matter ${params.matterKey}.`,
-	},
 ];
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -73,7 +69,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		CACHE_NAV,
 	);
 
-	// Inferred types from Zero queries
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 	const [teamMemberships] = useQuery(
 		queries.getTeamMembers({ teamId: matter?.teamId || "" }),
@@ -86,7 +81,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	// 2. Permissions
 	const perms = usePermissions(matter?.teamId, teamMemberships);
-	// Org-level elevation: managers in team or owners/admins in org have full access
 	const authRole = perms.role as string;
 	const isAdmin =
 		perms.isManager || authRole === "admin" || authRole === "owner";
@@ -97,7 +91,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 	// Filter statuses based on matter type (task vs request)
 	const filteredStatuses = useMemo(() => {
 		if (!matter) return statuses;
-		// Requests use request statuses, tasks use task statuses
 		const isRequest = matter.type === "request";
 		return statuses.filter((s) => {
 			const isRequestStatus =
@@ -114,37 +107,46 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		assignee: false,
 	});
 
-	const handleStatusChange = (s: string) => {
-		if (!matter) return;
-		setIsUpdating((prev) => ({ ...prev, status: true }));
-		z.mutate(
-			mutators.matter.updateStatus({ id: matter.id, statusId: s }),
-		).server.finally(() =>
-			setIsUpdating((prev) => ({ ...prev, status: false })),
-		);
-	};
+	const handleStatusChange = useCallback(
+		(s: string) => {
+			if (!matter) return;
+			setIsUpdating((prev) => ({ ...prev, status: true }));
+			z.mutate(
+				mutators.matter.updateStatus({ id: matter.id, statusId: s }),
+			).server.finally(() =>
+				setIsUpdating((prev) => ({ ...prev, status: false })),
+			);
+		},
+		[matter, z],
+	);
 
-	const handleAssign = (u: string | null) => {
-		if (!matter) return;
-		setIsUpdating((prev) => ({ ...prev, assignee: true }));
-		z.mutate(
-			mutators.matter.assign({ id: matter.id, assigneeId: u }),
-		).server.finally(() =>
-			setIsUpdating((prev) => ({ ...prev, assignee: false })),
-		);
-	};
+	const handleAssign = useCallback(
+		(u: string | null) => {
+			if (!matter) return;
+			setIsUpdating((prev) => ({ ...prev, assignee: true }));
+			z.mutate(
+				mutators.matter.assign({ id: matter.id, assigneeId: u }),
+			).server.finally(() =>
+				setIsUpdating((prev) => ({ ...prev, assignee: false })),
+			);
+		},
+		[matter, z],
+	);
 
-	const handlePriorityChange = (p: PriorityValue) => {
-		if (!matter) return;
-		setIsUpdating((prev) => ({ ...prev, priority: true }));
-		z.mutate(
-			mutators.matter.update({ id: matter.id, priority: p }),
-		).server.finally(() =>
-			setIsUpdating((prev) => ({ ...prev, priority: false })),
-		);
-	};
+	const handlePriorityChange = useCallback(
+		(p: PriorityValue) => {
+			if (!matter) return;
+			setIsUpdating((prev) => ({ ...prev, priority: true }));
+			z.mutate(
+				mutators.matter.update({ id: matter.id, priority: p }),
+			).server.finally(() =>
+				setIsUpdating((prev) => ({ ...prev, priority: false })),
+			);
+		},
+		[matter, z],
+	);
 
-	const handleArchive = () => {
+	const handleArchive = useCallback(() => {
 		if (!matter) return;
 		if (matter.archived) {
 			z.mutate(mutators.matter.unarchive({ id: matter.id }))
@@ -155,9 +157,9 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				.server.then(() => toast.success("Matter archived"))
 				.catch(() => toast.error("Failed to archive matter"));
 		}
-	};
+	}, [matter, z]);
 
-	const handleDelete = () => {
+	const handleDelete = useCallback(() => {
 		if (!matter) return;
 		z.mutate(mutators.matter.delete({ id: matter.id }))
 			.server.then(() => {
@@ -165,12 +167,12 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				navigate(`/${orgSlug}`);
 			})
 			.catch(() => toast.error("Failed to delete matter"));
-	};
+	}, [matter, orgSlug, navigate, z]);
 
-	const handleBack = () => {
+	const handleBack = useCallback(() => {
 		if (window.history.state && window.history.state.idx > 0) navigate(-1);
 		else navigate(`/${orgSlug}`);
-	};
+	}, [navigate, orgSlug]);
 
 	if (!matter) {
 		return (
@@ -206,7 +208,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						<ChevronRight className="size-4 rotate-180" />
 						<span className="ml-1 hidden sm:inline">Back</span>
 					</Button>
-					<span className="truncate font-medium font-mono text-foreground text-sm">
+					<span className="truncate font-medium font-mono text-muted-foreground/50 text-xs">
 						{matter.teamCode}-{matter.shortID}
 					</span>
 				</div>
@@ -249,17 +251,17 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 					<div className="mx-auto max-w-3xl @3xl:px-8 px-4 @3xl:py-8 py-4">
 						<div className="@3xl:space-y-6 space-y-4">
 							{matter.archived && (
-								<div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/50 p-3 sm:px-4 dark:border-amber-900/30 dark:bg-amber-950/10">
+								<div className="mb-4 flex items-center justify-between rounded-lg border border-status-pending/20 bg-status-pending/10 p-4">
 									<div className="flex items-center gap-2">
-										<Archive className="size-4 text-amber-600" />
-										<span className="text-amber-900 text-sm dark:text-amber-100">
+										<Archive className="size-4 text-status-pending" />
+										<span className="text-sm text-status-pending">
 											This matter is archived.
 										</span>
 									</div>
 									<Button
 										variant="ghost"
 										size="sm"
-										className="h-8 text-amber-900 hover:bg-amber-100 dark:text-amber-100 dark:hover:bg-amber-900/50"
+										className="h-8 text-status-pending hover:bg-status-pending/20"
 										onClick={handleArchive}
 									>
 										Unarchive
@@ -272,7 +274,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								isAdmin={isAdmin}
 								matterId={matter.id}
 								statusType={matter.status?.type}
-								z={z}
 							/>
 
 							<h1 className="font-bold @3xl:text-2xl text-xl">
@@ -388,13 +389,13 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 							</h3>
 							<div className="flex justify-between">
 								<span className="text-muted-foreground">Created</span>
-								<span className="text-foreground">
+								<span className="text-muted-foreground/80">
 									{new Date(matter.createdAt).toLocaleDateString()}
 								</span>
 							</div>
 							<div className="flex justify-between">
 								<span className="text-muted-foreground">Updated</span>
-								<span className="text-foreground">
+								<span className="text-muted-foreground/80">
 									{new Date(
 										matter.updatedAt || matter.createdAt,
 									).toLocaleDateString()}
@@ -427,319 +428,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-		</div>
-	);
-}
-
-// --- Internal Helper Components ---
-
-function PropertyPill({
-	label,
-	children,
-}: {
-	label: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<div className="flex shrink-0 items-center gap-2 rounded-full border bg-muted/50 px-3 py-1">
-			<span className="font-bold text-[10px] text-muted-foreground uppercase tracking-tight">
-				{label}
-			</span>
-			{children}
-		</div>
-	);
-}
-
-function PropertyRow({
-	label,
-	children,
-}: {
-	label: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<div className="space-y-1">
-			<span className="ml-1 font-medium text-[11px] text-muted-foreground">
-				{label}
-			</span>
-			<div className="flex-1">{children}</div>
-		</div>
-	);
-}
-
-function CommentInput({ matterId }: { matterId: string }) {
-	const z = useZero();
-	const [content, setContent] = useState("");
-	const [isSubmitting, setIsSubmitting] = useState(false);
-
-	// Sanitize comment: trim, collapse whitespace, enforce max length
-	const sanitizeComment = (text: string) => {
-		return text.trim().slice(0, 5000);
-	};
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		const sanitized = sanitizeComment(content);
-		if (!sanitized || isSubmitting) return;
-
-		setIsSubmitting(true);
-		z.mutate(mutators.timeline.addComment({ matterId, content: sanitized }))
-			.server.then(() => {
-				setContent("");
-				toast.success("Comment added");
-			})
-			.catch((err) => {
-				toast.error("Failed to add comment");
-				console.error("Comment mutation failed:", err);
-			})
-			.finally(() => setIsSubmitting(false));
-	};
-
-	// Support Cmd/Ctrl+Enter to submit
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-		if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-			e.preventDefault();
-			handleSubmit(e);
-		}
-	};
-
-	return (
-		<form onSubmit={handleSubmit} className="flex gap-2">
-			<Textarea
-				value={content}
-				onChange={(e) => setContent(e.target.value)}
-				onKeyDown={handleKeyDown}
-				placeholder="Add a comment... (⌘+Enter to submit)"
-				rows={2}
-				className="min-h-15 resize-none text-sm"
-				disabled={isSubmitting}
-			/>
-			<Button
-				type="submit"
-				size="sm"
-				className="shrink-0 self-end"
-				disabled={!content.trim() || isSubmitting}
-			>
-				{isSubmitting ? "..." : "Send"}
-			</Button>
-		</form>
-	);
-}
-
-function TaskTimeline({
-	matterId,
-	members,
-	statuses,
-}: {
-	matterId: string;
-	members: readonly any[];
-	statuses: readonly Row["statusesTable"][];
-}) {
-	const [timeline] = useQuery(
-		queries.getMatterTimelines({ matterId }),
-		CACHE_NAV,
-	);
-
-	const statusMap = useMemo(
-		() => new Map(statuses.map((s) => [s.id, s.name || "Status"])),
-		[statuses],
-	);
-	const memberMap = useMemo(
-		() =>
-			new Map(
-				members.map((m) => [
-					m.userId,
-					m.usersTable?.name || m.user?.name || "User",
-				]),
-			),
-		[members],
-	);
-
-	if (timeline.length === 0)
-		return (
-			<p className="text-muted-foreground text-sm italic">No activity yet</p>
-		);
-
-	return (
-		<div className="space-y-4">
-			{timeline.map((entry, index) => (
-				<TimelineEntry
-					key={entry.id}
-					entry={entry}
-					isLast={index === timeline.length - 1}
-					statusMap={statusMap}
-					memberMap={memberMap}
-				/>
-			))}
-		</div>
-	);
-}
-
-const TimelineEntry = memo(function TimelineEntry({
-	entry,
-	isLast,
-	statusMap,
-	memberMap,
-}: {
-	entry: any;
-	isLast: boolean;
-	statusMap: Map<string, string>;
-	memberMap: Map<string, string>;
-}) {
-	const userName = entry.user?.name || "User";
-	const userImage = entry.user?.image;
-
-	const getStatusName = (id: string | null) =>
-		id ? statusMap.get(id) || "Status" : "Unknown";
-	const getUserName = (id: string | null) =>
-		id ? memberMap.get(id) || "User" : "Unassigned";
-
-	let content: React.ReactNode = null;
-	if (entry.type === "comment")
-		content = <p className="text-sm">{entry.content}</p>;
-	else if (entry.type === "created")
-		content = (
-			<p className="text-muted-foreground text-sm">created this task</p>
-		);
-	else if (entry.type === "status_change")
-		content = (
-			<p className="text-muted-foreground text-sm">
-				changed status from{" "}
-				<span className="font-medium text-foreground">
-					{getStatusName(entry.fromStatusId)}
-				</span>{" "}
-				to{" "}
-				<span className="font-medium text-primary">
-					{getStatusName(entry.toStatusId)}
-				</span>
-			</p>
-		);
-	else if (entry.type === "assigned")
-		content = (
-			<p className="text-muted-foreground text-sm">
-				assigned this to{" "}
-				<span className="font-medium text-foreground">
-					{getUserName(entry.toAssigneeId)}
-				</span>
-			</p>
-		);
-
-	return (
-		<div className="relative flex gap-3">
-			{!isLast && (
-				<div className="absolute top-8 bottom-0 left-3.75 w-px bg-border" />
-			)}
-			<div className="relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-muted ring-2 ring-background">
-				{userImage ? (
-					<img
-						src={userImage}
-						alt=""
-						className="size-full rounded-full object-cover"
-					/>
-				) : (
-					<span className="font-bold text-[10px]">{getInitials(userName)}</span>
-				)}
-			</div>
-			<div className="flex-1 pb-4">
-				<div className="mb-1 flex items-center gap-2">
-					<span className="font-semibold text-sm">{userName}</span>
-					<span className="text-muted-foreground text-xs">
-						{formatTimelineDate(entry.createdAt)}
-					</span>
-				</div>
-				<div
-					className={cn(
-						"rounded-md border bg-muted/20 px-3 py-2",
-						entry.type === "comment" && "bg-background shadow-sm",
-					)}
-				>
-					{content}
-				</div>
-			</div>
-		</div>
-	);
-});
-
-function AdminApproveSection({
-	isVisible,
-	isAdmin,
-	matterId,
-	statusType,
-	z,
-}: {
-	isVisible: boolean;
-	isAdmin: boolean;
-	matterId: string;
-	statusType?: string | null;
-	z: any;
-}) {
-	if (!isVisible || !isAdmin) return null;
-
-	const handleApprove = () => {
-		z.mutate(mutators.matter.approve({ id: matterId }))
-			.server.then(() => toast.success("Request approved"))
-			.catch(() => toast.error("Failed to approve request"));
-	};
-
-	const handleReject = () => {
-		z.mutate(mutators.matter.reject({ id: matterId }))
-			.server.then(() => toast.success("Request rejected"))
-			.catch(() => toast.error("Failed to reject request"));
-	};
-
-	if (statusType === "rejected") {
-		return (
-			<div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
-				<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-					<div className="space-y-1">
-						<h3 className="font-bold text-destructive text-sm">
-							Request Rejected
-						</h3>
-						<p className="text-destructive/70 text-xs">
-							This request was rejected. You can still approve it if needed.
-						</p>
-					</div>
-					<Button
-						onClick={handleApprove}
-						size="sm"
-						className="w-full bg-green-600 text-white hover:bg-green-700 sm:w-auto"
-					>
-						<CheckCircle2 className="mr-2 size-4" /> Approve Anyway
-					</Button>
-				</div>
-			</div>
-		);
-	}
-
-	return (
-		<div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/10">
-			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-				<div className="space-y-1">
-					<h3 className="font-bold text-amber-900 text-sm dark:text-amber-100">
-						Pending Approval
-					</h3>
-					<p className="text-amber-800/80 text-xs dark:text-amber-400">
-						Review this request to convert it into an active task.
-					</p>
-				</div>
-				<div className="flex w-full gap-2 sm:w-auto">
-					<Button
-						onClick={handleReject}
-						size="sm"
-						variant="outline"
-						className="flex-1 border-red-300 text-red-600 hover:bg-red-50 sm:flex-none dark:border-red-800 dark:text-red-400"
-					>
-						Reject
-					</Button>
-					<Button
-						onClick={handleApprove}
-						size="sm"
-						className="flex-1 bg-green-600 text-white hover:bg-green-700 sm:flex-none"
-					>
-						<CheckCircle2 className="mr-2 size-4" /> Approve
-					</Button>
-				</div>
-			</div>
 		</div>
 	);
 }

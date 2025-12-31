@@ -9,9 +9,9 @@ import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
+import { cn } from "~/lib/utils";
 import { createMatterSchema } from "~/lib/validations/matter";
 import { matterType, teamRole } from "../db/helpers";
-// import { InputField, TextareaField } from "./forms";
 import {
 	MemberSelect,
 	type MemberSelectorItem,
@@ -52,7 +52,7 @@ export const MatterDialog = memo(
 		const isRequest = type === "request";
 		const Icon = isRequest ? GitPullRequest : ListTodo;
 		const label = isRequest ? "New Request" : "New Task";
-		const accentColor = isRequest ? "text-orange-500" : "text-blue-500";
+		const accentColor = isRequest ? "text-brand-requests" : "text-brand-tasks";
 		const submitLabel = isRequest ? "Submit Request" : "Create Task";
 		const submittingLabel = isRequest ? "Submitting..." : "Creating...";
 
@@ -150,40 +150,10 @@ export const MatterDialog = memo(
 					<form {...getFormProps(form)} className="flex flex-col bg-background">
 						<div className="space-y-4 p-6">
 							<div
-								className={`flex items-center gap-2 font-bold text-[10px] uppercase tracking-tighter ${accentColor}`}
+								className={`flex items-center gap-2 font-bold text-xs uppercase tracking-tight ${accentColor}`}
 							>
-								<Icon className="size-3" /> {teamCode} / {label}
+								<Icon className="size-3.5" /> {teamCode} / {label}
 							</div>
-
-							{/* <InputField
-								inputProps={{
-									...getInputProps(fields.title, { type: "text" }),
-									placeholder: isRequest
-										? "What needs approval?"
-										: "Task title",
-									autoFocus: true,
-									autoComplete: "off",
-									className:
-										"w-full bg-transparent font-semibold text-2xl outline-none placeholder:text-muted-foreground/30",
-								}}
-								key={fields.title.key}
-								className="w-full"
-								errors={fields.title.errors}
-							/>
-
-							<TextareaField
-								labelProps={{ className: "sr-only" }}
-								textareaProps={{
-									...getInputProps(fields.description, { type: "text" }),
-									placeholder: isRequest
-										? "Provide context for the managers..."
-										: "Description...",
-									className:
-										"min-h-35 w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/30",
-								}}
-								key={fields.description.key}
-								errors={fields.description.errors}
-							/> */}
 
 							<input
 								{...getInputProps(fields.title, { type: "text" })}
@@ -194,7 +164,7 @@ export const MatterDialog = memo(
 								className="w-full bg-transparent font-semibold text-xl outline-none placeholder:text-muted-foreground/30"
 							/>
 							{fields.title.errors && (
-								<p className="font-medium text-[10px] text-destructive">
+								<p className="font-medium text-destructive text-xs">
 									{fields.title.errors}
 								</p>
 							)}
@@ -210,7 +180,7 @@ export const MatterDialog = memo(
 								className="min-h-32 w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/30"
 							/>
 							{fields.description.errors && (
-								<p className="font-medium text-[10px] text-destructive">
+								<p className="font-medium text-destructive text-xs">
 									{fields.description.errors}
 								</p>
 							)}
@@ -262,7 +232,7 @@ export const MatterDialog = memo(
 									<input
 										{...getInputProps(fields.dueDate, { type: "date" })}
 										key={fields.dueDate.key}
-										className="h-7 rounded border bg-background px-2 text-[11px] text-muted-foreground outline-none hover:bg-muted focus:ring-1 focus:ring-ring"
+										className="h-7 rounded border bg-background px-2 text-muted-foreground text-xs outline-none hover:bg-muted focus:ring-1 focus:ring-ring"
 									/>
 								</div>
 							</div>
@@ -271,7 +241,10 @@ export const MatterDialog = memo(
 								<Button
 									type="submit"
 									size="sm"
-									className={`h-8 px-4 font-medium ${isRequest ? "bg-orange-600 hover:bg-orange-700" : ""}`}
+									className={cn(
+										"h-8 px-4 font-medium",
+										isRequest && "bg-brand-requests hover:bg-brand-requests/90",
+									)}
 									disabled={isSubmitting}
 								>
 									{isSubmitting ? submittingLabel : submitLabel}

@@ -1,5 +1,6 @@
 import { Avatar as AvatarPrimitive } from "radix-ui";
 import type * as React from "react";
+import { memo } from "react";
 
 import { cn } from "~/lib/utils";
 
@@ -40,7 +41,7 @@ function AvatarFallback({
 		<AvatarPrimitive.Fallback
 			data-slot="avatar-fallback"
 			className={cn(
-				"bg-muted flex size-full items-center justify-center rounded-full",
+				"flex size-full items-center justify-center rounded-full bg-muted",
 				className,
 			)}
 			{...props}
@@ -48,7 +49,7 @@ function AvatarFallback({
 	);
 }
 
-function CustomAvatar({
+export const CustomAvatar = memo(function CustomAvatar({
 	name = "unknown",
 	avatar,
 	className,
@@ -66,6 +67,6 @@ function CustomAvatar({
 			<AvatarFallback className="rounded-full">{name.charAt(0)}</AvatarFallback>
 		</Avatar>
 	);
-}
+});
 
-export { Avatar, AvatarImage, AvatarFallback, CustomAvatar };
+export { Avatar, AvatarImage, AvatarFallback };

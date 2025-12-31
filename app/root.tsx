@@ -85,12 +85,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				/>
 				<ColorSchemeScript nonce={nonce} />
 				<Meta />
-				{import.meta.env.DEV && (
+				{/* {import.meta.env.DEV && (
 					<script
 						crossOrigin="anonymous"
 						src="//unpkg.com/react-scan/dist/auto.global"
 					/>
-				)}
+				)} */}
 				<Links />
 			</head>
 			<body className="min-h-screen overflow-y-auto">

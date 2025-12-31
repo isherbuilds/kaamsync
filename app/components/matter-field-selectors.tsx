@@ -39,7 +39,7 @@ export type MemberSelectorItem = {
 	userId: string;
 	user?: Row["usersTable"]; // Team query shape
 	usersTable?: Row["usersTable"]; // Org query shape
-	role?: string;
+	role?: string | null;
 };
 
 type StatusRow = Row["statusesTable"];
@@ -72,7 +72,7 @@ const SelectorTrigger = memo(
 					onClick?.(e);
 				}}
 				className={cn(
-					"flex items-center gap-2 rounded px-1.5 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50",
+					"flex items-center gap-2 rounded px-2 py-1 text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50",
 					className,
 				)}
 			>

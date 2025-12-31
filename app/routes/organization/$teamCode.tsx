@@ -260,7 +260,7 @@ const GroupHeader = memo(
 						STATUS_TYPE_COLORS[status.type as StatusType],
 					)}
 				/>
-				<span className="font-semibold text-[11px] text-muted-foreground uppercase tracking-wider">
+				<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
 					{status.name}
 				</span>
 				<span className="ml-1 text-muted-foreground/40 text-xs tabular-nums">
@@ -322,7 +322,7 @@ const TaskRow = memo(
 							className="z-20 p-2"
 							align="start"
 						/>
-						<span className="hidden w-14 font-mono text-[10px] text-muted-foreground/50 md:inline">
+						<span className="hidden w-14 font-mono text-muted-foreground/40 text-xs md:inline">
 							{taskCode}
 						</span>
 					</div>
@@ -339,7 +339,7 @@ const TaskRow = memo(
 					<div className="min-w-0 flex-1">
 						<span
 							className={cn(
-								"block truncate text-[13px]",
+								"block truncate text-sm",
 								isCompleted && "text-muted-foreground line-through opacity-50",
 							)}
 						>
@@ -369,8 +369,8 @@ function DueDateBadge({ date }: { date: number }) {
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1 text-[10px]",
-				isOverdue ? "text-destructive" : "text-muted-foreground/60",
+				"flex items-center gap-1 text-xs",
+				isOverdue ? "text-priority-urgent" : "text-muted-foreground/60",
 			)}
 		>
 			<CalendarIcon className="size-3" />

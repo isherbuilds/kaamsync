@@ -1,0 +1,189 @@
+import type { Row } from "@rocicorp/zero";
+import type { LucideIcon } from "lucide-react";
+import { memo } from "react";
+import { Outlet } from "react-router";
+import { EmptyState } from "~/components/ui/empty-state";
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from "~/components/ui/resizable";
+import { SidebarTrigger } from "~/components/ui/sidebar";
+import { VirtualizedList } from "~/components/virtualized-list";
+import { useBreakpoints } from "~/hooks/use-mobile";
+import {
+	DETAIL_PANEL_MIN_SIZE,
+	getDetailPanelSize,
+	getListPanelSize,
+	PANEL_MAX_SIZE,
+	PANEL_MIN_SIZE,
+} from "~/lib/layout-constants";
+import { cn } from "~/lib/utils";
+
+type MatterWithStatus = Row["mattersTable"] & {
+	status?: Row["statusesTable"];
+};
+
+interface MatterListLayoutProps<T extends MatterWithStatus> {
+	/** Page title shown in header */
+	title: string;
+	/** Icon shown next to title */
+	icon: LucideIcon;
+	/** Accent color class for icon and badge (e.g., "blue", "amber") */
+	accentColor: "blue" | "amber";
+	/** Items to display */
+	items: readonly T[];
+	/** Whether data is still loading */
+	isLoading: boolean;
+	/** Empty state configuration */
+	emptyState: {
+		title: string;
+		description: string;
+	};
+	/** Estimated row height for virtualization */
+	estimateSize?: number;
+	/** Render function for each item */
+	renderItem: (item: T) => React.ReactNode;
+}
+
+const ACCENT_COLORS = {
+	blue: {
+		icon: "text-brand-tasks",
+		badge: "bg-brand-tasks/10 text-brand-tasks",
+		emptyBg: "bg-brand-tasks/10",
+		emptyIcon: "text-brand-tasks/50",
+	},
+	amber: {
+		icon: "text-brand-requests",
+		badge: "bg-brand-requests/10 text-brand-requests",
+		emptyBg: "bg-brand-requests/10",
+		emptyIcon: "text-brand-requests/50",
+	},
+} as const;
+
+/**
+ * Shared layout component for matter list pages (Tasks, Requests).
+ * Provides resizable panel structure with header, empty state, and virtualized list.
+ */
+function MatterListLayoutInner<T extends MatterWithStatus>({
+	title,
+	icon: Icon,
+	accentColor,
+	items,
+	isLoading,
+	emptyState,
+	estimateSize = 60,
+	renderItem,
+}: MatterListLayoutProps<T>) {
+	const { isMobile, isTablet, isExtraLargeScreen } = useBreakpoints();
+
+	const colors = ACCENT_COLORS[accentColor];
+	const itemCount = items.length;
+
+	// Sub-components for better organization
+	const Header = () => (
+		<div className="flex h-12 items-center justify-between border-b bg-background px-4">
+			<div className="flex items-center gap-2">
+				<SidebarTrigger className="lg:hidden" />
+				<Icon className={`size-4 ${colors.icon}`} />
+				<h5 className="font-semibold">{title}</h5>
+			</div>
+			<div className="flex items-center gap-2">
+				{isLoading ? (
+					<div className="h-5 w-8 animate-pulse rounded-full bg-muted" />
+				) : (
+					<span
+						className={cn(
+							"rounded-full px-2 py-0.5 font-medium text-xs",
+							colors.badge,
+						)}
+					>
+						{itemCount}
+					</span>
+				)}
+			</div>
+		</div>
+	);
+
+	const ListSkeleton = () => (
+		<div className="space-y-1 p-1">
+			{Array.from({ length: 8 }).map((_, i) => (
+				<div
+					key={`skeleton-item-${i}`}
+					className="flex items-start gap-3 rounded-md border border-transparent p-3"
+				>
+					<div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+					<div className="flex-1 space-y-2">
+						<div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+						<div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+					</div>
+					<div className="flex flex-col items-end gap-1">
+						<div className="size-4 animate-pulse rounded bg-muted" />
+						<div className="h-3 w-8 animate-pulse rounded bg-muted" />
+					</div>
+				</div>
+			))}
+		</div>
+	);
+
+	const DetailSkeleton = () => (
+		<div className="flex h-full items-center justify-center">
+			<div className="text-center">
+				<Icon className="mx-auto size-12 text-muted-foreground/30" />
+				<p className="mt-2 text-muted-foreground text-sm">
+					Select an item to view details
+				</p>
+			</div>
+		</div>
+	);
+
+	return (
+		<ResizablePanelGroup className="h-full" orientation="horizontal">
+			<ResizablePanel
+				className="border-r"
+				defaultSize={getListPanelSize(isTablet, isExtraLargeScreen)}
+				maxSize={PANEL_MAX_SIZE}
+				minSize={PANEL_MIN_SIZE}
+			>
+				<Header />
+				<div className="h-[calc(100%-48px)]">
+					{isLoading ? (
+						<ListSkeleton />
+					) : itemCount === 0 ? (
+						<EmptyState
+							icon={Icon}
+							iconColorClass={colors.emptyBg}
+							iconFillClass={colors.emptyIcon}
+							title={emptyState.title}
+							description={emptyState.description}
+						/>
+					) : (
+						<VirtualizedList
+							items={items}
+							getItemKey={(item) => item.id}
+							estimateSize={estimateSize}
+							className="p-1"
+							renderItem={renderItem}
+						/>
+					)}
+				</div>
+			</ResizablePanel>
+
+			{!isMobile && (
+				<>
+					<ResizableHandle />
+					<ResizablePanel
+						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
+						minSize={DETAIL_PANEL_MIN_SIZE}
+					>
+						{isLoading ? <DetailSkeleton /> : <Outlet />}
+					</ResizablePanel>
+				</>
+			)}
+		</ResizablePanelGroup>
+	);
+}
+
+export const MatterListLayout = memo(
+	MatterListLayoutInner,
+) as typeof MatterListLayoutInner;

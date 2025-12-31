@@ -48,6 +48,19 @@ body {
 	--color-info: var(--info);
 	--color-success: var(--success);
 	--color-warning: var(--warning);
+	--color-info: var(--info);
+	--color-brand-tasks: var(--brand-tasks);
+	--color-brand-requests: var(--brand-requests);
+	--color-priority-urgent: var(--priority-urgent);
+	--color-priority-high: var(--priority-high);
+	--color-priority-medium: var(--priority-medium);
+	--color-priority-low: var(--priority-low);
+	--color-priority-none: var(--priority-none);
+	--color-status-approved: var(--status-approved);
+	--color-status-rejected: var(--status-rejected);
+	--color-status-pending: var(--status-pending);
+	--color-status-progress: var(--status-progress);
+	--color-status-completed: var(--status-completed);
 	--color-chart-1: var(--chart-1);
 	--color-chart-2: var(--chart-2);
 	--color-chart-3: var(--chart-3);
@@ -89,6 +102,25 @@ body {
 	--success: oklch(0.65 0.18 150);
 	--warning: oklch(0.75 0.15 85);
 	--info: oklch(0.6 0.15 240);
+
+	/* BRAND */
+	--brand-tasks: oklch(0.55 0.23 262);
+	--brand-requests: oklch(0.77 0.17 65);
+
+	/* PRIORITIES */
+	--priority-urgent: oklch(0.63 0.22 28);
+	--priority-high: oklch(0.7 0.18 45);
+	--priority-medium: oklch(0.55 0.23 262);
+	--priority-low: oklch(0.6 0.05 285);
+	--priority-none: oklch(0.7 0.02 285);
+
+	/* STATUSES */
+	--status-approved: oklch(0.65 0.18 150);
+	--status-rejected: oklch(0.63 0.22 28);
+	--status-pending: oklch(0.77 0.17 65);
+	--status-progress: oklch(0.6 0.15 240);
+	--status-completed: oklch(0.65 0.18 150);
+
 	--chart-1: oklch(0.55 0.23 262);
 	--chart-2: oklch(0.65 0.18 150);
 	--chart-4: oklch(0.63 0.22 28);
@@ -136,6 +168,24 @@ body {
 	--warning: oklch(0.75 0.12 85);
 	--info: oklch(0.6 0.15 240);
 
+	/* BRAND */
+	--brand-tasks: oklch(0.6 0.23 262);
+	--brand-requests: oklch(0.82 0.2 65);
+
+	/* PRIORITIES */
+	--priority-urgent: oklch(0.6 0.2 28);
+	--priority-high: oklch(0.65 0.18 45);
+	--priority-medium: oklch(0.6 0.23 262);
+	--priority-low: oklch(0.5 0.05 285);
+	--priority-none: oklch(0.6 0.02 285);
+
+	/* STATUSES */
+	--status-approved: oklch(0.65 0.15 150);
+	--status-rejected: oklch(0.6 0.2 28);
+	--status-pending: oklch(0.82 0.2 65);
+	--status-progress: oklch(0.6 0.15 240);
+	--status-completed: oklch(0.65 0.15 150);
+
 	--chart-1: oklch(0.6 0.23 262);
 	--chart-2: oklch(0.65 0.15 150);
 	--chart-3: oklch(0.75 0.12 85);
@@ -157,7 +207,7 @@ body {
 		@apply border-border outline-ring/50;
 	}
 	body {
-		@apply bg-background text-foreground;
+		@apply bg-background text-foreground antialiased;
 	}
 }
 
