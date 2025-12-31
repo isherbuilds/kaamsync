@@ -1,6 +1,6 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
-import { CalendarIcon, Clock, Loader2, Send, UserIcon } from "lucide-react";
+import { CalendarIcon, Clock, Send, UserIcon } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
@@ -19,7 +19,7 @@ import {
 } from "~/components/ui/resizable";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
-import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
+// import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
 import {
@@ -56,15 +56,19 @@ export default function RequestsPage() {
 	const isExtraLargeScreen = useIsMobile("extraLargeScreen");
 
 	// Use infinite scroll for requests - loads in pages as user scrolls
-	const {
-		items: requests,
-		isLoadingMore,
-		hasMore,
-		loadedCount,
-		loadMore,
-	} = useInfiniteMatters({
-		queryType: "userAuthored",
-		enabled: true, // Zero handles context check
+	// const {
+	// 	items: requests,
+	// 	isLoadingMore,
+	// 	hasMore,
+	// 	loadedCount,
+	// 	loadMore,
+	// } = useInfiniteMatters({
+	// 	queryType: "userAuthored",
+	// 	enabled: true, // Zero handles context check
+	// });
+
+	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
+		...CACHE_LONG,
 	});
 
 	// Load members once for the entire list - cached by Zero
@@ -111,15 +115,15 @@ export default function RequestsPage() {
 						<h5 className="font-semibold">Requests</h5>
 					</div>
 					<div className="flex items-center gap-2">
-						{loadedCount > 0 && (
-							<span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 text-xs dark:text-amber-400">
-								{loadedCount}
-								{hasMore && "+"}
-							</span>
-						)}
-						{isLoadingMore && (
+						{/* {loadedCount > 0 && ( */}
+						<span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 text-xs dark:text-amber-400">
+							{requestCount}
+							{/* {hasMore && "+"} */}
+						</span>
+						{/* )} */}
+						{/* {isLoadingMore && (
 							<Loader2 className="size-3 animate-spin text-muted-foreground" />
-						)}
+						)} */}
 					</div>
 				</div>
 				<div className="h-[calc(100%-48px)]">
@@ -136,7 +140,7 @@ export default function RequestsPage() {
 							items={sortedRequests}
 							getItemKey={(item) => item.id}
 							estimateSize={100}
-							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
+							// onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
 							renderItem={(
 								matter: Row["mattersTable"] & { status?: Row["statusesTable"] },
 							) => {
@@ -165,15 +169,15 @@ export default function RequestsPage() {
 										prefetch="viewport"
 										to={
 											isMobile
-												? `/${orgSlug}/matter/${matter.workspaceCode}-${matter.shortID}`
-												: `/${orgSlug}/requests/matter/${matter.workspaceCode}-${matter.shortID}`
+												? `/${orgSlug}/matter/${matter.teamCode}-${matter.shortID}`
+												: `/${orgSlug}/requests/matter/${matter.teamCode}-${matter.shortID}`
 										}
 									>
 										<Item className="w-full" key={matter.id}>
 											<ItemContent className="flex-col gap-2">
 												<div className="flex items-center gap-2">
 													<span className="font-mono text-muted-foreground/70 text-xs">
-														{matter.workspaceCode}-{matter.shortID}
+														{matter.teamCode}-{matter.shortID}
 													</span>
 													{matter.priority != null &&
 														matter.priority !== Priority.NONE && (
@@ -186,6 +190,22 @@ export default function RequestsPage() {
 																{getPriorityLabel(matter.priority)}
 															</span>
 														)}
+													{/* Show status badge for requests (especially Pending/Rejected) */}
+													{matter.status && (
+														<span
+															className={cn(
+																"inline-flex items-center rounded border px-1.5 py-0.5 font-medium text-[9px] uppercase tracking-wider",
+																matter.status.type === "pending_approval" &&
+																	"border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-400",
+																matter.status.type === "rejected" &&
+																	"border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400",
+																matter.status.type === "approved" &&
+																	"border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-400",
+															)}
+														>
+															{matter.status.name}
+														</span>
+													)}
 												</div>
 												<ItemTitle className="line-clamp-2 font-normal text-foreground/90 text-sm leading-snug transition-colors group-hover:text-foreground">
 													{matter.title}

@@ -7,43 +7,42 @@ import {
 	canManageMembers as canMem,
 	canCreateRequests as canReq,
 	canCreateTasks as canTask,
-	canManageWorkspace as canWs,
-	type WorkspaceRole,
+	canManageTeam as canWs,
+	type TeamRole,
 } from "~/lib/permissions";
 import { useOrgLoaderData } from "./use-loader-data";
 
 /**
- * Unified hook for accessing organization and workspace permissions.
+ * Unified hook for accessing organization and team permissions.
  * Optimized for performance by memoizing computed flags.
  */
 export function usePermissions(
-	workspaceId?: string,
-	workspaceMemberships?: readonly Row["workspaceMembershipsTable"][],
+	teamId?: string,
+	teamMemberships?: readonly Row["teamMembershipsTable"][],
 ) {
 	const { authSession } = useOrgLoaderData();
 	const userId = authSession.user.id;
 
-	// Find membership for current workspace
+	// Find membership for current team
 	const membership = useMemo(() => {
-		if (!workspaceId || !workspaceMemberships) return null;
-		return workspaceMemberships.find(
-			(m) =>
-				m.workspaceId === workspaceId && m.userId === userId && !m.deletedAt,
+		if (!teamId || !teamMemberships) return null;
+		return teamMemberships.find(
+			(m) => m.teamId === teamId && m.userId === userId && !m.deletedAt,
 		);
-	}, [workspaceId, workspaceMemberships, userId]);
+	}, [teamId, teamMemberships, userId]);
 
-	const role = membership?.role as WorkspaceRole | undefined;
+	const role = membership?.role as TeamRole | undefined;
 
 	// Compute all permission flags once
 	return useMemo(
 		() => ({
 			role,
-			// Workspace permissions
+			// Team permissions
 			canCreateTasks: canTask(role),
 			canCreateRequests: canReq(role),
 			canApproveRequests: canApprove(role),
 			canManageMembers: canMem(role),
-			canManageWorkspace: canWs(role),
+			canManageTeam: canWs(role),
 
 			// Matter specific permissions (curried)
 			canEditMatter: (

@@ -9,7 +9,7 @@ import {
 	useRouteError,
 } from "react-router";
 import { ClientOnly } from "remix-utils/client-only";
-import { preloadAllWorkspaces } from "zero/preload";
+import { preloadAllTeams } from "zero/preload";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import { AppSidebar } from "~/components/app-sidebar";
@@ -107,23 +107,23 @@ function Layout({
 
 	// Context is now automatic from ZeroProvider - no need to pass queryCtx
 	const [orgsData] = useQuery(queries.getOrganizationList(), CACHE_LONG);
-	const [workspacesData] = useQuery(queries.getWorkspacesList(), CACHE_NAV);
+	const [teamsData] = useQuery(queries.getTeamsList(), CACHE_NAV);
 
-	// Preload workspaces for instant switching
+	// Preload teams for instant switching
 	const activeOrgId = authSession.session.activeOrganizationId;
 
 	useEffect(() => {
-		if (workspacesData.length > 0 && activeOrgId) {
+		if (teamsData.length > 0 && activeOrgId) {
 			const timeout = setTimeout(() => {
-				preloadAllWorkspaces(
+				preloadAllTeams(
 					z,
-					workspacesData.map((w) => w.id),
+					teamsData.map((w) => w.id),
 					activeOrgId,
 				);
 			}, 100); // Defer to next event loop tick to avoid UI blocking
 			return () => clearTimeout(timeout);
 		}
-	}, [z, activeOrgId, workspacesData]);
+	}, [z, activeOrgId, teamsData]);
 
 	// Direct find - O(n) on small array, no memoization overhead needed
 	const selectedOrg = orgsData.find((o) => o.slug === orgSlug);
@@ -136,7 +136,7 @@ function Layout({
 						authUser={authSession.user}
 						selectedOrg={selectedOrg ?? { id: "", name: "", slug: "" }}
 						organizations={orgsData}
-						workspaces={workspacesData}
+						teams={teamsData}
 					/>
 				)}
 			</ClientOnly>

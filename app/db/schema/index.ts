@@ -39,8 +39,8 @@ export {
 // 2. DEFINE APP TABLES (Before defining relations)
 // --------------------------------------------------------
 
-export const workspacesTable = pgTable(
-	"workspaces",
+export const teamsTable = pgTable(
+	"teams",
 	{
 		id: text("id").primaryKey(),
 
@@ -67,22 +67,22 @@ export const workspacesTable = pgTable(
 		...commonColumns,
 	},
 	(table) => [
-		uniqueIndex("workspaces_org_slug_unique").on(table.orgId, table.slug),
-		uniqueIndex("workspaces_org_code_unique").on(table.orgId, table.code),
-		index("workspaces_org_archived_idx").on(table.orgId, table.archived),
-		index("workspaces_org_code_idx").on(table.orgId, table.code),
+		uniqueIndex("teams_org_slug_unique").on(table.orgId, table.slug),
+		uniqueIndex("teams_org_code_unique").on(table.orgId, table.code),
+		index("teams_org_archived_idx").on(table.orgId, table.archived),
+		index("teams_org_code_idx").on(table.orgId, table.code),
 	],
 );
 
-export const workspaceMembershipsTable = pgTable(
-	"workspace_memberships",
+export const teamMembershipsTable = pgTable(
+	"team_memberships",
 	{
 		id: text("id").primaryKey(),
 
 		// Foreign keys
-		workspaceId: text("workspace_id")
+		teamId: text("team_id")
 			.notNull()
-			.references(() => workspacesTable.id, { onDelete: "cascade" }),
+			.references(() => teamsTable.id, { onDelete: "cascade" }),
 		userId: text("user_id")
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
@@ -98,17 +98,17 @@ export const workspaceMembershipsTable = pgTable(
 		canCreateTasks: boolean("can_create_tasks"), // Can create task directly
 		canCreateRequests: boolean("can_create_requests"), // Can create request (needs approval)
 		canApproveRequests: boolean("can_approve_requests"), // Can approve/reject requests
-		canManageMembers: boolean("can_manage_members"), // Can add/remove workspace members
-		canManageWorkspace: boolean("can_manage_workspace"), // Can edit workspace settings
+		canManageMembers: boolean("can_manage_members"), // Can add/remove team members
+		canManageTeam: boolean("can_manage_team"), // Can edit team settings
 
 		...commonColumns,
 	},
 	(table) => [
-		index("workspace_memberships_workspace_idx").on(table.workspaceId),
-		index("workspace_memberships_user_idx").on(table.userId),
-		index("workspace_memberships_org_user_idx").on(table.orgId, table.userId),
-		uniqueIndex("workspace_memberships_workspace_user_unique").on(
-			table.workspaceId,
+		index("team_memberships_team_idx").on(table.teamId),
+		index("team_memberships_user_idx").on(table.userId),
+		index("team_memberships_org_user_idx").on(table.orgId, table.userId),
+		uniqueIndex("team_memberships_team_user_unique").on(
+			table.teamId,
 			table.userId,
 		),
 	],
@@ -120,9 +120,9 @@ export const statusesTable = pgTable(
 		id: text("id").primaryKey(),
 
 		// Foreign keys
-		workspaceId: text("workspace_id")
+		teamId: text("team_id")
 			.notNull()
-			.references(() => workspacesTable.id, { onDelete: "cascade" }),
+			.references(() => teamsTable.id, { onDelete: "cascade" }),
 
 		// Core fields
 		name: varchar("name", { length: 100 }).notNull(),
@@ -133,17 +133,13 @@ export const statusesTable = pgTable(
 		// Metadata
 		isDefault: boolean("is_default"),
 		archived: boolean("archived"),
-		isRequestStatus: boolean("is_request_status"), // True for REQUEST-specific statuses
 
 		creatorId: text("creator_id").references(() => usersTable.id),
 
 		...commonColumns,
 	},
 	(table) => [
-		index("statuses_workspace_position_idx").on(
-			table.workspaceId,
-			table.position,
-		),
+		index("statuses_team_position_idx").on(table.teamId, table.position),
 	],
 );
 
@@ -186,9 +182,9 @@ export const mattersTable = pgTable(
 		orgId: text("org_id")
 			.notNull()
 			.references(() => organizationsTable.id, { onDelete: "cascade" }),
-		workspaceId: text("workspace_id")
+		teamId: text("team_id")
 			.notNull()
-			.references(() => workspacesTable.id, { onDelete: "cascade" }),
+			.references(() => teamsTable.id, { onDelete: "cascade" }),
 		authorId: text("author_id")
 			.notNull()
 			.references(() => usersTable.id),
@@ -198,7 +194,7 @@ export const mattersTable = pgTable(
 			.references(() => statusesTable.id),
 
 		// Denormalized for performance (avoids join when displaying matter keys)
-		workspaceCode: varchar("workspace_code", { length: 50 }).notNull(),
+		teamCode: varchar("team_code", { length: 50 }).notNull(),
 
 		// Core content
 		title: varchar("title", { length: 500 }).notNull(),
@@ -210,12 +206,9 @@ export const mattersTable = pgTable(
 		source: varchar("source", { length: 50 }),
 
 		// REQUEST approval workflow
-		approvalStatus: varchar("approval_status", { length: 50 }), // 'pending', 'approved', 'rejected' (only for request type)
 		approvedBy: text("approved_by").references(() => usersTable.id), // Who approved/rejected
 		approvedAt: timestamp("approved_at", { withTimezone: true }),
 		rejectionReason: text("rejection_reason"),
-		convertedToTaskId: text("converted_to_task_id"), // When REQUEST becomes TASK
-		convertedFromRequestId: text("converted_from_request_id"), // Parent REQUEST if this is converted TASK
 
 		// Dates
 		dueDate: timestamp("due_date", { withTimezone: true }),
@@ -232,30 +225,27 @@ export const mattersTable = pgTable(
 		...commonColumns,
 	},
 	(table) => [
-		uniqueIndex("matters_workspace_short_id_unique").on(
-			table.workspaceId,
-			table.shortID,
-		),
+		uniqueIndex("matters_team_short_id_unique").on(table.teamId, table.shortID),
 		// Composite index for fast matter key lookup (GEN-001)
-		uniqueIndex("matters_workspace_code_short_id_unique").on(
-			table.workspaceCode,
+		uniqueIndex("matters_team_code_short_id_unique").on(
+			table.teamCode,
 			table.shortID,
 		),
 		index("matters_short_id_idx").on(table.shortID),
-		index("matters_workspace_idx").on(table.workspaceId),
-		index("matters_workspace_archived_updated_idx").on(
-			table.workspaceId,
+		index("matters_team_idx").on(table.teamId),
+		index("matters_team_archived_updated_idx").on(
+			table.teamId,
 			table.archived,
 			table.updatedAt,
 		),
-		index("matters_workspace_status_updated_idx").on(
-			table.workspaceId,
+		index("matters_team_status_updated_idx").on(
+			table.teamId,
 			table.statusId,
 			table.updatedAt,
 		),
 		index("matters_assignee_archived_idx").on(table.assigneeId, table.archived),
-		index("matters_workspace_priority_archived_idx").on(
-			table.workspaceId,
+		index("matters_team_priority_archived_idx").on(
+			table.teamId,
 			table.priority,
 			table.archived,
 		),
@@ -266,19 +256,15 @@ export const mattersTable = pgTable(
 			table.updatedAt,
 		),
 		index("matters_author_idx").on(table.authorId),
-		index("matters_workspace_assignee_archived_idx").on(
-			table.workspaceId,
+		index("matters_team_assignee_archived_idx").on(
+			table.teamId,
 			table.assigneeId,
 			table.archived,
 		),
 		// New indexes for REQUEST/TASK workflow
-		index("matters_type_approval_idx").on(table.type, table.approvalStatus),
-		index("matters_workspace_type_idx").on(table.workspaceId, table.type),
+		// New indexes for REQUEST/TASK workflow
+		index("matters_team_type_idx").on(table.teamId, table.type),
 		index("matters_approved_by_idx").on(table.approvedBy),
-		index("matters_converted_to_task_idx").on(table.convertedToTaskId),
-		index("matters_converted_from_request_idx").on(
-			table.convertedFromRequestId,
-		),
 	],
 );
 
@@ -457,7 +443,7 @@ export const usersTableRelations = relations(usersTable, ({ many }) => ({
 	invitationsTables: many(invitationsTable),
 
 	// --- App Relations ---
-	workspaceMemberships: many(workspaceMembershipsTable),
+	teamMemberships: many(teamMembershipsTable),
 	authoredMatters: many(mattersTable, {
 		relationName: "authoredMatters",
 	}),
@@ -502,8 +488,8 @@ export const organizationsTableRelations = relations(
 		invitationsTables: many(invitationsTable),
 
 		// --- App Relations ---
-		workspaces: many(workspacesTable),
-		workspaceMemberships: many(workspaceMembershipsTable),
+		teams: many(teamsTable),
+		teamMemberships: many(teamMembershipsTable),
 		labels: many(labelsTable),
 		matters: many(mattersTable),
 	}),
@@ -534,41 +520,38 @@ export const invitationsTableRelations = relations(
 	}),
 );
 
-export const workspacesRelations = relations(
-	workspacesTable,
-	({ one, many }) => ({
-		organization: one(organizationsTable, {
-			fields: [workspacesTable.orgId],
-			references: [organizationsTable.id],
-		}),
-		statuses: many(statusesTable),
-		matters: many(mattersTable),
-		memberships: many(workspaceMembershipsTable),
+export const teamsRelations = relations(teamsTable, ({ one, many }) => ({
+	organization: one(organizationsTable, {
+		fields: [teamsTable.orgId],
+		references: [organizationsTable.id],
 	}),
-);
+	statuses: many(statusesTable),
+	matters: many(mattersTable),
+	memberships: many(teamMembershipsTable),
+}));
 
-export const workspaceMembershipsRelations = relations(
-	workspaceMembershipsTable,
+export const teamMembershipsRelations = relations(
+	teamMembershipsTable,
 	({ one }) => ({
-		workspace: one(workspacesTable, {
-			fields: [workspaceMembershipsTable.workspaceId],
-			references: [workspacesTable.id],
+		team: one(teamsTable, {
+			fields: [teamMembershipsTable.teamId],
+			references: [teamsTable.id],
 		}),
 		user: one(usersTable, {
-			fields: [workspaceMembershipsTable.userId],
+			fields: [teamMembershipsTable.userId],
 			references: [usersTable.id],
 		}),
 		organization: one(organizationsTable, {
-			fields: [workspaceMembershipsTable.orgId],
+			fields: [teamMembershipsTable.orgId],
 			references: [organizationsTable.id],
 		}),
 	}),
 );
 
 export const statusesRelations = relations(statusesTable, ({ one, many }) => ({
-	workspace: one(workspacesTable, {
-		fields: [statusesTable.workspaceId],
-		references: [workspacesTable.id],
+	team: one(teamsTable, {
+		fields: [statusesTable.teamId],
+		references: [teamsTable.id],
 	}),
 	creator: one(usersTable, {
 		fields: [statusesTable.creatorId],
@@ -590,9 +573,9 @@ export const labelsRelations = relations(labelsTable, ({ one, many }) => ({
 }));
 
 export const mattersRelations = relations(mattersTable, ({ one, many }) => ({
-	workspace: one(workspacesTable, {
-		fields: [mattersTable.workspaceId],
-		references: [workspacesTable.id],
+	team: one(teamsTable, {
+		fields: [mattersTable.teamId],
+		references: [teamsTable.id],
 	}),
 	organization: one(organizationsTable, {
 		fields: [mattersTable.orgId],
@@ -622,22 +605,6 @@ export const mattersRelations = relations(mattersTable, ({ one, many }) => ({
 		fields: [mattersTable.approvedBy],
 		references: [usersTable.id],
 		relationName: "approvedMatters",
-	}),
-	convertedTask: one(mattersTable, {
-		fields: [mattersTable.convertedToTaskId],
-		references: [mattersTable.id],
-		relationName: "convertedToTask",
-	}),
-	convertedFromMatters: many(mattersTable, {
-		relationName: "convertedToTask",
-	}),
-	parentRequest: one(mattersTable, {
-		fields: [mattersTable.convertedFromRequestId],
-		references: [mattersTable.id],
-		relationName: "convertedFromRequest",
-	}),
-	convertedToMatters: many(mattersTable, {
-		relationName: "convertedFromRequest",
 	}),
 }));
 

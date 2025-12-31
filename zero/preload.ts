@@ -3,7 +3,7 @@ import { queries } from "./queries";
 import { CACHE_LONG, CACHE_NAV, CACHE_PRELOAD } from "./query-cache-policy";
 
 // Per-instance tracking to avoid redundant preloads (following zbugs pattern)
-const preloadedWorkspaces = new WeakMap<Zero, Set<string>>();
+const preloadedTeams = new WeakMap<Zero, Set<string>>();
 const preloadedInstances = new WeakSet<Zero>();
 
 /**
@@ -18,7 +18,7 @@ export function preloadAll(z: Zero) {
 
 	// Essential navigation data - context comes from ZeroProvider
 	z.preload(queries.getOrganizationList(), CACHE_PRELOAD);
-	z.preload(queries.getWorkspacesList(), CACHE_PRELOAD);
+	z.preload(queries.getTeamsList(), CACHE_PRELOAD);
 	z.preload(queries.getUserAssignedMatters(), CACHE_PRELOAD);
 	z.preload(queries.getUserAuthoredMatters(), CACHE_PRELOAD);
 	z.preload(queries.getOrganizationLabels(), CACHE_PRELOAD);
@@ -26,87 +26,83 @@ export function preloadAll(z: Zero) {
 }
 
 /**
- * Preloads all workspaces after workspace list is available.
- * Call this once you have the workspace IDs.
- * Uses the SAME per-workspace queries that components use for cache hits.
+ * Preloads all teams after team list is available.
+ * Call this once you have the team IDs.
+ * Uses the SAME per-team queries that components use for cache hits.
  */
-export function preloadAllWorkspaces(
+export function preloadAllTeams(
 	z: Zero,
-	workspaceIds: string[],
+	teamIds: string[],
 	activeOrgId?: string,
 ) {
-	// Preload all workspaces - Zero handles this efficiently
-	for (const id of workspaceIds) {
-		preloadWorkspace(z, id, activeOrgId);
+	// Preload all teams - Zero handles this efficiently
+	for (const id of teamIds) {
+		preloadTeam(z, id, activeOrgId);
 	}
 }
 
 /**
- * Preloads workspace data for instant switching.
+ * Preloads team data for instant switching.
  * Zero caches to IndexedDB so subsequent loads are instant.
  */
-export function preloadWorkspace(
-	z: Zero,
-	workspaceId: string,
-	activeOrgId?: string,
-) {
-	if (!workspaceId) return;
+export function preloadTeam(z: Zero, teamId: string, activeOrgId?: string) {
+	if (!teamId) return;
 
-	let instanceSet = preloadedWorkspaces.get(z);
+	let instanceSet = preloadedTeams.get(z);
 	if (!instanceSet) {
 		instanceSet = new Set<string>();
-		preloadedWorkspaces.set(z, instanceSet);
+		preloadedTeams.set(z, instanceSet);
 	}
 
-	const key = `${activeOrgId ?? "default"}:${workspaceId}`;
+	const key = `${activeOrgId ?? "default"}:${teamId}`;
 	if (instanceSet.has(key)) return;
 
 	// Use CACHE_NAV to match component - this is critical for cache hit
-	z.preload(queries.getWorkspaceMatters({ workspaceId }), CACHE_NAV);
-	z.preload(queries.getWorkspaceStatuses({ workspaceId }), CACHE_LONG);
+	z.preload(queries.getTeamMatters({ teamId }), CACHE_NAV);
+	z.preload(queries.getTeamStatuses({ teamId }), CACHE_LONG);
 
 	instanceSet.add(key);
 }
 
 /**
- * Preloads all workspace matters for instant switching.
+ * Preloads all team matters for instant switching.
  */
-export function preloadAllWorkspaceMatters(
+export function preloadAllTeamMatters(
 	z: Zero,
-	workspaceIds: string[],
+	teamIds: string[],
 	max = 10,
 	activeOrgId?: string,
 ) {
-	for (const id of workspaceIds.slice(0, max)) {
-		preloadWorkspace(z, id, activeOrgId);
+	for (const id of teamIds.slice(0, max)) {
+		preloadTeam(z, id, activeOrgId);
 	}
 }
 
 /**
- * Preloads adjacent workspaces for instant navigation.
+ * Preloads adjacent teams for instant navigation.
  */
-export function preloadAdjacentWorkspaces(
+export function preloadAdjacentTeams(
 	z: Zero,
-	workspaceIds: string[],
+	teamIds: string[],
 	max = 3,
 	activeOrgId?: string,
 ) {
-	let instanceSet = preloadedWorkspaces.get(z);
+	let instanceSet = preloadedTeams.get(z);
 	if (!instanceSet) {
 		instanceSet = new Set<string>();
-		preloadedWorkspaces.set(z, instanceSet);
+		preloadedTeams.set(z, instanceSet);
 	}
-	const toPreload = workspaceIds
+	const toPreload = teamIds
 		.filter((id) => !instanceSet.has(`${activeOrgId ?? "default"}:${id}`))
 		.slice(0, max);
 	// Preload immediately - no delay needed, Zero handles async well
 	for (const id of toPreload) {
-		preloadWorkspace(z, id, activeOrgId);
+		preloadTeam(z, id, activeOrgId);
 	}
 }
 
 export function clearPreloadCache(z?: Zero) {
 	if (z) {
-		preloadedWorkspaces.delete(z);
+		preloadedTeams.delete(z);
 	}
 }

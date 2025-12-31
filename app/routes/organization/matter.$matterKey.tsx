@@ -75,18 +75,18 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	// Inferred types from Zero queries
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
-	const [workspaceMemberships] = useQuery(
-		queries.getWorkspaceMembers({ workspaceId: matter?.workspaceId || "" }),
-		{ enabled: !!matter?.workspaceId, ...CACHE_LONG },
+	const [teamMemberships] = useQuery(
+		queries.getTeamMembers({ teamId: matter?.teamId || "" }),
+		{ enabled: !!matter?.teamId, ...CACHE_LONG },
 	);
 	const [statuses] = useQuery(
-		queries.getWorkspaceStatuses({ workspaceId: matter?.workspaceId || "" }),
-		{ enabled: !!matter?.workspaceId, ...CACHE_LONG },
+		queries.getTeamStatuses({ teamId: matter?.teamId || "" }),
+		{ enabled: !!matter?.teamId, ...CACHE_LONG },
 	);
 
 	// 2. Permissions
-	const perms = usePermissions(matter?.workspaceId, workspaceMemberships);
-	// Org-level elevation: managers in workspace or owners/admins in org have full access
+	const perms = usePermissions(matter?.teamId, teamMemberships);
+	// Org-level elevation: managers in team or owners/admins in org have full access
 	const authRole = perms.role as string;
 	const isAdmin =
 		perms.isManager || authRole === "admin" || authRole === "owner";
@@ -99,9 +99,11 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		if (!matter) return statuses;
 		// Requests use request statuses, tasks use task statuses
 		const isRequest = matter.type === "request";
-		return statuses.filter((s) =>
-			isRequest ? s.isRequestStatus : !s.isRequestStatus,
-		);
+		return statuses.filter((s) => {
+			const isRequestStatus =
+				s.type === "pending_approval" || s.type === "rejected";
+			return isRequest ? isRequestStatus : !isRequestStatus;
+		});
 	}, [matter, statuses]);
 
 	// 3. State & Loading
@@ -205,7 +207,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						<span className="ml-1 hidden sm:inline">Back</span>
 					</Button>
 					<span className="truncate font-medium font-mono text-foreground text-sm">
-						{matter.workspaceCode}-{matter.shortID}
+						{matter.teamCode}-{matter.shortID}
 					</span>
 				</div>
 				<div className="flex items-center gap-1">
@@ -269,7 +271,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								isVisible={matter.type === "request"}
 								isAdmin={isAdmin}
 								matterId={matter.id}
-								approvalStatus={matter.approvalStatus}
+								statusType={matter.status?.type}
 								z={z}
 							/>
 
@@ -408,8 +410,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 					<DialogHeader>
 						<DialogTitle>Delete Matter</DialogTitle>
 						<DialogDescription>
-							Are you sure you want to delete {matter.workspaceCode}-
-							{matter.shortID}? This action cannot be easily undone.
+							Are you sure you want to delete {matter.teamCode}-{matter.shortID}
+							? This action cannot be easily undone.
 						</DialogDescription>
 					</DialogHeader>
 					<DialogFooter className="gap-2 sm:gap-0">
@@ -662,13 +664,13 @@ function AdminApproveSection({
 	isVisible,
 	isAdmin,
 	matterId,
-	approvalStatus,
+	statusType,
 	z,
 }: {
 	isVisible: boolean;
 	isAdmin: boolean;
 	matterId: string;
-	approvalStatus?: string | null;
+	statusType?: string | null;
 	z: any;
 }) {
 	if (!isVisible || !isAdmin) return null;
@@ -685,7 +687,7 @@ function AdminApproveSection({
 			.catch(() => toast.error("Failed to reject request"));
 	};
 
-	if (approvalStatus === "rejected") {
+	if (statusType === "rejected") {
 		return (
 			<div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
 				<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">

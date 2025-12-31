@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AppInfo } from "~/lib/app-config";
 import { auth, getServerSession } from "~/lib/auth";
 import { getOrganization } from "~/lib/server/organization.server";
-import { seedWorkspaceDefaults } from "~/lib/server/seed-defaults.server";
+import { seedTeamDefaults } from "~/lib/server/seed-defaults.server";
 import { sanitizeSlug } from "~/lib/utils";
 import { orgOnboardingSchema } from "~/lib/validations/organization";
 import type { Route } from "./+types/join";
@@ -115,7 +115,7 @@ export async function action({ request }: Route.ActionArgs) {
 					return null;
 				}
 
-				await seedWorkspaceDefaults({
+				await seedTeamDefaults({
 					orgId: newOrg.id,
 				});
 
@@ -130,7 +130,7 @@ export async function action({ request }: Route.ActionArgs) {
 		case "join": {
 			const { invitationId, joinOrgSlug } = submission.value;
 
-			// Use our Convex acceptInvitation which handles workspace memberships
+			// Use our Convex acceptInvitation which handles team memberships
 			const result = await auth.api.acceptInvitation({
 				body: {
 					invitationId,
@@ -142,7 +142,7 @@ export async function action({ request }: Route.ActionArgs) {
 				return toast.error("Failed to accept invitation.");
 			}
 
-			// After joining, redirect to home (sidebar will show new org/workspaces)
+			// After joining, redirect to home (sidebar will show new org/teams)
 			return redirect(`/${joinOrgSlug}/tasks`);
 		}
 

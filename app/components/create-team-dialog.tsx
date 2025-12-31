@@ -4,7 +4,7 @@ import { useZero } from "@rocicorp/zero/react";
 import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
-import { createWorkspaceSchema } from "../lib/validations/organization";
+import { createTeamSchema } from "../lib/validations/organization";
 import { InputField } from "./forms";
 import { Button } from "./ui/button";
 import {
@@ -22,7 +22,7 @@ const deriveCode = (name: string) =>
 		.substring(0, 3)
 		.toUpperCase();
 
-export const CreateWorkspaceDialog = memo(
+export const CreateTeamDialog = memo(
 	({
 		open,
 		onOpenChange,
@@ -35,21 +35,21 @@ export const CreateWorkspaceDialog = memo(
 		const [isSubmitting, setIsSubmitting] = useState(false);
 
 		const [form, fields] = useForm({
-			id: "create-workspace-dialog",
-			constraint: getZodConstraint(createWorkspaceSchema),
+			id: "create-team-dialog",
+			constraint: getZodConstraint(createTeamSchema),
 			onValidate: ({ formData }) =>
-				parseWithZod(formData, { schema: createWorkspaceSchema }),
+				parseWithZod(formData, { schema: createTeamSchema }),
 			onSubmit: async (e, { submission }) => {
 				e.preventDefault();
 				if (submission?.status !== "success") return;
 
 				setIsSubmitting(true);
-				zr.mutate(mutators.workspace.create(submission.value))
+				zr.mutate(mutators.team.create(submission.value))
 					.server.then(() => {
-						toast.success("Workspace created");
+						toast.success("Team created");
 						close();
 					})
-					.catch(() => toast.error("Failed to create workspace"))
+					.catch(() => toast.error("Failed to create team"))
 					.finally(() => setIsSubmitting(false));
 			},
 		});
@@ -65,9 +65,9 @@ export const CreateWorkspaceDialog = memo(
 			<Dialog open={open} onOpenChange={(o) => !o && close()}>
 				<DialogContent className="max-w-90 p-4">
 					<DialogHeader className="gap-2">
-						<DialogTitle>New Workspace</DialogTitle>
+						<DialogTitle>New Team</DialogTitle>
 						<DialogDescription className="text-xs">
-							Give your workspace a name and a unique 3-letter code.
+							Give your team a name and a unique 3-letter code.
 						</DialogDescription>
 					</DialogHeader>
 
@@ -117,7 +117,7 @@ export const CreateWorkspaceDialog = memo(
 								Cancel
 							</Button>
 							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? "Creating..." : "Create Workspace"}
+								{isSubmitting ? "Creating..." : "Create Team"}
 							</Button>
 						</div>
 					</form>

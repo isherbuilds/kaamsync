@@ -34,10 +34,10 @@ import {
 	type StatusType,
 } from "~/lib/matter-constants";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
-import type { Route } from "./+types/$workspaceCode";
+import type { Route } from "./+types/$teamCode";
 
 export const meta: Route.MetaFunction = ({ params }) => [
-	{ title: `${params.workspaceCode} - Tasks` },
+	{ title: `${params.teamCode} - Tasks` },
 ];
 
 type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
@@ -47,43 +47,43 @@ type Status = Row["statusesTable"];
 type ActionProps = {
 	isManager: boolean;
 	canRequest: boolean;
-	workspaceId: string;
-	workspaceCode: string;
+	teamId: string;
+	teamCode: string;
 	taskStatuses: readonly Status[];
 	requestStatuses: readonly Status[];
-	members: readonly Row["workspaceMembershipsTable"][];
+	members: readonly Row["teamMembershipsTable"][];
 };
 
-export default function WorkspaceIndex() {
+export default function TeamIndex() {
 	const { orgSlug } = useOrgLoaderData();
-	const { workspaceCode } = useParams();
+	const { teamCode } = useParams();
 	const z = useZero();
 
 	// 1. Data Fetching
-	const [workspaces] = useQuery(queries.getWorkspacesList(), CACHE_NAV);
-	const workspace = useMemo(
-		() => workspaces.find((w) => w.code === workspaceCode),
-		[workspaces, workspaceCode],
+	const [teams] = useQuery(queries.getTeamsList(), CACHE_NAV);
+	const team = useMemo(
+		() => teams.find((w) => w.code === teamCode),
+		[teams, teamCode],
 	);
-	const workspaceId = workspace?.id ?? "";
+	const teamId = team?.id ?? "";
 
-	const [matters] = useQuery(queries.getWorkspaceMatters({ workspaceId }), {
-		enabled: !!workspaceId,
+	const [matters] = useQuery(queries.getTeamMatters({ teamId }), {
+		enabled: !!teamId,
 		...CACHE_NAV,
 	});
 
-	const [statuses] = useQuery(queries.getWorkspaceStatuses({ workspaceId }), {
-		enabled: !!workspaceId,
+	const [statuses] = useQuery(queries.getTeamStatuses({ teamId }), {
+		enabled: !!teamId,
 		...CACHE_NAV,
 	});
 
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
-		useGroupedTasks(matters as Matter[], statuses, workspaceId);
+		useGroupedTasks(matters as Matter[], statuses, teamId);
 
 	const { isManager, canCreateRequests } = usePermissions(
-		workspaceId,
-		workspace?.memberships,
+		teamId,
+		team?.memberships,
 	);
 
 	const onPriority = useCallback(
@@ -104,44 +104,50 @@ export default function WorkspaceIndex() {
 
 	// Filter statuses for task-only view (exclude request statuses)
 	const taskStatuses = useMemo(
-		() => statuses.filter((s) => !s.isRequestStatus),
+		() =>
+			statuses.filter(
+				(s) => s.type !== "pending_approval" && s.type !== "rejected",
+			),
 		[statuses],
 	);
 	const requestStatuses = useMemo(
-		() => statuses.filter((s) => s.isRequestStatus),
+		() =>
+			statuses.filter(
+				(s) => s.type === "pending_approval" || s.type === "rejected",
+			),
 		[statuses],
 	);
 
-	if (!workspace) return null;
+	if (!team) return null;
 
 	return (
 		<div className="flex h-full flex-col overflow-hidden bg-background">
 			<Header
-				name={workspace.name}
+				name={team.name}
 				count={activeCount}
 				isManager={isManager}
 				canRequest={canCreateRequests}
-				workspaceId={workspace.id}
-				workspaceCode={workspace.code}
+				teamId={team.id}
+				teamCode={team.code}
 				taskStatuses={taskStatuses}
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
 				}
-				members={workspace.memberships ?? []}
+				members={team.memberships ?? []}
 			/>
 
 			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
-					<WorkspaceEmptyState
+					<TeamEmptyState
 						isManager={isManager}
 						canRequest={canCreateRequests}
-						workspaceId={workspace.id}
-						workspaceCode={workspace.code}
+						teamId={team.id}
+						teamCode={team.code}
 						taskStatuses={taskStatuses}
 						requestStatuses={
 							requestStatuses.length > 0 ? requestStatuses : taskStatuses
 						}
-						members={workspace.memberships ?? []}
+						members={team.memberships ?? []}
 					/>
 				) : (
 					<VirtualizedList
@@ -156,7 +162,7 @@ export default function WorkspaceIndex() {
 								<TaskRow
 									item={item}
 									orgSlug={orgSlug}
-									members={workspace.memberships ?? []}
+									members={team.memberships ?? []}
 									statuses={taskStatuses}
 									onPriority={onPriority}
 									onStatus={onStatus}
@@ -182,8 +188,8 @@ const Header = memo(
 		count,
 		isManager,
 		canRequest,
-		workspaceId,
-		workspaceCode,
+		teamId,
+		teamCode,
 		taskStatuses,
 		requestStatuses,
 		members,
@@ -203,19 +209,19 @@ const Header = memo(
 				{isManager && (
 					<MatterDialog
 						type="task"
-						workspaceId={workspaceId}
-						workspaceCode={workspaceCode}
+						teamId={teamId}
+						teamCode={teamCode}
 						statuses={taskStatuses}
-						workspaceMembers={members}
+						teamMembers={members}
 					/>
 				)}
 				{canRequest && (
 					<MatterDialog
 						type="request"
-						workspaceId={workspaceId}
-						workspaceCode={workspaceCode}
+						teamId={teamId}
+						teamCode={teamCode}
 						statuses={requestStatuses}
-						workspaceMembers={members}
+						teamMembers={members}
 					/>
 				)}
 			</div>
@@ -240,7 +246,7 @@ const GroupHeader = memo(
 			<button
 				type="button"
 				onClick={() => onToggle(status.id)}
-				className="sticky top-0 z-20 flex h-11 w-full items-center gap-2 border-b bg-background/95 px-4 backdrop-blur transition-colors hover:bg-muted/50"
+				className="sticky top-0 z-20 flex h-11 w-full items-center gap-2 border-b bg-background px-4 transition-colors hover:bg-muted/50"
 			>
 				<ChevronDown
 					className={cn(
@@ -268,7 +274,7 @@ const GroupHeader = memo(
 interface TaskRowProps {
 	item: TaskItem;
 	orgSlug: string;
-	members: readonly Row["workspaceMembershipsTable"][];
+	members: readonly Row["teamMembershipsTable"][];
 	statuses: readonly Status[];
 	onPriority: (id: string, p: PriorityValue) => void;
 	onStatus: (id: string, s: string) => void;
@@ -286,7 +292,7 @@ const TaskRow = memo(
 		onAssign,
 	}: TaskRowProps) => {
 		const { task, isCompleted } = item as TaskItem;
-		const taskCode = `${task.workspaceCode}-${task.shortID}`;
+		const taskCode = `${task.teamCode}-${task.shortID}`;
 		const link = `/${orgSlug}/matter/${taskCode}`;
 
 		const handlePriority = useCallback(
@@ -373,12 +379,12 @@ function DueDateBadge({ date }: { date: number }) {
 	);
 }
 
-const WorkspaceEmptyState = memo(
+const TeamEmptyState = memo(
 	({
 		isManager,
 		canRequest,
-		workspaceId,
-		workspaceCode,
+		teamId,
+		teamCode,
 		taskStatuses,
 		requestStatuses,
 		members,
@@ -387,25 +393,25 @@ const WorkspaceEmptyState = memo(
 			<EmptyStateCard
 				icon={ListTodoIcon}
 				title="All clear"
-				description="No active tasks in this workspace. Rest easy or create a new one."
+				description="No active tasks in this team. Rest easy or create a new one."
 			>
 				<div className="flex gap-2">
 					{isManager && (
 						<MatterDialog
 							type="task"
-							workspaceId={workspaceId}
-							workspaceCode={workspaceCode}
+							teamId={teamId}
+							teamCode={teamCode}
 							statuses={taskStatuses}
-							workspaceMembers={members}
+							teamMembers={members}
 						/>
 					)}
 					{canRequest && (
 						<MatterDialog
 							type="request"
-							workspaceId={workspaceId}
-							workspaceCode={workspaceCode}
+							teamId={teamId}
+							teamCode={teamCode}
 							statuses={requestStatuses}
-							workspaceMembers={members}
+							teamMembers={members}
 							triggerButton={
 								<Button size="sm" variant="outline">
 									Request

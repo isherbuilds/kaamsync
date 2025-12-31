@@ -29,27 +29,27 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { type WorkspaceRole, workspaceRole } from "~/db/helpers";
+import { type TeamRole, teamRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 
 const addMemberSchema = z.object({
 	userId: z.string().min(1, "Select a user"),
-	role: z.enum(workspaceRole),
+	role: z.enum(teamRole),
 });
 
-export default function WorkspaceMembersPage() {
+export default function TeamMembersPage() {
 	const { authSession } = useOrgLoaderData();
-	const { workspaceCode } = useParams();
+	const { teamCode } = useParams();
 	const zr = useZero();
 	const [open, setOpen] = useState(false);
 
-	const [workspace] = useQuery(
-		queries.getWorkspaceByCode({ code: workspaceCode ?? "" }),
+	const [team] = useQuery(
+		queries.getTeamByCode({ code: teamCode ?? "" }),
 		CACHE_LONG,
 	);
 	const [orgMembers] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 
-	const memberships = useMemo(() => workspace?.memberships ?? [], [workspace]);
+	const memberships = useMemo(() => team?.memberships ?? [], [team]);
 	const isManager = useMemo(
 		() =>
 			memberships.find((m) => m.userId === authSession.user.id)?.role ===
@@ -63,35 +63,32 @@ export default function WorkspaceMembersPage() {
 	}, [orgMembers, memberships]);
 
 	const [form, fields] = useForm({
-		id: "workspaces-add-member",
+		id: "teams-add-member",
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: addMemberSchema }),
 		defaultValue: { role: "member" },
 		onSubmit: async (event, { submission }) => {
 			event.preventDefault();
-			if (submission?.status !== "success" || !workspace) return;
+			if (submission?.status !== "success" || !team) return;
 
 			zr.mutate(
-				mutators.workspace.addMember({
-					workspaceId: workspace.id,
+				mutators.team.addMember({
+					teamId: team.id,
 					userId: submission.value.userId,
-					role: submission.value.role as WorkspaceRole,
+					role: submission.value.role as TeamRole,
 				}),
 			);
 
-			toast.success("Member added to workspace");
+			toast.success("Member added to team");
 			setOpen(false);
 		},
 	});
 
-	const handleRemove = async (member: {
-		userId: string;
-		role: WorkspaceRole;
-	}) => {
-		if (!workspace) return;
+	const handleRemove = async (member: { userId: string; role: TeamRole }) => {
+		if (!team) return;
 		zr.mutate(
-			mutators.workspace.removeMember({
-				workspaceId: workspace.id,
+			mutators.team.removeMember({
+				teamId: team.id,
 				userId: member.userId,
 			}),
 		);
@@ -101,10 +98,10 @@ export default function WorkspaceMembersPage() {
 				label: "Undo",
 				onClick: () =>
 					zr.mutate(
-						mutators.workspace.addMember({
-							workspaceId: workspace.id,
+						mutators.team.addMember({
+							teamId: team.id,
 							userId: member.userId,
-							role: member.role as WorkspaceRole,
+							role: member.role as TeamRole,
 						}),
 					),
 			},
@@ -116,11 +113,11 @@ export default function WorkspaceMembersPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="font-semibold text-lg md:text-2xl">
-						{workspace?.name} Members
+						{team?.name} Members
 					</h1>
 
 					<p className="hidden text-muted-foreground text-xs md:block">
-						Manage members who have access to this workspace.
+						Manage members who have access to this team.
 					</p>
 				</div>
 
@@ -133,7 +130,7 @@ export default function WorkspaceMembersPage() {
 						</DialogTrigger>
 						<DialogContent>
 							<DialogHeader>
-								<DialogTitle>Add Workspace Member</DialogTitle>
+								<DialogTitle>Add Team Member</DialogTitle>
 								<DialogDescription>
 									Only members of your organization can be added.
 								</DialogDescription>
@@ -155,7 +152,7 @@ export default function WorkspaceMembersPage() {
 								<div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
 									{getCollectionProps(fields.role, {
 										type: "radio",
-										options: Object.values(workspaceRole),
+										options: Object.values(teamRole),
 									}).map((props) => (
 										<label key={props.value} className="flex-1 cursor-pointer">
 											<input {...props} className="peer sr-only" />
@@ -166,7 +163,7 @@ export default function WorkspaceMembersPage() {
 									))}
 								</div>
 								<Button type="submit" className="w-full">
-									Add to Workspace
+									Add to Team
 								</Button>
 							</form>
 						</DialogContent>
@@ -209,16 +206,16 @@ export default function WorkspaceMembersPage() {
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end" className="w-44">
-											{Object.values(workspaceRole).map((role) => (
+											{Object.values(teamRole).map((role) => (
 												<DropdownMenuItem
 													key={role}
 													onClick={() =>
-														workspace &&
+														team &&
 														zr.mutate(
-															mutators.workspace.updateMemberRole({
-																workspaceId: workspace.id,
+															mutators.team.updateMemberRole({
+																teamId: team.id,
 																userId: m.userId,
-																role: role as WorkspaceRole,
+																role: role as TeamRole,
 															}),
 														)
 													}
@@ -232,7 +229,7 @@ export default function WorkspaceMembersPage() {
 												onClick={() =>
 													handleRemove({
 														userId: m.userId,
-														role: m.role as WorkspaceRole,
+														role: m.role as TeamRole,
 													})
 												}
 											>

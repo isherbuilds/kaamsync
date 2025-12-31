@@ -3,7 +3,7 @@ export type IndustryConfig = {
 	slug: string;
 	industry: string;
 	roles: string[];
-	workspaces: {
+	teams: {
 		name: string;
 		code: string;
 		icon: string;
@@ -31,7 +31,7 @@ export const industries: IndustryConfig[] = [
 			"IT Admin",
 			"Student",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Admissions",
 				code: "ADM",
@@ -113,7 +113,7 @@ export const industries: IndustryConfig[] = [
 			"Receptionist",
 			"Admin",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "OPD",
 				code: "OPD",
@@ -173,7 +173,7 @@ export const industries: IndustryConfig[] = [
 			"Worker",
 			"Surveyor",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Site Alpha",
 				code: "STA",
@@ -241,7 +241,7 @@ export const industries: IndustryConfig[] = [
 			"QA Engineer",
 			"HR Manager",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Client Projects",
 				code: "CLP",
@@ -291,7 +291,7 @@ export const industries: IndustryConfig[] = [
 			"Auditor",
 			"Accountant",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Trading Floor",
 				code: "TRD",
@@ -337,7 +337,7 @@ export const industries: IndustryConfig[] = [
 			"Security Guard",
 			"Customer Service",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Store Operations",
 				code: "OPS",
@@ -379,7 +379,7 @@ export const industries: IndustryConfig[] = [
 			"Loader",
 			"Mechanic",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Fleet Management",
 				code: "FLT",
@@ -425,7 +425,7 @@ export const industries: IndustryConfig[] = [
 			"Waiter",
 			"Valet",
 		],
-		workspaces: [
+		teams: [
 			{
 				name: "Guest Services",
 				code: "GST",

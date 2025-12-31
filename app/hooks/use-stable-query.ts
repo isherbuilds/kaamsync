@@ -51,16 +51,16 @@ export function useStableQuery<T>(
 /**
  * Caches query results to prevent flash of empty content during navigation.
  *
- * When switching workspaces, this hook maintains the previous data
+ * When switching teams, this hook maintains the previous data
  * until new data is loaded, preventing UI flicker.
  *
  * @example
  * ```tsx
  * const [tasks, status] = useCachedQuery(
- *   queries.getWorkspaceMatters({ workspaceId }),
+ *   queries.getTeamMatters({ teamId }),
  *   CACHE_NAV
  * );
- * // `tasks` will show previous workspace data until new data loads
+ * // `tasks` will show previous team data until new data loads
  * ```
  */
 export function useCachedQuery<T>(

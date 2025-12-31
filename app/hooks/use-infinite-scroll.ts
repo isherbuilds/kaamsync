@@ -16,11 +16,11 @@ type PaginationState = {
 	loadedCount: number;
 };
 
-type QueryType = "workspace" | "userAssigned" | "userAuthored";
+type QueryType = "team" | "userAssigned" | "userAuthored";
 
 interface UseInfiniteScrollOptions {
-	/** Workspace ID (required for workspace query type) */
-	workspaceId?: string;
+	/** Team ID (required for team query type) */
+	teamId?: string;
 	/** Query type to use */
 	queryType?: QueryType;
 	enabled?: boolean;
@@ -51,7 +51,7 @@ interface UseInfiniteScrollResult<T> {
  */
 function getPaginatedQuery(
 	queryType: QueryType,
-	workspaceId: string | undefined,
+	teamId: string | undefined,
 	pageSize: number,
 	cursor: MatterSortCursor | null,
 	direction: "forward" | "backward",
@@ -69,10 +69,10 @@ function getPaginatedQuery(
 				cursor,
 				direction,
 			});
-		case "workspace":
+		case "team":
 		default:
-			return queries.getWorkspaceMattersPaginated({
-				workspaceId: workspaceId || "",
+			return queries.getTeamMattersPaginated({
+				teamId: teamId || "",
 				limit: pageSize,
 				cursor,
 				direction,
@@ -93,8 +93,8 @@ function getPaginatedQuery(
  * @example
  * ```tsx
  * const { items, hasMore, loadMore, scrollRef, loadedCount } = useInfiniteMatters({
- *   workspaceId: workspace.id,
- *   queryType: 'workspace',
+ *   teamId: team.id,
+ *   queryType: 'team',
  * });
  *
  * return (
@@ -111,15 +111,15 @@ export function useInfiniteMatters(
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
 ): UseInfiniteScrollResult<any> {
 	const {
-		workspaceId,
-		queryType = "workspace",
+		teamId,
+		queryType = "team",
 		enabled = true,
 		initialPageSize = PAGE_SIZE,
 	} = options;
 
 	// Determine if query should be enabled based on query type
 	const queryEnabled =
-		enabled && (queryType === "workspace" ? Boolean(workspaceId) : true); // Context check handled by Zero
+		enabled && (queryType === "team" ? Boolean(teamId) : true); // Context check handled by Zero
 
 	// Track accumulated items across pages
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query types are complex
@@ -144,7 +144,7 @@ export function useInfiniteMatters(
 	const [currentPage, queryResult] = useQuery(
 		getPaginatedQuery(
 			queryType,
-			workspaceId,
+			teamId,
 			initialPageSize,
 			pagination.cursor,
 			pagination.direction,
@@ -152,8 +152,8 @@ export function useInfiniteMatters(
 		{ enabled: queryEnabled, ...CACHE_NAV },
 	);
 
-	// Cache key for tracking changes (workspace ID or query type)
-	const cacheKey = queryType === "workspace" ? workspaceId : queryType;
+	// Cache key for tracking changes (team ID or query type)
+	const cacheKey = queryType === "team" ? teamId : queryType;
 
 	// Track cache key changes to reset state
 	const prevCacheKeyRef = useRef(cacheKey);
@@ -188,7 +188,7 @@ export function useInfiniteMatters(
 			setAccumulatedItems((prev) => {
 				const existingIds = new Set(prev.map((item) => item.id));
 				const newItems = currentPage.filter(
-					(item) => !existingIds.has(item.id),
+					(item) => item && "id" in item && !existingIds.has(item.id),
 				);
 				return [...prev, ...newItems];
 			});

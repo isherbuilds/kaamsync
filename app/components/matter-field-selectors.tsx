@@ -34,10 +34,10 @@ import {
 } from "~/lib/matter-constants";
 import { cn } from "~/lib/utils";
 
-// This type covers both Org Members and Workspace Members query shapes
+// This type covers both Org Members and Team Members query shapes
 export type MemberSelectorItem = {
 	userId: string;
-	user?: Row["usersTable"]; // Workspace query shape
+	user?: Row["usersTable"]; // Team query shape
 	usersTable?: Row["usersTable"]; // Org query shape
 	role?: string;
 };

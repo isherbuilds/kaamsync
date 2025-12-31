@@ -1,10 +1,11 @@
 import { defineQueries, defineQuery } from "@rocicorp/zero";
 import z from "zod";
+import { matterType, statusType } from "~/db/helpers";
 import type { Context } from "./auth";
 import { zql } from "./schema";
 
 const DEFAULT_LIMIT = 100;
-const WORKSPACE_MATTERS_LIMIT = 1000; // High limit - Zero caches to IndexedDB
+const TEAM_MATTERS_LIMIT = 1000; // High limit - Zero caches to IndexedDB
 const TIMELINE_LIMIT = 50;
 const ATTACHMENTS_LIMIT = 25;
 const PAGE_SIZE = 100; // For paginated queries
@@ -34,12 +35,12 @@ const withOrg = <T extends Q>(q: T, ctx: Context): T =>
 
 const notDeleted = <T extends Q>(q: T): T => q.where("deletedAt", "IS", null);
 
-const withWorkspaceAccess = <T>(q: T, ctx: Context, workspaceId: string): T =>
+const withTeamAccess = <T>(q: T, ctx: Context, teamId: string): T =>
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 	(q as any)
-		.where("workspaceId", workspaceId)
+		.where("teamId", teamId)
 		.where("deletedAt", "IS", null) // Filter deleted matters
-		.whereExists("workspace", (w: any) =>
+		.whereExists("team", (w: any) =>
 			w
 				.where("orgId", ctx.activeOrganizationId ?? "")
 				// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
@@ -49,9 +50,9 @@ const withWorkspaceAccess = <T>(q: T, ctx: Context, workspaceId: string): T =>
 		);
 
 export const queries = defineQueries({
-	// WORKSPACE QUERIES
-	getWorkspacesList: defineQuery(({ ctx }) =>
-		withOrg(zql.workspacesTable, ctx)
+	// TEAM QUERIES
+	getTeamsList: defineQuery(({ ctx }) =>
+		withOrg(zql.teamsTable, ctx)
 			.whereExists("memberships", (q) =>
 				q.where("userId", ctx.userId).where("deletedAt", "IS", null),
 			)
@@ -60,19 +61,19 @@ export const queries = defineQueries({
 			.limit(DEFAULT_LIMIT),
 	),
 
-	getWorkspaceByCode: defineQuery(
+	getTeamByCode: defineQuery(
 		z.object({ code: z.string() }),
 		({ ctx, args: { code } }) =>
-			withOrg(zql.workspacesTable, ctx)
+			withOrg(zql.teamsTable, ctx)
 				.where("code", code)
 				.related("memberships", (q) => notDeleted(q).related("user"))
 				.one(),
 	),
 
-	getUserWorkspaces: defineQuery(({ ctx }) =>
-		withOrg(zql.workspaceMembershipsTable, ctx)
+	getUserTeams: defineQuery(({ ctx }) =>
+		withOrg(zql.teamMembershipsTable, ctx)
 			.where("userId", ctx.userId)
-			.related("workspace", (q) => notDeleted(q))
+			.related("team", (q) => notDeleted(q))
 			.related("user")
 			.limit(DEFAULT_LIMIT),
 	),
@@ -86,7 +87,7 @@ export const queries = defineQueries({
 				.related("author")
 				.related("assignee")
 				.related("status")
-				.related("workspace")
+				.related("team")
 				.related("organization")
 				.related("labels", (q) => q.related("label"))
 				.related("timelines", (q) =>
@@ -105,9 +106,9 @@ export const queries = defineQueries({
 		z.object({ code: z.string(), shortID: z.number() }),
 		({ ctx, args: { code, shortID } }) =>
 			withOrg(zql.mattersTable, ctx)
-				.where("workspaceCode", code)
+				.where("teamCode", code)
 				.where("shortID", shortID)
-				.related("workspace")
+				.related("team")
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -125,47 +126,47 @@ export const queries = defineQueries({
 				.one(),
 	),
 
-	getWorkspaceMatters: defineQuery(
-		z.object({ workspaceId: z.string() }),
-		({ ctx, args: { workspaceId } }) =>
-			withWorkspaceAccess(zql.mattersTable, ctx, workspaceId)
-				.where("type", "task")
-				.related("status") // Only status is needed for grouping - fetch others on detail page
-				// Server-side sorting: priority (numeric) → dueDate → createdAt
-				// Note: Zero doesn't support ordering by related table columns (status.position)
-				// but priority is now numeric so server sorts correctly.
+	getTeamMatters: defineQuery(
+		z.object({ teamId: z.string() }),
+		({ ctx, args: { teamId } }) =>
+			withTeamAccess(zql.mattersTable, ctx, teamId)
+				.where("type", matterType.task)
+				.related("status")
 				.orderBy("priority", "asc") // 0=urgent first, 4=none last
 				.orderBy("dueDate", "asc") // earliest first, nulls last
 				.orderBy("createdAt", "desc") // newest first for same priority+due date
-				.limit(WORKSPACE_MATTERS_LIMIT),
+				.limit(TEAM_MATTERS_LIMIT),
 	),
 
-	// Pre-sync all matters across ALL workspaces user has access to
-	// This enables instant workspace switching (no workspaceId filter)
+	// Pre-sync all matters across ALL teams user has access to
+	// This enables instant team switching (no teamId filter)
 	getAllMatters: defineQuery(z.tuple([]), ({ ctx }) =>
 		withOrg(zql.mattersTable, ctx)
-			.where("type", "task")
-			// Only sync matters from workspaces user is a member of
-			// flip: true because user is member of few workspaces (small subset)
-			.whereExists("workspace", (w) =>
+			.where("type", matterType.task)
+			// Only sync matters from teams user is a member of
+			// flip: true because user is member of few teams (small subset)
+			.whereExists("team", (w) =>
 				w.whereExists("memberships", (m) =>
 					m.where("userId", ctx.userId).where("deletedAt", "IS", null),
 				),
 			)
 			.related("status")
-			.related("workspace")
+			.related("team")
 			.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
-			.limit(WORKSPACE_MATTERS_LIMIT),
+			.limit(TEAM_MATTERS_LIMIT),
 	),
 
 	getUserAssignedMatters: defineQuery(({ ctx }) =>
 		withOrg(zql.mattersTable, ctx)
 			.where("assigneeId", ctx.userId)
-			.where("type", "task")
+			.where("type", matterType.task)
+			.whereExists("status", (w) =>
+				w.where("type", "IN", [statusType.notStarted, statusType.started]),
+			)
 			.related("author")
 			.related("assignee")
 			.related("status")
-			.related("labels", (q) => q.related("label"))
+			.related("labels")
 			.orderBy("createdAt", "desc")
 			.limit(DEFAULT_LIMIT),
 	),
@@ -173,7 +174,11 @@ export const queries = defineQueries({
 	getUserAuthoredMatters: defineQuery(({ ctx }) =>
 		withOrg(zql.mattersTable, ctx)
 			.where("authorId", ctx.userId)
-			.where("type", "request")
+			.where("type", matterType.request)
+			// Show all requests regardless of status
+			.whereExists("status", (w) =>
+				w.where("type", "IN", [statusType.pendingApproval]),
+			)
 			.related("assignee")
 			.related("status")
 			.orderBy("createdAt", "desc")
@@ -181,11 +186,13 @@ export const queries = defineQueries({
 	),
 
 	getPendingRequests: defineQuery(
-		z.object({ workspaceId: z.string() }),
-		({ ctx, args: { workspaceId } }) =>
-			withWorkspaceAccess(zql.mattersTable, ctx, workspaceId)
-				.where("type", "REQUEST")
-				.where("approvalStatus", "PENDING")
+		z.object({ teamId: z.string() }),
+		({ ctx, args: { teamId } }) =>
+			withTeamAccess(zql.mattersTable, ctx, teamId)
+				.where("type", matterType.request)
+				.whereExists("status", (w) =>
+					w.where("type", statusType.pendingApproval),
+				)
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -194,15 +201,15 @@ export const queries = defineQueries({
 	),
 
 	getWatchedMatters: defineQuery(
-		z.object({ workspaceId: z.string().nullable() }),
-		({ ctx, args: { workspaceId } }) => {
+		z.object({ teamId: z.string().nullable() }),
+		({ ctx, args: { teamId } }) => {
 			let q = withOrg(zql.mattersTable, ctx)
 				.whereExists("watchers", (w) => w.where("userId", ctx.userId))
 				.related("author")
 				.related("assignee")
 				.related("status")
-				.related("workspace");
-			if (workspaceId) q = q.where("workspaceId", workspaceId);
+				.related("team");
+			if (teamId) q = q.where("teamId", teamId);
 			return q.orderBy("updatedAt", "desc").limit(DEFAULT_LIMIT);
 		},
 	),
@@ -245,13 +252,13 @@ export const queries = defineQueries({
 			.limit(DEFAULT_LIMIT),
 	),
 
-	// WORKSPACE MEMBERSHIP QUERIES
-	getWorkspaceMembers: defineQuery(
-		z.object({ workspaceId: z.string() }),
-		({ ctx, args: { workspaceId } }) =>
-			withWorkspaceAccess(zql.workspaceMembershipsTable, ctx, workspaceId)
+	// TEAM MEMBERSHIP QUERIES
+	getTeamMembers: defineQuery(
+		z.object({ teamId: z.string() }),
+		({ ctx, args: { teamId } }) =>
+			withTeamAccess(zql.teamMembershipsTable, ctx, teamId)
 				.related("user")
-				.related("workspace")
+				.related("team")
 				.orderBy("createdAt", "asc")
 				.limit(DEFAULT_LIMIT),
 	),
@@ -261,21 +268,21 @@ export const queries = defineQueries({
 		withOrg(zql.labelsTable, ctx).orderBy("name", "asc").limit(DEFAULT_LIMIT),
 	),
 
-	getWorkspaceStatuses: defineQuery(
-		z.object({ workspaceId: z.string() }),
-		({ ctx, args: { workspaceId } }) =>
-			withWorkspaceAccess(notDeleted(zql.statusesTable), ctx, workspaceId)
+	getTeamStatuses: defineQuery(
+		z.object({ teamId: z.string() }),
+		({ ctx, args: { teamId } }) =>
+			withTeamAccess(notDeleted(zql.statusesTable), ctx, teamId)
 				.orderBy("position", "asc")
 				.limit(DEFAULT_LIMIT),
 	),
 
-	// Pre-sync statuses from ALL workspaces for instant switching
-	getAllWorkspaceStatuses: defineQuery(
+	// Pre-sync statuses from ALL teams for instant switching
+	getAllTeamStatuses: defineQuery(
 		({ ctx }) =>
 			notDeleted(zql.statusesTable)
-				// Filter to workspaces in current org that user is a member of
-				// flip: true because user is member of few workspaces (small subset)
-				.whereExists("workspace", (w) =>
+				// Filter to teams in current org that user is a member of
+				// flip: true because user is member of few teams (small subset)
+				.whereExists("team", (w) =>
 					w
 						.where("orgId", ctx.activeOrganizationId ?? "")
 						.where("deletedAt", "IS", null)
@@ -283,9 +290,9 @@ export const queries = defineQueries({
 							m.where("userId", ctx.userId).where("deletedAt", "IS", null),
 						),
 				)
-				.related("workspace")
+				.related("team")
 				.orderBy("position", "asc")
-				.limit(DEFAULT_LIMIT * 10), // Higher limit for all workspaces
+				.limit(DEFAULT_LIMIT * 10), // Higher limit for all teams
 	),
 
 	// TIMELINE QUERIES
@@ -319,18 +326,18 @@ export const queries = defineQueries({
 	// =========================================================================
 
 	/**
-	 * Paginated workspace matters - use when workspace has 1000+ matters.
+	 * Paginated team matters - use when team has 1000+ matters.
 	 * Uses keyset pagination with cursor for efficient large list navigation.
 	 */
-	getWorkspaceMattersPaginated: defineQuery(
+	getTeamMattersPaginated: defineQuery(
 		z.object({
-			workspaceId: z.string(), // workspaceId
+			teamId: z.string(), // teamId
 			limit: z.number(), // limit (page size)
 			cursor: matterCursorSchema.nullable(), // cursor (null for first page)
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
-		({ ctx, args: { workspaceId, limit, cursor, direction } }) => {
-			let q = withWorkspaceAccess(zql.mattersTable, ctx, workspaceId)
+		({ ctx, args: { teamId, limit, cursor, direction } }) => {
+			let q = withTeamAccess(zql.mattersTable, ctx, teamId)
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -361,7 +368,10 @@ export const queries = defineQueries({
 		({ ctx, args: { limit, cursor, direction } }) => {
 			let q = withOrg(zql.mattersTable, ctx)
 				.where("assigneeId", ctx.userId)
-				.where("type", "task")
+				.where("type", matterType.task)
+				.whereExists("status", (w) =>
+					w.where("type", "IN", [statusType.notStarted, statusType.started]),
+				)
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -391,8 +401,10 @@ export const queries = defineQueries({
 		({ ctx, args: { limit, cursor, direction } }) => {
 			let q = withOrg(zql.mattersTable, ctx)
 				.where("authorId", ctx.userId)
-				.where("type", "request")
-				.related("author")
+				.where("type", matterType.request)
+				.whereExists("status", (w) =>
+					w.where("type", "IN", [statusType.pendingApproval]),
+				)
 				.related("assignee")
 				.related("status")
 				.related("labels", (q) => q.related("label"));

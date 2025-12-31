@@ -1,25 +1,22 @@
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
-import { membershipStatus, workspaceRole } from "~/db/helpers";
+import { membershipStatus, teamRole } from "~/db/helpers";
 import { db } from "~/db/index";
 import {
 	labelsTable,
 	membersTable,
 	statusesTable,
-	workspaceMembershipsTable,
-	workspacesTable,
+	teamMembershipsTable,
+	teamsTable,
 } from "~/db/schema";
-import { DEFAULT_LABELS, DEFAULT_STATUSES } from "./default-workspace-data";
+import { DEFAULT_LABELS, DEFAULT_STATUSES } from "./default-team-data";
 
 type SeedOptions = {
 	orgId: string;
-	workspaceName?: string; // defaults to "General"
+	teamName?: string; // defaults to "General"
 };
 
-function makeWorkspaceIdentifierCandidates(
-	name: string,
-	attempts = 10,
-): string[] {
+function makeTeamIdentifierCandidates(name: string, attempts = 10): string[] {
 	// 1. Sanitize: remove non-alphanumeric, uppercase
 	const cleaned = name.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 	// 2. Take first 3 chars, default to "WRK" if empty
@@ -38,20 +35,20 @@ function makeWorkspaceIdentifierCandidates(
 	return candidates;
 }
 
-export async function seedWorkspaceDefaults({
+export async function seedTeamDefaults({
 	orgId,
-	workspaceName = "General",
+	teamName = "General",
 }: SeedOptions) {
 	// Pre-generate all IDs upfront
-	const workspaceId = createId();
+	const teamId = createId();
 	const labelIds = Array.from({ length: 5 }, () => createId());
 	const statusIds = Array.from({ length: 5 }, () => createId());
 
 	// Prepare candidates (used for BOTH slug and code)
-	const candidates = makeWorkspaceIdentifierCandidates(workspaceName, 10);
+	const candidates = makeTeamIdentifierCandidates(teamName, 10);
 
 	// Fetch org owner (or any member) in parallel with uniqueness probes
-	const [ownerMember, existingWorkspaces] = await Promise.all([
+	const [ownerMember, existingTeams] = await Promise.all([
 		// Get owner first, fallback to any member using ORDER BY (single query optimization)
 		db
 			.select({ userId: membersTable.userId })
@@ -66,14 +63,14 @@ export async function seedWorkspaceDefaults({
 			.then((rows) => rows[0])
 			.catch(() => null),
 		db
-			.select({ slug: workspacesTable.slug, code: workspacesTable.code })
-			.from(workspacesTable)
+			.select({ slug: teamsTable.slug, code: teamsTable.code })
+			.from(teamsTable)
 			.where(
 				and(
-					eq(workspacesTable.orgId, orgId),
+					eq(teamsTable.orgId, orgId),
 					or(
-						inArray(workspacesTable.slug, candidates),
-						inArray(workspacesTable.code, candidates),
+						inArray(teamsTable.slug, candidates),
+						inArray(teamsTable.code, candidates),
 					),
 				),
 			),
@@ -81,7 +78,7 @@ export async function seedWorkspaceDefaults({
 
 	// Find a candidate that is NOT used
 	const usedSet = new Set<string>();
-	for (const w of existingWorkspaces) {
+	for (const w of existingTeams) {
 		usedSet.add(w.slug);
 		usedSet.add(w.code);
 	}
@@ -90,20 +87,20 @@ export async function seedWorkspaceDefaults({
 
 	if (!finalSlugCode) {
 		throw new Error(
-			"Could not generate a unique workspace identifier (slug/code). Try a different name.",
+			"Could not generate a unique team identifier (slug/code). Try a different name.",
 		);
 	}
 
 	// Prepare all data structures
 	const now = new Date();
-	const workspaceRow = {
-		id: workspaceId,
+	const teamRow = {
+		id: teamId,
 		orgId,
-		name: workspaceName,
+		name: teamName,
 		slug: finalSlugCode,
 		code: finalSlugCode,
 		icon: "📁",
-		description: "Default workspace",
+		description: "Default team",
 		organizationId: orgId,
 		creatorId: ownerMember?.userId ?? null,
 		visibility: "private",
@@ -126,25 +123,24 @@ export async function seedWorkspaceDefaults({
 
 	const statusRows = DEFAULT_STATUSES.map((status, index) => ({
 		id: statusIds[index],
-		workspaceId,
+		teamId,
 		name: status.name,
 		color: status.color,
 		type: status.type,
 		position: status.position,
 		isDefault: status.isDefault,
 		archived: false,
-		isRequestStatus: false,
 		createdAt: now,
 		updatedAt: now,
 	}));
 
-	// Run labels + workspace inserts in parallel
+	// Run labels + team inserts in parallel
 	await Promise.all([
 		db
 			.insert(labelsTable)
 			.values(labelRows)
 			.onConflictDoNothing({ target: [labelsTable.orgId, labelsTable.name] }),
-		db.insert(workspacesTable).values(workspaceRow),
+		db.insert(teamsTable).values(teamRow),
 	]);
 
 	// Run all final inserts in parallel (statuses + optional membership)
@@ -154,18 +150,18 @@ export async function seedWorkspaceDefaults({
 
 	if (ownerMember?.userId) {
 		finalInserts.push(
-			db.insert(workspaceMembershipsTable).values({
+			db.insert(teamMembershipsTable).values({
 				id: createId(),
-				workspaceId,
+				teamId,
 				userId: ownerMember.userId,
 				orgId,
-				role: workspaceRole.manager,
+				role: teamRole.manager,
 				status: membershipStatus.active,
 				canCreateTasks: true,
 				canCreateRequests: true,
 				canApproveRequests: true,
 				canManageMembers: true,
-				canManageWorkspace: true,
+				canManageTeam: true,
 				createdAt: now,
 				updatedAt: now,
 			}),
@@ -175,10 +171,10 @@ export async function seedWorkspaceDefaults({
 	await Promise.all(finalInserts);
 
 	return {
-		workspaceId,
+		teamId,
 		labelIds,
 		statusIds,
 	};
 }
 
-// export default seedWorkspaceDefaults;
+// export default seedTeamDefaults;
