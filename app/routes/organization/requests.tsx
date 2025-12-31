@@ -56,15 +56,19 @@ export default function RequestsPage() {
 	const isExtraLargeScreen = useIsMobile("extraLargeScreen");
 
 	// Use infinite scroll for requests - loads in pages as user scrolls
-	const {
-		items: requests,
-		isLoadingMore,
-		hasMore,
-		loadedCount,
-		loadMore,
-	} = useInfiniteMatters({
-		queryType: "userAuthored",
-		enabled: true, // Zero handles context check
+	// const {
+	// 	items: requests,
+	// 	isLoadingMore,
+	// 	hasMore,
+	// 	loadedCount,
+	// 	loadMore,
+	// } = useInfiniteMatters({
+	// 	queryType: "userAuthored",
+	// 	enabled: true, // Zero handles context check
+	// });
+
+	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
+		...CACHE_LONG,
 	});
 
 	// Load members once for the entire list - cached by Zero
@@ -111,15 +115,15 @@ export default function RequestsPage() {
 						<h5 className="font-semibold">Requests</h5>
 					</div>
 					<div className="flex items-center gap-2">
-						{loadedCount > 0 && (
-							<span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 text-xs dark:text-amber-400">
-								{loadedCount}
-								{hasMore && "+"}
-							</span>
-						)}
-						{isLoadingMore && (
+						{/* {loadedCount > 0 && ( */}
+						<span className="rounded-full bg-amber-500/10 px-2 py-0.5 font-medium text-amber-600 text-xs dark:text-amber-400">
+							{requests.length}
+							{/* {hasMore && "+"} */}
+						</span>
+						{/* )} */}
+						{/* {isLoadingMore && (
 							<Loader2 className="size-3 animate-spin text-muted-foreground" />
-						)}
+						)} */}
 					</div>
 				</div>
 				<div className="h-[calc(100%-48px)]">
@@ -136,7 +140,7 @@ export default function RequestsPage() {
 							items={sortedRequests}
 							getItemKey={(item) => item.id}
 							estimateSize={100}
-							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
+							// onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
 							renderItem={(
 								matter: Row["mattersTable"] & { status?: Row["statusesTable"] },
 							) => {

@@ -4,7 +4,7 @@
 const KEY_PREFIX = "bt:nextShortId:";
 const VERSION_KEY = "bt:shortIdCache:version";
 const CURRENT_VERSION = "1";
-const MAX_WORKSPACES = 100; // Prevent localStorage bloat
+const MAX_TEAMS = 100; // Prevent localStorage bloat
 
 function getKey(teamId: string) {
 	return `${KEY_PREFIX}${teamId}`;
@@ -96,11 +96,11 @@ export function getAllCachedTeams(): string[] {
 function enforceMaxTeams() {
 	if (typeof localStorage === "undefined") return;
 	const teams = getAllCachedTeams();
-	if (teams.length > MAX_WORKSPACES) {
+	if (teams.length > MAX_TEAMS) {
 		// Remove oldest (first in list)
-		const toRemove = teams.slice(0, teams.length - MAX_WORKSPACES);
-		for (const wsId of toRemove) {
-			clearTeamCache(wsId);
+		const toRemove = teams.slice(0, teams.length - MAX_TEAMS);
+		for (const teamId of toRemove) {
+			clearTeamCache(teamId);
 		}
 	}
 }

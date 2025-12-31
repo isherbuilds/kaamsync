@@ -1,10 +1,11 @@
 import { defineQueries, defineQuery } from "@rocicorp/zero";
 import z from "zod";
+import { matterType, statusType } from "~/db/helpers";
 import type { Context } from "./auth";
 import { zql } from "./schema";
 
 const DEFAULT_LIMIT = 100;
-const WORKSPACE_MATTERS_LIMIT = 1000; // High limit - Zero caches to IndexedDB
+const TEAM_MATTERS_LIMIT = 1000; // High limit - Zero caches to IndexedDB
 const TIMELINE_LIMIT = 50;
 const ATTACHMENTS_LIMIT = 25;
 const PAGE_SIZE = 100; // For paginated queries
@@ -49,7 +50,7 @@ const withTeamAccess = <T>(q: T, ctx: Context, teamId: string): T =>
 		);
 
 export const queries = defineQueries({
-	// WORKSPACE QUERIES
+	// TEAM QUERIES
 	getTeamsList: defineQuery(({ ctx }) =>
 		withOrg(zql.teamsTable, ctx)
 			.whereExists("memberships", (q) =>
@@ -129,22 +130,19 @@ export const queries = defineQueries({
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
 			withTeamAccess(zql.mattersTable, ctx, teamId)
-				.where("type", "task")
-				.related("status") // Only status is needed for grouping - fetch others on detail page
-				// Server-side sorting: priority (numeric) → dueDate → createdAt
-				// Note: Zero doesn't support ordering by related table columns (status.position)
-				// but priority is now numeric so server sorts correctly.
+				.where("type", matterType.task)
+				.related("status")
 				.orderBy("priority", "asc") // 0=urgent first, 4=none last
 				.orderBy("dueDate", "asc") // earliest first, nulls last
 				.orderBy("createdAt", "desc") // newest first for same priority+due date
-				.limit(WORKSPACE_MATTERS_LIMIT),
+				.limit(TEAM_MATTERS_LIMIT),
 	),
 
 	// Pre-sync all matters across ALL teams user has access to
 	// This enables instant team switching (no teamId filter)
 	getAllMatters: defineQuery(z.tuple([]), ({ ctx }) =>
 		withOrg(zql.mattersTable, ctx)
-			.where("type", "task")
+			.where("type", matterType.task)
 			// Only sync matters from teams user is a member of
 			// flip: true because user is member of few teams (small subset)
 			.whereExists("team", (w) =>
@@ -155,17 +153,20 @@ export const queries = defineQueries({
 			.related("status")
 			.related("team")
 			.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
-			.limit(WORKSPACE_MATTERS_LIMIT),
+			.limit(TEAM_MATTERS_LIMIT),
 	),
 
 	getUserAssignedMatters: defineQuery(({ ctx }) =>
 		withOrg(zql.mattersTable, ctx)
 			.where("assigneeId", ctx.userId)
-			.where("type", "task")
+			.where("type", matterType.task)
+			.whereExists("status", (w) =>
+				w.where("type", "IN", [statusType.notStarted, statusType.started]),
+			)
 			.related("author")
 			.related("assignee")
 			.related("status")
-			.related("labels", (q) => q.related("label"))
+			.related("labels")
 			.orderBy("createdAt", "desc")
 			.limit(DEFAULT_LIMIT),
 	),
@@ -173,7 +174,10 @@ export const queries = defineQueries({
 	getUserAuthoredMatters: defineQuery(({ ctx }) =>
 		withOrg(zql.mattersTable, ctx)
 			.where("authorId", ctx.userId)
-			.where("type", "request")
+			.where("type", matterType.request)
+			.whereExists("status", (w) =>
+				w.where("type", "NOT IN", [statusType.rejected]),
+			)
 			.related("assignee")
 			.related("status")
 			.orderBy("createdAt", "desc")
@@ -184,8 +188,8 @@ export const queries = defineQueries({
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
 			withTeamAccess(zql.mattersTable, ctx, teamId)
-				.where("type", "REQUEST")
-				.where("approvalStatus", "PENDING")
+				.where("type", matterType.request)
+				.where("approvalStatus", statusType.pendingApproval)
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -245,7 +249,7 @@ export const queries = defineQueries({
 			.limit(DEFAULT_LIMIT),
 	),
 
-	// WORKSPACE MEMBERSHIP QUERIES
+	// TEAM MEMBERSHIP QUERIES
 	getTeamMembers: defineQuery(
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
@@ -361,7 +365,10 @@ export const queries = defineQueries({
 		({ ctx, args: { limit, cursor, direction } }) => {
 			let q = withOrg(zql.mattersTable, ctx)
 				.where("assigneeId", ctx.userId)
-				.where("type", "task")
+				.where("type", matterType.task)
+				.whereExists("status", (w) =>
+					w.where("type", "IN", [statusType.notStarted, statusType.started]),
+				)
 				.related("author")
 				.related("assignee")
 				.related("status")
@@ -391,10 +398,10 @@ export const queries = defineQueries({
 		({ ctx, args: { limit, cursor, direction } }) => {
 			let q = withOrg(zql.mattersTable, ctx)
 				.where("authorId", ctx.userId)
-				.where("type", "request")
-				.related("author")
-				.related("assignee")
-				.related("status")
+				.where("type", matterType.request)
+			.whereExists("status", (w) =>
+				w.where("type", "NOT IN", [statusType.rejected]),
+			)
 				.related("labels", (q) => q.related("label"));
 
 			if (cursor) {

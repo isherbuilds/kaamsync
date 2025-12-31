@@ -193,6 +193,7 @@ function Sidebar({
 						} as React.CSSProperties
 					}
 					side={side}
+					inert={!openMobile}
 				>
 					<SheetHeader className="sr-only">
 						<SheetTitle>Sidebar</SheetTitle>

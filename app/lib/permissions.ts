@@ -7,7 +7,7 @@
 import { type TeamRole, teamRole } from "~/db/helpers";
 
 // ============================================================================
-// WORKSPACE ROLES & PERMISSIONS
+// TEAM ROLES & PERMISSIONS
 // ============================================================================
 
 export type { TeamRole };
@@ -97,7 +97,7 @@ export function computeTeamPermissions(
 }
 
 // ============================================================================
-// WORKSPACE PERMISSION CHECKS (role-based)
+// TEAM PERMISSION CHECKS (role-based)
 // ============================================================================
 
 /**

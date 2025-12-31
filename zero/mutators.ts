@@ -366,12 +366,8 @@ export const mutators = defineMutators({
 						.one(),
 				);
 
-				if (!matter) {
+				if (!matter || matter.type !== matterType.request) {
 					throw new Error("Request not found");
-				}
-
-				if (matter.type !== matterType.request) {
-					throw new Error("Can only reject requests");
 				}
 
 				// Permission: Only managers can reject

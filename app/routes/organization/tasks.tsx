@@ -1,6 +1,6 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { useMemo } from "react";
 import { NavLink, Outlet } from "react-router";
 import { queries } from "zero/queries";
@@ -16,7 +16,6 @@ import {
 } from "~/components/ui/resizable";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { VirtualizedList } from "~/components/virtualized-list";
-import { useInfiniteMatters } from "~/hooks/use-infinite-scroll";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
 import {
@@ -57,19 +56,22 @@ export default function TasksPage() {
 	const isExtraLargeScreen = useIsMobile("extraLargeScreen");
 
 	// Use infinite scroll for tasks - loads in pages as user scrolls
-	const {
-		items: tasks,
-		isLoadingMore,
-		hasMore,
-		loadedCount,
-		loadMore,
-	} = useInfiniteMatters({
-		queryType: "userAssigned",
+	// const {
+	// 	items: tasks,
+	// 	isLoadingMore,
+	// 	hasMore,
+	// 	loadedCount,
+	// 	loadMore,
+	// } = useInfiniteMatters({
+	// 	queryType: "userAssigned",
+	// });
+
+	const [tasks] = useQuery(queries.getUserAssignedMatters(), {
+		...CACHE_LONG,
 	});
 
 	// Load members once for the entire list - cached by Zero
 	const [members] = useQuery(queries.getOrganizationMembers(), {
-		// enabled: Boolean(queryCtx.activeOrganizationId), // Zero handles this via implicit context
 		...CACHE_LONG,
 	});
 
@@ -109,7 +111,7 @@ export default function TasksPage() {
 						<h5 className="font-semibold">Tasks</h5>
 					</div>
 					<div className="flex items-center gap-2">
-						{loadedCount > 0 && (
+						{/* {loadedCount > 0 && (
 							<span className="rounded-full bg-blue-500/10 px-2 py-0.5 font-medium text-blue-600 text-xs dark:text-blue-400">
 								{loadedCount}
 								{hasMore && "+"}
@@ -117,7 +119,7 @@ export default function TasksPage() {
 						)}
 						{isLoadingMore && (
 							<Loader2 className="size-3 animate-spin text-muted-foreground" />
-						)}
+						)} */}
 					</div>
 				</div>
 				<div className="h-[calc(100%-48px)]">
@@ -135,7 +137,7 @@ export default function TasksPage() {
 							getItemKey={(item) => item.id}
 							estimateSize={60}
 							className="p-1"
-							onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
+							// onEndReached={hasMore && !isLoadingMore ? loadMore : undefined}
 							renderItem={(
 								matter: Row["mattersTable"] & { status: Row["statusesTable"] },
 							) => {
