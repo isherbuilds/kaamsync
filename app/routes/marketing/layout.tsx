@@ -46,13 +46,16 @@ export default function MarketingLayout() {
 			<header className="fixed inset-x-0 top-0 z-50">
 				<nav className="flex items-center justify-between gap-2 border-border/40 border-b bg-background/60 p-4 backdrop-blur-xl md:px-6">
 					<div className="flex md:flex-1">
-						<Link to="/" className="-m-1.5 flex items-center gap-2.5 p-1.5">
-							<div className="flex size-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-primary/80 text-primary-foreground">
-								<Zap className="size-4" />
+						<Link to="/" className="flex items-center gap-1">
+							<div className="flex size-7 items-center justify-center rounded-full bg-white">
+								<img
+									src="/static/kaamsync-logo.svg"
+									alt="KaamSync"
+									className="size-6"
+									style={{ filter: "invert(1)" }}
+								/>
 							</div>
-							<span className="font-semibold text-lg tracking-tight">
-								KaamSync
-							</span>
+							<span className="font-bold text-lg tracking-tight">KaamSync</span>
 						</Link>
 					</div>
 

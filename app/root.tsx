@@ -32,6 +32,30 @@ export const links: Route.LinksFunction = () => [
 		rel: "stylesheet",
 		href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
 	},
+	{
+		rel: "icon",
+		type: "image/png",
+		href: "/favicon-96x96.png",
+		sizes: "96x96",
+	},
+	{
+		rel: "icon",
+		type: "image/svg+xml",
+		href: "/favicon.svg",
+	},
+	{
+		rel: "shortcut icon",
+		href: "/favicon.ico",
+	},
+	{
+		rel: "apple-touch-icon",
+		sizes: "180x180",
+		href: "/apple-touch-icon.png",
+	},
+	{
+		rel: "manifest",
+		href: "/site.webmanifest",
+	},
 ];
 
 export const meta: Route.MetaFunction = () => [
@@ -103,16 +127,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	);
 }
 
-export function HydrateFallback() {
-	return (
-		<div className="flex h-screen w-screen items-center justify-center bg-background">
-			<div className="flex flex-col items-center gap-2">
-				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-				<p className="text-muted-foreground text-sm">Loading...</p>
-			</div>
-		</div>
-	);
-}
+// TODO: Re-enable a better fallback UI
+// export function HydrateFallback() {
+// 	return (
+// 		<div className="flex h-screen w-screen items-center justify-center bg-background">
+// 			<div className="flex flex-col items-center gap-2">
+// 				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+// 				<p className="text-muted-foreground text-sm">Loading...</p>
+// 			</div>
+// 		</div>
+// 	);
+// }
 
 export default function App() {
 	return <Outlet />;
