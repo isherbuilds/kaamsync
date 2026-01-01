@@ -10,32 +10,87 @@ const BREAKPOINTS = {
 type BreakpointVariant = keyof typeof BREAKPOINTS;
 
 /**
- * Hook to determine if the window width matches a specific breakpoint variant.
- * @param variant - The breakpoint variant (e.g., "mobile", "tablet", "extraLargeScreen").
- * @returns True if the window width matches the specified breakpoint variant.
+ * Hook that returns an object containing all breakpoint states.
+ * Uses shallow comparison to prevent unnecessary re-renders.
  */
-export function useIsMobile(variant: BreakpointVariant = "mobile") {
-	const [matches, setMatches] = useState<boolean | undefined>(undefined);
+export function useBreakpoints() {
+	const [breakpoints, setBreakpoints] = useState({
+		isMobile: false,
+		isTablet: false,
+		isLargeScreen: false,
+		isExtraLargeScreen: false,
+	});
 
 	useEffect(() => {
-		const breakpoint = BREAKPOINTS[variant];
-		const mql =
-			variant === "extraLargeScreen"
-				? window.matchMedia(`(min-width: ${breakpoint}px)`)
-				: window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
-
-		const onChange = () => {
-			setMatches(
-				variant === "extraLargeScreen"
-					? window.innerWidth >= breakpoint
-					: window.innerWidth < breakpoint,
-			);
+		const queries = {
+			isMobile: window.matchMedia(`(max-width: ${BREAKPOINTS.mobile - 1}px)`),
+			isTablet: window.matchMedia(`(max-width: ${BREAKPOINTS.tablet - 1}px)`),
+			isLargeScreen: window.matchMedia(
+				`(max-width: ${BREAKPOINTS.largeScreen - 1}px)`,
+			),
+			isExtraLargeScreen: window.matchMedia(
+				`(min-width: ${BREAKPOINTS.extraLargeScreen}px)`,
+			),
 		};
 
-		mql.addEventListener("change", onChange);
-		onChange(); // Set the initial value
-		return () => mql.removeEventListener("change", onChange);
+		const handler = () => {
+			const next = {
+				isMobile: queries.isMobile.matches,
+				isTablet: queries.isTablet.matches,
+				isLargeScreen: queries.isLargeScreen.matches,
+				isExtraLargeScreen: queries.isExtraLargeScreen.matches,
+			};
+
+			setBreakpoints((prev) => {
+				if (
+					prev.isMobile === next.isMobile &&
+					prev.isTablet === next.isTablet &&
+					prev.isLargeScreen === next.isLargeScreen &&
+					prev.isExtraLargeScreen === next.isExtraLargeScreen
+				) {
+					return prev;
+				}
+				return next;
+			});
+		};
+
+		handler();
+
+		const entries = Object.values(queries);
+		for (const mql of entries) {
+			mql.addEventListener("change", handler);
+		}
+
+		return () => {
+			for (const mql of entries) {
+				mql.removeEventListener("change", handler);
+			}
+		};
+	}, []);
+
+	return breakpoints;
+}
+
+/**
+ * Hook to determine if the window width matches a specific breakpoint variant.
+ * Optimized to only listen to the specific query requested.
+ */
+export function useIsMobile(variant: BreakpointVariant = "mobile") {
+	const [matches, setMatches] = useState(false);
+
+	useEffect(() => {
+		const queryStr =
+			variant === "extraLargeScreen"
+				? `(min-width: ${BREAKPOINTS[variant]}px)`
+				: `(max-width: ${BREAKPOINTS[variant] - 1}px)`;
+		
+		const mql = window.matchMedia(queryStr);
+		const handler = () => setMatches(mql.matches);
+		
+		handler();
+		mql.addEventListener("change", handler);
+		return () => mql.removeEventListener("change", handler);
 	}, [variant]);
 
-	return !!matches;
+	return matches;
 }

@@ -149,7 +149,7 @@ function Layout({
 
 function SidebarSkeleton() {
 	return (
-		<div className="hidden w-64 flex-col items-center justify-center bg-sidebar p-4 lg:flex">
+		<div className="hidden w-64 flex-col items-center justify-center bg-sidebar p-2 lg:flex">
 			<Spinner className="size-5" />
 		</div>
 	);
@@ -168,8 +168,8 @@ export function ErrorBoundary() {
 	return (
 		<div className="flex h-screen w-full items-center justify-center bg-background p-4">
 			<div className="flex max-w-md flex-col items-center gap-4 text-center">
-				<div className="rounded-full bg-destructive/10 p-3">
-					<AlertCircle className="size-6 text-destructive" />
+				<div className="rounded-full bg-destructive/10 p-2">
+					<AlertCircle className="size-5 text-destructive" />
 				</div>
 				<div className="space-y-1">
 					<h1 className="font-semibold text-lg">{message}</h1>

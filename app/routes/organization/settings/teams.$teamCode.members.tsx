@@ -84,7 +84,7 @@ export default function TeamMembersPage() {
 		},
 	});
 
-	const handleRemove = async (member: { userId: string; role: TeamRole }) => {
+	const handleRemove = async (member: { userId: string; role: string }) => {
 		if (!team) return;
 		zr.mutate(
 			mutators.team.removeMember({
@@ -141,7 +141,10 @@ export default function TeamMembersPage() {
 										members={availableUsers}
 										value={fields.userId.value}
 										onChange={(val) =>
-											form.update({ name: fields.userId.name, value: val })
+											form.update({
+												name: fields.userId.name,
+												value: val ?? undefined,
+											})
 										}
 										className="w-full rounded-md border bg-muted/50 p-2"
 										name={fields.userId.name}
@@ -206,7 +209,7 @@ export default function TeamMembersPage() {
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end" className="w-44">
-											{Object.values(teamRole).map((role) => (
+											{Object.values(teamRole).map((role: TeamRole) => (
 												<DropdownMenuItem
 													key={role}
 													onClick={() =>
@@ -215,7 +218,7 @@ export default function TeamMembersPage() {
 															mutators.team.updateMemberRole({
 																teamId: team.id,
 																userId: m.userId,
-																role: role as TeamRole,
+																role: role,
 															}),
 														)
 													}
@@ -229,7 +232,7 @@ export default function TeamMembersPage() {
 												onClick={() =>
 													handleRemove({
 														userId: m.userId,
-														role: m.role as TeamRole,
+														role: m.role,
 													})
 												}
 											>
