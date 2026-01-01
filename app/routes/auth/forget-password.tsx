@@ -28,9 +28,13 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 		redirectTo: "/auth/reset-password",
 	});
 
-	return error
-		? toast.error(error.message || "An unexpected error occurred.")
-		: toast.success("Password reset link sent to your email!");
+	if (error) {
+		toast.error(error.message || "An unexpected error occurred.");
+		return data({ success: false }, { status: 400 });
+	}
+	
+	toast.success("Password reset link sent to your email!");
+	return data({ success: true });
 }
 
 export default function ForgetPasswordRoute() {
