@@ -51,8 +51,7 @@ export default function MarketingLayout() {
 								<img
 									src="/static/kaamsync-logo.svg"
 									alt="KaamSync"
-									className="size-6"
-									style={{ filter: "invert(1)" }}
+									className="size-6 invert"
 								/>
 							</div>
 							<span className="font-bold text-lg tracking-tight">KaamSync</span>

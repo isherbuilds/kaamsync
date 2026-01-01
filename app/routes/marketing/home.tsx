@@ -111,6 +111,7 @@ export default function HomePage() {
 							>
 								<Link to="/contact">Book a Demo</Link>
 							</Button>
+							"{" "}
 						</div>
 
 						{/* Hero Visual - Product Screenshot */}
@@ -446,9 +447,9 @@ export default function HomePage() {
 							<div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)]">
 								<div className="px-8 pt-8 sm:px-10 sm:pt-10">
 									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-										Teams
-									</p>
+										<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
+											Teams
+										</p>
 									</p>
 									<p className="mt-2 max-w-lg text-muted-foreground text-sm max-lg:text-center">
 										Dedicated spaces for each department. Keep work organized.

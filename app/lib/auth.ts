@@ -4,6 +4,7 @@ import { organization } from "better-auth/plugins";
 import { cache } from "react";
 import { UseSend } from "usesend-js";
 import { VerifyEmail } from "~/components/email/verify-email";
+import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
 import { getActiveOrganization } from "~/lib/server/organization.server";
@@ -114,15 +115,35 @@ export const auth = betterAuth({
 					modelName: "invitationsTable",
 				},
 			},
-			async sendInvitationEmail(data) {
-				// const inviteLink = `${env.FE_ORIGIN}/accept-invitation/${data.id}`;
-				// await sendOrganizationInvitation({
-				// 	email: data.email,
-				// 	invitedByUsername: data.inviter.user.name,
-				// 	invitedByEmail: data.inviter.user.email,
-				// 	teamName: data.organization.name,
-				// 	inviteLink,
-				// });
+			async sendInvitationEmail({
+				email,
+				organization,
+				inviter,
+				role,
+				invitation				,
+			}) {
+
+				const inviteLink = `${process.env.SITE_URL}/join`;
+
+				if (process.env.NODE_ENV === "development") {
+					console.log(
+						`Invitation email to ${email}: ${inviteLink} (organization: ${organization.name}, invited by: ${inviter.user.email})`,
+					);
+					return;
+				}
+
+
+				await usesend.emails.send({
+					from: "KaamSync@mail.kaamsync.com",
+					to: email,
+					subject: `You're invited to join ${organization.name} on KaamSync`,
+					react: OrgInvitationEmail({
+						organizationName: organization.name,
+						inviterName: inviter.user.name,
+						inviterEmail: inviter.user.email,
+						inviteLink,
+					}),
+				});
 			},
 		}),
 		// lastLoginMethod(),
