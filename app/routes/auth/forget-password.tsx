@@ -1,6 +1,6 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-import { Form, Link } from "react-router";
+import { data, Form, Link } from "react-router";
 import { toast } from "sonner";
 
 import { BasicLayout } from "~/components/basic-layout";
@@ -32,7 +32,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 		toast.error(error.message || "An unexpected error occurred.");
 		return data({ success: false }, { status: 400 });
 	}
-	
+
 	toast.success("Password reset link sent to your email!");
 	return data({ success: true });
 }
