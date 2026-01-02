@@ -188,7 +188,7 @@ export function canDeleteMatter(role?: TeamRole | null): boolean {
  * Organization-level roles (from Better Auth).
  * These control org-wide permissions like creating teams.
  */
-export type OrgRole = "owner" | "admin" | "member";
+export type OrgRole = "owner" | "admin" | "member" | "guest";
 
 /**
  * Check if org role can create teams

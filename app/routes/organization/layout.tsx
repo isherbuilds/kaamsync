@@ -80,6 +80,8 @@ export async function clientLoader({
 }: Route.ClientLoaderArgs) {
 	const authSession = context.get(clientAuthContext);
 
+	console.log("Loaded layout for org:", params.orgSlug);
+
 	return {
 		authSession,
 		orgSlug: params.orgSlug,

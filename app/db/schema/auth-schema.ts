@@ -97,6 +97,7 @@ export const organizationsTable = pgTable(
 		subscriptionId: text("subscription_id"),
 		subscriptionStatus: text("subscription_status"),
 		billedSeats: integer("billed_seats"),
+		productId: text("product_id"),
 		trialEndsAt: timestamp("trial_ends_at"),
 		storageUsed: integer("storage_used").default(0),
 	},

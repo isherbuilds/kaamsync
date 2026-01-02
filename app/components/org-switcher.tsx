@@ -3,8 +3,7 @@
 import {
 	BlocksIcon,
 	ChevronsUpDown,
-	CogIcon,
-	HomeIcon,
+	Settings2Icon,
 	Users2Icon,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -95,7 +94,7 @@ export function OrgSwitcher({
 								className="cursor-pointer"
 								to={`/${currentOrg.slug}/settings`}
 							>
-								<CogIcon className="size-4" />
+								<Settings2Icon className="size-4" />
 								<div>Settings</div>
 							</Link>
 						</DropdownMenuItem>

@@ -724,6 +724,12 @@ const organizationsTable = {
       customType: null as unknown as number,
       serverName: "billed_seats",
     },
+    productId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "product_id",
+    },
     trialEndsAt: {
       type: "number",
       optional: true,

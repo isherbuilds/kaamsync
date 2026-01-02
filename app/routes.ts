@@ -60,6 +60,7 @@ export default [
 		route("auth/error", "routes/api/auth/better-error.tsx"),
 		route("zero/query", "routes/api/zero/query.ts"),
 		route("zero/mutate", "routes/api/zero/mutate.ts"),
+		route("billing/callback", "routes/api/billing/callback.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 	]),
 

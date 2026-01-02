@@ -7,7 +7,11 @@ import {
 	type TeamRole,
 	teamRole,
 } from "~/db/helpers";
-import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
+import {
+	canCreateRequests,
+	canCreateTasks,
+	getRolePermissions,
+} from "~/lib/permissions";
 import { reservedTeamSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
 import type { Context } from "./auth";
@@ -463,14 +467,13 @@ export const mutators = defineMutators({
 					tx,
 					orgMembership.organizationId,
 				);
-				if (!teamLimitCheck.allowed) {
+
+				if (!teamLimitCheck.allowed || !teamLimitCheck.existingTeams) {
 					throw new Error(teamLimitCheck.reason || "Cannot create team");
 				}
 
 				// Find unique code by checking existing teams
-				const existingTeams = await tx.run(
-					zql.teamsTable.where("orgId", orgMembership.organizationId),
-				);
+				const existingTeams = teamLimitCheck.existingTeams;
 
 				const usedCodes = new Set(
 					existingTeams.flatMap((w: { slug?: string; code?: string }) =>
@@ -514,7 +517,6 @@ export const mutators = defineMutators({
 					position: i,
 					isDefault: status.isDefault,
 					archived: false,
-					isRequestStatus: status.isRequestStatus,
 					creatorId: ctx.userId,
 					createdAt: now,
 					updatedAt: now,
@@ -585,8 +587,9 @@ export const mutators = defineMutators({
 						throw new Error("User is already a member of this team");
 					}
 				} else {
-					// Create new membership
+					// Create new membership with permissions from the unified system
 					const now = Date.now();
+					const perms = getRolePermissions(args.role);
 					await tx.mutate.teamMembershipsTable.insert({
 						id: createId(),
 						teamId: args.teamId,
@@ -594,11 +597,7 @@ export const mutators = defineMutators({
 						orgId: orgMembership.organizationId,
 						role: args.role,
 						status: membershipStatus.active,
-						canCreateTasks: true,
-						canCreateRequests: true,
-						canApproveRequests: args.role === "manager",
-						canManageMembers: args.role === "manager",
-						canManageTeam: args.role === "manager",
+						...perms,
 						createdAt: now,
 						updatedAt: now,
 					});
@@ -628,12 +627,11 @@ export const mutators = defineMutators({
 					throw new Error("User is not a member of this team");
 				}
 
+				const perms = getRolePermissions(args.role);
 				await tx.mutate.teamMembershipsTable.update({
 					id: membership.id,
 					role: args.role,
-					canApproveRequests: args.role === "manager",
-					canManageMembers: args.role === "manager",
-					canManageTeam: args.role === "manager",
+					...perms,
 					updatedAt: Date.now(),
 				});
 			},

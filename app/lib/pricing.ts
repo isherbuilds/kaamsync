@@ -18,16 +18,19 @@ export const PLAN_ID = {
 	ENTERPRISE: "enterprise",
 } as const;
 
+import { getEnv } from "~/lib/env";
+
 export type PlanId = (typeof PLAN_ID)[keyof typeof PLAN_ID];
 
 // Dodo Payments product IDs - Update these with actual product IDs from Dodo dashboard
+// Dodo Payments product IDs - Update these with actual product IDs from Dodo dashboard
 export const DODO_PRODUCT_IDS = {
-	PRO_MONTHLY: process.env.DODO_PRODUCT_PRO_MONTHLY || "pdt_ProPlanMonthly",
-	PRO_YEARLY: process.env.DODO_PRODUCT_PRO_YEARLY || "pdt_ProPlanYearly",
+	PRO_MONTHLY: getEnv("DODO_PRODUCT_PRO_MONTHLY") || "pdt_ProPlanMonthly",
+	PRO_YEARLY: getEnv("DODO_PRODUCT_PRO_YEARLY") || "pdt_ProPlanYearly",
 	BUSINESS_MONTHLY:
-		process.env.DODO_PRODUCT_BUSINESS_MONTHLY || "pdt_BusinessPlanMonthly",
+		getEnv("DODO_PRODUCT_BUSINESS_MONTHLY") || "pdt_BusinessPlanMonthly",
 	BUSINESS_YEARLY:
-		process.env.DODO_PRODUCT_BUSINESS_YEARLY || "pdt_BusinessPlanYearly",
+		getEnv("DODO_PRODUCT_BUSINESS_YEARLY") || "pdt_BusinessPlanYearly",
 } as const;
 
 // Storage in bytes
@@ -68,9 +71,9 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 		isPerSeat: false,
 		limits: {
 			maxMembers: 5,
-			maxTeams: 1,
+			maxTeams: 2,
 			storageBytes: 1 * GB,
-			historyDays: 7,
+			historyDays: null,
 			hasApprovalWorkflows: false,
 			hasPrioritySupport: false,
 			hasSSO: false,

@@ -79,7 +79,7 @@ export default function OrgMembersPage() {
 			startTransition(async () => {
 				const { error } = await authClient.organization.inviteMember({
 					email: submission.value.email,
-					role: submission.value.role as "member" | "admin" | "owner", // Safe cast to core types
+					role: submission.value.role,
 				});
 
 				if (error) {
@@ -93,10 +93,13 @@ export default function OrgMembersPage() {
 	});
 
 	// Action Handlers
-	const updateRole = (memberId: string, newRole: "admin" | "member") => {
+	const updateRole = (
+		memberId: string,
+		newRole: "admin" | "member" | "guest",
+	) => {
 		startTransition(async () => {
 			const { error } = await authClient.organization.updateMemberRole({
-				memberId, // Better Auth needs the member record ID
+				memberId,
 				role: newRole,
 			});
 			if (error) toast.error(error.message);
@@ -257,14 +260,22 @@ export default function OrgMembersPage() {
 												</DropdownMenuTrigger>
 												<DropdownMenuContent align="end" className="w-48">
 													<DropdownMenuItem
-														onClick={() =>
-															updateRole(
-																m.id,
-																m.role === "admin" ? "member" : "admin",
-															)
-														}
+														onClick={() => updateRole(m.id, "admin")}
+														disabled={m.role === "admin"}
 													>
-														Change to {m.role === "admin" ? "Member" : "Admin"}
+														Make Admin
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														onClick={() => updateRole(m.id, "member")}
+														disabled={m.role === "member"}
+													>
+														Make Member
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														onClick={() => updateRole(m.id, "guest")}
+														disabled={m.role === "guest"}
+													>
+														Make Guest
 													</DropdownMenuItem>
 													<DropdownMenuSeparator />
 													<DropdownMenuItem

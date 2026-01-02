@@ -10,25 +10,14 @@ import type { MutatorTx } from "./mutator-helpers";
 import { zql } from "./schema";
 
 /**
- * Get plan ID from organization (reads from proper column, falls back to metadata for migration)
+ * Get plan ID from organization (reads from proper column)
  */
-export function getOrgPlan(org: {
-	plan?: string | null;
-	metadata?: string | null;
-}): PlanId {
+export function getOrgPlan(org: { plan?: string | null }): PlanId {
 	// Primary: read from plan column
 	if (org.plan && Object.values(PLAN_ID).includes(org.plan as PlanId)) {
 		return org.plan as PlanId;
 	}
-	// Fallback: legacy metadata JSON (for migration period)
-	if (org.metadata) {
-		try {
-			const parsed = JSON.parse(org.metadata);
-			return (parsed?.plan as PlanId) || PLAN_ID.STARTER;
-		} catch {
-			return PLAN_ID.STARTER;
-		}
-	}
+
 	return PLAN_ID.STARTER;
 }
 
@@ -43,6 +32,7 @@ export async function canCreateTeam(
 	reason?: string;
 	currentCount?: number;
 	limit?: number | null;
+	existingTeams?: any[];
 }> {
 	// Get organization with plan info
 	const org = await tx.run(
@@ -80,7 +70,7 @@ export async function canCreateTeam(
 		};
 	}
 
-	return { allowed: true, currentCount, limit: limits.maxTeams };
+	return { allowed: true, currentCount, limit: limits.maxTeams, existingTeams };
 }
 
 /**

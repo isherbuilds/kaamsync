@@ -1,5 +1,5 @@
 {
-  "id": "13c5f6e4-e770-4927-af42-32936288d4b1",
+  "id": "a90251de-ac58-4aed-88a3-f05a5d80edfe",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1741,6 +1741,12 @@
         "billed_seats": {
           "name": "billed_seats",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

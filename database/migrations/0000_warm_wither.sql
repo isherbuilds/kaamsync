@@ -146,6 +146,7 @@ CREATE TABLE "organizations_table" (
 	"subscription_id" text,
 	"subscription_status" text,
 	"billed_seats" integer,
+	"product_id" text,
 	"trial_ends_at" timestamp,
 	"storage_used" integer DEFAULT 0,
 	CONSTRAINT "organizations_table_slug_unique" UNIQUE("slug")

@@ -16,18 +16,25 @@ import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { VerifyEmail } from "~/components/email/verify-email";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
-import { DODO_PRODUCT_IDS, PLAN_ID, type PlanId } from "~/lib/pricing";
+import { getEnv } from "~/lib/env";
+import {
+	DODO_PRODUCT_IDS,
+	getPlanLimits,
+	PLAN_ID,
+	type PlanId,
+} from "~/lib/pricing";
 import { getActiveOrganization } from "~/lib/server/organization.server";
+import { ac, roles } from "./auth-ac";
+import { syncDodoSubscriptionSeats } from "./server/dodo.server";
 
 export const dodoPayments = new DodoPayments({
-	bearerToken: process.env.DODO_PAYMENTS_API_KEY ?? "",
-	environment:
-		process.env.NODE_ENV === "production" ? "live_mode" : "test_mode",
+	bearerToken: getEnv("DODO_PAYMENTS_API_KEY") ?? "",
+	environment: getEnv("NODE_ENV") === "production" ? "live_mode" : "test_mode",
 });
 
 const usesend = new UseSend(
-	process.env.USESEND_API_KEY,
-	process.env.USESEND_SELF_HOSTED_URL,
+	getEnv("USESEND_API_KEY"),
+	getEnv("USESEND_SELF_HOSTED_URL"),
 );
 
 export const auth = betterAuth({
@@ -41,9 +48,9 @@ export const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: process.env.NODE_ENV === "production",
+		requireEmailVerification: getEnv("NODE_ENV") === "production",
 		sendResetPassword: async ({ user, url }) => {
-			if (process.env.NODE_ENV === "development") {
+			if (getEnv("NODE_ENV") === "development") {
 				console.log("Reset password link:", url);
 				return;
 			}
@@ -60,7 +67,7 @@ export const auth = betterAuth({
 		sendOnSignUp: true,
 		autoSignInAfterVerification: true,
 		sendVerificationEmail: async ({ user, url }) => {
-			if (process.env.NODE_ENV === "development") {
+			if (getEnv("NODE_ENV") === "development") {
 				console.log("Email verification link:", url);
 				return;
 			}
@@ -76,8 +83,8 @@ export const auth = betterAuth({
 	//   trustedOrigins: [process.env.BETTER_AUTH_URL!],
 	socialProviders: {
 		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+			clientId: getEnv("GOOGLE_CLIENT_ID") ?? "",
+			clientSecret: getEnv("GOOGLE_CLIENT_SECRET") ?? "",
 		},
 	},
 	session: {
@@ -122,6 +129,9 @@ export const auth = betterAuth({
 				before: async (
 					invitation: typeof schema.invitationsTable.$inferInsert,
 				) => {
+					// Guests don't count towards paid limits, skip check
+					if (invitation.role === "guest") return { data: invitation };
+
 					const orgId = invitation.organizationId;
 					const org = await db.query.organizationsTable.findFirst({
 						where: eq(schema.organizationsTable.id, orgId),
@@ -130,9 +140,7 @@ export const auth = betterAuth({
 					if (!org) return;
 
 					const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
-					const { limits } = await import("~/lib/pricing").then((m) => ({
-						limits: m.getPlanLimits(planId),
-					}));
+					const limits = getPlanLimits(planId);
 
 					if (limits.maxMembers !== null) {
 						// Only count non-guest members for plan limits
@@ -174,9 +182,7 @@ export const auth = betterAuth({
 					if (!org) return;
 
 					const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
-					const { limits } = await import("~/lib/pricing").then((m) => ({
-						limits: m.getPlanLimits(planId),
-					}));
+					const limits = getPlanLimits(planId);
 
 					if (limits.maxMembers !== null) {
 						const existingPaidMembers = await db
@@ -239,6 +245,11 @@ export const auth = betterAuth({
 							required: false,
 							input: false,
 						},
+						productId: {
+							type: "string",
+							required: false,
+							input: false,
+						},
 						// Trial tracking
 						trialEndsAt: {
 							type: "date",
@@ -261,22 +272,15 @@ export const auth = betterAuth({
 					modelName: "invitationsTable",
 				},
 			},
-			// NOTE: We don't use Better Auth's built-in teams feature.
-			// KaamSync has its own rich teams system in teamsTable/teamMembershipsTable
-			// with custom fields (code, nextShortId, visibility, granular permissions).
-			// The teams feature here is disabled to avoid creating unused tables.
 			teams: {
 				enabled: false,
 			},
-			// Member limits are enforced dynamically in our custom team system
-			// via Zero mutators (see zero/plan-limits.ts).
-			// Better Auth's membershipLimit only accepts a static number, so we set
-			// a high default and rely on our mutator-level checks for plan enforcement.
+
 			membershipLimit: 10000,
 			async sendInvitationEmail({ email, organization, inviter }) {
-				const inviteLink = `${process.env.SITE_URL}/join`;
+				const inviteLink = `${getEnv("SITE_URL")}/join`;
 
-				if (process.env.NODE_ENV === "development") {
+				if (getEnv("NODE_ENV") === "development") {
 					console.log(
 						`Invitation email to ${email}: ${inviteLink} (organization: ${organization.name}, invited by: ${inviter.user.email})`,
 					);
@@ -294,6 +298,19 @@ export const auth = betterAuth({
 						inviteLink,
 					}),
 				});
+			},
+			ac,
+			roles,
+			organizationHooks: {
+				afterAddMember: async ({ member }) => {
+					await syncDodoSubscriptionSeats(member.organizationId);
+				},
+				afterRemoveMember: async ({ member }) => {
+					await syncDodoSubscriptionSeats(member.organizationId);
+				},
+				afterAcceptInvitation: async ({ member }) => {
+					await syncDodoSubscriptionSeats(member.organizationId);
+				},
 			},
 		}),
 		dodopayments({
@@ -321,12 +338,12 @@ export const auth = betterAuth({
 							slug: "business_yearly",
 						},
 					],
-					successUrl: "/organization/settings/billing?success=true",
+					successUrl: "/api/billing/callback",
 					authenticatedUsersOnly: true,
 				}),
 				portal(),
 				webhooks({
-					webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET ?? "",
+					webhookKey: getEnv("DODO_PAYMENTS_WEBHOOK_SECRET") ?? "",
 					onPayload: async (payload) => {
 						const rawEventType =
 							(payload as { event_type?: string; type?: string }).event_type ??
@@ -394,7 +411,8 @@ export const auth = betterAuth({
 							];
 
 							if (activationEvents.includes(eventType)) {
-								// Update organization using proper schema columns
+								// Update organization. Use type-cast to allow updating additionalFields
+								// defined in auth.ts but not present in the manual Drizzle schema.
 								await db
 									.update(schema.organizationsTable)
 									.set({
@@ -403,6 +421,7 @@ export const auth = betterAuth({
 										subscriptionStatus: data.status || "active",
 										customerId: data.customer_id,
 										billedSeats: data.quantity,
+										productId: productId,
 										planUpdatedAt: new Date(),
 									})
 									.where(eq(schema.organizationsTable.id, organizationId));
@@ -411,7 +430,7 @@ export const auth = betterAuth({
 									`Updated organization ${organizationId} to plan: ${newPlan}`,
 								);
 							} else if (cancellationEvents.includes(eventType)) {
-								// Downgrade to starter plan on cancellation/refund
+								// Downgrade to starter plan
 								await db
 									.update(schema.organizationsTable)
 									.set({
