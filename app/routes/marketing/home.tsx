@@ -15,11 +15,11 @@ import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => [
-	{ title: "KaamSync - Work doesn't belong in the chat" },
+	{ title: "KaamSync - Stop drowning in chat. Start doing work." },
 	{
 		name: "description",
 		content:
-			"Stop drowning in dm's. KaamSync brings your operations out of the noise and into a system built for clarity, speed, and control.",
+			"Chat is where work goes to die. KaamSync brings your operations out of the noise and into a system built for clarity, speed, and real-world results.",
 	},
 ];
 
@@ -80,17 +80,17 @@ export default function HomePage() {
 						</Link>
 
 						<h1 className="mb-6 font-bold text-4xl leading-[1.1] tracking-tight md:text-6xl lg:text-[5.5rem]">
-							Work doesn't belong
+							Chat is where work
 							<br />
-							<span className="bg-linear-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
-								in the chat.
+							<span className="bg-linear-to-r from-destructive via-primary to-primary/70 bg-clip-text text-transparent">
+								goes to die.
 							</span>
 						</h1>
 
 						<p className="mb-10 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-							Stop chasing messages. KaamSync gives your team a single place to
-							manage tasks, track approvals, and get work done without the
-							noise.
+							"Did you see my message?" shouldn't be your most common question.
+							Stop chasing updates in endless threads and start managing your
+							operations with clarity.
 						</p>
 
 						<div className="mb-20 flex flex-col items-center gap-4 sm:flex-row">
@@ -111,9 +111,6 @@ export default function HomePage() {
 							>
 								<Link to="/contact">Book a Demo</Link>
 							</Button>
-				</Link>
-			</Button>
-		</div>
 						</div>
 
 						{/* Hero Visual - Product Screenshot */}
@@ -252,14 +249,16 @@ export default function HomePage() {
 					<div className="grid items-center gap-16 lg:grid-cols-2">
 						<div className="space-y-8">
 							<div className="space-y-4">
-								<p className="font-medium text-primary text-sm">The Problem</p>
+								<p className="font-medium text-destructive text-sm">
+									The Problem
+								</p>
 								<h2 className="font-bold text-3xl tracking-tight md:text-4xl lg:text-5xl">
-									Drowning in messages?
+									You have work. They have chat.
 								</h2>
 								<p className="text-lg text-muted-foreground leading-relaxed">
-									"Did you see my message?" shouldn't be your most common
-									question. Chat is great for conversation — but terrible for
-									tracking work.
+									Chat is great for talking, but toxic for tracking. When your
+									operations live in chat, requests get lost, deadlines are
+									missed, and nobody knows who's responsible.
 								</p>
 							</div>
 							<div className="space-y-5">

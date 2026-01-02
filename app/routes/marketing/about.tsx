@@ -105,9 +105,9 @@ export default function AboutPage() {
 							</h2>
 							<div className="space-y-4 text-muted-foreground">
 								<p>
-									We spent years using project management tools that promised
-									simplicity but delivered complexity. Features piled on
-									features until the tools became obstacles instead of enablers.
+									We spent years using tools that promised simplicity but
+									delivered chaos. Between bloated project management software
+									and endless chat threads, work was getting lost in the noise.
 								</p>
 								<p>
 									In 2023, we set out to build something different — a task

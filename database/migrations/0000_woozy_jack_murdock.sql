@@ -140,6 +140,14 @@ CREATE TABLE "organizations_table" (
 	"logo" text,
 	"created_at" timestamp NOT NULL,
 	"metadata" text,
+	"plan" text DEFAULT 'starter',
+	"plan_updated_at" timestamp,
+	"customer_id" text,
+	"subscription_id" text,
+	"subscription_status" text,
+	"billed_seats" integer,
+	"trial_ends_at" timestamp,
+	"storage_used" integer DEFAULT 0,
 	CONSTRAINT "organizations_table_slug_unique" UNIQUE("slug")
 );
 --> statement-breakpoint
@@ -309,6 +317,7 @@ CREATE INDEX "matters_team_type_idx" ON "matters" USING btree ("team_id","type")
 CREATE INDEX "matters_approved_by_idx" ON "matters" USING btree ("approved_by");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "organizationsTable_slug_uidx" ON "organizations_table" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "sessionsTable_userId_idx" ON "sessions_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "statuses_team_position_idx" ON "statuses" USING btree ("team_id","position");--> statement-breakpoint
 CREATE INDEX "team_memberships_team_idx" ON "team_memberships" USING btree ("team_id");--> statement-breakpoint

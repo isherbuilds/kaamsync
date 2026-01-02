@@ -1,5 +1,13 @@
 import { relations } from "drizzle-orm";
-import { boolean, index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import {
+	boolean,
+	index,
+	integer,
+	pgTable,
+	text,
+	timestamp,
+	uniqueIndex,
+} from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users_table", {
 	id: text("id").primaryKey(),
@@ -74,14 +82,26 @@ export const verificationsTable = pgTable(
 	(table) => [index("verificationsTable_identifier_idx").on(table.identifier)],
 );
 
-export const organizationsTable = pgTable("organizations_table", {
-	id: text("id").primaryKey(),
-	name: text("name").notNull(),
-	slug: text("slug").notNull().unique(),
-	logo: text("logo"),
-	createdAt: timestamp("created_at").notNull(),
-	metadata: text("metadata"),
-});
+export const organizationsTable = pgTable(
+	"organizations_table",
+	{
+		id: text("id").primaryKey(),
+		name: text("name").notNull(),
+		slug: text("slug").notNull().unique(),
+		logo: text("logo"),
+		createdAt: timestamp("created_at").notNull(),
+		metadata: text("metadata"),
+		plan: text("plan").default("starter"),
+		planUpdatedAt: timestamp("plan_updated_at"),
+		customerId: text("customer_id"),
+		subscriptionId: text("subscription_id"),
+		subscriptionStatus: text("subscription_status"),
+		billedSeats: integer("billed_seats"),
+		trialEndsAt: timestamp("trial_ends_at"),
+		storageUsed: integer("storage_used").default(0),
+	},
+	(table) => [uniqueIndex("organizationsTable_slug_uidx").on(table.slug)],
+);
 
 export const membersTable = pgTable(
 	"members_table",

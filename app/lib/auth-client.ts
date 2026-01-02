@@ -1,3 +1,4 @@
+import { dodopaymentsClient } from "@dodopayments/better-auth";
 import {
 	// lastLoginMethodClient,
 	organizationClient,
@@ -6,7 +7,7 @@ import { createAuthClient } from "better-auth/react";
 import { clearAuthSessionFromLocalStorage } from "./offline-auth";
 
 export const authClient = createAuthClient({
-	plugins: [organizationClient()],
+	plugins: [organizationClient(), dodopaymentsClient()],
 });
 
 export type AuthSession = typeof authClient.$Infer.Session;

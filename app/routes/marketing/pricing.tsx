@@ -14,17 +14,16 @@ export const meta: MetaFunction = () => [
 
 const plans = [
 	{
-		name: "Free",
+		name: "Starter",
 		price: "$0",
 		period: "forever",
-		description:
-			"For small teams getting started with structured task management.",
+		description: "For small teams fixing their messy chat workflows.",
 		features: [
 			"Up to 5 team members",
+			"1 Team space",
+			"1GB Storage",
 			"Unlimited tasks",
-			"Basic teams",
-			"7-day activity history",
-			"Email support",
+			"7-day history",
 		],
 		cta: "Get Started",
 		href: "/signup",
@@ -32,40 +31,35 @@ const plans = [
 	},
 	{
 		name: "Pro",
-		price: "$12",
-		period: "per user / month",
-		description:
-			"For growing teams that need advanced workflows and reporting.",
+		price: "$29",
+		period: "flat / month",
+		description: "The sweet spot for growing operations teams.",
 		features: [
-			"Unlimited team members",
+			"Up to 20 team members",
+			"3 Team spaces",
+			"10GB Storage",
 			"Unlimited tasks",
-			"Advanced teams",
 			"Unlimited history",
 			"Priority support",
-			"Custom fields",
 			"Approval workflows",
-			"API access",
-			"Integrations",
 		],
 		cta: "Start Free Trial",
 		href: "/signup?plan=pro",
 		popular: true,
 	},
 	{
-		name: "Enterprise",
-		price: "Custom",
-		period: "contact us",
-		description:
-			"For large organizations with specific security and compliance needs.",
+		name: "Business",
+		price: "$9",
+		period: "per user / month",
+		description: "For large organizations scaling across many departments.",
 		features: [
+			"Unlimited team members",
+			"Unlimited spaces",
+			"10GB Storage per user",
 			"Everything in Pro",
 			"SSO / SAML",
-			"Advanced security",
-			"Dedicated support",
 			"Custom integrations",
-			"SLA guarantee",
-			"Onboarding assistance",
-			"Custom contracts",
+			"Dedicated support",
 		],
 		cta: "Contact Sales",
 		href: "/contact",
@@ -109,12 +103,14 @@ export default function PricingPage() {
 					<div className="mx-auto mb-16 max-w-3xl text-center">
 						<p className="mb-4 font-medium text-primary text-sm">Pricing</p>
 						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
-							Simple pricing for
+							Clarity shouldn't
 							<br />
-							every team size
+							cost a fortune
 						</h1>
-						<p className="text-lg text-muted-foreground">
-							Start free and scale as you grow. No hidden fees, no surprises.
+						<p className="text-balance text-lg text-muted-foreground">
+							Stop paying $15/user for chat that creates more work. KaamSync
+							offers simple, flat-rate pricing built for teams that actually get
+							things done.
 						</p>
 					</div>
 

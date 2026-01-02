@@ -12,6 +12,7 @@ import { reservedTeamSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
 import type { Context } from "./auth";
 import { allocateShortID, type MutatorTx } from "./mutator-helpers";
+import { canCreateTeam } from "./plan-limits";
 import { zql } from "./schema";
 
 function assertLoggedIn(ctx: Context) {
@@ -450,6 +451,15 @@ export const mutators = defineMutators({
 
 				if (!orgMembership) {
 					throw new Error("Not a member of this organization");
+				}
+
+				// Check plan limits for team creation
+				const teamLimitCheck = await canCreateTeam(
+					tx,
+					orgMembership.organizationId,
+				);
+				if (!teamLimitCheck.allowed) {
+					throw new Error(teamLimitCheck.reason || "Cannot create team");
 				}
 
 				// Find unique code by checking existing teams
