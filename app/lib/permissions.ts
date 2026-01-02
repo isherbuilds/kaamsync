@@ -187,33 +187,8 @@ export function canDeleteMatter(role?: TeamRole | null): boolean {
 /**
  * Organization-level roles (from Better Auth).
  * These control org-wide permissions like creating teams.
+ *
+ * Note: Org-level permission enforcement is handled by Better Auth's AC system.
+ * Plan-based limits are enforced server-side in zero/plan-limits.ts
  */
 export type OrgRole = "owner" | "admin" | "member" | "guest";
-
-/**
- * Check if org role can create teams
- */
-export function canCreateTeams(role?: OrgRole | null): boolean {
-	return role === "owner" || role === "admin";
-}
-
-/**
- * Check if org role can invite members
- */
-export function canInviteMembers(role?: OrgRole | null): boolean {
-	return role === "owner" || role === "admin";
-}
-
-/**
- * Check if org role can change org settings
- */
-export function canChangeOrgSettings(role?: OrgRole | null): boolean {
-	return role === "owner" || role === "admin";
-}
-
-/**
- * Check if org role can delete org
- */
-export function canDeleteOrg(role?: OrgRole | null): boolean {
-	return role === "owner";
-}

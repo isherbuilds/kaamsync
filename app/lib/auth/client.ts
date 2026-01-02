@@ -4,8 +4,8 @@ import {
 	organizationClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
-import { ac, roles } from "./auth-ac";
-import { clearAuthSessionFromLocalStorage } from "./offline-auth";
+import { ac, roles } from "./access-control";
+import { clearAuthSessionFromLocalStorage } from "./offline-session";
 
 export const authClient = createAuthClient({
 	plugins: [

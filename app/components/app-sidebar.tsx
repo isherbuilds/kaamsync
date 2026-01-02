@@ -72,6 +72,7 @@ export function AppSidebar({
 	selectedOrg,
 	authUser,
 	teams,
+	orgPlan,
 	...props
 }: {
 	organizations: {
@@ -96,6 +97,7 @@ export function AppSidebar({
 		code: string;
 		slug: string;
 	}[];
+	orgPlan?: string | null;
 } & React.ComponentProps<typeof Sidebar>) {
 	const matches = useMatches();
 	const isSettings = matches.find(
@@ -112,7 +114,13 @@ export function AppSidebar({
 					items={isSettings ? navSettings : navMain}
 					orgSlug={selectedOrg.slug}
 				/>
-				{!isSettings && <NavTeams teams={teams} orgSlug={selectedOrg.slug} />}
+				{!isSettings && (
+					<NavTeams
+						teams={teams}
+						orgSlug={selectedOrg.slug}
+						orgPlan={orgPlan}
+					/>
+				)}
 			</SidebarContent>
 			<SidebarFooter className="flex-row items-center">
 				<NavUser user={authUser} />

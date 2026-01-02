@@ -22,7 +22,7 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "~/components/ui/sidebar";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 import { Avatar, AvatarFallback, AvatarImage, CustomAvatar } from "./ui/avatar";
 
 export function OrgSwitcher({

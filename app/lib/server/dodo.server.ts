@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import { organizationsTable } from "~/db/schema/auth-schema";
-import { dodoPayments } from "../auth";
+import { dodoPayments } from "~/lib/auth/dodo";
 import { PLAN_ID } from "../pricing";
 
 /**

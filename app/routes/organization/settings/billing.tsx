@@ -27,7 +27,7 @@ import {
 import { Progress } from "~/components/ui/progress";
 import { Separator } from "~/components/ui/separator";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 import {
 	getOrganizationStorageLimit,
 	getPlan,

@@ -45,7 +45,8 @@ import {
 import { orgRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 // Auth & Hooks
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
+import { getPlanLimits } from "~/lib/pricing";
 
 const inviteSchema = z.object({
 	email: z.email("Please enter a valid email"),
@@ -60,11 +61,30 @@ export default function OrgMembersPage() {
 	// Data
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 	const [invites] = useQuery(queries.getOrganizationInvitations(), CACHE_LONG);
+	const [orgs] = useQuery(queries.getOrganizationList(), CACHE_LONG);
 
 	const currentUser = authSession.user;
 	const currentMember = members?.find((m) => m.userId === currentUser.id);
 	const isAdminOrOwner =
 		currentMember?.role === "admin" || currentMember?.role === "owner";
+
+	// Get current org plan
+	const currentOrgId = authSession.session.activeOrganizationId;
+	const currentOrg = orgs?.find((o) => o.id === currentOrgId);
+
+	// Plan limits checking
+	const planLimits = getPlanLimits(currentOrg?.plan);
+	const memberCount = members?.length ?? 0;
+	const pendingInvites =
+		invites?.filter((i) => i.expiresAt > Date.now())?.length ?? 0;
+	const effectiveMemberCount = memberCount + pendingInvites;
+	const canAddMember =
+		planLimits.maxMembers === null ||
+		effectiveMemberCount < planLimits.maxMembers;
+	const remainingSlots =
+		planLimits.maxMembers === null
+			? null
+			: Math.max(0, planLimits.maxMembers - effectiveMemberCount);
 
 	// Form logic
 	const [form, fields] = useForm({
@@ -140,7 +160,15 @@ export default function OrgMembersPage() {
 				{isAdminOrOwner && (
 					<Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
 						<DialogTrigger asChild>
-							<Button size="sm">
+							<Button
+								size="sm"
+								disabled={!canAddMember}
+								title={
+									!canAddMember
+										? `Member limit reached (${planLimits.maxMembers}). Upgrade to add more.`
+										: undefined
+								}
+							>
 								<UserPlus className="size-4" />
 								<span className="hidden sm:inline">Invite Member</span>
 							</Button>
@@ -150,6 +178,13 @@ export default function OrgMembersPage() {
 								<DialogTitle>Invite team member</DialogTitle>
 								<DialogDescription>
 									They will receive an email to join your organization.
+									{remainingSlots !== null && (
+										<div className="mt-2 text-muted-foreground text-xs">
+											{remainingSlots > 0
+												? `${remainingSlots} of ${planLimits.maxMembers} slots remaining`
+												: `Member limit reached. Upgrade to add more.`}
+										</div>
+									)}
 								</DialogDescription>
 							</DialogHeader>
 							<form {...getFormProps(form)} className="space-y-4 pt-4">

@@ -3,7 +3,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 
 export default function SettingsProfilePage() {
 	const { data: session } = authClient.useSession();
@@ -16,8 +16,8 @@ export default function SettingsProfilePage() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h3 className="text-lg font-medium">Profile</h3>
-				<p className="text-sm text-muted-foreground">
+				<h3 className="font-medium text-lg">Profile</h3>
+				<p className="text-muted-foreground text-sm">
 					This is how others will see you on the site.
 				</p>
 			</div>
@@ -29,8 +29,8 @@ export default function SettingsProfilePage() {
 						<AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
 					</Avatar>
 					<div className="flex flex-col gap-1">
-						<h4 className="text-sm font-medium leading-none">{user.name}</h4>
-						<p className="text-sm text-muted-foreground">{user.email}</p>
+						<h4 className="font-medium text-sm leading-none">{user.name}</h4>
+						<p className="text-muted-foreground text-sm">{user.email}</p>
 					</div>
 				</div>
 

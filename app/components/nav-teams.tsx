@@ -25,6 +25,7 @@ import { StableLink } from "./stable-link";
 export function NavTeams({
 	teams,
 	orgSlug,
+	orgPlan,
 }: {
 	teams: {
 		id: string;
@@ -33,6 +34,7 @@ export function NavTeams({
 		slug: string;
 	}[];
 	orgSlug: string;
+	orgPlan?: string | null;
 }) {
 	const { isMobile, setOpenMobile } = useSidebar();
 	const [createTeamOpen, setCreateTeamOpen] = useState(false);
@@ -121,6 +123,8 @@ export function NavTeams({
 			<CreateTeamDialog
 				open={createTeamOpen}
 				onOpenChange={setCreateTeamOpen}
+				orgPlan={orgPlan}
+				teamCount={teams?.length ?? 0}
 			/>
 		</>
 	);

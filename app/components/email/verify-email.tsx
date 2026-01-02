@@ -13,12 +13,13 @@ import {
 	Tailwind,
 	Text,
 } from "@react-email/components";
+import { getEnv } from "~/lib/env";
 
 interface VerifyEmailProps {
 	verifyUrl?: string;
 }
 
-export const baseUrl = process.env.SITE_URL;
+export const baseUrl = getEnv("SITE_URL");
 
 export const VerifyEmail = ({ verifyUrl }: VerifyEmailProps) => (
 	<Html>

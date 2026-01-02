@@ -7,8 +7,8 @@ import { BasicLayout } from "~/components/basic-layout";
 import { InputField, LoadingButton, PasswordField } from "~/components/forms";
 import { Button } from "~/components/ui/button";
 import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/lib/app-config";
-import { type AuthSession, authClient } from "~/lib/auth-client";
-import { saveAuthSessionToLocalStorage } from "~/lib/offline-auth";
+import { type AuthSession, authClient } from "~/lib/auth/client";
+import { saveAuthSessionToLocalStorage } from "~/lib/auth/offline-session";
 import { signInSchema } from "~/lib/validations/auth";
 import type { Route } from "./+types/login";
 

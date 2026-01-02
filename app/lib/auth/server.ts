@@ -8,7 +8,6 @@ import {
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
-import DodoPayments from "dodopayments";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { UseSend } from "usesend-js";
@@ -23,19 +22,55 @@ import {
 	PLAN_ID,
 	type PlanId,
 } from "~/lib/pricing";
+import { syncDodoSubscriptionSeats } from "~/lib/server/dodo.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
-import { ac, roles } from "./auth-ac";
-import { syncDodoSubscriptionSeats } from "./server/dodo.server";
-
-export const dodoPayments = new DodoPayments({
-	bearerToken: getEnv("DODO_PAYMENTS_API_KEY") ?? "",
-	environment: getEnv("NODE_ENV") === "production" ? "live_mode" : "test_mode",
-});
+import { ac, roles } from "./access-control";
+import { dodoPayments } from "./dodo";
 
 const usesend = new UseSend(
 	getEnv("USESEND_API_KEY"),
 	getEnv("USESEND_SELF_HOSTED_URL"),
 );
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Validate that organization has capacity for new members based on plan limits.
+ * Guests do not count towards limits.
+ *
+ * @throws Error if organization is not found or member limit reached
+ */
+async function validateMemberLimit(orgId: string): Promise<void> {
+	const org = await db.query.organizationsTable.findFirst({
+		where: eq(schema.organizationsTable.id, orgId),
+	});
+
+	if (!org) {
+		throw new Error(`Organization ${orgId} not found`);
+	}
+
+	const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
+	const limits = getPlanLimits(planId);
+
+	if (limits.maxMembers !== null) {
+		const existingPaidMembers = await db
+			.select()
+			.from(schema.membersTable)
+			.where(eq(schema.membersTable.organizationId, orgId));
+
+		const paidCount = existingPaidMembers.filter(
+			(m) => m.role !== "guest",
+		).length;
+
+		if (paidCount >= limits.maxMembers) {
+			throw new Error(
+				`Organization has reached the member limit (${limits.maxMembers}) for the ${org.plan} plan. Upgrade to add more members.`,
+			);
+		}
+	}
+}
 
 export const auth = betterAuth({
 	experimental: {
@@ -130,39 +165,9 @@ export const auth = betterAuth({
 					invitation: typeof schema.invitationsTable.$inferInsert,
 				) => {
 					// Guests don't count towards paid limits, skip check
-					if (invitation.role === "guest") return { data: invitation };
-
-					const orgId = invitation.organizationId;
-					const org = await db.query.organizationsTable.findFirst({
-						where: eq(schema.organizationsTable.id, orgId),
-					});
-
-					if (!org) return;
-
-					const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
-					const limits = getPlanLimits(planId);
-
-					if (limits.maxMembers !== null) {
-						// Only count non-guest members for plan limits
-						const existingPaidMembers = await db
-							.select()
-							.from(schema.membersTable)
-							.where(eq(schema.membersTable.organizationId, orgId));
-
-						// In Starter/Pro, all members typically count unless we strictly define Guests as free there too.
-						// User said "business users free users" -> likely Business plan.
-						// For Starter/Pro (flat limits), we exclude 'guest' from the count if they exist.
-						const paidCount = existingPaidMembers.filter(
-							(m) => m.role !== "guest",
-						).length;
-
-						if (paidCount >= limits.maxMembers) {
-							throw new Error(
-								`Organization has reached the member limit (${limits.maxMembers}) for the ${org.plan} plan. Upgrade to add more members.`,
-							);
-						}
+					if (invitation.role !== "guest") {
+						await validateMemberLimit(invitation.organizationId);
 					}
-
 					return { data: invitation };
 				},
 			},
@@ -173,32 +178,8 @@ export const auth = betterAuth({
 					const orgId = member.organizationId;
 
 					// Guests are always allowed to join (they don't count towards paid limits)
-					if (member.role === "guest") return { data: member };
-
-					const org = await db.query.organizationsTable.findFirst({
-						where: eq(schema.organizationsTable.id, orgId),
-					});
-
-					if (!org) return;
-
-					const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
-					const limits = getPlanLimits(planId);
-
-					if (limits.maxMembers !== null) {
-						const existingPaidMembers = await db
-							.select()
-							.from(schema.membersTable)
-							.where(eq(schema.membersTable.organizationId, orgId));
-
-						const paidCount = existingPaidMembers.filter(
-							(m) => m.role !== "guest",
-						).length;
-
-						if (paidCount >= limits.maxMembers) {
-							throw new Error(
-								`Organization has reached the member limit (${limits.maxMembers}) for the ${org.plan} plan.`,
-							);
-						}
+					if (member.role !== "guest") {
+						await validateMemberLimit(orgId);
 					}
 					return { data: member };
 				},

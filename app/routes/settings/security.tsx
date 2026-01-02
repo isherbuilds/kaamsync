@@ -5,7 +5,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 
 import { Separator } from "~/components/ui/separator";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 
 export default function SettingsSecurityPage() {
 	const { data: session } = authClient.useSession();
@@ -36,8 +36,8 @@ export default function SettingsSecurityPage() {
 	return (
 		<div className="space-y-6">
 			<div>
-				<h3 className="text-lg font-medium">Security</h3>
-				<p className="text-sm text-muted-foreground">
+				<h3 className="font-medium text-lg">Security</h3>
+				<p className="text-muted-foreground text-sm">
 					Manage your sessions and linked accounts.
 				</p>
 			</div>
@@ -45,7 +45,7 @@ export default function SettingsSecurityPage() {
 
 			<div className="space-y-6">
 				<section>
-					<h4 className="text-sm font-medium mb-4">Active Sessions</h4>
+					<h4 className="mb-4 font-medium text-sm">Active Sessions</h4>
 					{isLoadingSessions ? (
 						<div className="flex items-center justify-center p-4">
 							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -55,7 +55,7 @@ export default function SettingsSecurityPage() {
 							{sessions?.map((s: any) => (
 								<div
 									key={s.id}
-									className="border rounded-lg overflow-hidden shadow-sm bg-card text-card-foreground"
+									className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm"
 								>
 									<div className="flex items-center justify-between p-4">
 										<div className="flex items-center gap-4">
@@ -64,7 +64,7 @@ export default function SettingsSecurityPage() {
 											</div>
 											<div>
 												<div className="flex items-center gap-2">
-													<p className="text-sm font-medium">
+													<p className="font-medium text-sm">
 														{s.userAgent
 															? /Chrome|Firefox|Safari|Edge/.exec(
 																	s.userAgent,
@@ -77,7 +77,7 @@ export default function SettingsSecurityPage() {
 														</Badge>
 													)}
 												</div>
-												<div className="flex items-center gap-2 text-xs text-muted-foreground">
+												<div className="flex items-center gap-2 text-muted-foreground text-xs">
 													<Globe className="h-3 w-3" />
 													<span>{s.ipAddress || "Unknown IP"}</span>
 													<span>•</span>
@@ -92,7 +92,7 @@ export default function SettingsSecurityPage() {
 											<Button
 												variant="ghost"
 												size="sm"
-												className="text-destructive hover:text-destructive hover:bg-destructive/10"
+												className="text-destructive hover:bg-destructive/10 hover:text-destructive"
 												onClick={() => handleRevokeSession(s.token)} // Assuming token is used for revocation
 												disabled={revokingSessionId === s.token}
 											>
@@ -107,7 +107,7 @@ export default function SettingsSecurityPage() {
 								</div>
 							))}
 							{sessions?.length === 0 && (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									No active sessions found.
 								</p>
 							)}
@@ -118,7 +118,7 @@ export default function SettingsSecurityPage() {
 				<Separator />
 
 				<section>
-					<h4 className="text-sm font-medium mb-4">Linked Accounts</h4>
+					<h4 className="mb-4 font-medium text-sm">Linked Accounts</h4>
 					{isLoadingAccounts ? (
 						<div className="flex items-center justify-center p-4">
 							<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -128,19 +128,19 @@ export default function SettingsSecurityPage() {
 							{accounts?.map((account: any) => (
 								<div
 									key={account.id}
-									className="border rounded-lg overflow-hidden shadow-sm bg-card text-card-foreground"
+									className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm"
 								>
 									<div className="flex items-center justify-between p-4">
 										<div className="flex items-center gap-4">
 											{/* Placeholder for provider icon - can map based on account.providerId */}
-											<div className="rounded-full bg-muted p-2 capitalize font-bold text-muted-foreground">
+											<div className="rounded-full bg-muted p-2 font-bold text-muted-foreground capitalize">
 												{account.providerId.charAt(0)}
 											</div>
 											<div>
-												<p className="text-sm font-medium capitalize">
+												<p className="font-medium text-sm capitalize">
 													{account.providerId}
 												</p>
-												<p className="text-xs text-muted-foreground">
+												<p className="text-muted-foreground text-xs">
 													Linked on{" "}
 													{new Date(account.createdAt).toLocaleDateString()}
 												</p>
@@ -154,7 +154,7 @@ export default function SettingsSecurityPage() {
 								</div>
 							))}
 							{accounts?.length === 0 && (
-								<p className="text-sm text-muted-foreground">
+								<p className="text-muted-foreground text-sm">
 									No linked accounts found.
 								</p>
 							)}
