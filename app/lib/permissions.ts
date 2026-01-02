@@ -53,6 +53,14 @@ export function getRolePermissions(role: string): TeamRolePermissions {
 				canManageMembers: false,
 				canManageTeam: false,
 			};
+		case teamRole.guest:
+			return {
+				canCreateTasks: false,
+				canCreateRequests: false,
+				canApproveRequests: false,
+				canManageMembers: false,
+				canManageTeam: false,
+			};
 		default:
 			return {
 				canCreateTasks: false,
@@ -142,7 +150,8 @@ export function canViewTeam(role?: TeamRole | null): boolean {
 	return (
 		role === teamRole.manager ||
 		role === teamRole.member ||
-		role === teamRole.viewer
+		role === teamRole.viewer ||
+		role === teamRole.guest
 	);
 }
 
@@ -155,9 +164,11 @@ export function canEditMatter(
 	isAssignee?: boolean,
 ): boolean {
 	// Managers can edit all, members can edit their own
+	// Guests are external users who can only complete or comment on tasks assigned to them
 	return (
 		role === teamRole.manager ||
-		(role === teamRole.member && (isAuthor === true || isAssignee === true))
+		((role === teamRole.member || role === teamRole.guest) &&
+			(isAuthor === true || isAssignee === true))
 	);
 }
 
@@ -165,6 +176,7 @@ export function canEditMatter(
  * Check if role can delete matters
  */
 export function canDeleteMatter(role?: TeamRole | null): boolean {
+	// Only managers can delete matters
 	return role === teamRole.manager;
 }
 

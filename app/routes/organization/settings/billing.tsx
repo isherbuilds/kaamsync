@@ -87,7 +87,10 @@ export default function BillingSettings() {
 	const currentPlan = getPlan(currentPlanId);
 	const subscriptionStatus = org?.subscriptionStatus;
 
-	const memberCount = members?.length ?? 0;
+	const paidMembers = members?.filter((m) => m.role !== "guest") ?? [];
+	const guestMembers = members?.filter((m) => m.role === "guest") ?? [];
+	const memberCount = paidMembers.length;
+	const guestCount = guestMembers.length;
 	const teamCount = teams?.length ?? 0;
 
 	// Calculate usage percentages
@@ -228,6 +231,11 @@ export default function BillingSettings() {
 								</span>
 								<span className="font-medium">
 									{memberCount} / {memberLimit ?? "∞"}
+									{guestCount > 0 && (
+										<span className="ml-2 font-normal text-muted-foreground text-xs">
+											(+ {guestCount} Guests)
+										</span>
+									)}
 								</span>
 							</div>
 							<Progress value={memberUsagePercent} className="h-2" />
@@ -261,6 +269,13 @@ export default function BillingSettings() {
 							<Progress value={storageUsagePercent} className="h-2" />
 						</div>
 					</div>
+
+					{currentPlanId === PLAN_ID.BUSINESS && (
+						<div className="rounded-lg bg-muted/50 p-3 text-muted-foreground text-xs">
+							<span className="font-medium text-foreground">Note:</span> Guest
+							users are free and do not count towards your billed seats.
+						</div>
+					)}
 				</CardContent>
 			</Card>
 
@@ -281,7 +296,7 @@ export default function BillingSettings() {
 						return (
 							<Card
 								key={plan.id}
-								className={`relative ${isCurrent ? "border-primary" : ""}`}
+								className={`relative ${isCurrent ? "border-primary" : ""} ${plan.id === PLAN_ID.ENTERPRISE ? "bg-muted/10" : ""}`}
 							>
 								{plan.id === PLAN_ID.PRO && (
 									<div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -296,7 +311,11 @@ export default function BillingSettings() {
 									<CardDescription>{plan.description}</CardDescription>
 									<div className="pt-2">
 										<span className="font-bold text-3xl">
-											{plan.price === 0 ? "Free" : `$${plan.price / 100}`}
+											{plan.price === 0
+												? plan.id === PLAN_ID.ENTERPRISE
+													? "Custom"
+													: "Free"
+												: `$${plan.price / 100}`}
 										</span>
 										{plan.price > 0 && (
 											<span className="text-muted-foreground">
@@ -309,7 +328,10 @@ export default function BillingSettings() {
 									<ul className="space-y-2">
 										<li className="flex items-center gap-2 text-sm">
 											<Check className="size-4 text-green-500" />
-											{plan.limits.maxMembers ?? "Unlimited"} members
+											{plan.limits.maxMembers ??
+												(plan.id === PLAN_ID.ENTERPRISE
+													? "100+ members"
+													: "Unlimited members")}
 										</li>
 										<li className="flex items-center gap-2 text-sm">
 											<Check className="size-4 text-green-500" />
@@ -319,7 +341,9 @@ export default function BillingSettings() {
 											<Check className="size-4 text-green-500" />
 											{plan.limits.storageBytes
 												? formatStorage(plan.limits.storageBytes)
-												: `${formatStorage(plan.limits.storagePerUserBytes ?? 0)}/user`}{" "}
+												: plan.limits.storagePerUserBytes
+													? `${formatStorage(plan.limits.storagePerUserBytes ?? 0)}/user`
+													: "Unlimited"}{" "}
 											storage
 										</li>
 										<li className="flex items-center gap-2 text-sm">
@@ -365,6 +389,13 @@ export default function BillingSettings() {
 										<Button variant="outline" className="w-full" disabled>
 											Current Plan
 										</Button>
+									) : plan.id === PLAN_ID.ENTERPRISE ? (
+										<Button variant="outline" className="w-full" asChild>
+											<a href="/contact">
+												Contact Sales
+												<ExternalLink className="ml-2 size-4" />
+											</a>
+										</Button>
 									) : canUpgrade ? (
 										<Button
 											className="w-full"
@@ -379,11 +410,17 @@ export default function BillingSettings() {
 												: "Upgrade"}
 										</Button>
 									) : plan.id === PLAN_ID.BUSINESS ? (
-										<Button variant="outline" className="w-full" asChild>
-											<a href="/contact">
-												Contact Sales
-												<ExternalLink className="ml-2 size-4" />
-											</a>
+										/* Keep old logic for Business contact sales if coming from Starter? No, Logic changed to allow upgrade to Business 
+										   Wait, canUpgrade logic handles order. 
+										   If I am Pro, I can upgrade to Business.
+										   If I am Starter, I can upgrade to Business.
+										   My previous code had a fallback for BUSINESS to contact sales? */
+										<Button
+											className="w-full"
+											onClick={() => handleUpgrade(`${plan.id}_monthly`)}
+											disabled={isLoading !== null}
+										>
+											Upgrade
 										</Button>
 									) : (
 										<Button variant="outline" className="w-full" disabled>

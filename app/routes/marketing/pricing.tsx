@@ -54,12 +54,28 @@ const plans = [
 		description: "For large organizations scaling across many departments.",
 		features: [
 			"Unlimited team members",
-			"Unlimited spaces",
+			"Free Guest category",
 			"10GB Storage per user",
-			"Everything in Pro",
 			"SSO / SAML",
 			"Custom integrations",
 			"Dedicated support",
+		],
+		cta: "Contact Sales",
+		href: "/contact",
+		popular: false,
+	},
+	{
+		name: "Enterprise",
+		price: "Custom",
+		period: "contact for quote",
+		description: "Custom solutions for mission-critical operations.",
+		features: [
+			"100+ team members",
+			"Unlimited storage",
+			"Custom contracts",
+			"White-glove onboarding",
+			"24/7 dedicated support",
+			"SLA guarantees",
 		],
 		cta: "Contact Sales",
 		href: "/contact",
@@ -92,6 +108,10 @@ const faqs = [
 		q: "Can I get a refund?",
 		a: "We offer a 30-day money-back guarantee for annual plans.",
 	},
+	{
+		q: "Who are Guest users?",
+		a: "Guests are external collaborators who can view and complete tasks assigned to them. On Business and Enterprise plans, Guest users are free and don't count towards your seat limit.",
+	},
 ];
 
 export default function PricingPage() {
@@ -115,7 +135,7 @@ export default function PricingPage() {
 					</div>
 
 					{/* Plans */}
-					<div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+					<div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
 						{plans.map((plan) => (
 							<div
 								key={plan.name}

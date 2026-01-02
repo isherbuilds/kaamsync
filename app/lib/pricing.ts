@@ -15,6 +15,7 @@ export const PLAN_ID = {
 	STARTER: "starter",
 	PRO: "pro",
 	BUSINESS: "business",
+	ENTERPRISE: "enterprise",
 } as const;
 
 export type PlanId = (typeof PLAN_ID)[keyof typeof PLAN_ID];
@@ -114,6 +115,24 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 			maxTeams: null, // Unlimited
 			storageBytes: null, // Calculated per user
 			storagePerUserBytes: 10 * GB, // 10GB per user, pooled
+			historyDays: null, // Unlimited
+			hasApprovalWorkflows: true,
+			hasPrioritySupport: true,
+			hasSSO: true,
+			hasCustomIntegrations: true,
+			hasDedicatedSupport: true,
+		},
+	},
+	[PLAN_ID.ENTERPRISE]: {
+		id: PLAN_ID.ENTERPRISE,
+		name: "Enterprise",
+		description: "Custom solutions for mission-critical operations.",
+		price: 0, // Contact Sales
+		isPerSeat: true,
+		limits: {
+			maxMembers: null, // 100+ (Unlimited in code, gated by sales)
+			maxTeams: null, // Unlimited
+			storageBytes: null, // Unlimited
 			historyDays: null, // Unlimited
 			hasApprovalWorkflows: true,
 			hasPrioritySupport: true,
@@ -254,7 +273,12 @@ export function isUpgrade(
 	fromPlanId: PlanId | string | null | undefined,
 	toPlanId: PlanId | string,
 ): boolean {
-	const planOrder: PlanId[] = [PLAN_ID.STARTER, PLAN_ID.PRO, PLAN_ID.BUSINESS];
+	const planOrder: PlanId[] = [
+		PLAN_ID.STARTER,
+		PLAN_ID.PRO,
+		PLAN_ID.BUSINESS,
+		PLAN_ID.ENTERPRISE,
+	];
 	const fromIndex = planOrder.indexOf(
 		(fromPlanId as PlanId) || PLAN_ID.STARTER,
 	);
@@ -294,7 +318,11 @@ export function getUpgradePrompt(
 ): string {
 	const plan = getPlan(planId);
 	const nextPlan =
-		plan.id === PLAN_ID.STARTER ? PLANS[PLAN_ID.PRO] : PLANS[PLAN_ID.BUSINESS];
+		plan.id === PLAN_ID.STARTER
+			? PLANS[PLAN_ID.PRO]
+			: plan.id === PLAN_ID.PRO
+				? PLANS[PLAN_ID.BUSINESS]
+				: PLANS[PLAN_ID.ENTERPRISE];
 
 	switch (limitType) {
 		case "members":

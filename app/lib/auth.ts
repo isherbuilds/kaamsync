@@ -117,6 +117,87 @@ export const auth = betterAuth({
 				},
 			},
 		},
+		invitation: {
+			create: {
+				before: async (
+					invitation: typeof schema.invitationsTable.$inferInsert,
+				) => {
+					const orgId = invitation.organizationId;
+					const org = await db.query.organizationsTable.findFirst({
+						where: eq(schema.organizationsTable.id, orgId),
+					});
+
+					if (!org) return;
+
+					const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
+					const { limits } = await import("~/lib/pricing").then((m) => ({
+						limits: m.getPlanLimits(planId),
+					}));
+
+					if (limits.maxMembers !== null) {
+						// Only count non-guest members for plan limits
+						const existingPaidMembers = await db
+							.select()
+							.from(schema.membersTable)
+							.where(eq(schema.membersTable.organizationId, orgId));
+
+						// In Starter/Pro, all members typically count unless we strictly define Guests as free there too.
+						// User said "business users free users" -> likely Business plan.
+						// For Starter/Pro (flat limits), we exclude 'guest' from the count if they exist.
+						const paidCount = existingPaidMembers.filter(
+							(m) => m.role !== "guest",
+						).length;
+
+						if (paidCount >= limits.maxMembers) {
+							throw new Error(
+								`Organization has reached the member limit (${limits.maxMembers}) for the ${org.plan} plan. Upgrade to add more members.`,
+							);
+						}
+					}
+
+					return { data: invitation };
+				},
+			},
+		},
+		member: {
+			create: {
+				before: async (member: typeof schema.membersTable.$inferInsert) => {
+					const orgId = member.organizationId;
+
+					// Guests are always allowed to join (they don't count towards paid limits)
+					if (member.role === "guest") return { data: member };
+
+					const org = await db.query.organizationsTable.findFirst({
+						where: eq(schema.organizationsTable.id, orgId),
+					});
+
+					if (!org) return;
+
+					const planId = (org.plan as PlanId) || PLAN_ID.STARTER;
+					const { limits } = await import("~/lib/pricing").then((m) => ({
+						limits: m.getPlanLimits(planId),
+					}));
+
+					if (limits.maxMembers !== null) {
+						const existingPaidMembers = await db
+							.select()
+							.from(schema.membersTable)
+							.where(eq(schema.membersTable.organizationId, orgId));
+
+						const paidCount = existingPaidMembers.filter(
+							(m) => m.role !== "guest",
+						).length;
+
+						if (paidCount >= limits.maxMembers) {
+							throw new Error(
+								`Organization has reached the member limit (${limits.maxMembers}) for the ${org.plan} plan.`,
+							);
+						}
+					}
+					return { data: member };
+				},
+			},
+		},
 	},
 	plugins: [
 		organization({

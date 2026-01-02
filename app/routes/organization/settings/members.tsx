@@ -79,7 +79,7 @@ export default function OrgMembersPage() {
 			startTransition(async () => {
 				const { error } = await authClient.organization.inviteMember({
 					email: submission.value.email,
-					role: submission.value.role,
+					role: submission.value.role as "member" | "admin" | "owner", // Safe cast to core types
 				});
 
 				if (error) {
@@ -176,6 +176,9 @@ export default function OrgMembersPage() {
 										<SelectContent>
 											<SelectItem value="member">Member</SelectItem>
 											<SelectItem value="admin">Admin</SelectItem>
+											<SelectItem value="guest">
+												Guest (Read specific tasks)
+											</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>

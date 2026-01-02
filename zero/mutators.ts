@@ -144,6 +144,11 @@ export const mutators = defineMutators({
 					throw new Error("You do not have permission to create requests");
 				}
 
+				// Explicitly block guests (redundant with above but safe)
+				if (membership.role === teamRole.guest) {
+					throw new Error("Guests cannot create tasks or requests");
+				}
+
 				const id = createId();
 				const now = Date.now();
 
