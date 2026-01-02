@@ -62,7 +62,7 @@ The core unit of work is a "Matter", which can be:
    cp .env.example .env
    ```
 
-   **Important:** Ensure `SITE_URL` is configured in all environments (CI, staging, and production). `SITE_URL` should be the base hostname without protocol (for example `https://example.com`). This value is used to generate absolute URLs in emails and other outbound links; the application validates and normalizes `SITE_URL` at startup and will fail-fast if it is missing.
+   **Important:** Ensure `SITE_URL` is configured in all environments (CI, staging, and production). `SITE_URL` should be the full base URL including protocol (for example `https://example.com`). This value is used to generate absolute URLs in emails and other outbound links; the application validates and normalizes `SITE_URL` at startup and will fail-fast if it is missing.
 
 
 4. **Database Setup**
