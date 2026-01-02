@@ -111,7 +111,9 @@ export default function HomePage() {
 							>
 								<Link to="/contact">Book a Demo</Link>
 							</Button>
-							"{" "}
+				</Link>
+			</Button>
+		</div>
 						</div>
 
 						{/* Hero Visual - Product Screenshot */}
