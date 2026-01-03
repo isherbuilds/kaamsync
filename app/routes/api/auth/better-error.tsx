@@ -1,7 +1,7 @@
 import { Link, type LoaderFunctionArgs, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button";
 
-import { auth } from "~/lib/auth";
+import { auth } from "~/lib/auth/server";
 
 export const meta = () => [{ title: "Authentication Error" }];
 

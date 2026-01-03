@@ -69,6 +69,7 @@ export const reservedSlugs = [
 	"productivity",
 
 	// Operations Management
+	"static",
 	"operations",
 	"ops",
 	"supply-chain",

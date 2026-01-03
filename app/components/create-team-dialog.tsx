@@ -4,6 +4,7 @@ import { useZero } from "@rocicorp/zero/react";
 import { memo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
+import { getPlanLimits } from "~/lib/pricing";
 import { createTeamSchema } from "../lib/validations/organization";
 import { InputField } from "./forms";
 import { Button } from "./ui/button";
@@ -26,13 +27,22 @@ export const CreateTeamDialog = memo(
 	({
 		open,
 		onOpenChange,
+		orgPlan,
+		teamCount = 0,
 	}: {
 		open: boolean;
 		onOpenChange: (o: boolean) => void;
+		orgPlan?: string | null;
+		teamCount?: number;
 	}) => {
 		const zr = useZero();
 		const isManual = useRef(false);
 		const [isSubmitting, setIsSubmitting] = useState(false);
+
+		// Plan limits checking
+		const planLimits = getPlanLimits(orgPlan);
+		const canCreateTeam =
+			planLimits.maxTeams === null || teamCount < planLimits.maxTeams;
 
 		const [form, fields] = useForm({
 			id: "create-team-dialog",
@@ -68,6 +78,12 @@ export const CreateTeamDialog = memo(
 						<DialogTitle>New Team</DialogTitle>
 						<DialogDescription className="text-xs">
 							Give your team a name and a unique 3-letter code.
+							{!canCreateTeam && planLimits.maxTeams !== null && (
+								<div className="mt-2 text-destructive">
+									Team limit reached ({planLimits.maxTeams}). Upgrade to add
+									more.
+								</div>
+							)}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -116,7 +132,7 @@ export const CreateTeamDialog = memo(
 							<Button type="button" variant="ghost" onClick={close}>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button type="submit" disabled={isSubmitting || !canCreateTeam}>
 								{isSubmitting ? "Creating..." : "Create Team"}
 							</Button>
 						</div>

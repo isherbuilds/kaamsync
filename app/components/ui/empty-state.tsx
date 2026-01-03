@@ -53,8 +53,8 @@ export function EmptyState({
 			<div className={cn("rounded-full p-3", iconColorClass)}>
 				<Icon className={cn("size-8", iconFillClass)} />
 			</div>
-			<p className="mt-3 text-sm font-medium text-muted-foreground">{title}</p>
-			<p className="mt-1 text-xs text-muted-foreground/70">{description}</p>
+			<p className="mt-3 font-medium text-muted-foreground text-sm">{title}</p>
+			<p className="mt-1 text-muted-foreground/70 text-xs">{description}</p>
 			{children && <div className="mt-4">{children}</div>}
 		</div>
 	);
@@ -76,7 +76,7 @@ export function EmptyStateCard({
 	return (
 		<div
 			className={cn(
-				"flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/20 bg-muted/30 p-8 text-center m-4",
+				"m-4 flex h-full flex-col items-center justify-center rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/30 p-8 text-center",
 				className,
 			)}
 		>
@@ -90,13 +90,13 @@ export function EmptyStateCard({
 					<Icon className={cn("size-8", iconFillClass)} />
 				</div>
 				<div className="space-y-2">
-					<h3 className="text-lg font-semibold">{title}</h3>
-					<p className="text-sm text-muted-foreground leading-relaxed">
+					<h3 className="font-semibold text-lg">{title}</h3>
+					<p className="text-muted-foreground text-sm leading-relaxed">
 						{description}
 					</p>
 				</div>
 				{children && (
-					<div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+					<div className="flex flex-col items-center justify-center gap-2 pt-2 sm:flex-row">
 						{children}
 					</div>
 				)}

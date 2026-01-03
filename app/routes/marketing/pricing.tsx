@@ -14,17 +14,16 @@ export const meta: MetaFunction = () => [
 
 const plans = [
 	{
-		name: "Free",
+		name: "Starter",
 		price: "$0",
 		period: "forever",
-		description:
-			"For small teams getting started with structured task management.",
+		description: "For small teams fixing their messy chat workflows.",
 		features: [
 			"Up to 5 team members",
+			"2 Team spaces",
+			"1GB Storage",
 			"Unlimited tasks",
-			"Basic teams",
-			"7-day activity history",
-			"Email support",
+			"Unlimited tasks",
 		],
 		cta: "Get Started",
 		href: "/signup",
@@ -32,40 +31,51 @@ const plans = [
 	},
 	{
 		name: "Pro",
-		price: "$12",
-		period: "per user / month",
-		description:
-			"For growing teams that need advanced workflows and reporting.",
+		price: "$29",
+		period: "flat / month",
+		description: "The sweet spot for growing operations teams.",
 		features: [
-			"Unlimited team members",
+			"Up to 20 team members",
+			"5 Team spaces",
+			"10GB Storage",
 			"Unlimited tasks",
-			"Advanced teams",
 			"Unlimited history",
 			"Priority support",
-			"Custom fields",
 			"Approval workflows",
-			"API access",
-			"Integrations",
 		],
 		cta: "Start Free Trial",
 		href: "/signup?plan=pro",
 		popular: true,
 	},
 	{
+		name: "Business",
+		price: "$10",
+		period: "per user / month",
+		description: "For large organizations scaling across many departments.",
+		features: [
+			"Unlimited team members",
+			"Free Guest category",
+			"100GB+ Storage",
+			"SSO / SAML",
+			"Custom integrations",
+			"Dedicated support",
+		],
+		cta: "Get Started",
+		href: "/signup?plan=business",
+		popular: false,
+	},
+	{
 		name: "Enterprise",
 		price: "Custom",
-		period: "contact us",
-		description:
-			"For large organizations with specific security and compliance needs.",
+		period: "contact for quote",
+		description: "Custom solutions for mission-critical operations.",
 		features: [
-			"Everything in Pro",
-			"SSO / SAML",
-			"Advanced security",
-			"Dedicated support",
-			"Custom integrations",
-			"SLA guarantee",
-			"Onboarding assistance",
+			"100+ team members",
+			"Unlimited storage",
 			"Custom contracts",
+			"White-glove onboarding",
+			"24/7 dedicated support",
+			"SLA guarantees",
 		],
 		cta: "Contact Sales",
 		href: "/contact",
@@ -98,6 +108,10 @@ const faqs = [
 		q: "Can I get a refund?",
 		a: "We offer a 30-day money-back guarantee for annual plans.",
 	},
+	{
+		q: "Who are Guest users?",
+		a: "Guests are external collaborators who can view and complete tasks assigned to them. On Business and Enterprise plans, Guest users are free and don't count towards your seat limit.",
+	},
 ];
 
 export default function PricingPage() {
@@ -109,17 +123,19 @@ export default function PricingPage() {
 					<div className="mx-auto mb-16 max-w-3xl text-center">
 						<p className="mb-4 font-medium text-primary text-sm">Pricing</p>
 						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
-							Simple pricing for
+							Clarity shouldn't
 							<br />
-							every team size
+							cost a fortune
 						</h1>
-						<p className="text-lg text-muted-foreground">
-							Start free and scale as you grow. No hidden fees, no surprises.
+						<p className="text-balance text-lg text-muted-foreground">
+							Stop paying $15/user for chat that creates more work. KaamSync
+							offers simple pricing built for teams that actually get things
+							done.
 						</p>
 					</div>
 
 					{/* Plans */}
-					<div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+					<div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
 						{plans.map((plan) => (
 							<div
 								key={plan.name}

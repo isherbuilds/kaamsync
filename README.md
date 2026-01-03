@@ -2,22 +2,17 @@
 
 The operating system for field teams. KaamSync is an offline-first task management platform designed to bridge the gap between office managers and frontline workers.
 
-## 🚀 Tech Stack
+## 🛠️ Tech Stack
 
-Built with a modern, performance-focused stack:
-
-- **Framework**: [React Router v7](https://reactrouter.com/)
-- **Database**: [PostgreSQL](https://www.postgresql.org/) with [Drizzle ORM](https://orm.drizzle.team/)
-- **Sync Engine**: [Zero](https://zero.rocicorp.dev/) for local-first, offline-capable data sync
-- **Authentication**: [Better Auth](https://www.better-auth.com/)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
-- **UI Components**: [Shadcn UI](https://ui.shadcn.com/) & [Lucide Icons](https://lucide.dev/)
+- **Framework**: [React Router v7](https://reactrouter.com)
+- **Database**: [PostgreSQL](https://www.postgresql.org) + [Drizzle ORM](https://orm.drizzle.team)
+- **Sync Layer**: [Zero](https://zero.rocicorp.dev)
+- **Authentication**: [Better Auth](https://better-auth.com)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com)
+- **UI Components**: [Radix UI](https://www.radix-ui.com) + [Lucide React](https://lucide.dev)
 
 ## ✨ Key Features
 
-Based on our robust schema design:
-
-### 🏢 Organization & Teams
 - Multi-tenant architecture with **Organizations**.
 - **Teams** for granular team separation (e.g., "Maintenance", "Logistics").
 - Role-based access control (Manager, Member, Viewer).
@@ -66,6 +61,9 @@ The core unit of work is a "Matter", which can be:
    ```bash
    cp .env.example .env
    ```
+
+   **Important:** Ensure `SITE_URL` is configured in all environments (CI, staging, and production). `SITE_URL` should be the full base URL including protocol (for example `https://example.com`). This value is used to generate absolute URLs in emails and other outbound links; the application validates and normalizes `SITE_URL` at startup and will fail-fast if it is missing.
+
 
 4. **Database Setup**
    Generate the database schema:

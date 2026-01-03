@@ -1,6 +1,6 @@
 import { dropAllDatabases } from "@rocicorp/zero";
 import { redirect } from "react-router";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 
 export function loader() {
 	return redirect("/login");

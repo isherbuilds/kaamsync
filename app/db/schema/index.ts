@@ -22,9 +22,6 @@ import {
 	verificationsTable,
 } from "./auth-schema";
 
-// --------------------------------------------------------
-// 1. RE-EXPORT AUTH TABLES
-// --------------------------------------------------------
 export {
 	organizationsTable,
 	usersTable,
@@ -34,10 +31,6 @@ export {
 	membersTable,
 	invitationsTable,
 };
-
-// --------------------------------------------------------
-// 2. DEFINE APP TABLES (Before defining relations)
-// --------------------------------------------------------
 
 export const teamsTable = pgTable(
 	"teams",

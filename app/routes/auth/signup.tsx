@@ -6,7 +6,7 @@ import { BasicLayout } from "~/components/basic-layout";
 import { InputField, LoadingButton, PasswordField } from "~/components/forms";
 import { useIsPending } from "~/hooks/use-is-pending";
 import { AppInfo } from "~/lib/app-config";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 import { signUpSchema } from "~/lib/validations/auth";
 import type { Route } from "./+types/signup";
 

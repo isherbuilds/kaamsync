@@ -60,6 +60,7 @@ export default [
 		route("auth/error", "routes/api/auth/better-error.tsx"),
 		route("zero/query", "routes/api/zero/query.ts"),
 		route("zero/mutate", "routes/api/zero/mutate.ts"),
+		route("billing/callback", "routes/api/billing/callback.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 	]),
 
@@ -67,6 +68,7 @@ export default [
 		route("login", "routes/auth/login.tsx"),
 		route("signup", "routes/auth/signup.tsx"),
 		route("logout", "routes/auth/logout.tsx"),
-		// route("forget-password", "routes/auth/forget-password.tsx"),
+		route("forget-password", "routes/auth/forget-password.tsx"),
+		route("reset-password", "routes/auth/reset-password.tsx"),
 	]),
 ] satisfies RouteConfig;

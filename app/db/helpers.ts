@@ -60,6 +60,7 @@ export const orgRole = {
 	owner: "owner",
 	admin: "admin",
 	member: "member",
+	guest: "guest",
 } as const;
 
 export const membershipStatus = {
@@ -99,6 +100,7 @@ export const teamRole = {
 	viewer: "viewer", // Read-only access
 	member: "member", // Can create requests, limited task creation
 	manager: "manager", // Can create tasks, approve requests, manage team
+	guest: "guest", // External/limited user, can only view assigned tasks
 } as const;
 
 export type TeamRole = (typeof teamRole)[keyof typeof teamRole];

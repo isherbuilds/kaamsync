@@ -12,7 +12,7 @@ import { BasicLayout } from "~/components/basic-layout";
 import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AppInfo } from "~/lib/app-config";
-import { auth, getServerSession } from "~/lib/auth";
+import { auth, getServerSession } from "~/lib/auth/server";
 import { getOrganization } from "~/lib/server/organization.server";
 import { seedTeamDefaults } from "~/lib/server/seed-defaults.server";
 import { sanitizeSlug } from "~/lib/utils";

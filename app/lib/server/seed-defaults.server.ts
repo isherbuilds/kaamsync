@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or } from "drizzle-orm";
 import { membershipStatus, teamRole } from "~/db/helpers";
 import { db } from "~/db/index";
 import {
@@ -41,8 +41,12 @@ export async function seedTeamDefaults({
 }: SeedOptions) {
 	// Pre-generate all IDs upfront
 	const teamId = createId();
-	const labelIds = Array.from({ length: 5 }, () => createId());
-	const statusIds = Array.from({ length: 5 }, () => createId());
+	const labelIds = Array.from({ length: DEFAULT_LABELS.length }, () =>
+		createId(),
+	);
+	const statusIds = Array.from({ length: DEFAULT_STATUSES.length }, () =>
+		createId(),
+	);
 
 	// Prepare candidates (used for BOTH slug and code)
 	const candidates = makeTeamIdentifierCandidates(teamName, 10);
@@ -54,11 +58,7 @@ export async function seedTeamDefaults({
 			.select({ userId: membersTable.userId })
 			.from(membersTable)
 			.where(eq(membersTable.organizationId, orgId))
-			.orderBy(
-				// Prioritize owners (role = 'owner' comes first)
-				// Using sql to create a CASE expression for conditional ordering
-				sql`CASE WHEN ${membersTable.role} = 'owner' THEN 0 ELSE 1 END`,
-			)
+			.orderBy(asc(membersTable.role))
 			.limit(1)
 			.then((rows) => rows[0])
 			.catch(() => null),
