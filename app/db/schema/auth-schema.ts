@@ -87,11 +87,11 @@ export const organizationsTable = pgTable(
 	{
 		id: text("id").primaryKey(),
 		name: text("name").notNull(),
-		slug: text("slug").notNull().unique(),
+		slug: text("slug").notNull(),
 		logo: text("logo"),
 		createdAt: timestamp("created_at").notNull(),
 		metadata: text("metadata"),
-		plan: text("plan").default("starter"),
+		plan: text("plan").default("starter").notNull(),
 		planUpdatedAt: timestamp("plan_updated_at"),
 		customerId: text("customer_id"),
 		subscriptionId: text("subscription_id"),
@@ -99,7 +99,7 @@ export const organizationsTable = pgTable(
 		billedSeats: integer("billed_seats"),
 		productId: text("product_id"),
 		trialEndsAt: timestamp("trial_ends_at"),
-		storageUsed: integer("storage_used").default(0),
+		storageUsed: integer("storage_used").default(0).notNull(),
 	},
 	(table) => [uniqueIndex("organizationsTable_slug_uidx").on(table.slug)],
 );

@@ -13,13 +13,13 @@ import {
 	Tailwind,
 	Text,
 } from "@react-email/components";
-import { getEnv } from "~/lib/env";
+import { env } from "~/lib/env";
 
 interface VerifyEmailProps {
-	verifyUrl?: string;
+	verifyUrl: string;
 }
 
-export const baseUrl = getEnv("SITE_URL");
+export const baseUrl = env.SITE_URL;
 
 export const VerifyEmail = ({ verifyUrl }: VerifyEmailProps) => (
 	<Html>
@@ -45,7 +45,7 @@ export const VerifyEmail = ({ verifyUrl }: VerifyEmailProps) => (
 							className="block rounded bg-[#292cf5ca] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"
 							href={verifyUrl}
 						>
-							Login to KaamSync
+							Verify Your Email
 						</Button>
 					</Section>
 

@@ -46,11 +46,6 @@ export async function canCreateTeam(
 	const planId = getOrgPlan(org);
 	const limits = getPlanLimits(planId);
 
-	// Unlimited teams
-	if (limits.maxTeams === null) {
-		return { allowed: true, limit: null };
-	}
-
 	// Count existing teams
 	const existingTeams = await tx.run(
 		zql.teamsTable
@@ -58,6 +53,11 @@ export async function canCreateTeam(
 			.where("archived", false)
 			.where("deletedAt", "IS", null),
 	);
+
+	// Unlimited teams
+	if (limits.maxTeams === null) {
+		return { allowed: true, limit: null, existingTeams };
+	}
 
 	const currentCount = existingTeams.length;
 

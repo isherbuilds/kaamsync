@@ -72,8 +72,12 @@ export default function OrgMembersPage() {
 	const currentOrgId = authSession.session.activeOrganizationId;
 	const currentOrg = orgs?.find((o) => o.id === currentOrgId);
 
+	// Fallback to free plan if org not found
+	const orgPlan = currentOrg?.plan ?? "starter";
+
 	// Plan limits checking
-	const planLimits = getPlanLimits(currentOrg?.plan);
+	const planLimits = getPlanLimits(orgPlan);
+
 	const memberCount = members?.length ?? 0;
 	const pendingInvites =
 		invites?.filter((i) => i.expiresAt > Date.now())?.length ?? 0;

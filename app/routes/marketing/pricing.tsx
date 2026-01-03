@@ -20,10 +20,10 @@ const plans = [
 		description: "For small teams fixing their messy chat workflows.",
 		features: [
 			"Up to 5 team members",
-			"1 Team space",
+			"2 Team spaces",
 			"1GB Storage",
 			"Unlimited tasks",
-			"7-day history",
+			"Unlimited tasks",
 		],
 		cta: "Get Started",
 		href: "/signup",
@@ -36,7 +36,7 @@ const plans = [
 		description: "The sweet spot for growing operations teams.",
 		features: [
 			"Up to 20 team members",
-			"3 Team spaces",
+			"5 Team spaces",
 			"10GB Storage",
 			"Unlimited tasks",
 			"Unlimited history",
@@ -49,19 +49,19 @@ const plans = [
 	},
 	{
 		name: "Business",
-		price: "$9",
+		price: "$10",
 		period: "per user / month",
 		description: "For large organizations scaling across many departments.",
 		features: [
 			"Unlimited team members",
 			"Free Guest category",
-			"10GB Storage per user",
+			"100GB+ Storage",
 			"SSO / SAML",
 			"Custom integrations",
 			"Dedicated support",
 		],
-		cta: "Contact Sales",
-		href: "/contact",
+		cta: "Get Started",
+		href: "/signup?plan=business",
 		popular: false,
 	},
 	{
@@ -129,8 +129,8 @@ export default function PricingPage() {
 						</h1>
 						<p className="text-balance text-lg text-muted-foreground">
 							Stop paying $15/user for chat that creates more work. KaamSync
-							offers simple, flat-rate pricing built for teams that actually get
-							things done.
+							offers simple pricing built for teams that actually get things
+							done.
 						</p>
 					</div>
 

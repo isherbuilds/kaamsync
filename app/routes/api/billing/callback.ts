@@ -43,6 +43,17 @@ export async function loader({ request }: Route.LoaderArgs) {
 	// because the webhook might be processing in parallel.
 	// We primarily rely on the session's activeOrganizationId for the redirect destination.
 
+	if (
+		subscriptionId &&
+		org.subscriptionId &&
+		subscriptionId !== org.subscriptionId
+	) {
+		console.warn(
+			`Subscription ID mismatch for org ${activeOrgId}: ` +
+				`URL param=${subscriptionId}, org.subscriptionId=${org.subscriptionId}`,
+		);
+	}
+
 	console.log(`Redirecting user to organization: ${org.slug} (${activeOrgId})`);
 
 	// 4. Build redirect URL

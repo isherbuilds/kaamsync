@@ -5,12 +5,12 @@
  * All plan-related logic should reference these constants.
  *
  * Pricing Tiers:
- * - Starter (Free): $0 - Up to 5 members, 1GB Storage, 1 Team
- * - Pro (Org-based): $29/month flat - Up to 20 members, 10GB Storage, 3 Teams
- * - Business (Seat-based): $9/user/month - Unlimited members, 10GB/user pooled, Unlimited Teams
+ * - Starter (Free): $0 - Up to 5 members, 1GB Storage, 2 Teams
+ * - Pro (Org-based): $29/month flat - Up to 20 members, 10GB Storage, 5 Teams
+ * - Business (Seat-based): $10/user/month - Unlimited members, 10GB/user pooled, Unlimited Teams
  */
 
-import { getEnv } from "~/lib/env";
+import { env } from "~/lib/env";
 
 // Plan identifiers (must match Dodo Payments product IDs)
 export const PLAN_ID = {
@@ -32,12 +32,10 @@ export const PLAN_ORDER: readonly PlanId[] = [
 
 // Dodo Payments product IDs - Update these with actual product IDs from Dodo dashboard
 export const DODO_PRODUCT_IDS = {
-	PRO_MONTHLY: getEnv("DODO_PRODUCT_PRO_MONTHLY") || "pdt_ProPlanMonthly",
-	PRO_YEARLY: getEnv("DODO_PRODUCT_PRO_YEARLY") || "pdt_ProPlanYearly",
-	BUSINESS_MONTHLY:
-		getEnv("DODO_PRODUCT_BUSINESS_MONTHLY") || "pdt_BusinessPlanMonthly",
-	BUSINESS_YEARLY:
-		getEnv("DODO_PRODUCT_BUSINESS_YEARLY") || "pdt_BusinessPlanYearly",
+	PRO_MONTHLY: env.DODO_PRODUCT_PRO_MONTHLY,
+	PRO_YEARLY: env.DODO_PRODUCT_PRO_YEARLY,
+	BUSINESS_MONTHLY: env.DODO_PRODUCT_BUSINESS_MONTHLY,
+	BUSINESS_YEARLY: env.DODO_PRODUCT_BUSINESS_YEARLY,
 } as const;
 
 // Storage in bytes
@@ -100,7 +98,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 		dodoProductIdYearly: DODO_PRODUCT_IDS.PRO_YEARLY,
 		limits: {
 			maxMembers: 20,
-			maxTeams: 3,
+			maxTeams: 5,
 			storageBytes: 10 * GB,
 			historyDays: null, // Unlimited
 			hasApprovalWorkflows: true,
@@ -117,7 +115,7 @@ export const PLANS: Record<PlanId, PlanConfig> = {
 		price: 1000, // $10.00 per user
 		priceYearly: 9000, // $90/user/year (~$7.50/month)
 		isPerSeat: true,
-		trialDays: 14,
+		trialDays: 0,
 		dodoProductId: DODO_PRODUCT_IDS.BUSINESS_MONTHLY,
 		dodoProductIdYearly: DODO_PRODUCT_IDS.BUSINESS_YEARLY,
 		limits: {

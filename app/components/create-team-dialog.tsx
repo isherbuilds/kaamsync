@@ -78,7 +78,7 @@ export const CreateTeamDialog = memo(
 						<DialogTitle>New Team</DialogTitle>
 						<DialogDescription className="text-xs">
 							Give your team a name and a unique 3-letter code.
-							{!canCreateTeam && planLimits.maxTeams && (
+							{!canCreateTeam && planLimits.maxTeams !== null && (
 								<div className="mt-2 text-destructive">
 									Team limit reached ({planLimits.maxTeams}). Upgrade to add
 									more.

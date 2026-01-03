@@ -33,7 +33,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 		return data({ success: false }, { status: 400 });
 	}
 
-	toast.success("Password reset link sent to your email!");
+	toast.success(
+		"If an account exists with this email, you will receive a password reset link.",
+	);
+
 	return data({ success: true });
 }
 

@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
+import { orgRole } from "~/db/helpers";
 import { organizationsTable } from "~/db/schema/auth-schema";
 import { dodoPayments } from "~/lib/auth/dodo";
 import { PLAN_ID } from "../pricing";
@@ -18,20 +19,27 @@ export async function syncDodoSubscriptionSeats(organizationId: string) {
 			return;
 		}
 
-		// Count active non-guest members
+		// Count non-guest members (all members count as paid seats regardless of status)
 		const members = await db.query.membersTable.findMany({
 			where: (members, { eq }) => eq(members.organizationId, organizationId),
 		});
 
-		const paidSeats = members.filter((m) => m.role !== "guest").length;
+		const paidSeats = members.filter((m) => m.role !== orgRole.guest).length;
 
 		console.log(
 			`Syncing Dodo seats for org ${organizationId}: ${paidSeats} seats (subscription: ${org.subscriptionId})`,
 		);
 
+		if (!org.productId) {
+			console.error(
+				`Missing productId for org ${organizationId}, cannot sync seats`,
+			);
+			return;
+		}
+
 		// Dodo Payments SDK changePlan call
 		await dodoPayments.subscriptions.changePlan(org.subscriptionId, {
-			product_id: org.productId || "",
+			product_id: org.productId,
 			quantity: paidSeats,
 			proration_billing_mode: "prorated_immediately",
 		});

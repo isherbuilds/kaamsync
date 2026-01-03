@@ -15,7 +15,7 @@ import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { VerifyEmail } from "~/components/email/verify-email";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
-import { getEnv } from "~/lib/env";
+import { env } from "~/lib/env";
 import {
 	DODO_PRODUCT_IDS,
 	getPlanLimits,
@@ -27,10 +27,7 @@ import { getActiveOrganization } from "~/lib/server/organization.server";
 import { ac, roles } from "./access-control";
 import { dodoPayments } from "./dodo";
 
-const usesend = new UseSend(
-	getEnv("USESEND_API_KEY"),
-	getEnv("USESEND_SELF_HOSTED_URL"),
-);
+const usesend = new UseSend(env.USESEND_API_KEY, env.USESEND_SELF_HOSTED_URL);
 
 // ============================================================================
 // HELPERS
@@ -83,9 +80,9 @@ export const auth = betterAuth({
 	}),
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: getEnv("NODE_ENV") === "production",
+		requireEmailVerification: env.isProduction,
 		sendResetPassword: async ({ user, url }) => {
-			if (getEnv("NODE_ENV") === "development") {
+			if (env.isDevelopment) {
 				console.log("Reset password link:", url);
 				return;
 			}
@@ -102,7 +99,7 @@ export const auth = betterAuth({
 		sendOnSignUp: true,
 		autoSignInAfterVerification: true,
 		sendVerificationEmail: async ({ user, url }) => {
-			if (getEnv("NODE_ENV") === "development") {
+			if (env.isDevelopment) {
 				console.log("Email verification link:", url);
 				return;
 			}
@@ -118,8 +115,8 @@ export const auth = betterAuth({
 	//   trustedOrigins: [process.env.BETTER_AUTH_URL!],
 	socialProviders: {
 		google: {
-			clientId: getEnv("GOOGLE_CLIENT_ID") ?? "",
-			clientSecret: getEnv("GOOGLE_CLIENT_SECRET") ?? "",
+			clientId: env.GOOGLE_CLIENT_ID,
+			clientSecret: env.GOOGLE_CLIENT_SECRET,
 		},
 	},
 	session: {
@@ -259,9 +256,9 @@ export const auth = betterAuth({
 
 			membershipLimit: 10000,
 			async sendInvitationEmail({ email, organization, inviter }) {
-				const inviteLink = `${getEnv("SITE_URL")}/join`;
+				const inviteLink = `${env.SITE_URL}/join`;
 
-				if (getEnv("NODE_ENV") === "development") {
+				if (env.isDevelopment) {
 					console.log(
 						`Invitation email to ${email}: ${inviteLink} (organization: ${organization.name}, invited by: ${inviter.user.email})`,
 					);
@@ -309,7 +306,7 @@ export const auth = betterAuth({
 							productId: DODO_PRODUCT_IDS.PRO_YEARLY,
 							slug: "pro_yearly",
 						},
-						// Business Plan - $9/user/month (seat-based)
+						// Business Plan - $10/user/month (seat-based)
 						{
 							productId: DODO_PRODUCT_IDS.BUSINESS_MONTHLY,
 							slug: "business_monthly",
@@ -324,7 +321,7 @@ export const auth = betterAuth({
 				}),
 				portal(),
 				webhooks({
-					webhookKey: getEnv("DODO_PAYMENTS_WEBHOOK_SECRET") ?? "",
+					webhookKey: env.DODO_PAYMENTS_WEBHOOK_SECRET,
 					onPayload: async (payload) => {
 						const rawEventType =
 							(payload as { event_type?: string; type?: string }).event_type ??

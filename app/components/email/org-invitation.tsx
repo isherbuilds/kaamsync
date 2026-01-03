@@ -48,9 +48,8 @@ export const OrgInvitationEmail = ({
 
 					<Section className="px-0 py-6">
 						<Text className="text-[#3c4149] text-[15px] leading-[1.4]">
-							<strong>{inviterName}</strong> ({inviterEmail}) has invited you to
-							join the <strong>{organizationName}</strong> organization on
-							KaamSync.
+							<strong>{inviterName}</strong> has invited you to join the{" "}
+							<strong>{organizationName}</strong> organization on KaamSync.
 						</Text>
 						<Button
 							className="block rounded bg-[#292cf5ca] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"

@@ -1,7 +1,7 @@
 import DodoPayments from "dodopayments";
-import { getEnv } from "~/lib/env";
+import { env } from "~/lib/env";
 
 export const dodoPayments = new DodoPayments({
-	bearerToken: getEnv("DODO_PAYMENTS_API_KEY") ?? "",
-	environment: getEnv("NODE_ENV") === "production" ? "live_mode" : "test_mode",
+	bearerToken: env.DODO_PAYMENTS_API_KEY,
+	environment: env.isProduction ? "live_mode" : "test_mode",
 });
