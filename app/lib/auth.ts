@@ -2,9 +2,17 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
 import { cache } from "react";
+import { UseSend } from "usesend-js";
+import { VerifyEmail } from "~/components/email/verify-email";
+import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
 import { getActiveOrganization } from "~/lib/server/organization.server";
+
+const usesend = new UseSend(
+	process.env.USESEND_API_KEY,
+	process.env.USESEND_SELF_HOSTED_URL,
+);
 
 export const auth = betterAuth({
 	experimental: {
@@ -19,24 +27,34 @@ export const auth = betterAuth({
 		enabled: true,
 		requireEmailVerification: process.env.NODE_ENV === "production",
 		sendResetPassword: async ({ user, url }) => {
-			//   await resend.emails.send({
-			//     from: "support@mail.kanbased.com",
-			//     to: user.email,
-			//     subject: "Reset your password",
-			//     html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
-			//   });
+			if (process.env.NODE_ENV === "development") {
+				console.log("Reset password link:", url);
+				return;
+			}
+
+			await usesend.emails.send({
+				from: "support@mail.kaamsync.com",
+				to: user.email,
+				subject: "KaamSync: Reset your password",
+				html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
+			});
 		},
 	},
 	emailVerification: {
 		sendOnSignUp: true,
 		autoSignInAfterVerification: true,
 		sendVerificationEmail: async ({ user, url }) => {
-			//   await resend.emails.send({
-			//     from: "support@mail.kanbased.com",
-			//     to: user.email,
-			//     subject: "Verify your email address",
-			//     html: `<p>Click the link to verify your email: <a href="${url}">${url}</a></p>`,
-			//   });
+			if (process.env.NODE_ENV === "development") {
+				console.log("Email verification link:", url);
+				return;
+			}
+
+			await usesend.emails.send({
+				from: "welcome@mail.kaamsync.com",
+				to: user.email,
+				subject: "KaamSync: Verify your email address",
+				react: VerifyEmail({ verifyUrl: url }),
+			});
 		},
 	},
 	//   trustedOrigins: [process.env.BETTER_AUTH_URL!],
@@ -97,15 +115,35 @@ export const auth = betterAuth({
 					modelName: "invitationsTable",
 				},
 			},
-			async sendInvitationEmail(data) {
-				// const inviteLink = `${env.FE_ORIGIN}/accept-invitation/${data.id}`;
-				// await sendOrganizationInvitation({
-				// 	email: data.email,
-				// 	invitedByUsername: data.inviter.user.name,
-				// 	invitedByEmail: data.inviter.user.email,
-				// 	teamName: data.organization.name,
-				// 	inviteLink,
-				// });
+			async sendInvitationEmail({
+				email,
+				organization,
+				inviter,
+				role,
+				invitation				,
+			}) {
+
+				const inviteLink = `${process.env.SITE_URL}/join`;
+
+				if (process.env.NODE_ENV === "development") {
+					console.log(
+						`Invitation email to ${email}: ${inviteLink} (organization: ${organization.name}, invited by: ${inviter.user.email})`,
+					);
+					return;
+				}
+
+
+				await usesend.emails.send({
+					from: "KaamSync@mail.kaamsync.com",
+					to: email,
+					subject: `You're invited to join ${organization.name} on KaamSync`,
+					react: OrgInvitationEmail({
+						organizationName: organization.name,
+						inviterName: inviter.user.name,
+						inviterEmail: inviter.user.email,
+						inviteLink,
+					}),
+				});
 			},
 		}),
 		// lastLoginMethod(),

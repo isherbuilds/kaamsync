@@ -112,30 +112,31 @@ export default function HomePage() {
 								<Link to="/contact">Book a Demo</Link>
 							</Button>
 						</div>
+					</div>
 
-						{/* Hero Visual - Product Screenshot */}
-						<div className="perspective-[2000px] group relative mx-auto w-full max-w-5xl">
-							{/* Glow effect */}
-							<div className="absolute -inset-1 rounded-xl bg-linear-to-r from-primary/20 to-purple-500/20 opacity-50 blur-2xl transition-opacity duration-500 group-hover:opacity-75" />
+					{/* Hero Visual - Product Screenshot */}
+					<div className="perspective-[2000px] group relative mx-auto w-full max-w-5xl">
+						{/* Glow effect */}
+						<div className="absolute -inset-1 rounded-xl bg-linear-to-r from-primary/20 to-purple-500/20 opacity-50 blur-2xl transition-opacity duration-500 group-hover:opacity-75" />
 
-							<div className="relative origin-top rotate-x-15 transform overflow-hidden rounded-xl border border-border/40 bg-background/80 shadow-2xl backdrop-blur-xl transition-transform duration-700 ease-out group-hover:rotate-x-0">
-								{/* Browser Header */}
-								<div className="flex h-10 items-center gap-2 border-border/40 border-b bg-muted/30 px-4">
-									<div className="flex gap-1.5">
-										<div className="size-3 rounded-full border border-red-500/30 bg-red-500/20" />
-										<div className="size-3 rounded-full border border-yellow-500/30 bg-yellow-500/20" />
-										<div className="size-3 rounded-full border border-green-500/30 bg-green-500/20" />
-									</div>
-									<div className="ml-4 flex flex-1 justify-center">
-										<div className="flex h-5 items-center rounded-md bg-muted/50 px-4 text-muted-foreground text-xs">
-											kaamsync.com
-										</div>
+						<div className="relative origin-top rotate-x-15 transform overflow-hidden rounded-xl border border-border/40 bg-background/80 shadow-2xl backdrop-blur-xl transition-transform duration-700 ease-out group-hover:rotate-x-0">
+							{/* Browser Header */}
+							<div className="flex h-10 items-center gap-2 border-border/40 border-b bg-muted/30 px-4">
+								<div className="flex gap-1.5">
+									<div className="size-3 rounded-full border border-red-500/30 bg-red-500/20" />
+									<div className="size-3 rounded-full border border-yellow-500/30 bg-yellow-500/20" />
+									<div className="size-3 rounded-full border border-green-500/30 bg-green-500/20" />
+								</div>
+								<div className="ml-4 flex flex-1 justify-center">
+									<div className="flex h-5 items-center rounded-md bg-muted/50 px-4 text-muted-foreground text-xs">
+										kaamsync.com
 									</div>
 								</div>
+							</div>
 
-								{/* Screenshot Container - Replace src with your actual screenshot */}
-								<div className="relative aspect-16/10 bg-muted/20">
-									{/* 
+							{/* Screenshot Container - Replace src with your actual screenshot */}
+							<div className="relative aspect-16/10 bg-muted/20">
+								{/* 
 										TODO: Replace this with your actual product screenshot
 										<img 
 											src="/images/product-screenshot.png" 
@@ -143,41 +144,40 @@ export default function HomePage() {
 											className="w-full h-full object-cover object-top"
 										/>
 									*/}
-									{/* Placeholder - remove when you add real screenshot */}
-									<div className="absolute inset-0 flex items-center justify-center bg-muted/30">
-										<div className="space-y-3 p-8 text-center">
-											<div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-												<Sparkles className="size-8 text-primary" />
-											</div>
-											<p className="text-muted-foreground text-sm">
-												Add your product screenshot here
-											</p>
-											<p className="text-muted-foreground/60 text-xs">
-												Recommended: 1920×1200px PNG
-											</p>
+								{/* Placeholder - remove when you add real screenshot */}
+								<div className="absolute inset-0 flex items-center justify-center bg-muted/30">
+									<div className="space-y-3 p-8 text-center">
+										<div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
+											<Sparkles className="size-8 text-primary" />
 										</div>
+										<p className="text-muted-foreground text-sm">
+											Add your product screenshot here
+										</p>
+										<p className="text-muted-foreground/60 text-xs">
+											Recommended: 1920×1200px PNG
+										</p>
 									</div>
 								</div>
 							</div>
+						</div>
 
-							{/* Floating notification */}
-							<div className="absolute top-1/4 -right-4 hidden lg:block">
-								<div className="animate-pulse rounded-lg border border-border/60 bg-card p-3 shadow-lg">
-									<div className="flex items-center gap-2">
-										<CheckCircle2 className="size-4 text-green-500" />
-										<span className="font-medium text-xs">Task approved!</span>
-									</div>
+						{/* Floating notification */}
+						<div className="absolute top-1/4 -right-4 hidden lg:block">
+							<div className="animate-pulse rounded-lg border border-border/60 bg-card p-3 shadow-lg">
+								<div className="flex items-center gap-2">
+									<CheckCircle2 className="size-4 text-green-500" />
+									<span className="font-medium text-xs">Task approved!</span>
 								</div>
 							</div>
+						</div>
 
-							<div className="absolute bottom-1/4 -left-4 hidden lg:block">
-								<div className="rounded-lg border border-border/60 bg-card p-3 shadow-lg">
-									<div className="flex items-center gap-2">
-										<RefreshCw className="size-4 text-blue-500" />
-										<span className="text-muted-foreground text-xs">
-											Synced just now
-										</span>
-									</div>
+						<div className="absolute bottom-1/4 -left-4 hidden lg:block">
+							<div className="rounded-lg border border-border/60 bg-card p-3 shadow-lg">
+								<div className="flex items-center gap-2">
+									<RefreshCw className="size-4 text-blue-500" />
+									<span className="text-muted-foreground text-xs">
+										Synced just now
+									</span>
 								</div>
 							</div>
 						</div>
@@ -242,8 +242,6 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-
-			{/* Problem Section */}
 			<section className="border-border/40 border-t py-24">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="grid items-center gap-16 lg:grid-cols-2">
@@ -313,8 +311,7 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-
-			{/* Features - Bento Grid */}
+			;
 			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto mb-16 max-w-2xl text-center">
@@ -446,9 +443,9 @@ export default function HomePage() {
 							<div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)]">
 								<div className="px-8 pt-8 sm:px-10 sm:pt-10">
 									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-										Teams
-									</p>
+										<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
+											Teams
+										</p>
 									</p>
 									<p className="mt-2 max-w-lg text-muted-foreground text-sm max-lg:text-center">
 										Dedicated spaces for each department. Keep work organized.
@@ -524,8 +521,7 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-
-			{/* Enterprise features */}
+			;
 			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mb-12 text-center">
@@ -553,8 +549,7 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-
-			{/* CTA */}
+			;
 			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
@@ -591,6 +586,7 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
+			;
 		</>
 	);
 }
