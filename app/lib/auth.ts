@@ -16,16 +16,16 @@ import { db } from "~/db";
 import * as schema from "~/db/schema";
 import { billingConfig, dodoPayments } from "~/lib/billing";
 import { handleBillingWebhook } from "~/lib/server/billing.server";
+import { trackMembershipChange } from "~/lib/server/billing-tracking.server";
 import {
-	trackMemberRemoved,
-	trackNewMember,
-} from "~/lib/server/billing-tracking.server";
+	env,
+	hasGoogleOAuth,
+	isDevelopment,
+	isProduction,
+} from "~/lib/server/env-validation.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
 
-const usesend = new UseSend(
-	process.env.USESEND_API_KEY,
-	process.env.USESEND_SELF_HOSTED_URL,
-);
+const usesend = new UseSend(env.USESEND_API_KEY, env.USESEND_SELF_HOSTED_URL);
 
 export const auth = betterAuth({
 	experimental: {
@@ -36,11 +36,30 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema,
 	}),
+	// Built-in rate limiting (Better Auth v1.4+)
+	rateLimit: {
+		enabled: true,
+		window: 60, // 60 seconds
+		max: 100, // 100 requests per window
+		customRules: {
+			"/api/auth/sign-in/*": { window: 60, max: 10 },
+			"/api/auth/sign-up/*": { window: 60, max: 5 },
+			"/api/auth/forgot-password": { window: 60, max: 3 },
+			"/api/auth/dodopayments/checkout/*": { window: 60, max: 5 },
+		},
+		storage: "memory",
+	},
+	// IP address detection for rate limiting
+	advanced: {
+		ipAddress: {
+			ipAddressHeaders: ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"],
+		},
+	},
 	emailAndPassword: {
 		enabled: true,
-		requireEmailVerification: process.env.NODE_ENV === "production",
+		requireEmailVerification: isProduction,
 		sendResetPassword: async ({ user, url }) => {
-			if (process.env.NODE_ENV === "development") {
+			if (isDevelopment) {
 				console.log("Reset password link:", url);
 				return;
 			}
@@ -57,7 +76,7 @@ export const auth = betterAuth({
 		sendOnSignUp: true,
 		autoSignInAfterVerification: true,
 		sendVerificationEmail: async ({ user, url }) => {
-			if (process.env.NODE_ENV === "development") {
+			if (isDevelopment) {
 				console.log("Email verification link:", url);
 				return;
 			}
@@ -70,21 +89,16 @@ export const auth = betterAuth({
 			});
 		},
 	},
-	//   trustedOrigins: [process.env.BETTER_AUTH_URL!],
 	socialProviders: {
-		...(process.env.GOOGLE_CLIENT_ID &&
-			process.env.GOOGLE_CLIENT_SECRET && {
-				google: {
-					clientId: process.env.GOOGLE_CLIENT_ID,
-					clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-				},
-			}),
+		google: {
+			clientId: env.GOOGLE_CLIENT_ID!,
+			clientSecret: env.GOOGLE_CLIENT_SECRET!,
+		},
 	},
 	session: {
 		modelName: "sessionsTable",
-		expiresIn: 60 * 60 * 24 * 365, // 1 year
-		updateAge: 60 * 60 * 24 * 365, // 1 year
-		disableSessionRefresh: true,
+		expiresIn: 60 * 60 * 24 * 30, // 30 days (reduced from 1 year for security)
+		updateAge: 60 * 60 * 24, // 1 day - refresh session daily
 		cookieCache: {
 			enabled: true,
 			maxAge: 24 * 60 * 60, // 1 day cache duration (reduced from 7 days for security)
@@ -133,9 +147,9 @@ export const auth = betterAuth({
 			},
 
 			async sendInvitationEmail({ email, organization, inviter }) {
-				const inviteLink = `${process.env.SITE_URL}/join`;
+				const inviteLink = `${env.SITE_URL}/join`;
 
-				if (process.env.NODE_ENV === "development") {
+				if (isDevelopment) {
 					console.log(
 						`Invitation email to ${email}: ${inviteLink} (organization: ${organization.name}, invited by: ${inviter.user.email})`,
 					);
@@ -156,36 +170,40 @@ export const auth = betterAuth({
 			},
 			organizationHooks: {
 				afterAcceptInvitation: async ({ member }) => {
-					// console.log(
-					// 	`[AuthHook] afterAcceptInvitation: org=${member.organizationId}`,
-					// );
 					if (member.organizationId) {
-						// Delegate tracking to afterAddMember to prevent double events
-						trackNewMember(member.organizationId).catch((err) =>
-							console.error("[Billing] Failed to track member addition:", err),
+						// Use unified tracking function (handles cache invalidation + billing)
+						trackMembershipChange(member.organizationId).catch((err) =>
+							console.error(
+								"[Billing] Failed to track membership change:",
+								err,
+							),
 						);
 					}
 				},
 				afterAddMember: async ({ member }) => {
-					// console.log(
-					// 	`[AuthHook] afterAddMember: org=${member.organizationId}`,
-					// );
 					if (member.organizationId) {
-						trackNewMember(member.organizationId).catch((err) =>
-							console.error("[Billing] Failed to track member addition:", err),
+						// Use unified tracking function (handles cache invalidation + billing)
+						trackMembershipChange(member.organizationId).catch((err) =>
+							console.error(
+								"[Billing] Failed to track membership change:",
+								err,
+							),
 						);
 					}
 				},
 				afterRemoveMember: async ({ member }) => {
 					if (member.organizationId) {
-						trackMemberRemoved(member.organizationId).catch((err) =>
-							console.error("[Billing] Failed to track member removal:", err),
+						// Use unified tracking function (handles cache invalidation + billing)
+						trackMembershipChange(member.organizationId).catch((err) =>
+							console.error(
+								"[Billing] Failed to track membership change:",
+								err,
+							),
 						);
 					}
 				},
 			},
 		}),
-		// lastLoginMethod(),
 		// Dodo Payments billing integration
 		...(dodoPayments && billingConfig.webhookSecret
 			? [
@@ -196,37 +214,35 @@ export const auth = betterAuth({
 							checkout({
 								products: [
 									// Growth plans (monthly & yearly)
-									...(process.env.DODO_PRODUCT_GROWTH_MONTHLY
+									...(env.DODO_PRODUCT_GROWTH_MONTHLY
 										? [
 												{
-													productId: process.env.DODO_PRODUCT_GROWTH_MONTHLY,
+													productId: env.DODO_PRODUCT_GROWTH_MONTHLY,
 													slug: "growth-monthly",
 												},
 											]
 										: []),
-									...(process.env.DODO_PRODUCT_GROWTH_YEARLY
+									...(env.DODO_PRODUCT_GROWTH_YEARLY
 										? [
 												{
-													productId: process.env.DODO_PRODUCT_GROWTH_YEARLY,
+													productId: env.DODO_PRODUCT_GROWTH_YEARLY,
 													slug: "growth-yearly",
 												},
 											]
 										: []),
 									// Pro plans (monthly & yearly)
-									...(process.env.DODO_PRODUCT_PROFESSIONAL_MONTHLY
+									...(env.DODO_PRODUCT_PROFESSIONAL_MONTHLY
 										? [
 												{
-													productId:
-														process.env.DODO_PRODUCT_PROFESSIONAL_MONTHLY,
+													productId: env.DODO_PRODUCT_PROFESSIONAL_MONTHLY,
 													slug: "pro-monthly",
 												},
 											]
 										: []),
-									...(process.env.DODO_PRODUCT_PROFESSIONAL_YEARLY
+									...(env.DODO_PRODUCT_PROFESSIONAL_YEARLY
 										? [
 												{
-													productId:
-														process.env.DODO_PRODUCT_PROFESSIONAL_YEARLY,
+													productId: env.DODO_PRODUCT_PROFESSIONAL_YEARLY,
 													slug: "pro-yearly",
 												},
 											]
@@ -239,7 +255,7 @@ export const auth = betterAuth({
 							usage(),
 							webhooks({
 								webhookKey: billingConfig.webhookSecret,
-								onPayload: async (payload) => {
+								onPayload: async (payload: any) => {
 									const maxRetries = 3;
 									let lastError: Error | null = null;
 

@@ -11,7 +11,7 @@ import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
 import { reservedTeamSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
 import type { Context } from "./auth";
-import { assertCanCreateTeam } from "./billing-limits";
+import { assertCanCreateMatter, assertCanCreateTeam } from "./billing-limits";
 import { allocateShortID, type MutatorTx } from "./mutator-helpers";
 import { zql } from "./schema";
 
@@ -129,6 +129,9 @@ export const mutators = defineMutators({
 				if (!membership) {
 					throw new Error("Not a member of this team");
 				}
+
+				// Check billing limits
+				await assertCanCreateMatter(tx, membership.orgId);
 
 				// Permission checks using unified permission system
 				if (
@@ -527,6 +530,9 @@ export const mutators = defineMutators({
 					}),
 					...statusRows.map((row) => tx.mutate.statusesTable.insert(row)),
 				]);
+
+				// PERFORMANCE: Invalidate organization cache after team creation
+				ctx.invalidateUsageCache?.(orgMembership.organizationId);
 			},
 		),
 

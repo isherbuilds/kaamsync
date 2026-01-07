@@ -4,14 +4,31 @@
  * with access to tx.dbTransaction
  */
 
+import { planLimits } from "~/lib/billing";
 import type { MutatorTx } from "./mutator-helpers";
 
-// Plan limits configuration - canonical values (mirror app/lib/billing.ts). Use -1 for unlimited
+// Map plan limits from canonical source for Zero mutators
 const PLAN_LIMITS = {
-	starter: { maxMembers: 3, maxTeams: 5 },
-	growth: { maxMembers: 10, maxTeams: -1 },
-	pro: { maxMembers: 25, maxTeams: 15 },
-	enterprise: { maxMembers: -1, maxTeams: -1 },
+	starter: {
+		maxMembers: planLimits.starter.members,
+		maxTeams: planLimits.starter.teams,
+		maxMatters: planLimits.starter.matters,
+	},
+	growth: {
+		maxMembers: planLimits.growth.members,
+		maxTeams: planLimits.growth.teams,
+		maxMatters: planLimits.growth.matters,
+	},
+	pro: {
+		maxMembers: planLimits.pro.members,
+		maxTeams: planLimits.pro.teams,
+		maxMatters: planLimits.pro.matters,
+	},
+	enterprise: {
+		maxMembers: planLimits.enterprise.members,
+		maxTeams: planLimits.enterprise.teams,
+		maxMatters: planLimits.enterprise.matters,
+	},
 } as const;
 
 type PlanKey = keyof typeof PLAN_LIMITS;
@@ -28,33 +45,44 @@ export async function getOrgPlan(
 		return "enterprise"; // Client-side: optimistic
 	}
 
-	try {
-		const result = await tx.dbTransaction.query(
-			`SELECT plan_key FROM subscriptions 
+	const result = await tx.dbTransaction.query(
+		`SELECT plan_key, status, current_period_end FROM subscriptions 
 		 WHERE organization_id = $1 
-		 AND status IN ('active', 'on_hold')
 		 ORDER BY created_at DESC 
 		 LIMIT 1`,
-			[orgId],
-		);
+		[orgId],
+	);
 
-		const rows = Array.from(result as unknown as Array<{ plan_key?: string }>);
-		const planKey = rows[0]?.plan_key;
+	const rows = Array.from(
+		result as unknown as Array<{
+			plan_key?: string;
+			status?: string;
+			current_period_end?: Date;
+		}>,
+	);
+	const sub = rows[0];
 
-		if (planKey && planKey in PLAN_LIMITS) {
-			return planKey as PlanKey;
-		}
+	if (!sub) return "starter";
 
-		return "starter";
-	} catch (err) {
-		console.error(`[Billing] getOrgPlan error:`, err);
-		return "starter";
+	// Cancellation Strict Enforcement
+	if (sub.status === "cancelled" || sub.status === "expired") {
+		const periodEnded = sub.current_period_end
+			? new Date(sub.current_period_end) < new Date()
+			: true;
+		if (periodEnded) return "starter";
 	}
+
+	// Use plan_key if valid
+	if (sub.plan_key && sub.plan_key in PLAN_LIMITS) {
+		return sub.plan_key as PlanKey;
+	}
+
+	return "starter";
 }
 
 /**
  * Check if the organization can create a new team
- * Returns { allowed: true } or throws an error
+ * Returns void or throws an error
  */
 export async function assertCanCreateTeam(
 	tx: MutatorTx,
@@ -64,54 +92,60 @@ export async function assertCanCreateTeam(
 		return; // Client-side: optimistic
 	}
 
-	try {
-		const plan = await getOrgPlan(tx, orgId);
-		const limits = PLAN_LIMITS[plan];
+	const plan = await getOrgPlan(tx, orgId);
+	const limits = PLAN_LIMITS[plan];
 
-		if (limits.maxTeams === -1) {
+	if (limits.maxTeams === -1) {
+		return;
+	}
+
+	const countResult = await tx.dbTransaction.query(
+		`SELECT COUNT(*)::int as count FROM teams WHERE org_id = $1`,
+		[orgId],
+	);
+	const rows = Array.from(countResult as unknown as Array<{ count: number }>);
+	const currentCount = rows[0]?.count ?? 0;
+
+	if (currentCount >= limits.maxTeams) {
+		// Allow overage for paid plans (usage-based billing)
+		if (plan === "growth" || plan === "pro") {
 			return;
 		}
 
-		const countResult = await tx.dbTransaction.query(
-			`SELECT COUNT(*)::int as count FROM teams WHERE org_id = $1`,
-			[orgId],
+		throw new Error(
+			`Team limit reached. Your ${plan} plan allows ${limits.maxTeams} teams. Please upgrade to create more teams.`,
 		);
-		const rows = Array.from(countResult as unknown as Array<{ count: number }>);
-		const currentCount = rows[0]?.count ?? 0;
-
-		if (currentCount >= limits.maxTeams) {
-			if (plan === "growth" || plan === "pro") {
-				console.log(
-					`[Billing] Overage: ${plan} org creating team ${currentCount + 1}/${limits.maxTeams}`,
-				);
-				return;
-			}
-
-			console.log(
-				`[Billing] BLOCKED: ${plan} at limit (${currentCount}/${limits.maxTeams})`,
-			);
-			throw new Error(
-				`Team limit reached. Your ${plan} plan allows ${limits.maxTeams} teams. Please upgrade to create more teams.`,
-			);
-		}
-	} catch (err) {
-		if (err instanceof Error && err.message.includes("Team limit reached")) {
-			throw err;
-		}
-		console.error(`[Billing] assertCanCreateTeam error:`, err);
 	}
 }
 
 /**
- * Check if the organization can add a new member
- * This is for team membership, not org membership (which goes through Better Auth)
+ * Check if the organization can create a new matter (task/request)
  */
-export async function assertCanAddTeamMember(
-	_tx: MutatorTx,
-	_orgId: string,
+export async function assertCanCreateMatter(
+	tx: MutatorTx,
+	orgId: string,
 ): Promise<void> {
-	// Team membership doesn't count toward org member limits
-	// Org members are managed through Better Auth invitations
-	// No billing check needed here - just permission checks
-	return;
+	if (tx.location !== "server") {
+		return; // Client-side: optimistic
+	}
+
+	const plan = await getOrgPlan(tx, orgId);
+	const limits = PLAN_LIMITS[plan];
+
+	if (limits.maxMatters === -1) {
+		return;
+	}
+
+	const countResult = await tx.dbTransaction.query(
+		`SELECT COUNT(*)::int as count FROM matters WHERE org_id = $1`,
+		[orgId],
+	);
+	const rows = Array.from(countResult as unknown as Array<{ count: number }>);
+	const currentCount = rows[0]?.count ?? 0;
+
+	if (currentCount >= limits.maxMatters) {
+		throw new Error(
+			`Task/Matter limit reached. Your ${plan} plan allows ${limits.maxMatters} items. Please upgrade for unlimited.`,
+		);
+	}
 }

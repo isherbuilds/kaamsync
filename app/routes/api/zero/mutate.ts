@@ -8,6 +8,13 @@ import { mutators } from "zero/mutators";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth";
 import { getActiveOrganization } from "~/lib/server/organization.server";
+import { 
+	withErrorHandler, 
+	assertAuthenticated, 
+	ErrorFactory,
+	handleDatabaseError 
+} from "~/lib/server/error-handler.server";
+import { invalidateUsageCache } from "~/lib/server/billing.server";
 
 // Create database provider with Postgres adapter
 const pgURL = must(
@@ -16,16 +23,12 @@ const pgURL = must(
 );
 const dbProvider = zeroPostgresJS(schema, postgres(pgURL));
 
-export async function action({ request }: { request: Request }) {
+export const action = withErrorHandler(async ({ request }: { request: Request }) => {
 	// Get session from Better Auth
 	const authSession = await getServerSession(request);
 
-	if (!authSession?.user) {
-		return new Response(JSON.stringify({ error: "Unauthorized" }), {
-			status: 401,
-			headers: { "Content-Type": "application/json" },
-		});
-	}
+	// Use standardized authentication check
+	assertAuthenticated(authSession?.user, "Authentication required for Zero mutations");
 
 	let activeOrgId = authSession.session.activeOrganizationId;
 
@@ -37,6 +40,7 @@ export async function action({ request }: { request: Request }) {
 	const ctx = {
 		userId: authSession.user.id,
 		activeOrganizationId: activeOrgId ?? null,
+		invalidateUsageCache,
 	};
 
 	try {
@@ -51,11 +55,14 @@ export async function action({ request }: { request: Request }) {
 				request,
 			),
 		);
-	} catch (err) {
-		console.error("[Zero:mutate] Error:", err);
-		return new Response(JSON.stringify({ error: "Internal server error" }), {
-			status: 500,
-			headers: { "Content-Type": "application/json" },
-		});
+	} catch (error) {
+		console.error("[Zero:mutate] Mutation execution failed:", error);
+		
+		// Handle database-specific errors
+		if (error instanceof Error && error.message.includes("constraint")) {
+			handleDatabaseError(error);
+		}
+		
+		throw ErrorFactory.internal("Mutation execution failed");
 	}
-}
+});

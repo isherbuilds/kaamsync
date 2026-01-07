@@ -63,6 +63,7 @@ export default [
 		route("billing/redirect", "routes/api/billing/redirect.ts"),
 		route("billing/debug", "routes/api/billing/debug.ts"),
 		route("billing/check-limits", "routes/api/billing/check-limits.ts"),
+		// route("billing/change-plan", "routes/api/billing/change-plan.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 	]),
 

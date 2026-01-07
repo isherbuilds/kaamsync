@@ -9,7 +9,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
-import { products } from "~/lib/billing";
+import { type ProductKey, products } from "~/lib/billing";
 
 interface Subscription {
 	id: string;
@@ -24,6 +24,7 @@ interface Subscription {
 
 interface SubscriptionStatusProps {
 	subscription: Subscription | null;
+	currentPlan: ProductKey | null;
 	onManage: () => void;
 	onUpgrade: () => void;
 	loading?: boolean;
@@ -62,18 +63,6 @@ const statusConfig = {
 	},
 };
 
-function getProductName(productId: string): string {
-	for (const product of Object.values(products)) {
-		// Handle products with monthly/yearly IDs
-		if (product.id && typeof product.id === "object") {
-			if (product.id.monthly === productId || product.id.yearly === productId) {
-				return product.name;
-			}
-		}
-	}
-	return "Unknown Plan";
-}
-
 function formatDate(date: Date | null): string {
 	if (!date) return "N/A";
 	return new Intl.DateTimeFormat("en-US", {
@@ -93,6 +82,7 @@ function formatAmount(amount: number | null, currency: string | null): string {
 
 export function SubscriptionStatus({
 	subscription,
+	currentPlan,
 	onManage,
 	onUpgrade,
 	loading,
@@ -123,13 +113,14 @@ export function SubscriptionStatus({
 
 	const status = statusConfig[subscription.status as keyof typeof statusConfig];
 	const StatusIcon = status?.icon ?? AlertCircle;
+	const planName = currentPlan ? products[currentPlan].name : "Unknown Plan";
 
 	return (
 		<Card>
 			<CardHeader>
 				<div className="flex items-center justify-between">
 					<CardTitle className="flex items-center gap-2">
-						{getProductName(subscription.productId)}
+						{planName}
 						<Badge variant={status?.badge ?? "outline"}>
 							{status?.label ?? subscription.status}
 						</Badge>
@@ -175,11 +166,11 @@ export function SubscriptionStatus({
 				<Button variant="outline" onClick={onManage} disabled={loading}>
 					Manage Subscription
 				</Button>
-				{subscription.status === "active" && (
-					<Button variant="secondary" onClick={onUpgrade} disabled={loading}>
-						Change Plan
-					</Button>
-				)}
+				{/* {subscription.status === "active" && ( */}
+				<Button variant="secondary" onClick={onUpgrade} disabled={loading}>
+					Change Plan
+				</Button>
+				{/* )} */}
 			</CardFooter>
 		</Card>
 	);

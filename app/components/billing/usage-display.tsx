@@ -18,6 +18,7 @@ import { cn } from "~/lib/utils";
 interface UsageData {
 	members: number;
 	teams: number;
+	matters?: number;
 	storageGb?: number;
 }
 
@@ -169,6 +170,10 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 			? usagePricing[planKey as keyof typeof usagePricing]
 			: null;
 
+	const isFrozen = usage.members > limits.members && limits.members !== -1;
+	const isMattersFrozen =
+		usage.matters && limits.matters !== -1 && usage.matters >= limits.matters;
+
 	return (
 		<Card>
 			<CardHeader className="pb-3">
@@ -180,6 +185,18 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4">
+				{(isFrozen || isMattersFrozen) && (
+					<div className="rounded-md bg-destructive/15 p-3 font-medium text-destructive text-sm">
+						<div className="flex items-center gap-2">
+							<AlertTriangle className="h-4 w-4" />
+							<span>
+								Usage limits exceeded. creating new items is blocked until you
+								upgrade.
+							</span>
+						</div>
+					</div>
+				)}
+
 				<UsageItem
 					label="Team Members"
 					current={usage.members}
@@ -194,6 +211,13 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 					limit={limits.teams}
 					icon={Layers}
 					overageRate={pricing?.teamCreated}
+				/>
+
+				<UsageItem
+					label="Tasks & Requests"
+					current={usage.matters ?? 0}
+					limit={limits.matters ?? -1}
+					icon={Layers}
 				/>
 
 				<UsageItem

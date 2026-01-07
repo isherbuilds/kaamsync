@@ -5,10 +5,9 @@ import type { Context } from "./auth";
 import { zql } from "./schema";
 
 const DEFAULT_LIMIT = 100;
-const TEAM_MATTERS_LIMIT = 1000; // High limit - Zero caches to IndexedDB
+const BULK_SYNC_LIMIT = 1000; // High limit for pre-sync - Zero caches to IndexedDB
 const TIMELINE_LIMIT = 50;
 const ATTACHMENTS_LIMIT = 25;
-const PAGE_SIZE = 100; // For paginated queries
 
 /** Sort cursor for keyset pagination - use createdAt + id for stable sorting */
 export type MatterSortCursor = {
@@ -135,7 +134,7 @@ export const queries = defineQueries({
 				.orderBy("priority", "asc") // 0=urgent first, 4=none last
 				.orderBy("dueDate", "asc") // earliest first, nulls last
 				.orderBy("createdAt", "desc") // newest first for same priority+due date
-				.limit(TEAM_MATTERS_LIMIT),
+				.limit(BULK_SYNC_LIMIT),
 	),
 
 	// Pre-sync all matters across ALL teams user has access to
@@ -153,7 +152,7 @@ export const queries = defineQueries({
 			.related("status")
 			.related("team")
 			.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
-			.limit(TEAM_MATTERS_LIMIT),
+			.limit(BULK_SYNC_LIMIT),
 	),
 
 	getUserAssignedMatters: defineQuery(({ ctx }) =>
@@ -423,4 +422,4 @@ export const queries = defineQueries({
 });
 
 export type QueryName = keyof typeof queries;
-export { DEFAULT_LIMIT, PAGE_SIZE };
+export { DEFAULT_LIMIT };

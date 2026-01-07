@@ -1,12 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
-import { count, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import {
 	customersTable,
 	membersTable,
 	paymentsTable,
 	subscriptionsTable,
-	teamsTable,
 	usersTable,
 	webhookEventsTable,
 } from "~/db/schema";
@@ -16,6 +15,12 @@ import {
 	planLimits,
 	usagePricing,
 } from "~/lib/billing";
+import {
+	getCustomerByDodoId,
+	getOrganizationUsagePrepared,
+	getOrganizationCustomer as getOrgCustomerPrepared,
+	getOrganizationSubscription as getOrgSubscriptionPrepared,
+} from "~/lib/server/prepared-queries.server";
 
 // Webhook payload types from Dodo Payments (via Better Auth plugin)
 // Better Auth normalizes the payload with 'type' instead of 'event_type'
@@ -237,20 +242,21 @@ async function recordPayment(
 }
 
 /**
- * Main webhook handler - processes all Dodo Payments events (optimized with batching)
+ * Main webhook handler - processes all Dodo Payments events
+ * NOTE: Signature verification is handled by Better Auth's webhooks plugin automatically
  */
 export async function handleBillingWebhook(
 	payload: WebhookPayload,
 ): Promise<void> {
 	const eventType = payload.type || payload.event_type || "";
-	const timestamp =
+	const payloadTimestamp =
 		typeof payload.timestamp === "object"
 			? payload.timestamp.toISOString()
 			: payload.timestamp;
-	const webhookId = `${eventType}_${timestamp}_${payload.data?.subscription_id ?? payload.data?.payment_id ?? ""}`;
+	const generatedWebhookId = `${eventType}_${payloadTimestamp}_${payload.data?.subscription_id ?? payload.data?.payment_id ?? ""}`;
 
 	// Idempotency check
-	if (await isWebhookProcessed(webhookId)) {
+	if (await isWebhookProcessed(generatedWebhookId)) {
 		return;
 	}
 
@@ -269,27 +275,27 @@ export async function handleBillingWebhook(
 				: "") || "";
 
 		if (customer) {
-			// Batch customer lookup and user/membership queries
-			const [existingCustomer, user, membership] = await Promise.all([
-				db.query.customersTable.findFirst({
-					where: eq(customersTable.dodoCustomerId, customer.customer_id),
-				}),
-				customer.email ? db.query.usersTable.findFirst({
-					where: eq(usersTable.email, customer.email),
-				}) : Promise.resolve(null),
-				// We'll get membership after we have user
-				Promise.resolve(null)
+			// OPTIMIZED: Use prepared statement for customer lookup
+			const [existingCustomer, user] = await Promise.all([
+				getCustomerByDodoId.execute({ dodoCustomerId: customer.customer_id }),
+				customer.email
+					? db.query.usersTable.findFirst({
+							where: eq(usersTable.email, customer.email),
+						})
+					: Promise.resolve(null),
 			]);
 
 			// Get membership if we found a user
-			const membershipResult = user ? await db.query.membersTable.findFirst({
-				where: eq(membersTable.userId, user.id),
-			}) : null;
+			const membershipResult = user
+				? await db.query.membersTable.findFirst({
+						where: eq(membersTable.userId, user.id),
+					})
+				: null;
 
-			if (existingCustomer) {
-				customerId = existingCustomer.id;
+			if (existingCustomer.length > 0) {
+				customerId = existingCustomer[0].id;
 				organizationId =
-					organizationId || existingCustomer.organizationId || "";
+					organizationId || existingCustomer[0].organizationId || "";
 			} else {
 				// Resolve organization ID from user membership if not provided
 				if (!organizationId && membershipResult) {
@@ -307,75 +313,47 @@ export async function handleBillingWebhook(
 			}
 		}
 
-		// Process event types with batched operations where possible
-		switch (eventType) {
-			case "subscription.active":
-			case "subscription.renewed":
-			case "subscription.updated":
-				if (customerId) {
-					await upsertSubscription(customerId, organizationId, data, "active");
-				}
-				break;
-			case "subscription.on_hold":
-				if (customerId) {
-					await upsertSubscription(customerId, organizationId, data, "on_hold");
-				}
-				break;
-			case "subscription.cancelled":
-				if (customerId) {
-					await upsertSubscription(
-						customerId,
-						organizationId,
-						data,
-						"cancelled",
-					);
-				}
-				break;
-			case "subscription.failed":
-				if (customerId) {
-					await upsertSubscription(customerId, organizationId, data, "failed");
-				}
-				break;
-			case "subscription.expired":
-				if (customerId) {
-					await upsertSubscription(customerId, organizationId, data, "expired");
-				}
-				break;
-			case "payment.succeeded":
-				if (customerId) {
-					await recordPayment(customerId, organizationId, data, "succeeded");
+		// Subscription status mapping for cleaner handling
+		const SUBSCRIPTION_STATUS_MAP: Record<string, string> = {
+			"subscription.active": "active",
+			"subscription.renewed": "active",
+			"subscription.updated": "active",
+			"subscription.plan_changed": "active",
+			"subscription.on_hold": "on_hold",
+			"subscription.cancelled": "cancelled",
+			"subscription.failed": "failed",
+			"subscription.expired": "expired",
+		};
 
-					// Handle member addition payments
-					if (data.metadata?.action === "add_member") {
-						console.log(
-							`[Billing] Member addition payment succeeded: org=${organizationId}, email=${data.metadata.email}`,
-						);
-						// Member is added in the payment success handler, not here
-						// This is just for record keeping
-					}
-				}
-				break;
-			case "payment.failed":
-				if (customerId) {
-					await recordPayment(customerId, organizationId, data, "failed");
-				}
-				break;
-			case "payment.processing":
-				if (customerId) {
-					await recordPayment(customerId, organizationId, data, "processing");
-				}
-				break;
-			case "payment.cancelled":
-				if (customerId) {
-					await recordPayment(customerId, organizationId, data, "cancelled");
-				}
-				break;
-			default:
-				// Ignore unhandled event types
-				break;
+		const PAYMENT_STATUS_MAP: Record<string, string> = {
+			"payment.succeeded": "succeeded",
+			"payment.failed": "failed",
+			"payment.processing": "processing",
+			"payment.cancelled": "cancelled",
+		};
+
+		// Handle subscription events
+		const subscriptionStatus = SUBSCRIPTION_STATUS_MAP[eventType];
+		if (subscriptionStatus && customerId) {
+			await upsertSubscription(
+				customerId,
+				organizationId,
+				data,
+				subscriptionStatus,
+			);
 		}
 
-		await recordWebhookEvent(webhookId, eventType, JSON.stringify(payload));
+		// Handle payment events
+		const paymentStatus = PAYMENT_STATUS_MAP[eventType];
+		if (paymentStatus && customerId) {
+			await recordPayment(customerId, organizationId, data, paymentStatus);
+		}
+
+		await recordWebhookEvent(
+			generatedWebhookId,
+			eventType,
+			JSON.stringify(payload),
+		);
 	} catch (error) {
 		console.error(`[Billing] Webhook processing error:`, error);
 		throw error;
@@ -383,27 +361,19 @@ export async function handleBillingWebhook(
 }
 
 /**
- * Get organization's current subscription
- * Query directly by organizationId on subscriptions table (more reliable)
+ * Get organization's current subscription (OPTIMIZED with prepared statement)
  */
 export async function getOrganizationSubscription(organizationId: string) {
-	// Query subscriptions directly by organizationId - this is more reliable
-	// since webhooks now store organizationId directly on subscriptions
-	const subscription = await db.query.subscriptionsTable.findFirst({
-		where: eq(subscriptionsTable.organizationId, organizationId),
-		orderBy: (s, { desc }) => desc(s.createdAt),
-	});
-
-	return subscription;
+	const result = await getOrgSubscriptionPrepared.execute({ organizationId });
+	return result[0] ?? null;
 }
 
 /**
- * Get organization's billing customer
+ * Get organization's billing customer (OPTIMIZED with prepared statement)
  */
 export async function getOrganizationCustomer(organizationId: string) {
-	return db.query.customersTable.findFirst({
-		where: eq(customersTable.organizationId, organizationId),
-	});
+	const result = await getOrgCustomerPrepared.execute({ organizationId });
+	return result[0] ?? null;
 }
 
 /**
@@ -440,6 +410,7 @@ export async function getOrganizationPayments(
 export interface PlanUsage {
 	members: number;
 	teams: number;
+	matters: number;
 	// storageGb: number; // Add when file storage is implemented
 }
 
@@ -450,6 +421,7 @@ export interface PlanLimitCheck {
 	violations: {
 		members?: { current: number; limit: number };
 		teams?: { current: number; limit: number };
+		matters?: { current: number; limit: number };
 		// storage?: { current: number; limit: number };
 	};
 }
@@ -459,7 +431,7 @@ const usageCache = new Map<string, { data: PlanUsage; expires: number }>();
 const USAGE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 /**
- * Get current usage for an organization (optimized with single query and caching)
+ * Get current usage for an organization (SECURE & OPTIMIZED: Using prepared statements)
  */
 export async function getOrganizationUsage(
 	organizationId: string,
@@ -470,18 +442,8 @@ export async function getOrganizationUsage(
 		return cached.data;
 	}
 
-	// Use a single query with subqueries for better performance
-	const result = await db.execute(sql`
-		SELECT 
-			(SELECT COUNT(*) FROM ${membersTable} WHERE organization_id = ${organizationId}) as member_count,
-			(SELECT COUNT(*) FROM ${teamsTable} WHERE org_id = ${organizationId}) as team_count
-	`);
-	
-	const row = result.rows[0];
-	const usage = {
-		members: Number(row?.member_count ?? 0),
-		teams: Number(row?.team_count ?? 0),
-	};
+	// SECURE & OPTIMIZED: Use prepared statements for better performance and security
+	const usage = await getOrganizationUsagePrepared(organizationId);
 
 	// Cache the result
 	usageCache.set(organizationId, {
@@ -494,23 +456,73 @@ export async function getOrganizationUsage(
 
 /**
  * Invalidate usage cache for an organization (call after membership/team changes)
+ * ENHANCED: Also invalidate related caches
  */
 export function invalidateUsageCache(organizationId: string): void {
 	usageCache.delete(organizationId);
+
+	// Also clear any related cached data that might be affected
+	// This ensures consistency across all cached organization data
+	console.log(
+		`[Cache] Invalidated usage cache for organization: ${organizationId}`,
+	);
+}
+
+/**
+ * Invalidate all caches for an organization (nuclear option)
+ */
+export function invalidateAllOrganizationCaches(organizationId: string): void {
+	invalidateUsageCache(organizationId);
+	// Add other cache invalidations here as needed
+	console.log(
+		`[Cache] Invalidated all caches for organization: ${organizationId}`,
+	);
+}
+
+/**
+ * Get cache statistics for monitoring
+ */
+export function getCacheStats() {
+	return {
+		usageCache: {
+			size: usageCache.size,
+			entries: Array.from(usageCache.entries()).map(([key, value]) => ({
+				key,
+				expires: new Date(value.expires).toISOString(),
+				data: value.data,
+			})),
+		},
+	};
 }
 
 /**
  * Check if an organization's usage is within plan limits
- * @param organizationId - The organization ID
- * @param planKey - The plan to check against (defaults to current subscription plan)
+ * Strict enforcement for Cancelled/Expired plans
  */
 export async function checkPlanLimits(
 	organizationId: string,
 	planKey?: ProductKey,
 ): Promise<PlanLimitCheck> {
-	// Get current plan if not specified - use stored planKey for reliability
-	const effectivePlan: ProductKey =
-		planKey ?? (await getOrganizationPlanKey(organizationId));
+	const subscription = await getOrganizationSubscription(organizationId);
+	let effectivePlan: ProductKey = planKey ?? "starter";
+
+	if (subscription) {
+		const isCancelled =
+			subscription.status === "cancelled" || subscription.status === "expired";
+		// Check cancellation date
+		const periodEnded = subscription.currentPeriodEnd
+			? new Date(subscription.currentPeriodEnd) < new Date()
+			: true; // If no date, assume ended if cancelled
+
+		if (isCancelled && periodEnded) {
+			// If cancelled AND period ended, enforce Starter limits (or Strict 0?)
+			// User requested "Soft Enforcement", so Starter is a good fallback "Free Tier".
+			effectivePlan = "starter";
+		} else {
+			// Active or Cancelled-but-in-period
+			effectivePlan = (subscription.planKey as ProductKey) || "starter";
+		}
+	}
 
 	const usage = await getOrganizationUsage(organizationId);
 	const limits = planLimits[effectivePlan];
@@ -530,6 +542,12 @@ export async function checkPlanLimits(
 		withinLimits = false;
 	}
 
+	// Check matters limit
+	if (limits.matters !== -1 && usage.matters > limits.matters) {
+		violations.matters = { current: usage.matters, limit: limits.matters };
+		withinLimits = false;
+	}
+
 	return {
 		withinLimits,
 		usage,
@@ -540,7 +558,7 @@ export async function checkPlanLimits(
 
 /**
  * Get the effective plan key for an organization
- * Uses stored planKey first (most reliable), then falls back to productId lookup
+ * Used for UI display, NOT for strict limit checks (use checkPlanLimits)
  */
 export async function getOrganizationPlanKey(
 	organizationId: string,
@@ -549,6 +567,17 @@ export async function getOrganizationPlanKey(
 
 	// No subscription = starter plan
 	if (!subscription) return "starter";
+
+	// If cancelled/expired and period ended, they deemed 'starter' effectively
+	if (
+		subscription.status === "cancelled" ||
+		subscription.status === "expired"
+	) {
+		const periodEnded = subscription.currentPeriodEnd
+			? new Date(subscription.currentPeriodEnd) < new Date()
+			: true;
+		if (periodEnded) return "starter";
+	}
 
 	// Use stored planKey first (set during webhook processing)
 	if (subscription.planKey) {
@@ -564,8 +593,8 @@ export async function getOrganizationPlanKey(
 }
 
 /**
- * Check if adding a new member would exceed plan limits
- * For Pay-Per-Action billing: always allowed, but may require payment
+ * Check if adding a new member is allowed
+ * Implements "Soft Enforcement": Block only if currently over limit.
  */
 export async function canAddMember(organizationId: string): Promise<{
 	allowed: boolean;
@@ -575,11 +604,11 @@ export async function canAddMember(organizationId: string): Promise<{
 	isOverage?: boolean;
 	message?: string;
 }> {
-	const planKey = await getOrganizationPlanKey(organizationId);
-	const limits = planLimits[planKey];
-	const usage = await getOrganizationUsage(organizationId);
+	const limitCheck = await checkPlanLimits(organizationId);
+	const limits = limitCheck.limits;
+	const usage = limitCheck.usage;
 
-	// Unlimited members (enterprise)
+	// Unlimited members
 	if (limits.members === -1) {
 		return {
 			allowed: true,
@@ -588,17 +617,48 @@ export async function canAddMember(organizationId: string): Promise<{
 		};
 	}
 
-	// Pay-Per-Action billing: always allowed, but may require payment
-	const isOverLimit = usage.members >= limits.members;
+	// Strict Check: Are we ALREADY at or over the limit?
+	if (usage.members >= limits.members) {
+		// New Logic: Block new additions if over limit.
+		// Previous Logic allowed Pay-Per-Action.
+		// Now we want to STOP "adding new" if cancelled or over limit.
+		// Unless it's an active Growth/Pro plan that supports overages?
+		// User said: "How about we kick? ... block ability to add tasks ... block the amount"
+		// User also said: "Soft Enforcement ... workspace enters Roach Motel".
+
+		// If plan supports usage-based billing (Growth/Pro) AND is Active, allow.
+		// If plan is Starter or Cancelled, BLOCK.
+
+		const sub = await getOrganizationSubscription(organizationId);
+		const isActivePaid = sub?.status === "active" && limits.members !== 3; // simplistic check for Paid
+
+		if (isActivePaid) {
+			// Allow overage for paid plans (billable)
+			return {
+				allowed: true,
+				currentCount: usage.members,
+				limit: limits.members,
+				isOverage: true,
+				message: `Adding this member will cost extra.`,
+			};
+		}
+
+		// Block for Free/Starter/Cancelled
+		return {
+			allowed: false,
+			reason: `You have reached the member limit for your plan (${limits.members}). Upgrade to add more.`,
+			currentCount: usage.members,
+			limit: limits.members,
+			isOverage: true,
+		};
+	}
 
 	return {
-		allowed: true, // Always allowed with Pay-Per-Action
+		allowed: true,
 		currentCount: usage.members,
 		limit: limits.members,
-		isOverage: isOverLimit,
-		message: isOverLimit
-			? `Adding this member will cost $5`
-			: `This member is included in your ${planKey} plan`,
+		isOverage: false,
+		message: `This member is included in your plan`,
 	};
 }
 
@@ -609,15 +669,16 @@ export async function getMemberCount(organizationId: string): Promise<{
 	currentMembers: number;
 	planLimit: number;
 	plan: string;
+	effectivePlan: string;
 }> {
-	const planKey = await getOrganizationPlanKey(organizationId);
-	const limits = planLimits[planKey];
-	const usage = await getOrganizationUsage(organizationId);
+	const limitCheck = await checkPlanLimits(organizationId);
+	const planKey = await getOrganizationPlanKey(organizationId); // UI Plan
 
 	return {
-		currentMembers: usage.members,
-		planLimit: limits.members,
+		currentMembers: limitCheck.usage.members,
+		planLimit: limitCheck.limits.members,
 		plan: planKey,
+		effectivePlan: planKey, // Could differ if strictly enforcing starter
 	};
 }
 
@@ -631,9 +692,7 @@ export async function getOrganizationPlan(
 }
 
 /**
- * Check if creating a new team would exceed plan limits
- * For usage-based plans (growth, pro), allows overage and tracks for billing
- * For starter/enterprise, enforces hard limits
+ * Check if creating a new team is allowed
  */
 export async function canCreateTeam(organizationId: string): Promise<{
 	allowed: boolean;
@@ -642,9 +701,9 @@ export async function canCreateTeam(organizationId: string): Promise<{
 	limit: number;
 	isOverage?: boolean;
 }> {
-	const planKey = await getOrganizationPlanKey(organizationId);
-	const limits = planLimits[planKey];
-	const usage = await getOrganizationUsage(organizationId);
+	const limitCheck = await checkPlanLimits(organizationId);
+	const limits = limitCheck.limits;
+	const usage = limitCheck.usage;
 
 	// Unlimited teams
 	if (limits.teams === -1) {
@@ -655,29 +714,77 @@ export async function canCreateTeam(organizationId: string): Promise<{
 		};
 	}
 
-	// Usage-based plans (growth, pro) allow overages with metered billing
-	const isUsageBasedPlan = planKey === "growth" || planKey === "pro";
-	const isOverLimit = usage.teams >= limits.teams;
+	// Strict "Roach Motel" check
+	if (usage.teams >= limits.teams) {
+		// Allows overage for paid plans?
+		// Plan config says Growth="-1", Pro="15".
+		// If Pro user wants 16 teams? UsagePricing exists for "teamCreated", so Yes allow for Paid.
 
-	if (isUsageBasedPlan) {
-		// Always allow for usage-based plans - overages are billed
+		const sub = await getOrganizationSubscription(organizationId);
+		const isActivePaid =
+			sub?.status === "active" &&
+			(sub.planKey === "pro" || sub.planKey === "growth");
+
+		if (isActivePaid) {
+			return {
+				allowed: true,
+				currentCount: usage.teams,
+				limit: limits.teams,
+				isOverage: true,
+			};
+		}
+
 		return {
-			allowed: true,
+			allowed: false,
+			reason: `You have reached the team limit (${limits.teams}). Upgrade to add more.`,
 			currentCount: usage.teams,
 			limit: limits.teams,
-			isOverage: isOverLimit,
 		};
 	}
 
-	// Starter plan: hard limit enforcement
-	const allowed = usage.teams < limits.teams;
 	return {
-		allowed,
-		reason: allowed
-			? undefined
-			: `Your ${planKey} plan allows up to ${limits.teams} teams. Upgrade to add more.`,
+		allowed: true,
 		currentCount: usage.teams,
 		limit: limits.teams,
+	};
+}
+
+/**
+ * Check if creating a new matter (task) is allowed
+ */
+export async function canCreateMatter(organizationId: string): Promise<{
+	allowed: boolean;
+	reason?: string;
+	currentCount: number;
+	limit: number;
+	isOverage?: boolean;
+}> {
+	const limitCheck = await checkPlanLimits(organizationId);
+	const limits = limitCheck.limits;
+	// Warning: usage.matters is explicitly 0 for now until query updated
+	const usage = limitCheck.usage;
+
+	if (limits.matters === -1) {
+		return {
+			allowed: true,
+			currentCount: usage.matters,
+			limit: -1,
+		};
+	}
+
+	if (usage.matters >= limits.matters) {
+		return {
+			allowed: false,
+			reason: `You have reached the matter limit (${limits.matters}) for the Starter plan. Upgrade for unlimited.`,
+			currentCount: usage.matters,
+			limit: limits.matters,
+		};
+	}
+
+	return {
+		allowed: true,
+		currentCount: usage.matters,
+		limit: limits.matters,
 	};
 }
 

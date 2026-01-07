@@ -6,6 +6,7 @@ import {
 	trackStorageUsage,
 	trackTeamCreated,
 } from "~/lib/billing";
+import { invalidateUsageCache } from "~/lib/server/billing.server";
 import { getOrCreateCustomer } from "~/lib/server/customer.server";
 
 /**
@@ -86,30 +87,13 @@ export async function syncOrganizationSeats(
  * Called after invitation acceptance, direct member addition, or member removal
  * Syncs absolute seat count and invalidates cache
  */
-export async function trackMembershipChange(organizationId: string): Promise<void> {
-	// Invalidate usage cache first
-	const { invalidateUsageCache } = await import("~/lib/server/billing.server");
-	invalidateUsageCache(organizationId);
-	
-	await syncOrganizationSeats(organizationId);
-}
-
-/**
- * Track when a new organization member joins
- * @deprecated Use trackMembershipChange instead
- */
-export async function trackNewMember(organizationId: string): Promise<void> {
-	await trackMembershipChange(organizationId);
-}
-
-/**
- * Track when a member is removed from an organization
- * @deprecated Use trackMembershipChange instead
- */
-export async function trackMemberRemoved(
+export async function trackMembershipChange(
 	organizationId: string,
 ): Promise<void> {
-	await trackMembershipChange(organizationId);
+	// Invalidate usage cache first
+	invalidateUsageCache(organizationId);
+
+	await syncOrganizationSeats(organizationId);
 }
 
 /**

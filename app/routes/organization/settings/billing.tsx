@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
 	PaymentHistory,
@@ -105,6 +105,7 @@ export default function BillingSettings() {
 		currentPlan,
 	} = loaderData;
 	const [searchParams] = useSearchParams();
+	const revalidator = useRevalidator();
 	const [loading, setLoading] = useState(false);
 	const [showPricing, setShowPricing] = useState(false);
 	const [showComparison, setShowComparison] = useState(false);
@@ -126,10 +127,12 @@ export default function BillingSettings() {
 	useEffect(() => {
 		if (success === "true") {
 			toast.success("Subscription updated successfully!");
+			// Revalidate to get fresh data
+			revalidator.revalidate();
 		} else if (cancelled === "true") {
 			toast.info("Checkout cancelled");
 		}
-	}, [success, cancelled]);
+	}, [success, cancelled, revalidator]);
 
 	const handleCheckout = useCallback(
 		async (plan: ProductKey, interval: BillingInterval) => {
@@ -255,7 +258,13 @@ export default function BillingSettings() {
 			}
 
 			if (plan === "starter") {
-				toast.info("To downgrade to Starter, please manage your subscription.");
+				if (subscription && subscription.status === "active") {
+					// Redirect to portal for downgrade
+					handleManageSubscription();
+					toast.info("Please downgrade your plan in the customer portal.");
+					return;
+				}
+				toast.info("You are already on the Starter plan.");
 				return;
 			}
 			if (plan === "enterprise") {
@@ -263,9 +272,19 @@ export default function BillingSettings() {
 					"mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry";
 				return;
 			}
-			setSelectedPlan({ plan, interval });
+
+			// If user has an active subscription, redirect to portal for ANY plan change
+			if (subscription && subscription.status === "active") {
+				handleManageSubscription();
+				toast.info(
+					"Please manage your subscription details in the customer portal.",
+				);
+			} else {
+				// New subscription
+				setSelectedPlan({ plan, interval });
+			}
 		},
-		[canManage],
+		[canManage, subscription, handleManageSubscription],
 	);
 
 	const confirmPlanChange = useCallback(async () => {
@@ -311,11 +330,11 @@ export default function BillingSettings() {
 			{/* Subscription Status */}
 			<SubscriptionStatus
 				subscription={subscription ?? null}
+				currentPlan={currentPlan}
 				onManage={handleManageSubscription}
 				onUpgrade={() => setShowPricing(true)}
 				loading={loading}
 			/>
-
 			{/* Usage Display - Shows current usage vs plan limits */}
 			<UsageDisplay usage={usage} currentPlan={currentPlan} />
 
@@ -363,7 +382,7 @@ export default function BillingSettings() {
 				</div>
 			)}
 
-			{/* Confirmation Dialog */}
+			{/* Confirmation Dialog for New Subscriptions */}
 			<AlertDialog
 				open={!!selectedPlan}
 				onOpenChange={(open) => !open && setSelectedPlan(null)}
@@ -381,7 +400,7 @@ export default function BillingSettings() {
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogCancel className="mr-auto">Cancel</AlertDialogCancel>
 						<AlertDialogAction onClick={confirmPlanChange} disabled={loading}>
 							{loading ? "Processing..." : "Continue to Checkout"}
 						</AlertDialogAction>

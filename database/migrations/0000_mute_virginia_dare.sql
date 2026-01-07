@@ -342,6 +342,7 @@ CREATE INDEX "accountsTable_userId_idx" ON "accounts_table" USING btree ("user_i
 CREATE INDEX "attachments_matter_idx" ON "attachments" USING btree ("matter_id");--> statement-breakpoint
 CREATE INDEX "customers_org_idx" ON "customers" USING btree ("organization_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "customers_dodo_idx" ON "customers" USING btree ("dodo_customer_id");--> statement-breakpoint
+CREATE INDEX "customers_email_idx" ON "customers" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "invitationsTable_organizationId_idx" ON "invitations_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "invitationsTable_email_idx" ON "invitations_table" USING btree ("email");--> statement-breakpoint
 CREATE UNIQUE INDEX "labels_org_name_unique" ON "labels" USING btree ("org_id","name");--> statement-breakpoint
@@ -360,14 +361,18 @@ CREATE INDEX "matters_short_id_idx" ON "matters" USING btree ("short_id");--> st
 CREATE INDEX "matters_team_idx" ON "matters" USING btree ("team_id");--> statement-breakpoint
 CREATE INDEX "matters_team_archived_updated_idx" ON "matters" USING btree ("team_id","archived","updated_at");--> statement-breakpoint
 CREATE INDEX "matters_team_status_updated_idx" ON "matters" USING btree ("team_id","status_id","updated_at");--> statement-breakpoint
-CREATE INDEX "matters_assignee_archived_idx" ON "matters" USING btree ("assignee_id","archived");--> statement-breakpoint
-CREATE INDEX "matters_team_priority_archived_idx" ON "matters" USING btree ("team_id","priority","archived");--> statement-breakpoint
-CREATE INDEX "matters_due_date_idx" ON "matters" USING btree ("due_date");--> statement-breakpoint
-CREATE INDEX "matters_org_archived_updated_idx" ON "matters" USING btree ("org_id","archived","updated_at");--> statement-breakpoint
-CREATE INDEX "matters_author_idx" ON "matters" USING btree ("author_id");--> statement-breakpoint
 CREATE INDEX "matters_team_assignee_archived_idx" ON "matters" USING btree ("team_id","assignee_id","archived");--> statement-breakpoint
+CREATE INDEX "matters_team_priority_archived_idx" ON "matters" USING btree ("team_id","priority","archived");--> statement-breakpoint
+CREATE INDEX "matters_assignee_archived_idx" ON "matters" USING btree ("assignee_id","archived");--> statement-breakpoint
+CREATE INDEX "matters_author_idx" ON "matters" USING btree ("author_id");--> statement-breakpoint
+CREATE INDEX "matters_author_type_archived_idx" ON "matters" USING btree ("author_id","type","archived");--> statement-breakpoint
+CREATE INDEX "matters_org_archived_updated_idx" ON "matters" USING btree ("org_id","archived","updated_at");--> statement-breakpoint
+CREATE INDEX "matters_due_date_idx" ON "matters" USING btree ("due_date");--> statement-breakpoint
+CREATE INDEX "matters_due_date_archived_idx" ON "matters" USING btree ("due_date","archived");--> statement-breakpoint
 CREATE INDEX "matters_team_type_idx" ON "matters" USING btree ("team_id","type");--> statement-breakpoint
 CREATE INDEX "matters_approved_by_idx" ON "matters" USING btree ("approved_by");--> statement-breakpoint
+CREATE INDEX "matters_type_approved_by_idx" ON "matters" USING btree ("type","approved_by");--> statement-breakpoint
+CREATE INDEX "matters_team_list_covering_idx" ON "matters" USING btree ("team_id","archived","priority","updated_at","status_id","assignee_id");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "organizationsTable_slug_uidx" ON "organizations_table" USING btree ("slug");--> statement-breakpoint
@@ -375,12 +380,16 @@ CREATE INDEX "payments_customer_idx" ON "payments" USING btree ("customer_id");-
 CREATE INDEX "payments_org_idx" ON "payments" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "payments_subscription_idx" ON "payments" USING btree ("subscription_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "payments_dodo_idx" ON "payments" USING btree ("dodo_payment_id");--> statement-breakpoint
+CREATE INDEX "payments_org_created_idx" ON "payments" USING btree ("organization_id","created_at");--> statement-breakpoint
+CREATE INDEX "payments_status_idx" ON "payments" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "sessionsTable_userId_idx" ON "sessions_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "statuses_team_position_idx" ON "statuses" USING btree ("team_id","position");--> statement-breakpoint
 CREATE INDEX "subscriptions_customer_idx" ON "subscriptions" USING btree ("customer_id");--> statement-breakpoint
 CREATE INDEX "subscriptions_org_idx" ON "subscriptions" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "subscriptions_status_idx" ON "subscriptions" USING btree ("status");--> statement-breakpoint
 CREATE UNIQUE INDEX "subscriptions_dodo_idx" ON "subscriptions" USING btree ("dodo_subscription_id");--> statement-breakpoint
+CREATE INDEX "subscriptions_org_status_idx" ON "subscriptions" USING btree ("organization_id","status");--> statement-breakpoint
+CREATE INDEX "subscriptions_period_end_idx" ON "subscriptions" USING btree ("current_period_end");--> statement-breakpoint
 CREATE INDEX "team_memberships_team_idx" ON "team_memberships" USING btree ("team_id");--> statement-breakpoint
 CREATE INDEX "team_memberships_user_idx" ON "team_memberships" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "team_memberships_org_user_idx" ON "team_memberships" USING btree ("org_id","user_id");--> statement-breakpoint

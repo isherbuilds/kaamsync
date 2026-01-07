@@ -3,18 +3,35 @@ import DodoPayments from "dodopayments";
 // Safe environment variable access (server-side only)
 const isServer = typeof window === "undefined";
 
-// Environment validation
-const apiKey = isServer ? process.env.DODO_PAYMENTS_API_KEY : undefined;
+// Dynamic import to avoid issues with client-side bundling
+let envModule: typeof import("~/lib/server/env-validation.server") | null =
+	null;
+
+if (isServer) {
+	try {
+		envModule = require("~/lib/server/env-validation.server");
+	} catch {
+		// Fallback for when env validation hasn't run yet
+	}
+}
+
+const apiKey = isServer
+	? envModule?.env?.DODO_PAYMENTS_API_KEY || process.env.DODO_PAYMENTS_API_KEY
+	: undefined;
 const webhookSecret = isServer
-	? process.env.DODO_PAYMENTS_WEBHOOK_SECRET
+	? envModule?.env?.DODO_PAYMENTS_WEBHOOK_SECRET ||
+		process.env.DODO_PAYMENTS_WEBHOOK_SECRET
 	: undefined;
 const environment = (
-	isServer ? process.env.DODO_PAYMENTS_ENVIRONMENT || "test_mode" : "test_mode"
+	isServer
+		? envModule?.env?.DODO_PAYMENTS_ENVIRONMENT ||
+			process.env.DODO_PAYMENTS_ENVIRONMENT ||
+			"test_mode"
+		: "test_mode"
 ) as "test_mode" | "live_mode";
-
-if (isServer && !apiKey) {
-	console.warn("[Billing] DODO_PAYMENTS_API_KEY is not set");
-}
+const siteUrl = isServer
+	? envModule?.env?.SITE_URL || process.env.SITE_URL || "http://localhost:3000"
+	: "";
 
 // Dodo Payments client singleton (server-side only)
 export const dodoPayments =
@@ -37,17 +54,10 @@ export const billingConfig = {
 	webhookSecret,
 	environment,
 	apiBaseUrl,
-	enabled: !!apiKey,
-	// Use a generic billing redirect that will redirect to the org-specific page
-	returnUrl: isServer
-		? `${process.env.SITE_URL}/api/billing/redirect`
-		: "/api/billing/redirect",
-	successUrl: isServer
-		? `${process.env.SITE_URL}/api/billing/redirect?success=true`
-		: "/api/billing/redirect?success=true",
-	cancelUrl: isServer
-		? `${process.env.SITE_URL}/api/billing/redirect?cancelled=true`
-		: "/api/billing/redirect?cancelled=true",
+	enabled: !!(apiKey && webhookSecret),
+	returnUrl: `${siteUrl}/api/billing/redirect`,
+	successUrl: `${siteUrl}/api/billing/redirect?success=true`,
+	cancelUrl: `${siteUrl}/api/billing/redirect?cancelled=true`,
 } as const;
 
 // Plan limits configuration
@@ -56,21 +66,25 @@ export const planLimits = {
 		members: 3,
 		teams: 5,
 		storageGb: 0.5,
+		matters: 250, // Limit matters/tasks for free tier
 	},
 	growth: {
 		members: 10,
 		teams: -1, // -1 = unlimited
 		storageGb: 10,
+		matters: -1,
 	},
 	pro: {
 		members: 25,
 		teams: 15,
 		storageGb: 25,
+		matters: -1,
 	},
 	enterprise: {
 		members: -1, // unlimited
 		teams: -1, // unlimited
 		storageGb: -1, // unlimited/custom
+		matters: -1,
 	},
 } as const;
 
