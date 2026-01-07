@@ -46,14 +46,13 @@ export async function action({ request }: { request: Request }) {
 				(transact) =>
 					transact(async (tx: any, name: string, args: any) => {
 						const mutator = mustGetMutator(mutators, name);
-						// mutator.fn receives tx, ctx, and args
 						await mutator.fn({ tx, ctx, args });
 					}),
 				request,
 			),
 		);
 	} catch (err) {
-		console.error("Mutate error:", err);
+		console.error("[Zero:mutate] Error:", err);
 		return new Response(JSON.stringify({ error: "Internal server error" }), {
 			status: 500,
 			headers: { "Content-Type": "application/json" },

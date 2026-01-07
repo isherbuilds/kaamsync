@@ -205,3 +205,19 @@ export function canChangeOrgSettings(role?: OrgRole | null): boolean {
 export function canDeleteOrg(role?: OrgRole | null): boolean {
 	return role === "owner";
 }
+
+/**
+ * Check if org role can manage billing (subscriptions, checkout, portal)
+ * Only owner and admin can manage billing according to Better Auth best practices
+ */
+export function canManageBilling(role?: OrgRole | null): boolean {
+	return role === "owner" || role === "admin";
+}
+
+/**
+ * Check if org role can view billing (read-only access to subscription status)
+ * All members can view billing status
+ */
+export function canViewBilling(role?: OrgRole | null): boolean {
+	return role === "owner" || role === "admin" || role === "member";
+}

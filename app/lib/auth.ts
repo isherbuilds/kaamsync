@@ -1,12 +1,25 @@
+import {
+	checkout,
+	dodopayments,
+	portal,
+	usage,
+	webhooks,
+} from "@dodopayments/better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
 import { cache } from "react";
 import { UseSend } from "usesend-js";
-import { VerifyEmail } from "~/components/email/verify-email";
 import { OrgInvitationEmail } from "~/components/email/org-invitation";
+import { VerifyEmail } from "~/components/email/verify-email";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
+import { billingConfig, dodoPayments } from "~/lib/billing";
+import { handleBillingWebhook } from "~/lib/server/billing.server";
+import {
+	trackMemberRemoved,
+	trackNewMember,
+} from "~/lib/server/billing-tracking.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
 
 const usesend = new UseSend(
@@ -59,10 +72,13 @@ export const auth = betterAuth({
 	},
 	//   trustedOrigins: [process.env.BETTER_AUTH_URL!],
 	socialProviders: {
-		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID!,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-		},
+		...(process.env.GOOGLE_CLIENT_ID &&
+			process.env.GOOGLE_CLIENT_SECRET && {
+				google: {
+					clientId: process.env.GOOGLE_CLIENT_ID,
+					clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+				},
+			}),
 	},
 	session: {
 		modelName: "sessionsTable",
@@ -115,14 +131,8 @@ export const auth = betterAuth({
 					modelName: "invitationsTable",
 				},
 			},
-			async sendInvitationEmail({
-				email,
-				organization,
-				inviter,
-				role,
-				invitation				,
-			}) {
 
+			async sendInvitationEmail({ email, organization, inviter }) {
 				const inviteLink = `${process.env.SITE_URL}/join`;
 
 				if (process.env.NODE_ENV === "development") {
@@ -131,7 +141,6 @@ export const auth = betterAuth({
 					);
 					return;
 				}
-
 
 				await usesend.emails.send({
 					from: "KaamSync@mail.kaamsync.com",
@@ -145,8 +154,139 @@ export const auth = betterAuth({
 					}),
 				});
 			},
+			organizationHooks: {
+				afterAcceptInvitation: async ({ member }) => {
+					// console.log(
+					// 	`[AuthHook] afterAcceptInvitation: org=${member.organizationId}`,
+					// );
+					if (member.organizationId) {
+						// Delegate tracking to afterAddMember to prevent double events
+						trackNewMember(member.organizationId).catch((err) =>
+							console.error("[Billing] Failed to track member addition:", err),
+						);
+					}
+				},
+				afterAddMember: async ({ member }) => {
+					// console.log(
+					// 	`[AuthHook] afterAddMember: org=${member.organizationId}`,
+					// );
+					if (member.organizationId) {
+						trackNewMember(member.organizationId).catch((err) =>
+							console.error("[Billing] Failed to track member addition:", err),
+						);
+					}
+				},
+				afterRemoveMember: async ({ member }) => {
+					if (member.organizationId) {
+						trackMemberRemoved(member.organizationId).catch((err) =>
+							console.error("[Billing] Failed to track member removal:", err),
+						);
+					}
+				},
+			},
 		}),
 		// lastLoginMethod(),
+		// Dodo Payments billing integration
+		...(dodoPayments && billingConfig.webhookSecret
+			? [
+					dodopayments({
+						client: dodoPayments,
+						createCustomerOnSignUp: true,
+						use: [
+							checkout({
+								products: [
+									// Growth plans (monthly & yearly)
+									...(process.env.DODO_PRODUCT_GROWTH_MONTHLY
+										? [
+												{
+													productId: process.env.DODO_PRODUCT_GROWTH_MONTHLY,
+													slug: "growth-monthly",
+												},
+											]
+										: []),
+									...(process.env.DODO_PRODUCT_GROWTH_YEARLY
+										? [
+												{
+													productId: process.env.DODO_PRODUCT_GROWTH_YEARLY,
+													slug: "growth-yearly",
+												},
+											]
+										: []),
+									// Pro plans (monthly & yearly)
+									...(process.env.DODO_PRODUCT_PROFESSIONAL_MONTHLY
+										? [
+												{
+													productId:
+														process.env.DODO_PRODUCT_PROFESSIONAL_MONTHLY,
+													slug: "pro-monthly",
+												},
+											]
+										: []),
+									...(process.env.DODO_PRODUCT_PROFESSIONAL_YEARLY
+										? [
+												{
+													productId:
+														process.env.DODO_PRODUCT_PROFESSIONAL_YEARLY,
+													slug: "pro-yearly",
+												},
+											]
+										: []),
+								],
+								successUrl: billingConfig.successUrl,
+								authenticatedUsersOnly: true,
+							}),
+							portal(),
+							usage(),
+							webhooks({
+								webhookKey: billingConfig.webhookSecret,
+								onPayload: async (payload) => {
+									const maxRetries = 3;
+									let lastError: Error | null = null;
+
+									for (let attempt = 0; attempt < maxRetries; attempt++) {
+										try {
+											await handleBillingWebhook({
+												business_id: payload.business_id,
+												type: payload.type,
+												timestamp: payload.timestamp,
+												data: payload.data as unknown as Parameters<
+													typeof handleBillingWebhook
+												>[0]["data"],
+											});
+											return; // Success - exit retry loop
+										} catch (error) {
+											lastError =
+												error instanceof Error
+													? error
+													: new Error(String(error));
+
+											if (attempt < maxRetries - 1) {
+												// Exponential backoff: 1s, 2s, 4s
+												const delay = 1000 * 2 ** attempt;
+												console.warn(
+													`[Billing] Webhook attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
+													lastError.message,
+												);
+												await new Promise((resolve) =>
+													setTimeout(resolve, delay),
+												);
+											}
+										}
+									}
+
+									// All retries exhausted
+									console.error(
+										`[Billing] Webhook failed after ${maxRetries} attempts:`,
+										lastError,
+									);
+									// Re-throw to signal failure to Better Auth
+									throw lastError;
+								},
+							}),
+						],
+					}),
+				]
+			: []),
 	],
 	user: {
 		modelName: "usersTable",

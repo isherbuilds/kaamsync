@@ -38,7 +38,6 @@ export const DEFAULT_STATUSES = [
 		type: "backlog" as const,
 		position: 0,
 		isDefault: false,
-		isRequestStatus: false,
 	},
 	{
 		name: "Todo",
@@ -46,7 +45,6 @@ export const DEFAULT_STATUSES = [
 		type: "not_started" as const,
 		position: 1,
 		isDefault: true,
-		isRequestStatus: false,
 	},
 	{
 		name: "In progress",
@@ -54,7 +52,6 @@ export const DEFAULT_STATUSES = [
 		type: "started" as const,
 		position: 2,
 		isDefault: false,
-		isRequestStatus: false,
 	},
 	{
 		name: "Completed",
@@ -62,7 +59,6 @@ export const DEFAULT_STATUSES = [
 		type: "completed" as const,
 		position: 3,
 		isDefault: false,
-		isRequestStatus: false,
 	},
 	{
 		name: "Canceled",
@@ -70,7 +66,6 @@ export const DEFAULT_STATUSES = [
 		type: "canceled" as const,
 		position: 4,
 		isDefault: false,
-		isRequestStatus: false,
 	},
 	{
 		name: "Pending Approval",
@@ -78,7 +73,6 @@ export const DEFAULT_STATUSES = [
 		type: "pending_approval" as const,
 		position: 5,
 		isDefault: false,
-		isRequestStatus: true,
 	},
 	{
 		name: "Rejected",
@@ -86,6 +80,5 @@ export const DEFAULT_STATUSES = [
 		type: "rejected" as const,
 		position: 6,
 		isDefault: false,
-		isRequestStatus: true,
 	},
 ] as const;

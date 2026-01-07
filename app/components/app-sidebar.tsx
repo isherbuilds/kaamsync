@@ -38,6 +38,7 @@ const navMain = [
 	},
 ];
 
+// Note: URLs with "/settings" are relative to org - they get /:orgSlug prefix
 const navSettings = [
 	{
 		title: "Back Home",
@@ -56,7 +57,7 @@ const navSettings = [
 	},
 	{
 		title: "Billing",
-		url: "/settings/billing",
+		url: "/settings/billing", // Organization billing (/:orgSlug/settings/billing)
 		icon: CreditCard,
 	},
 	{

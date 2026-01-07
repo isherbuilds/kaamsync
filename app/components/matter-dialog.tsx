@@ -56,7 +56,7 @@ export const MatterDialog = memo(
 		const submitLabel = isRequest ? "Submit Request" : "Create Task";
 		const submittingLabel = isRequest ? "Submitting..." : "Creating...";
 
-		// For requests, only managers can be assigned
+		// Memoize filtered members to prevent recalculation on every render
 		const filteredMembers = useMemo(
 			() =>
 				isRequest

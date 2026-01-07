@@ -1,6 +1,6 @@
 {
-  "id": "99ab10de-f02d-4ad8-8861-2ca1179b0e3e",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "b5e48847-f14b-4faa-969b-7b14db17288f",
+  "prevId": "99ab10de-f02d-4ad8-8861-2ca1179b0e3e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -318,6 +318,21 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "customers_email_idx": {
+          "name": "customers_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1427,9 +1442,15 @@
           "method": "btree",
           "with": {}
         },
-        "matters_assignee_archived_idx": {
-          "name": "matters_assignee_archived_idx",
+        "matters_team_assignee_archived_idx": {
+          "name": "matters_team_assignee_archived_idx",
           "columns": [
+            {
+              "expression": "team_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "assignee_id",
               "isExpression": false,
@@ -1475,11 +1496,59 @@
           "method": "btree",
           "with": {}
         },
-        "matters_due_date_idx": {
-          "name": "matters_due_date_idx",
+        "matters_assignee_archived_idx": {
+          "name": "matters_assignee_archived_idx",
           "columns": [
             {
-              "expression": "due_date",
+              "expression": "assignee_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "archived",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "matters_author_idx": {
+          "name": "matters_author_idx",
+          "columns": [
+            {
+              "expression": "author_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "matters_author_type_archived_idx": {
+          "name": "matters_author_type_archived_idx",
+          "columns": [
+            {
+              "expression": "author_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "archived",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1517,11 +1586,11 @@
           "method": "btree",
           "with": {}
         },
-        "matters_author_idx": {
-          "name": "matters_author_idx",
+        "matters_due_date_idx": {
+          "name": "matters_due_date_idx",
           "columns": [
             {
-              "expression": "author_id",
+              "expression": "due_date",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1532,17 +1601,11 @@
           "method": "btree",
           "with": {}
         },
-        "matters_team_assignee_archived_idx": {
-          "name": "matters_team_assignee_archived_idx",
+        "matters_due_date_archived_idx": {
+          "name": "matters_due_date_archived_idx",
           "columns": [
             {
-              "expression": "team_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "assignee_id",
+              "expression": "due_date",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1585,6 +1648,72 @@
           "columns": [
             {
               "expression": "approved_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "matters_type_approved_by_idx": {
+          "name": "matters_type_approved_by_idx",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "approved_by",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "matters_team_list_covering_idx": {
+          "name": "matters_team_list_covering_idx",
+          "columns": [
+            {
+              "expression": "team_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "archived",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "priority",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "assignee_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2430,6 +2559,42 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "subscriptions_org_status_idx": {
+          "name": "subscriptions_org_status_idx",
+          "columns": [
+            {
+              "expression": "organization_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "subscriptions_period_end_idx": {
+          "name": "subscriptions_period_end_idx",
+          "columns": [
+            {
+              "expression": "current_period_end",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}

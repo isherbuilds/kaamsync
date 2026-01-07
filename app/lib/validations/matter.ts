@@ -1,7 +1,13 @@
 import { z } from "zod";
+import { 
+	prioritySchema, 
+	statusSchema, 
+	userIdSchema,
+	optionalDateSchema 
+} from "./shared";
 import { Priority } from "~/lib/matter-constants";
 
-// Matter validation schemas
+// Matter validation schemas with shared base schemas
 const MIN_TITLE_LENGTH = 3;
 const MAX_TITLE_LENGTH = 255;
 const MAX_DESCRIPTION_LENGTH = 800;
@@ -29,9 +35,8 @@ export const matterDescriptionSchema = z
 export const createMatterSchema = z.object({
 	title: matterTitleSchema,
 	description: matterDescriptionSchema,
-	statusId: z.string().optional(),
-	// TODO: Think this through more - should unassigned be allowed?
-	assigneeId: z.string().nullable(),
+	statusId: statusSchema.optional(),
+	assigneeId: userIdSchema.nullable(),
 	priority: z.number().int().min(0).max(4).default(Priority.NONE),
 	dueDate: z.string().optional(),
 });
@@ -39,4 +44,25 @@ export const createMatterSchema = z.object({
 export const approveRequestSchema = z.object({
 	requestId: z.string().min(1, "Request ID is required."),
 	action: z.enum(["approve", "reject"]),
+});
+
+// Additional consolidated schemas for better reusability
+export const updateMatterSchema = createMatterSchema.partial().extend({
+	id: z.string().min(1, "Matter ID is required"),
+});
+
+export const assignMatterSchema = z.object({
+	id: z.string().min(1, "Matter ID is required"),
+	assigneeId: userIdSchema.nullable(),
+});
+
+export const updateMatterStatusSchema = z.object({
+	id: z.string().min(1, "Matter ID is required"),
+	statusId: statusSchema,
+});
+
+export const addMatterCommentSchema = z.object({
+	matterId: z.string().min(1, "Matter ID is required"),
+	content: z.string().min(1, "Comment cannot be empty").max(2000, "Comment too long"),
+	mentions: z.array(z.string()).optional(),
 });

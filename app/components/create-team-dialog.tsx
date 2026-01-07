@@ -1,11 +1,12 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useZero } from "@rocicorp/zero/react";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { createTeamSchema } from "../lib/validations/organization";
 import { InputField } from "./forms";
+import { Alert, AlertDescription } from "./ui/alert";
 import { Button } from "./ui/button";
 import {
 	Dialog,
@@ -33,6 +34,33 @@ export const CreateTeamDialog = memo(
 		const zr = useZero();
 		const isManual = useRef(false);
 		const [isSubmitting, setIsSubmitting] = useState(false);
+		const [billingLimit, setBillingLimit] = useState<{
+			blocked: boolean;
+			message?: string;
+			isOverage?: boolean;
+		} | null>(null);
+
+		// Check billing limits when dialog opens
+		useEffect(() => {
+			if (open) {
+				fetch("/api/billing/check-limits")
+					.then((res) => res.json())
+					.then((data) => {
+						// Only show a blocking limit for plans that enforce hard limits (eg. Starter)
+						if (!data.canCreateTeam) {
+							setBillingLimit({
+								blocked: true,
+								message:
+									data.teamMessage ||
+									"Team limit reached. Please upgrade your plan.",
+							});
+						} else {
+							setBillingLimit(null); // No message for usage-based overages (unlimited teams)
+						}
+					})
+					.catch(() => setBillingLimit(null));
+			}
+		}, [open]);
 
 		const [form, fields] = useForm({
 			id: "create-team-dialog",
@@ -70,6 +98,15 @@ export const CreateTeamDialog = memo(
 							Give your team a name and a unique 3-letter code.
 						</DialogDescription>
 					</DialogHeader>
+
+					{billingLimit?.blocked && (
+						<Alert variant="destructive">
+							<AlertDescription>
+								{billingLimit.message ||
+									"Team limit reached. Please upgrade your plan."}
+							</AlertDescription>
+						</Alert>
+					)}
 
 					<form {...getFormProps(form)} className="space-y-4">
 						<InputField
@@ -116,7 +153,10 @@ export const CreateTeamDialog = memo(
 							<Button type="button" variant="ghost" onClick={close}>
 								Cancel
 							</Button>
-							<Button type="submit" disabled={isSubmitting}>
+							<Button
+								type="submit"
+								disabled={isSubmitting || billingLimit?.blocked}
+							>
 								{isSubmitting ? "Creating..." : "Create Team"}
 							</Button>
 						</div>

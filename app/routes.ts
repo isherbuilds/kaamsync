@@ -60,6 +60,9 @@ export default [
 		route("auth/error", "routes/api/auth/better-error.tsx"),
 		route("zero/query", "routes/api/zero/query.ts"),
 		route("zero/mutate", "routes/api/zero/mutate.ts"),
+		route("billing/redirect", "routes/api/billing/redirect.ts"),
+		route("billing/debug", "routes/api/billing/debug.ts"),
+		route("billing/check-limits", "routes/api/billing/check-limits.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 	]),
 
