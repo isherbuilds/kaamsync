@@ -1,25 +1,15 @@
 /**
- * Consolidated permission helpers to reduce duplication in mutators.
- * These helpers encapsulate common permission checks and provide consistent error messages.
+ * Server-side permission helpers for Zero mutators.
+ * Uses shared permission logic and error messages from app/lib/permissions.ts
  */
 
+import { PERMISSION_ERRORS } from "~/lib/permissions";
 import type { Context } from "./auth";
 import type { MutatorTx } from "./mutator-helpers";
 import { zql } from "./schema";
 
-// ============================================================================
-// PERMISSION ERROR MESSAGES
-// ============================================================================
-
-export const PERMISSION_ERRORS = {
-	NOT_LOGGED_IN: "User must be logged in",
-	NOT_TEAM_MEMBER: "Not a member of this team",
-	MANAGER_REQUIRED: "Only team managers can perform this action",
-	CANNOT_MODIFY_MATTER: "Cannot modify this matter",
-	MATTER_NOT_FOUND: "Matter not found",
-	TEAM_NOT_FOUND: "Team not found",
-	ORGANIZATION_ACCESS_DENIED: "Access denied to this organization",
-} as const;
+// Re-export shared error messages
+export { PERMISSION_ERRORS };
 
 // ============================================================================
 // CORE PERMISSION HELPERS

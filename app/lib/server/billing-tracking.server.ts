@@ -82,22 +82,34 @@ export async function syncOrganizationSeats(
 }
 
 /**
- * Track when a new organization member joins
- * Called after invitation acceptance or direct member addition
- * Now syncs absolute seat count instead of incremental
+ * Track membership changes (unified function for add/remove)
+ * Called after invitation acceptance, direct member addition, or member removal
+ * Syncs absolute seat count and invalidates cache
  */
-export async function trackNewMember(organizationId: string): Promise<void> {
+export async function trackMembershipChange(organizationId: string): Promise<void> {
+	// Invalidate usage cache first
+	const { invalidateUsageCache } = await import("~/lib/server/billing.server");
+	invalidateUsageCache(organizationId);
+	
 	await syncOrganizationSeats(organizationId);
 }
 
 /**
+ * Track when a new organization member joins
+ * @deprecated Use trackMembershipChange instead
+ */
+export async function trackNewMember(organizationId: string): Promise<void> {
+	await trackMembershipChange(organizationId);
+}
+
+/**
  * Track when a member is removed from an organization
- * Syncs the updated (lower) seat count to Dodo
+ * @deprecated Use trackMembershipChange instead
  */
 export async function trackMemberRemoved(
 	organizationId: string,
 ): Promise<void> {
-	await syncOrganizationSeats(organizationId);
+	await trackMembershipChange(organizationId);
 }
 
 /**

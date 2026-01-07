@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { count, eq } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import { db } from "~/db";
 import {
 	customersTable,
@@ -237,7 +237,7 @@ async function recordPayment(
 }
 
 /**
- * Main webhook handler - processes all Dodo Payments events
+ * Main webhook handler - processes all Dodo Payments events (optimized with batching)
  */
 export async function handleBillingWebhook(
 	payload: WebhookPayload,
@@ -269,15 +269,33 @@ export async function handleBillingWebhook(
 				: "") || "";
 
 		if (customer) {
-			const existingCustomer = await db.query.customersTable.findFirst({
-				where: eq(customersTable.dodoCustomerId, customer.customer_id),
-			});
+			// Batch customer lookup and user/membership queries
+			const [existingCustomer, user, membership] = await Promise.all([
+				db.query.customersTable.findFirst({
+					where: eq(customersTable.dodoCustomerId, customer.customer_id),
+				}),
+				customer.email ? db.query.usersTable.findFirst({
+					where: eq(usersTable.email, customer.email),
+				}) : Promise.resolve(null),
+				// We'll get membership after we have user
+				Promise.resolve(null)
+			]);
+
+			// Get membership if we found a user
+			const membershipResult = user ? await db.query.membersTable.findFirst({
+				where: eq(membersTable.userId, user.id),
+			}) : null;
 
 			if (existingCustomer) {
 				customerId = existingCustomer.id;
 				organizationId =
 					organizationId || existingCustomer.organizationId || "";
 			} else {
+				// Resolve organization ID from user membership if not provided
+				if (!organizationId && membershipResult) {
+					organizationId = membershipResult.organizationId;
+				}
+
 				const result = await upsertCustomer(
 					customer.customer_id,
 					customer.email,
@@ -289,6 +307,7 @@ export async function handleBillingWebhook(
 			}
 		}
 
+		// Process event types with batched operations where possible
 		switch (eventType) {
 			case "subscription.active":
 			case "subscription.renewed":
@@ -435,27 +454,49 @@ export interface PlanLimitCheck {
 	};
 }
 
+// Simple in-memory cache for organization usage (5-minute TTL)
+const usageCache = new Map<string, { data: PlanUsage; expires: number }>();
+const USAGE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 /**
- * Get current usage for an organization
+ * Get current usage for an organization (optimized with single query and caching)
  */
 export async function getOrganizationUsage(
 	organizationId: string,
 ): Promise<PlanUsage> {
-	const [memberResult, teamResult] = await Promise.all([
-		db
-			.select({ count: count() })
-			.from(membersTable)
-			.where(eq(membersTable.organizationId, organizationId)),
-		db
-			.select({ count: count() })
-			.from(teamsTable)
-			.where(eq(teamsTable.orgId, organizationId)),
-	]);
+	// Check cache first
+	const cached = usageCache.get(organizationId);
+	if (cached && cached.expires > Date.now()) {
+		return cached.data;
+	}
 
-	return {
-		members: memberResult[0]?.count ?? 0,
-		teams: teamResult[0]?.count ?? 0,
+	// Use a single query with subqueries for better performance
+	const result = await db.execute(sql`
+		SELECT 
+			(SELECT COUNT(*) FROM ${membersTable} WHERE organization_id = ${organizationId}) as member_count,
+			(SELECT COUNT(*) FROM ${teamsTable} WHERE org_id = ${organizationId}) as team_count
+	`);
+	
+	const row = result.rows[0];
+	const usage = {
+		members: Number(row?.member_count ?? 0),
+		teams: Number(row?.team_count ?? 0),
 	};
+
+	// Cache the result
+	usageCache.set(organizationId, {
+		data: usage,
+		expires: Date.now() + USAGE_CACHE_TTL,
+	});
+
+	return usage;
+}
+
+/**
+ * Invalidate usage cache for an organization (call after membership/team changes)
+ */
+export function invalidateUsageCache(organizationId: string): void {
+	usageCache.delete(organizationId);
 }
 
 /**

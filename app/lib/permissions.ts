@@ -1,10 +1,23 @@
 /**
  * Unified permission system for KaamSync.
- * Consolidates team and organization permission logic into a single source of truth.
- * Keep simple and fast - just role checks, no complex logic.
+ * Single source of truth for all permission logic used by both client and server.
  */
 
 import { type TeamRole, teamRole } from "~/db/helpers";
+
+// ============================================================================
+// PERMISSION ERROR MESSAGES
+// ============================================================================
+
+export const PERMISSION_ERRORS = {
+	NOT_LOGGED_IN: "User must be logged in",
+	NOT_TEAM_MEMBER: "Not a member of this team",
+	MANAGER_REQUIRED: "Only team managers can perform this action",
+	CANNOT_MODIFY_MATTER: "Cannot modify this matter",
+	MATTER_NOT_FOUND: "Matter not found",
+	TEAM_NOT_FOUND: "Team not found",
+	ORGANIZATION_ACCESS_DENIED: "Access denied to this organization",
+} as const;
 
 // ============================================================================
 // TEAM ROLES & PERMISSIONS
@@ -25,7 +38,7 @@ export type TeamRolePermissions = {
 
 /**
  * Get default permissions for a team role.
- * Used to compute permission flags from role for membership records.
+ * This is the canonical source of truth for role permissions.
  */
 export function getRolePermissions(role: string): TeamRolePermissions {
 	switch (role) {
@@ -66,7 +79,6 @@ export function getRolePermissions(role: string): TeamRolePermissions {
 
 /**
  * Team permission context loaded per-team.
- * Kept minimal and fast - just role + computed permissions.
  */
 export type TeamPermissions = {
 	teamId: string;
@@ -75,13 +87,6 @@ export type TeamPermissions = {
 
 /**
  * Compute permissions from team role.
- * Fast pure function, no DB calls.
- *
- * Why keep both role AND permission flags?
- * 1. Security: Can't be faked client-side (computed server-side)
- * 2. Performance: No extra DB query per permission check
- * 3. Flexibility: Can override defaults (temp elevated access)
- * 4. Clarity: Explicit what user can do in this team
  */
 export function computeTeamPermissions(
 	teamId: string,
@@ -97,7 +102,7 @@ export function computeTeamPermissions(
 }
 
 // ============================================================================
-// TEAM PERMISSION CHECKS (role-based)
+// TEAM PERMISSION CHECKS (role-based, pure functions)
 // ============================================================================
 
 /**
@@ -174,7 +179,6 @@ export function canDeleteMatter(role?: TeamRole | null): boolean {
 
 /**
  * Organization-level roles (from Better Auth).
- * These control org-wide permissions like creating teams.
  */
 export type OrgRole = "owner" | "admin" | "member";
 
@@ -207,16 +211,14 @@ export function canDeleteOrg(role?: OrgRole | null): boolean {
 }
 
 /**
- * Check if org role can manage billing (subscriptions, checkout, portal)
- * Only owner and admin can manage billing according to Better Auth best practices
+ * Check if org role can manage billing
  */
 export function canManageBilling(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin";
 }
 
 /**
- * Check if org role can view billing (read-only access to subscription status)
- * All members can view billing status
+ * Check if org role can view billing
  */
 export function canViewBilling(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin" || role === "member";

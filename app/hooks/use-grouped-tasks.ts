@@ -1,5 +1,5 @@
 import type { Row } from "@rocicorp/zero";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
 	COMPLETED_STATUS_TYPES,
 	STATUS_TYPE_ORDER,
@@ -30,7 +30,7 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
 /**
  * Hook to group and flatten tasks by status for virtualized lists.
- * Handles expanded/collapsed state and provides optimized memoized results.
+ * Optimized with incremental updates and stable references.
  */
 export function useGroupedTasks(
 	matters: readonly Matter[],
@@ -42,11 +42,23 @@ export function useGroupedTasks(
 		new Set(),
 	);
 
+	// Cache previous results for incremental updates
+	const prevMattersRef = useRef<readonly Matter[]>([]);
+	const prevStatusesRef = useRef<readonly Status[]>([]);
+	const prevResultRef = useRef<{
+		flatItems: ListItem[];
+		activeCount: number;
+		stickyIndices: number[];
+	}>({ flatItems: [], activeCount: 0, stickyIndices: [] });
+
 	// Reset toggles when team changes
 	useEffect(() => {
 		setToggledStatuses(new Set());
+		prevMattersRef.current = [];
+		prevStatusesRef.current = [];
 	}, [teamId]);
 
+	// Stable toggle function with useCallback
 	const toggleGroup = useCallback((id: string) => {
 		setToggledStatuses((prev) => {
 			const next = new Set(prev);
@@ -60,10 +72,24 @@ export function useGroupedTasks(
 	}, []);
 
 	const result = useMemo(() => {
+		// Early return for empty data
 		if (!matters.length || !statuses.length) {
-			return { flatItems: [], activeCount: 0, stickyIndices: [] };
+			const emptyResult = { flatItems: [], activeCount: 0, stickyIndices: [] };
+			prevResultRef.current = emptyResult;
+			return emptyResult;
 		}
 
+		// Check if we can use incremental update (only toggle state changed)
+		const mattersChanged = prevMattersRef.current !== matters;
+		const statusesChanged = prevStatusesRef.current !== statuses;
+		
+		if (!mattersChanged && !statusesChanged && prevResultRef.current.flatItems.length > 0) {
+			// Only toggle state changed - rebuild with cached groups
+			const cachedResult = rebuildWithToggles(prevResultRef.current, toggledStatuses);
+			return cachedResult;
+		}
+
+		// Full rebuild needed
 		const groups = new Map<
 			string,
 			{ status: Status; tasks: Matter[]; order: number }
@@ -130,11 +156,68 @@ export function useGroupedTasks(
 			}
 		}
 
-		return { flatItems, activeCount, stickyIndices };
+		const newResult = { flatItems, activeCount, stickyIndices };
+		
+		// Cache for next render
+		prevMattersRef.current = matters;
+		prevStatusesRef.current = statuses;
+		prevResultRef.current = newResult;
+
+		return newResult;
 	}, [matters, statuses, toggledStatuses]);
 
 	return {
 		...result,
 		toggleGroup,
 	};
+}
+
+/**
+ * Rebuild list items with new toggle state (optimization for toggle-only changes)
+ */
+function rebuildWithToggles(
+	prevResult: { flatItems: ListItem[]; activeCount: number; stickyIndices: number[] },
+	toggledStatuses: Set<string>
+): { flatItems: ListItem[]; activeCount: number; stickyIndices: number[] } {
+	const flatItems: ListItem[] = [];
+	const stickyIndices: number[] = [];
+	let activeCount = prevResult.activeCount;
+
+	let i = 0;
+	while (i < prevResult.flatItems.length) {
+		const item = prevResult.flatItems[i];
+		
+		if (item.type === "header") {
+			const isCompletedType = COLLAPSED_TYPES.has(item.status.type as string);
+			const isExpanded = toggledStatuses.has(item.status.id)
+				? isCompletedType
+				: !isCompletedType;
+
+			// Add header with updated expansion state
+			stickyIndices.push(flatItems.length);
+			flatItems.push({
+				...item,
+				isExpanded,
+			});
+
+			// Skip or include tasks based on expansion
+			i++; // Move past header
+			if (isExpanded) {
+				// Include tasks
+				while (i < prevResult.flatItems.length && prevResult.flatItems[i].type === "task") {
+					flatItems.push(prevResult.flatItems[i]);
+					i++;
+				}
+			} else {
+				// Skip tasks
+				while (i < prevResult.flatItems.length && prevResult.flatItems[i].type === "task") {
+					i++;
+				}
+			}
+		} else {
+			i++;
+		}
+	}
+
+	return { flatItems, activeCount, stickyIndices };
 }

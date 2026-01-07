@@ -9,6 +9,7 @@ interface RateLimitEntry {
 
 // Store rate limit state (in-memory, reset on server restart)
 const rateLimitStore = new Map<string, RateLimitEntry>();
+const MAX_STORE_SIZE = 10000; // Prevent unbounded growth
 
 /**
  * Check if an action should be rate limited
@@ -51,6 +52,16 @@ export function checkRateLimit(
 
 	// Allow and track
 	validTimestamps.push(now);
+	
+	// Implement LRU eviction if store is getting too large
+	if (rateLimitStore.size >= MAX_STORE_SIZE) {
+		// Remove oldest entry (simple LRU approximation)
+		const firstKey = rateLimitStore.keys().next().value;
+		if (firstKey) {
+			rateLimitStore.delete(firstKey);
+		}
+	}
+	
 	rateLimitStore.set(key, { timestamps: validTimestamps });
 	return {
 		allowed: true,
@@ -97,13 +108,13 @@ export function checkCheckoutRateLimit(organizationId: string): {
 	};
 }
 
-// Clean up old entries periodically (every 5 minutes)
+// Clean up old entries periodically (every 1 minute for better memory management)
 if (typeof window === "undefined") {
 	// Server-side only
 	setInterval(
 		() => {
 			const now = Date.now();
-			const windowMs = 5 * 60 * 1000; // 5 minute cleanup threshold
+			const windowMs = 2 * 60 * 1000; // 2 minute cleanup threshold (reduced from 5)
 
 			for (const [key, entry] of rateLimitStore.entries()) {
 				const validTimestamps = entry.timestamps.filter(
@@ -116,6 +127,6 @@ if (typeof window === "undefined") {
 				}
 			}
 		},
-		5 * 60 * 1000,
+		60 * 1000, // Run every 1 minute (reduced from 5)
 	);
 }

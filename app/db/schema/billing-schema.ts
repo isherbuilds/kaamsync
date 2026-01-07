@@ -39,7 +39,7 @@ export const customersTable = pgTable(
 	(t) => [
 		index("customers_org_idx").on(t.organizationId),
 		uniqueIndex("customers_dodo_idx").on(t.dodoCustomerId),
-		// Add index for email lookups
+		// Add index for email lookups (webhook processing optimization)
 		index("customers_email_idx").on(t.email),
 	],
 );
@@ -82,7 +82,7 @@ export const subscriptionsTable = pgTable(
 		index("subscriptions_org_idx").on(t.organizationId),
 		index("subscriptions_status_idx").on(t.status),
 		uniqueIndex("subscriptions_dodo_idx").on(t.dodoSubscriptionId),
-		// Add composite index for active subscription queries
+		// Add composite index for active subscription queries (performance optimization)
 		index("subscriptions_org_status_idx").on(t.organizationId, t.status),
 		// Add index for billing period queries
 		index("subscriptions_period_end_idx").on(t.currentPeriodEnd),
@@ -118,6 +118,10 @@ export const paymentsTable = pgTable(
 		index("payments_org_idx").on(t.organizationId),
 		index("payments_subscription_idx").on(t.subscriptionId),
 		uniqueIndex("payments_dodo_idx").on(t.dodoPaymentId),
+		// Add composite index for payment history queries (org + created_at)
+		index("payments_org_created_idx").on(t.organizationId, t.createdAt),
+		// Add index for status filtering
+		index("payments_status_idx").on(t.status),
 	],
 );
 
