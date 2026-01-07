@@ -1,11 +1,19 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+// ============================================================================
+// Core
+// ============================================================================
+
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
-const MAX_SLUG_LENGTH = 30;
+// ============================================================================
+// String Utilities
+// ============================================================================
+
+export const MAX_SLUG_LENGTH = 30;
 
 export function sanitizeSlug(value: string) {
 	return value
@@ -16,18 +24,29 @@ export function sanitizeSlug(value: string) {
 		.slice(0, MAX_SLUG_LENGTH);
 }
 
+/**
+ * Get initials from a name (e.g., "John Doe" -> "JD")
+ */
+export function getInitials(name: string): string {
+	return name
+		.split(" ")
+		.filter((n) => n.length > 0)
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
 // ============================================================================
-// Date Formatting Utilities (using native Intl - no date-fns dependency)
+// Date Utilities (Intl-based)
 // ============================================================================
 
 const MS_MINUTE = 60 * 1000;
 const MS_HOUR = 60 * MS_MINUTE;
 const MS_DAY = 24 * MS_HOUR;
 
-/** Check if timestamp is today */
-function isToday(timestamp: number | Date, referenceDate?: Date): boolean {
-	const date = new Date(timestamp);
-	const today = referenceDate ?? new Date();
+function isToday(date: Date): boolean {
+	const today = new Date();
 	return (
 		date.getDate() === today.getDate() &&
 		date.getMonth() === today.getMonth() &&
@@ -35,16 +54,29 @@ function isToday(timestamp: number | Date, referenceDate?: Date): boolean {
 	);
 }
 
-/** Check if timestamp is tomorrow */
-function isTomorrow(timestamp: number | Date, referenceDate?: Date): boolean {
-	const date = new Date(timestamp);
-	const tomorrow = referenceDate ? new Date(referenceDate) : new Date();
+function isTomorrow(date: Date): boolean {
+	const tomorrow = new Date();
 	tomorrow.setDate(tomorrow.getDate() + 1);
 	return (
 		date.getDate() === tomorrow.getDate() &&
 		date.getMonth() === tomorrow.getMonth() &&
 		date.getFullYear() === tomorrow.getFullYear()
 	);
+}
+
+function isYesterday(date: Date): boolean {
+	const yesterday = new Date();
+	yesterday.setDate(yesterday.getDate() - 1);
+	return (
+		date.getDate() === yesterday.getDate() &&
+		date.getMonth() === yesterday.getMonth() &&
+		date.getFullYear() === yesterday.getFullYear()
+	);
+}
+
+function isThisYear(date: Date): boolean {
+	const today = new Date();
+	return date.getFullYear() === today.getFullYear();
 }
 
 /**
@@ -56,13 +88,23 @@ export function formatCompactRelativeDate(
 	nowDate?: Date,
 ): string {
 	const now = nowDate || new Date();
-	const timestamp = new Date(date).getTime();
+	const d = new Date(date);
+	const timestamp = d.getTime();
 
 	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp))
 		return "Invalid Date";
 
-	if (isToday(timestamp, now)) return "Today";
-	if (isTomorrow(timestamp, now)) return "Tomorrow";
+	if (isToday(d)) return "Today";
+
+	// Helper for tomorrow check respecting the reference date if provided
+	const tomorrowOfNow = new Date(now);
+	tomorrowOfNow.setDate(tomorrowOfNow.getDate() + 1);
+	const isTomorrowRelative =
+		d.getDate() === tomorrowOfNow.getDate() &&
+		d.getMonth() === tomorrowOfNow.getMonth() &&
+		d.getFullYear() === tomorrowOfNow.getFullYear();
+
+	if (isTomorrowRelative) return "Tomorrow";
 
 	const diffMs = timestamp - now.getTime();
 
@@ -87,37 +129,47 @@ export function formatTimelineDate(timestamp: number): string {
 	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp) || timestamp < 0)
 		return "";
 
-	const date = new Date(timestamp);
-	const now = Date.now();
-	const diff = now - timestamp;
+	const d = new Date(timestamp);
+	const now = new Date();
+	const diffMs = now.getTime() - d.getTime();
+	const diffHours = diffMs / MS_HOUR;
 
 	// Future dates - show absolute date
-	if (diff < 0) {
-		return date.toLocaleDateString("en-US", {
+	if (diffMs < 0) {
+		return new Intl.DateTimeFormat("en-US", {
 			month: "short",
 			day: "numeric",
-			year:
-				date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-		});
+			year: isThisYear(d) ? undefined : "numeric",
+		}).format(d);
 	}
 
-	const minutes = Math.floor(diff / MS_MINUTE);
-	const hours = Math.floor(diff / MS_HOUR);
-	const days = Math.floor(diff / MS_DAY);
-
-	if (days > 7) {
-		return date.toLocaleDateString("en-US", {
-			month: "short",
-			day: "numeric",
-			year:
-				date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-		});
+	if (isToday(d)) {
+		if (diffHours < 1) {
+			const minutes = Math.floor(diffMs / MS_MINUTE);
+			return minutes < 1 ? "Just Now" : `${minutes}m ago`;
+		}
+		return `${Math.floor(diffHours)}h ago`;
 	}
 
-	if (days > 0) return `${days}d ago`;
-	if (hours > 0) return `${hours}h ago`;
-	if (minutes > 0) return `${minutes}m ago`;
-	return "Just Now";
+	if (isYesterday(d)) {
+		const timeStr = new Intl.DateTimeFormat("en-US", {
+			hour: "numeric",
+			minute: "numeric",
+			hour12: true,
+		}).format(d);
+		return `Yesterday at ${timeStr}`;
+	}
+
+	const days = Math.floor(diffMs / MS_DAY);
+	if (days < 7) {
+		return `${days}d ago`;
+	}
+
+	return new Intl.DateTimeFormat("en-US", {
+		month: "short",
+		day: "numeric",
+		year: isThisYear(d) ? undefined : "numeric",
+	}).format(d);
 }
 
 /**
@@ -127,7 +179,7 @@ export function formatDate(ms: number): string {
 	if (!Number.isFinite(ms) || Number.isNaN(ms)) return "";
 
 	try {
-		return new Date(ms).toLocaleDateString(undefined, {
+		return new Date(ms).toLocaleDateString("en-US", {
 			month: "numeric",
 			day: "numeric",
 			year: "numeric",
@@ -135,21 +187,4 @@ export function formatDate(ms: number): string {
 	} catch {
 		return "";
 	}
-}
-
-// ============================================================================
-// Other Utilities
-// ============================================================================
-
-/**
- * Get initials from a name (e.g., "John Doe" -> "JD")
- */
-export function getInitials(name: string): string {
-	return name
-		.split(" ")
-		.filter((n) => n.length > 0)
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
 }

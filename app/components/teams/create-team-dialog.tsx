@@ -4,17 +4,17 @@ import { useZero } from "@rocicorp/zero/react";
 import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
-import { createTeamSchema } from "../lib/validations/organization";
-import { InputField } from "./forms";
-import { Alert, AlertDescription } from "./ui/alert";
-import { Button } from "./ui/button";
+import { InputField } from "~/components/forms";
+import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogHeader,
 	DialogTitle,
-} from "./ui/dialog";
+} from "~/components/ui/dialog";
+import { createTeamSchema } from "~/lib/validations/organization";
 
 // Simple derivation logic
 const deriveCode = (name: string) =>

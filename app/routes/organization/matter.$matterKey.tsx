@@ -15,14 +15,14 @@ import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import { AdminApproveSection } from "~/components/matter/admin-approve-section";
 import { CommentInput } from "~/components/matter/comment-input";
-import { PropertyPill, PropertyRow } from "~/components/matter/properties";
-import { TaskTimeline } from "~/components/matter/task-timeline";
 import {
 	MemberSelect,
 	type MemberSelectorItem,
 	PrioritySelect,
 	StatusSelect,
-} from "~/components/matter-field-selectors";
+} from "~/components/matter/matter-field-selectors";
+import { PropertyPill, PropertyRow } from "~/components/matter/properties";
+import { TaskTimeline } from "~/components/matter/task-timeline";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,

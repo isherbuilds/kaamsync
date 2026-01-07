@@ -12,7 +12,7 @@ import { ClientOnly } from "remix-utils/client-only";
 import { preloadAllTeams } from "zero/preload";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_USER_DATA } from "zero/query-cache-policy";
-import { AppSidebar } from "~/components/app-sidebar";
+import { AppSidebar } from "~/components/layout/app-sidebar";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
@@ -112,7 +112,7 @@ function Layout({
 	const activeOrgId = authSession.session.activeOrganizationId;
 
 	// Memoize team IDs to prevent unnecessary preloading re-runs
-	const teamIds = useMemo(() => teamsData.map(t => t.id), [teamsData]);
+	const teamIds = useMemo(() => teamsData.map((t) => t.id), [teamsData]);
 
 	// Optimize preloading with reduced timeout and memoized dependencies
 	useEffect(() => {
@@ -126,8 +126,13 @@ function Layout({
 
 	// Memoize org lookup to prevent unnecessary re-renders
 	const selectedOrg = useMemo(
-		() => orgsData.find(o => o.slug === orgSlug) ?? { id: "", name: "", slug: "" },
-		[orgsData, orgSlug]
+		() =>
+			orgsData.find((o) => o.slug === orgSlug) ?? {
+				id: "",
+				name: "",
+				slug: "",
+			},
+		[orgsData, orgSlug],
 	);
 
 	return (

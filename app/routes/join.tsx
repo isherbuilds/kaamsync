@@ -8,8 +8,8 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useState } from "react";
 import { data, Form, href, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
-import { BasicLayout } from "~/components/basic-layout";
 import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
+import { BasicLayout } from "~/components/layout/basic-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AppInfo } from "~/lib/app-config";
 import { auth, getServerSession } from "~/lib/auth";
@@ -58,8 +58,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 	return pendingInvites.map((invite) => ({
 		...invite,
-		organizationName: orgInfoById[invite.organizationId]?.name ?? "",
-		organizationSlug: orgInfoById[invite.organizationId]?.slug ?? "",
+		organizationName: orgInfoById[invite.organizationId].name,
+		organizationSlug: orgInfoById[invite.organizationId].slug,
 	}));
 }
 
@@ -96,7 +96,6 @@ export async function action({ request }: Route.ActionArgs) {
 	if (submission.status !== "success") {
 		return data(
 			{ result: submission.reply() },
-			// biome-ig
 			{ status: submission.status === "error" ? 400 : 200 },
 			// toast.error("Invalid form data.")
 		);

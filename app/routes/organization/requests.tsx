@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
-import { MatterListLayout } from "~/components/matter-list-layout";
+import { MatterListLayout } from "~/components/matter/matter-list-layout";
 import {
 	Item,
 	ItemContent,

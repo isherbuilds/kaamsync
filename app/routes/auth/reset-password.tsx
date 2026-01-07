@@ -2,9 +2,8 @@ import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { data, Form, Link, redirect } from "react-router";
 import { toast } from "sonner";
-
-import { BasicLayout } from "~/components/basic-layout";
 import { LoadingButton, PasswordField } from "~/components/forms";
+import { BasicLayout } from "~/components/layout/basic-layout";
 import { useIsPending } from "~/hooks/use-is-pending";
 import { AppInfo } from "~/lib/app-config";
 import { authClient } from "~/lib/auth-client";

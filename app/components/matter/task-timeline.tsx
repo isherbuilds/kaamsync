@@ -3,8 +3,8 @@ import { useQuery } from "@rocicorp/zero/react";
 import { memo, useMemo } from "react";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
-import type { MemberSelectorItem } from "~/components/matter-field-selectors";
 import { cn, formatTimelineDate, getInitials } from "~/lib/utils";
+import type { MemberSelectorItem } from "./matter-field-selectors";
 
 // Timeline entry shape from Zero query - type is string at runtime
 type TimelineEntryType = Row["timelinesTable"] & {

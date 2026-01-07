@@ -10,7 +10,12 @@ import {
 	usersTable,
 	webhookEventsTable,
 } from "~/db/schema";
-import { getPlanByProductId, type ProductKey, planLimits } from "~/lib/billing";
+import {
+	getPlanByProductId,
+	type ProductKey,
+	planLimits,
+	usagePricing,
+} from "~/lib/billing";
 
 // Webhook payload types from Dodo Payments (via Better Auth plugin)
 // Better Auth normalizes the payload with 'type' instead of 'event_type'
@@ -673,5 +678,85 @@ export async function handleSubscriptionDowngrade(
 	return {
 		canDowngrade: true,
 		violations: {},
+	};
+}
+
+/**
+ * Get the member addition product slug for a plan
+ */
+export function getMemberProductSlug(plan: string): string {
+	switch (plan) {
+		case "starter":
+			return "member-add-starter";
+		case "growth":
+			return "member-add-growth";
+		case "pro":
+			return "member-add-pro";
+		case "enterprise":
+			throw new Error("Enterprise plans don't require member payments");
+		default:
+			return "member-add-starter";
+	}
+}
+
+/**
+ * Get member addition price for a plan (in cents)
+ */
+export function getMemberPrice(plan: string): number {
+	// Check if plan has specific pricing
+	if (plan === "growth" || plan === "pro") {
+		return usagePricing[plan].memberSeat;
+	}
+
+	// Default fallbacks
+	return 500;
+}
+
+/**
+ * Get comprehensive billing status for an organization
+ * Used for checking limits and displaying usage in UI
+ */
+export async function getBillingStatus(organizationId: string) {
+	const [memberCheck, teamCheck, usage] = await Promise.all([
+		canAddMember(organizationId),
+		canCreateTeam(organizationId),
+		getOrganizationUsage(organizationId),
+	]);
+
+	const planKey = await getOrganizationPlanKey(organizationId);
+	const limits = planLimits[planKey];
+
+	// Determine overage prices
+	let teamPriceCents: number | null = null;
+	if (planKey === "growth" || planKey === "pro") {
+		teamPriceCents = usagePricing[planKey].teamCreated;
+	}
+	const memberPriceCents = getMemberPrice(planKey);
+
+	return {
+		// Plan information
+		plan: planKey,
+		limits,
+		usage,
+
+		// Member information
+		members: {
+			allowed: memberCheck.allowed,
+			requiresPayment: memberCheck.isOverage ?? false,
+			message: memberCheck.message,
+			priceCents: memberPriceCents,
+			current: usage.members,
+			limit: limits.members,
+		},
+
+		// Team information
+		teams: {
+			allowed: teamCheck.allowed,
+			requiresPayment: teamCheck.isOverage ?? false,
+			message: teamCheck.allowed ? null : teamCheck.reason,
+			priceCents: teamPriceCents,
+			current: usage.teams,
+			limit: limits.teams,
+		},
 	};
 }
