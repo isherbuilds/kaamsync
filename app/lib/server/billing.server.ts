@@ -286,7 +286,7 @@ export async function handleBillingWebhook(
 		typeof payload.timestamp === "object"
 			? payload.timestamp.toISOString()
 			: payload.timestamp;
-	const generatedWebhookId = `${eventType}_${payloadTimestamp}_${payload.data?.subscription_id ?? payload.data?.payment_id ?? ""}`;
+	const generatedWebhookId = `${eventType}_${payloadTimestamp}_${payload.business_id}_${payload.data?.subscription_id ?? ""}_${payload.data?.payment_id ?? ""}_${payload.data?.customer_id ?? ""}`;
 
 	// Idempotency check
 	if (await isWebhookProcessed(generatedWebhookId)) {
