@@ -1,4 +1,4 @@
-import { Building2, Mail, MessageSquare } from "lucide-react";
+import { Mail, MessageSquare } from "lucide-react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
@@ -7,31 +7,11 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 
 export const meta: MetaFunction = () => [
-	{ title: "Contact - KaamSync" },
+	{ title: "Contact - KaamSync Support" },
 	{
 		name: "description",
-		content: "Get in touch with the KaamSync team. We'd love to hear from you.",
-	},
-];
-
-const contactMethods = [
-	{
-		icon: Mail,
-		title: "Email",
-		description: "hello@kaamsync.com",
-		href: "mailto:hello@kaamsync.com",
-	},
-	{
-		icon: MessageSquare,
-		title: "Live Chat",
-		description: "Mon-Fri, 9am-6pm PST",
-		href: "#",
-	},
-	{
-		icon: Building2,
-		title: "Office",
-		description: "San Francisco, CA",
-		href: "#",
+		content:
+			"Get in touch with the KaamSync team. Support, sales, and general inquiries.",
 	},
 ];
 
@@ -39,118 +19,129 @@ export default function ContactPage() {
 	return (
 		<>
 			{/* Hero */}
-			<section className="py-24 md:py-32">
+			<section className="bg-background py-20 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto mb-16 max-w-3xl text-center">
-						<p className="mb-4 font-medium text-primary text-sm">Contact</p>
-						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
-							Get in touch
+						<div className="mb-6 inline-flex border border-border bg-muted/50 px-3 py-1 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+							Support
+						</div>
+						<h1 className="mb-6 font-medium font-serif text-5xl tracking-tight md:text-6xl lg:text-7xl">
+							Deploy KaamSync <br />
+							<span className="text-muted-foreground italic">
+								to your field.
+							</span>
 						</h1>
-						<p className="text-lg text-muted-foreground">
-							Have a question or want to learn more? We'd love to hear from you.
+						<p className="mx-auto max-w-xl text-lg text-muted-foreground">
+							Setup takes 2 minutes. For enterprise deployments or custom
+							integrations, talk to our engineering team.
 						</p>
 					</div>
 
-					<div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-2">
+					<div className="mx-auto grid max-w-6xl gap-0 overflow-hidden border border-border bg-background shadow-lg lg:grid-cols-12">
 						{/* Contact Methods */}
-						<div className="space-y-6">
-							{contactMethods.map(
-								({ icon: Icon, title, description, href }) => (
+						<div className="border-border border-b bg-muted/20 p-8 md:p-12 lg:col-span-5 lg:border-r lg:border-b-0">
+							<h3 className="mb-8 font-bold font-serif text-2xl">
+								Direct Lines
+							</h3>
+							<div className="space-y-6">
+								{[
+									{
+										icon: Mail,
+										title: "Email Engineering",
+										description: "hello@kaamsync.com",
+										href: "mailto:hello@kaamsync.com",
+									},
+									{
+										icon: MessageSquare,
+										title: "Priority Support",
+										description: "Average response: < 2 hours",
+										href: "#",
+									},
+								].map(({ icon: Icon, title, description, href }) => (
 									<a
 										key={title}
 										href={href}
-										className="flex items-start gap-4 rounded-2xl border border-border/60 bg-card/30 p-6 backdrop-blur-sm transition-colors hover:bg-card/50"
+										className="group flex items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
 									>
-										<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-											<Icon className="size-5 text-primary" />
+										<div className="flex size-10 shrink-0 items-center justify-center bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
+											<Icon className="size-5" />
 										</div>
 										<div>
-											<h3 className="mb-1 font-medium">{title}</h3>
-											<p className="text-muted-foreground text-sm">
+											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
+												{title}
+											</h3>
+											<p className="font-medium text-foreground text-sm">
 												{description}
 											</p>
 										</div>
 									</a>
-								),
-							)}
+								))}
 
-							<div className="rounded-2xl border border-border/60 bg-card/30 p-6 backdrop-blur-sm">
-								<h3 className="mb-2 font-medium">Looking for support?</h3>
-								<p className="mb-4 text-muted-foreground text-sm">
-									Check out our help center for quick answers to common
-									questions.
-								</p>
-								<Button
-									variant="outline"
-									size="sm"
-									className="rounded-lg border-border/60"
-								>
-									Visit Help Center
-								</Button>
+								<div className="mt-12 border border-border bg-background p-6">
+									<h3 className="mb-2 font-bold text-sm">System Status</h3>
+									<div className="flex items-center gap-2">
+										<span className="relative flex size-2">
+											<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+											<span className="relative inline-flex size-2 rounded-full bg-green-500" />
+										</span>
+										<span className="font-mono text-muted-foreground text-xs">
+											All Systems Operational
+										</span>
+									</div>
+								</div>
 							</div>
 						</div>
 
 						{/* Contact Form */}
-						<div className="rounded-2xl border border-border/60 bg-card/30 p-8 backdrop-blur-sm">
-							<h2 className="mb-6 font-semibold text-xl">Send us a message</h2>
-							<form className="space-y-5">
-								<div className="grid gap-4 sm:grid-cols-2">
+						<div className="bg-background p-8 md:p-12 lg:col-span-7">
+							<h2 className="mb-8 font-bold font-serif text-2xl">
+								Start a conversation
+							</h2>
+							<form className="space-y-6">
+								<div className="grid gap-6 sm:grid-cols-2">
 									<div className="space-y-2">
-										<Label htmlFor="firstName" className="text-sm">
-											First name
-										</Label>
+										<Label htmlFor="firstName">First Name</Label>
 										<Input
 											id="firstName"
-											placeholder="John"
-											className="h-10 rounded-lg border-border/60 bg-background/50"
+											placeholder="Jane"
+											className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 										/>
 									</div>
 									<div className="space-y-2">
-										<Label htmlFor="lastName" className="text-sm">
-											Last name
-										</Label>
+										<Label htmlFor="lastName">Last Name</Label>
 										<Input
 											id="lastName"
 											placeholder="Doe"
-											className="h-10 rounded-lg border-border/60 bg-background/50"
+											className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 										/>
 									</div>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="email" className="text-sm">
-										Work email
-									</Label>
+									<Label htmlFor="email">Work Email</Label>
 									<Input
 										id="email"
 										type="email"
-										placeholder="john@company.com"
-										className="h-10 rounded-lg border-border/60 bg-background/50"
+										placeholder="jane@company.com"
+										className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="company" className="text-sm">
-										Company
-									</Label>
+									<Label htmlFor="company">Company Name</Label>
 									<Input
 										id="company"
-										placeholder="Acme Inc"
-										className="h-10 rounded-lg border-border/60 bg-background/50"
+										placeholder="Acme Inc."
+										className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="message" className="text-sm">
-										Message
-									</Label>
+									<Label htmlFor="message">Project Details</Label>
 									<Textarea
 										id="message"
-										placeholder="Tell us how we can help..."
-										className="min-h-[120px] resize-none rounded-lg border-border/60 bg-background/50"
+										placeholder="Tell us about the scale of your operations..."
+										className="min-h-[150px] resize-none rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 									/>
 								</div>
-								<Button
-									type="submit"
-									className="h-10 w-full rounded-lg bg-foreground text-background hover:bg-foreground/90"
-								>
+								<Button size="lg" className="w-full rounded-none font-bold">
 									Send Message
 								</Button>
 							</form>
@@ -160,27 +151,16 @@ export default function ContactPage() {
 			</section>
 
 			{/* Enterprise CTA */}
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
-						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
-						<div className="relative">
-							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
-								Enterprise needs?
-							</h2>
-							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-								For larger deployments, custom integrations, or security
-								requirements, let's schedule a call.
-							</p>
-							<Button
-								size="lg"
-								className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
-								asChild
-							>
-								<Link to="/contact">Schedule a Demo</Link>
-							</Button>
-						</div>
-					</div>
+			<section className="border-border/40 border-t bg-muted/20 py-24">
+				<div className="container mx-auto px-4 text-center md:px-6">
+					<h2 className="mb-6 font-bold text-3xl">Need Enterprise Support?</h2>
+					<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
+						For custom integrations, SLA guarantees, and dedicated support
+						channels.
+					</p>
+					<Button size="lg" variant="outline" className="h-12 px-8" asChild>
+						<Link to="/contact">Contact Enterprise Sales</Link>
+					</Button>
 				</div>
 			</section>
 		</>
