@@ -143,6 +143,12 @@ async function upsertCustomer(
 		};
 	}
 
+	if (!resolvedOrgId) {
+		throw new Error(
+			"Cannot create customer without organization. Provide organizationId or ensure user has membership.",
+		);
+	}
+
 	// Create new customer
 	const customerId = createId();
 	await db.insert(customersTable).values({

@@ -45,7 +45,6 @@ export function useGroupedTasks(
 	// Reset toggles when team changes
 	useEffect(() => {
 		setToggledStatuses(new Set());
-		// read _teamId to make it an explicit dependency (reset toggles on team change)
 	}, [teamId]);
 
 	// Stable toggle function with useCallback
@@ -134,10 +133,7 @@ export function useGroupedTasks(
 			}
 		}
 
-		const newResult = { flatItems, activeCount, stickyIndices };
-
-		// Cache for next render is not needed: always rebuild on matters/statuses change
-		return newResult;
+		return { flatItems, activeCount, stickyIndices };
 	}, [matters, statuses, toggledStatuses]);
 
 	return {

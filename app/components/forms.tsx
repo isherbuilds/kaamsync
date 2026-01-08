@@ -238,6 +238,9 @@ export function SelectField({
 	items,
 	placeholder,
 	defaultValue,
+	labelProps,
+	className,
+	id,
 	...props
 }: SelectProps) {
 	const selectRef = useRef<React.ComponentRef<typeof SelectTrigger>>(null);
@@ -249,8 +252,9 @@ export function SelectField({
 	});
 
 	return (
-		<>
+		<div className={cn(className, "flex flex-col gap-2")}>
 			<input name={name} ref={control.register} hidden />
+			<Label htmlFor={id} {...labelProps} />
 			<Select
 				value={control.value}
 				onValueChange={(value) => control.change(value)}
@@ -273,7 +277,7 @@ export function SelectField({
 					})}
 				</SelectContent>
 			</Select>
-		</>
+		</div>
 	);
 }
 
