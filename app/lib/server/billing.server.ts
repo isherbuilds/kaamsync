@@ -545,7 +545,7 @@ export async function checkPlanLimits(
 		// Check cancellation date
 		const periodEnded = subscription.currentPeriodEnd
 			? new Date(subscription.currentPeriodEnd) < new Date()
-			: true; // If no date, assume ended if cancelled
+			: false; // If no date, give benefit of doubt until we have data
 
 		if (isCancelled && periodEnded) {
 			// If cancelled AND period ended, enforce Starter limits (or Strict 0?)
@@ -553,7 +553,13 @@ export async function checkPlanLimits(
 			effectivePlan = "starter";
 		} else {
 			// Active or Cancelled-but-in-period
-			effectivePlan = (subscription.planKey as ProductKey) || "starter";
+			effectivePlan =
+				subscription.planKey &&
+				["starter", "growth", "pro", "enterprise"].includes(
+					subscription.planKey,
+				)
+					? (subscription.planKey as ProductKey)
+					: "starter";
 		}
 	}
 
@@ -873,7 +879,7 @@ export function getMemberProductSlug(plan: string): string {
 		case "pro":
 			return "member-add-pro";
 		case "enterprise":
-			throw new Error("Enterprise plans don't require member payments");
+			return "member-add-enterprise";
 		default:
 			return "member-add-starter";
 	}
