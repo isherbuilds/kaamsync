@@ -241,8 +241,12 @@ export function SelectField({
 	labelProps,
 	className,
 	id,
+	errors,
 	...props
 }: SelectProps) {
+	const fallbackId = useId();
+	const selectId = id || fallbackId;
+	const errorId = errors?.length ? `${selectId}-error` : undefined;
 	const selectRef = useRef<React.ComponentRef<typeof SelectTrigger>>(null);
 	const control = useControl({
 		defaultValue,
@@ -254,7 +258,7 @@ export function SelectField({
 	return (
 		<div className={cn(className, "flex flex-col gap-2")}>
 			<input name={name} ref={control.register} hidden />
-			<Label htmlFor={id} {...labelProps} />
+			{labelProps && <Label htmlFor={selectId} {...labelProps} />}
 			<Select
 				value={control.value}
 				onValueChange={(value) => control.change(value)}
@@ -264,7 +268,13 @@ export function SelectField({
 					}
 				}}
 			>
-				<SelectTrigger {...props} ref={selectRef}>
+				<SelectTrigger
+					{...props}
+					ref={selectRef}
+					id={selectId}
+					aria-describedby={errorId}
+					aria-invalid={errorId ? true : undefined}
+				>
 					<SelectValue placeholder={placeholder} />
 				</SelectTrigger>
 				<SelectContent>
@@ -277,6 +287,7 @@ export function SelectField({
 					})}
 				</SelectContent>
 			</Select>
+			{errorId ? <ErrorList errors={errors} id={errorId} /> : null}
 		</div>
 	);
 }
