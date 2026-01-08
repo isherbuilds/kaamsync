@@ -1,13 +1,12 @@
 import {
+	Activity,
 	ArrowRight,
 	CheckCircle2,
-	Clock,
+	ChevronRight,
+	Layout,
 	Lock,
-	MessageSquare,
-	RefreshCw,
 	Shield,
-	ShieldCheck,
-	Sparkles,
+	Users,
 	Zap,
 } from "lucide-react";
 import type { MetaFunction } from "react-router";
@@ -15,295 +14,293 @@ import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => [
-	{ title: "KaamSync - Work doesn't belong in the chat" },
+	{ title: "KaamSync - Stop Managing Work in WhatsApp" },
 	{
 		name: "description",
 		content:
-			"Stop drowning in dm's. KaamSync brings your operations out of the noise and into a system built for clarity, speed, and control.",
+			"Stop drowning in chat groups. KaamSync helps field teams manage tasks, approvals, and operations in one simple, offline-first app.",
 	},
-];
-
-const problems = [
-	{
-		icon: MessageSquare,
-		title: "Lost Context",
-		desc: "Important requests get buried in endless chat threads.",
-	},
-	{
-		icon: ShieldCheck,
-		title: "No Accountability",
-		desc: "No clear trail of who approved what and when.",
-	},
-	{
-		icon: Clock,
-		title: "Time Wasted",
-		desc: "Hours spent chasing updates instead of doing actual work.",
-	},
-] as const;
-
-// const logos = [
-// 	"Meridian Partners",
-// 	"Apex Industries",
-// 	"Sterling Group",
-// 	"Nova Consulting",
-// ];
-
-const enterprise = [
-	{
-		icon: Shield,
-		title: "Enterprise Security",
-		description: "SOC 2 compliant, SSO support",
-	},
-	{
-		icon: RefreshCw,
-		title: "Real-time Sync",
-		description: "Changes appear instantly",
-	},
-	{ icon: Lock, title: "Privacy First", description: "End-to-end encryption" },
-	{ icon: Zap, title: "Lightning Fast", description: "Sub-100ms load times" },
 ];
 
 export default function HomePage() {
 	return (
-		<>
-			{/* Hero */}
-			<section className="relative overflow-hidden py-24">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-						<Link
-							to="/features"
-							className="group mb-8 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-muted-foreground text-sm backdrop-blur-sm transition-all hover:border-border hover:bg-muted/50"
+		<div className="flex flex-col bg-background text-foreground">
+			{/* HERO SECTION: Design 3 Structure + Design 2 Typography */}
+			<section className="relative flex flex-col items-center justify-center border-border/40 border-b pt-24 pb-32">
+				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
+
+				<div className="container relative z-10 px-4 text-center md:px-6">
+					{/* Status Indicator */}
+					{/* <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-3 py-1 backdrop-blur-sm">
+						<span className="relative flex size-2">
+							<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+							<span className="relative inline-flex size-2 rounded-full bg-green-500" />
+						</span>
+						<span className="font-medium font-mono text-muted-foreground text-xs uppercase tracking-widest">
+							System Online v2.1
+						</span>
+					</div> */}
+
+					{/* Headline from Plan */}
+					{/* Headline from Plan */}
+					<h1 className="mx-auto mb-8 max-w-5xl font-medium font-serif text-5xl leading-[1.1] tracking-tight sm:text-7xl md:text-8xl">
+						Turn conversations into <br />
+						<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+							clear, trackable work.
+						</span>
+					</h1>
+
+					{/* Subheadline from Plan */}
+					<p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground leading-relaxed md:text-xl">
+						KaamSync helps operations teams track jobs, approvals, and updates
+						in one calm workspace — even when teams are offline.
+					</p>
+
+					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+						<Button
+							size="lg"
+							className="h-14 min-w-[200px] rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] transition-all hover:bg-foreground/90 hover:px-10 hover:shadow-none dark:shadow-[4px_4px_0_0_rgba(255,255,255,0.2)]"
+							asChild
 						>
-							<Sparkles className="size-3.5 text-primary" />
-							<span className="font-medium">Introducing KaamSync v1.0</span>
-							<ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-						</Link>
-
-						<h1 className="mb-6 font-bold text-4xl leading-[1.1] tracking-tight md:text-6xl lg:text-[5.5rem]">
-							Work doesn't belong
-							<br />
-							<span className="bg-linear-to-r from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent">
-								in the chat.
-							</span>
-						</h1>
-
-						<p className="mb-10 max-w-2xl text-lg text-muted-foreground leading-relaxed">
-							Stop chasing messages. KaamSync gives your team a single place to
-							manage tasks, track approvals, and get work done without the
-							noise.
-						</p>
-
-						<div className="mb-20 flex flex-col items-center gap-4 sm:flex-row">
-							<Button
-								size="lg"
-								className="h-12 gap-2 rounded-xl bg-foreground px-8 text-background text-base shadow-foreground/5 shadow-lg hover:bg-foreground/90"
-								asChild
-							>
-								<Link to="/signup">
-									Start for Free <ArrowRight className="size-4" />
-								</Link>
-							</Button>
-							<Button
-								size="lg"
-								variant="link"
-								className="text-foreground"
-								asChild
-							>
-								<Link to="/contact">Book a Demo</Link>
-							</Button>
-						</div>
+							<Link to="/signup">
+								Create My Team Space <ArrowRight className="ml-2 size-5" />
+							</Link>
+						</Button>
+						<Button
+							size="lg"
+							variant="outline"
+							className="h-14 min-w-[200px] rounded-none border-foreground/20 bg-transparent px-8 font-medium text-foreground text-lg hover:bg-muted"
+							asChild
+						>
+							<Link to="/contact">Watch 2-Min Demo</Link>
+						</Button>
 					</div>
 
-					{/* Hero Visual - Product Screenshot */}
-					<div className="perspective-[2000px] group relative mx-auto w-full max-w-5xl">
-						{/* Glow effect */}
-						<div className="absolute -inset-1 rounded-xl bg-linear-to-r from-primary/20 to-purple-500/20 opacity-50 blur-2xl transition-opacity duration-500 group-hover:opacity-75" />
+					<p className="mt-6 font-mono text-muted-foreground text-xs uppercase tracking-wide">
+						No Credit Card Required • Setup in 2 Minutes
+					</p>
+				</div>
+			</section>
 
-						<div className="relative origin-top rotate-x-15 transform overflow-hidden rounded-xl border border-border/40 bg-background/80 shadow-2xl backdrop-blur-xl transition-transform duration-700 ease-out group-hover:rotate-x-0">
-							{/* Browser Header */}
-							<div className="flex h-10 items-center gap-2 border-border/40 border-b bg-muted/30 px-4">
-								<div className="flex gap-1.5">
-									<div className="size-3 rounded-full border border-red-500/30 bg-red-500/20" />
-									<div className="size-3 rounded-full border border-yellow-500/30 bg-yellow-500/20" />
-									<div className="size-3 rounded-full border border-green-500/30 bg-green-500/20" />
-								</div>
-								<div className="ml-4 flex flex-1 justify-center">
-									<div className="flex h-5 items-center rounded-md bg-muted/50 px-4 text-muted-foreground text-xs">
-										kaamsync.com
-									</div>
-								</div>
-							</div>
+			{/* VISUALIZATION: The Blueprint (Design 3) */}
+			<section className="container relative z-20 mx-auto -mt-20 px-4 md:px-6">
+				<div className="relative overflow-hidden rounded-none border border-border bg-background shadow-2xl">
+					<div className="flex items-center gap-4 border-border border-b bg-muted/30 px-4 py-2">
+						<div className="flex gap-2">
+							<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
+							<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
+							<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
+						</div>
+						<div className="flex-1 text-center font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+							kaamsync_dashboard.view
+						</div>
+					</div>
+					<div className="grid min-h-[400px] grid-cols-12 bg-muted/5 md:min-h-[600px]">
+						{/* Sidebar */}
+						<div className="col-span-2 hidden flex-col gap-4 border-border border-r bg-background p-4 md:flex">
+							{[...Array(6)].map((_, i) => (
+								<div
+									key={i}
+									className="h-6 w-full rounded-sm bg-muted/50"
+									style={{ animationDelay: `${i * 100}ms` }}
+								/>
+							))}
+						</div>
 
-							{/* Screenshot Container - Replace src with your actual screenshot */}
-							<div className="relative aspect-16/10 bg-muted/20">
-								{/* 
-										TODO: Replace this with your actual product screenshot
-										<img 
-											src="/images/product-screenshot.png" 
-											alt="KaamSync task management dashboard" 
-											className="w-full h-full object-cover object-top"
-										/>
-									*/}
-								{/* Placeholder - remove when you add real screenshot */}
-								<div className="absolute inset-0 flex items-center justify-center bg-muted/30">
-									<div className="space-y-3 p-8 text-center">
-										<div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10">
-											<Sparkles className="size-8 text-primary" />
+						{/* Main View */}
+						<div className="col-span-12 grid content-start gap-8 p-6 md:col-span-10 md:p-8">
+							{/* Stats Row */}
+							<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+								{[
+									{ label: "Active Jobs", val: "42" },
+									{ label: "Completed", val: "18" },
+									{ label: "Team Online", val: "12" },
+									{ label: "Pending", val: "3" },
+								].map((stat) => (
+									<div
+										key={stat.label}
+										className="group border border-border bg-background p-4 transition-colors hover:border-primary"
+									>
+										<div className="mb-2 font-mono text-[10px] text-muted-foreground uppercase group-hover:text-primary">
+											{stat.label}
 										</div>
-										<p className="text-muted-foreground text-sm">
-											Add your product screenshot here
-										</p>
-										<p className="text-muted-foreground/60 text-xs">
-											Recommended: 1920×1200px PNG
-										</p>
+										<div className="font-bold font-sans text-3xl tracking-tighter">
+											{stat.val}
+										</div>
+									</div>
+								))}
+							</div>
+
+							{/* Map / List Hybrid */}
+							<div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+								<div className="relative col-span-2 min-h-[300px] border border-border bg-background p-4">
+									{/* Fake Map Grid */}
+									<div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] opacity-50 [background-size:16px_16px]" />
+									<div className="relative z-10 flex h-full items-center justify-center">
+										<div className="absolute size-32 animate-ping rounded-full border border-primary/30" />
+										<div className="size-4 rounded-full bg-primary ring-4 ring-primary/20" />
+										<div className="absolute top-4 right-4 border border-border bg-background px-2 py-1 font-mono text-xs shadow-sm">
+											LIVE GPS: ACTIVE
+										</div>
 									</div>
 								</div>
-							</div>
-						</div>
-
-						{/* Floating notification */}
-						<div className="absolute top-1/4 -right-4 hidden lg:block">
-							<div className="animate-pulse rounded-lg border border-border/60 bg-card p-3 shadow-lg">
-								<div className="flex items-center gap-2">
-									<CheckCircle2 className="size-4 text-green-500" />
-									<span className="font-medium text-xs">Task approved!</span>
-								</div>
-							</div>
-						</div>
-
-						<div className="absolute bottom-1/4 -left-4 hidden lg:block">
-							<div className="rounded-lg border border-border/60 bg-card p-3 shadow-lg">
-								<div className="flex items-center gap-2">
-									<RefreshCw className="size-4 text-blue-500" />
-									<span className="text-muted-foreground text-xs">
-										Synced just now
-									</span>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					{/* Feature Stats - Honest, feature-based */}
-					<div className="mx-auto mt-20 max-w-4xl">
-						<div className="grid grid-cols-3 gap-6 md:gap-12">
-							{[
-								{
-									value: "Real-time",
-									label: "Instant sync across all devices",
-									icon: RefreshCw,
-								},
-								{
-									value: "Offline",
-									label: "Works without internet",
-									icon: Zap,
-								},
-								{
-									value: "<50ms",
-									label: "Near-instant response time",
-									icon: Clock,
-								},
-							].map((stat) => (
-								<div key={stat.label} className="text-center">
-									<div className="mb-1 flex items-center justify-center gap-2">
-										<stat.icon className="size-5 text-primary" />
-										<p className="font-bold text-xl md:text-2xl">
-											{stat.value}
-										</p>
+								<div className="flex flex-col gap-3">
+									<div className="mb-2 font-bold font-mono text-xs uppercase">
+										Recent Updates
 									</div>
-									<p className="text-muted-foreground text-xs md:text-sm">
-										{stat.label}
-									</p>
+									{[...Array(5)].map((_, i) => (
+										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: visualization only
+											key={i}
+											className="flex items-center justify-between border-border/50 border-b pb-2 last:border-0"
+										>
+											<div className="flex items-center gap-2">
+												<div className="size-2 rounded-full bg-green-500" />
+												<div className="flex flex-col">
+													<span className="font-medium text-xs">
+														Site Visit #{204 + i}
+													</span>
+													<span className="text-[10px] text-muted-foreground">
+														Updated by Rahul
+													</span>
+												</div>
+											</div>
+											<div className="font-mono text-[10px] text-muted-foreground">
+												{10 + i}:00 AM
+											</div>
+										</div>
+									))}
 								</div>
-							))}
-						</div>
-					</div>
-
-					{/* Built for teams callout - replaces fake logos */}
-					<div className="mt-16 border-border/40 border-t pt-10">
-						<p className="mb-6 text-center text-muted-foreground text-sm">
-							Built for operations teams who are tired of chasing messages
-						</p>
-						<div className="flex flex-wrap items-center justify-center gap-3">
-							{[
-								"Office Managers",
-								"Site Supervisors",
-								"HR Teams",
-								"Facility Managers",
-								"Small Businesses",
-							].map((role) => (
-								<span
-									key={role}
-									className="rounded-full border border-border/40 bg-muted/50 px-3 py-1.5 font-medium text-muted-foreground text-xs"
-								>
-									{role}
-								</span>
-							))}
+							</div>
 						</div>
 					</div>
 				</div>
 			</section>
-			<section className="border-border/40 border-t py-24">
+
+			{/* PROBLEM SECTION: The WhatsApp Pain (Design 3) */}
+			<section className="bg-foreground py-32 text-background">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="grid items-center gap-16 lg:grid-cols-2">
-						<div className="space-y-8">
-							<div className="space-y-4">
-								<p className="font-medium text-primary text-sm">The Problem</p>
-								<h2 className="font-bold text-3xl tracking-tight md:text-4xl lg:text-5xl">
-									Drowning in messages?
-								</h2>
-								<p className="text-lg text-muted-foreground leading-relaxed">
-									"Did you see my message?" shouldn't be your most common
-									question. Chat is great for conversation — but terrible for
-									tracking work.
-								</p>
+					<div className="grid items-center gap-16 md:grid-cols-2">
+						<div>
+							<div className="mb-4 font-mono text-primary text-sm uppercase tracking-widest">
+								{/* THE PROBLEM */}
 							</div>
-							<div className="space-y-5">
-								{problems.map(({ icon: Icon, title, desc }) => (
-									<div key={title} className="group flex items-start gap-4">
-										<div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-											<Icon className="size-5" />
+							<h2 className="mb-8 max-w-xl font-bold font-serif text-4xl tracking-tight md:text-5xl">
+								<span className="text-destructive underline decoration-4 decoration-destructive underline-offset-4">
+									Drowning
+								</span>{" "}
+								in Messages?
+							</h2>
+							<p className="border-primary/50 border-l-2 pl-6 text-background/80 text-xl leading-relaxed">
+								"Running operations on WhatsApp is like trying to build a
+								skyscraper with duct tape. It works until it collapses."
+							</p>
+
+							<div className="mt-12 grid gap-6">
+								{[
+									{
+										title: "No Context",
+										desc: "Important updates buried in threads.",
+									},
+									{
+										title: "No Accountability",
+										desc: "Who approved this? No one knows.",
+									},
+									{
+										title: "No Data",
+										desc: "You can't create reports from chat logs.",
+									},
+								].map((item) => (
+									<div key={item.title} className="flex items-start gap-4">
+										<div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border border-destructive text-destructive">
+											<span className="font-bold text-sm">×</span>
 										</div>
 										<div>
-											<h3 className="mb-1 font-medium">{title}</h3>
-											<p className="text-muted-foreground text-sm">{desc}</p>
+											<div className="font-bold text-lg">{item.title}</div>
+											<div className="text-background/60 text-sm">
+												{item.desc}
+											</div>
 										</div>
 									</div>
 								))}
 							</div>
 						</div>
 
-						{/* Visual */}
-						<div className="relative lg:pl-8">
-							<div className="absolute inset-0 rounded-3xl bg-linear-to-br from-destructive/5 to-orange-500/5 blur-3xl" />
-							<div className="relative rounded-2xl border border-border/60 bg-card/50 p-6 shadow-xl backdrop-blur-sm">
-								<div className="space-y-4">
-									{[
-										{ align: "left", lines: [32, 24] },
-										{ align: "right", lines: [28, 20] },
-										{ align: "left", lines: [36, 16] },
-									].map((msg) => (
-										<div
-											key={`${msg.align}-${msg.lines.join("-")}`}
-											className={`flex gap-3 ${msg.align === "right" ? "flex-row-reverse" : ""}`}
-										>
-											<div className="size-8 shrink-0 rounded-full bg-muted" />
-											<div
-												className={`max-w-[70%] rounded-xl px-4 py-3 ${msg.align === "right" ? "bg-primary/10" : "bg-muted"}`}
-											>
-												{msg.lines.map((w) => (
-													<div
-														key={w}
-														className={`mt-2 h-2 rounded bg-current opacity-10`}
-														style={{ width: w * 4 }}
-													/>
-												))}
+						{/* The Chat Simulator */}
+						<div className="relative mx-auto w-full max-w-md">
+							<div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent blur-2xl filter" />
+							<div className="relative rounded-2xl border border-white/10 bg-black/40 p-6 font-sans shadow-2xl backdrop-blur-md">
+								<div className="mb-4 flex items-center justify-between border-white/10 border-b pb-4">
+									<div className="flex items-center gap-3">
+										<div className="size-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500" />
+										<div>
+											<div className="font-bold text-sm text-white">
+												Project Alpha Group
+											</div>
+											<div className="text-white/50 text-xs">
+												12 participants
 											</div>
 										</div>
-									))}
-									<div className="mt-6 flex h-16 items-center justify-center rounded-xl border-2 border-destructive/30 border-dashed bg-destructive/5">
-										<span className="font-medium text-destructive text-sm">
-											Where did that request go?
-										</span>
+									</div>
+								</div>
+
+								<div className="space-y-4 text-sm">
+									<div className="flex gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-orange-500" />
+										<div className="rounded-2xl rounded-tl-none bg-white/10 p-3 text-white/90">
+											Where is the updated invoice for the cement?
+											<div className="mt-1 text-[10px] text-white/40">
+												10:42 AM
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-row-reverse gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-blue-500" />
+										<div className="rounded-2xl rounded-tr-none bg-primary/20 p-3 text-white/90">
+											I sent it yesterday. Check the files.
+											<div className="mt-1 text-right text-[10px] text-white/40">
+												10:45 AM
+											</div>
+										</div>
+									</div>
+
+									<div className="flex gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-orange-500" />
+										<div className="rounded-2xl rounded-tl-none bg-white/10 p-3 text-white/90">
+											I can't find it. Can you send it again?
+											<div className="mt-1 text-[10px] text-white/40">
+												10:48 AM
+											</div>
+										</div>
+									</div>
+
+									<div className="flex justify-center py-2">
+										<div className="rounded-full bg-white/5 px-3 py-1 text-white/40 text-xs">
+											New message from Client...
+										</div>
+									</div>
+
+									<div className="flex gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-green-500" />
+										<div className="rounded-2xl rounded-tl-none bg-white/10 p-3 text-white/90">
+											<span className="font-bold text-destructive">@Team</span>{" "}
+											Why is the site closed today??
+											<div className="mt-1 text-[10px] text-white/40">
+												11:02 AM
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div className="mt-6 flex items-center gap-2 rounded-full bg-white/5 p-2 px-4 blur-[1px]">
+									<div className="text-white/30 text-xs">Type a message...</div>
+								</div>
+
+								{/* Overlay Error */}
+								<div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">
+									<div className="rotate-[-5deg] border-2 border-destructive bg-destructive/10 px-6 py-3 font-bold font-mono text-destructive text-xl uppercase tracking-widest backdrop-blur-sm">
+										System Failure
 									</div>
 								</div>
 							</div>
@@ -311,279 +308,113 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto mb-16 max-w-2xl text-center">
-						<p className="mb-4 font-medium text-primary text-sm">
-							The Solution
-						</p>
-						<h2 className="mb-4 text-balance font-bold text-3xl tracking-tight md:text-4xl lg:text-5xl">
-							Everything you need to manage work
+
+			{/* FEATURES GRID: Swiss Utility (Design 2) */}
+			<section className="py-24 md:py-32">
+				<div className="container mx-auto max-w-7xl px-4 md:px-6">
+					<div className="mb-20">
+						<h2 className="font-medium font-serif text-4xl md:text-5xl">
+							Engineered for clarity.
 						</h2>
-						<p className="text-lg text-muted-foreground">
-							KaamSync replaces the noise with structured workflows built for
-							how your team actually operates.
-						</p>
+						<div className="mt-4 h-1 w-24 bg-primary" />
 					</div>
 
-					{/* Bento Grid - Tailwind inspired */}
-					<div className="mx-auto mt-10 grid max-w-6xl gap-4 sm:mt-16 lg:grid-cols-3 lg:grid-rows-2">
-						{/* Large card - left */}
-						<div className="relative lg:row-span-2">
-							<div className="absolute inset-px rounded-lg bg-card lg:rounded-l-4xl" />
-							<div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] lg:rounded-l-[calc(2rem+1px)]">
-								<div className="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
-									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-										Structured Tasks
-									</p>
-									<p className="mt-2 max-w-lg text-muted-foreground text-sm max-lg:text-center">
-										Every task has an owner, deadline, and priority. No more
-										ambiguity about who's doing what.
-									</p>
-								</div>
-								<div className="relative min-h-120 w-full grow max-lg:mx-auto max-lg:max-w-sm">
-									<div className="absolute inset-x-10 top-10 bottom-0 overflow-hidden rounded-t-xl border-border/60 border-x-4 border-t-4 bg-muted/30">
-										<div className="space-y-3 p-4">
-											{[
-												{
-													id: "TASK-102",
-													title: "Q3 Financial Report",
-													status: "In Progress",
-													assignee: "Sarah",
-												},
-												{
-													id: "TASK-103",
-													title: "Update vendor contracts",
-													status: "Pending",
-													assignee: "Mike",
-												},
-												{
-													id: "TASK-104",
-													title: "Team sync meeting",
-													status: "Done",
-													assignee: "You",
-												},
-											].map((task) => (
-												<div
-													key={task.id}
-													className="rounded-lg border border-border/60 bg-background p-3"
-												>
-													<div className="mb-2 flex items-center justify-between text-muted-foreground text-xs">
-														<span className="font-mono">{task.id}</span>
-														<span
-															className={`rounded-full px-2 py-0.5 text-xs ${task.status === "Done" ? "bg-green-500/10 text-green-500" : task.status === "In Progress" ? "bg-blue-500/10 text-blue-500" : "bg-yellow-500/10 text-yellow-500"}`}
-														>
-															{task.status}
-														</span>
-													</div>
-													<p className="font-medium text-sm">{task.title}</p>
-													<p className="mt-1 text-muted-foreground text-xs">
-														Assigned to {task.assignee}
-													</p>
-												</div>
-											))}
-										</div>
-									</div>
-								</div>
-							</div>
-							<div className="pointer-events-none absolute inset-px rounded-lg ring-1 ring-border/60 lg:rounded-l-4xl" />
-						</div>
-
-						{/* Top middle card */}
-						<div className="relative max-lg:row-start-1">
-							<div className="absolute inset-px rounded-lg bg-card max-lg:rounded-t-4xl" />
-							<div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] max-lg:rounded-t-[calc(2rem+1px)]">
-								<div className="px-8 pt-8 sm:px-10 sm:pt-10">
-									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-										Approval Workflows
-									</p>
-									<p className="mt-2 max-w-lg text-muted-foreground text-sm max-lg:text-center">
-										One-click approvals with full audit trails. Know exactly
-										where things stand.
-									</p>
-								</div>
-								<div className="flex flex-1 items-center justify-center px-8 max-lg:pt-10 max-lg:pb-12 sm:px-10 lg:pb-2">
-									<div className="w-full max-w-xs space-y-2">
-										<div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background p-3">
-											<div className="flex size-8 items-center justify-center rounded-full bg-green-500/10">
-												<CheckCircle2 className="size-4 text-green-500" />
-											</div>
-											<div className="min-w-0 flex-1">
-												<p className="truncate font-medium text-sm">
-													Budget approved
-												</p>
-												<p className="text-muted-foreground text-xs">
-													by Finance Team
-												</p>
-											</div>
-										</div>
-										<div className="flex items-center gap-3 rounded-lg border border-border/60 bg-background p-3">
-											<div className="flex size-8 items-center justify-center rounded-full bg-yellow-500/10">
-												<Clock className="size-4 text-yellow-500" />
-											</div>
-											<div className="min-w-0 flex-1">
-												<p className="truncate font-medium text-sm">
-													Waiting for review
-												</p>
-												<p className="text-muted-foreground text-xs">
-													2 approvers left
-												</p>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div className="pointer-events-none absolute inset-px rounded-lg ring-1 ring-border/60 max-lg:rounded-t-4xl" />
-						</div>
-
-						{/* Bottom middle card */}
-						<div className="relative max-lg:row-start-3 lg:col-start-2 lg:row-start-2">
-							<div className="absolute inset-px rounded-lg bg-card" />
-							<div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)]">
-								<div className="px-8 pt-8 sm:px-10 sm:pt-10">
-									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-										<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-											Teams
-										</p>
-									</p>
-									<p className="mt-2 max-w-lg text-muted-foreground text-sm max-lg:text-center">
-										Dedicated spaces for each department. Keep work organized.
-									</p>
-								</div>
-								<div className="flex flex-1 items-center px-8 max-lg:py-6 sm:px-10 lg:pb-2">
-									<div className="flex gap-2 overflow-hidden">
-										{["Finance", "Marketing", "Engineering", "HR"].map(
-											(dept) => (
-												<div
-													key={dept}
-													className="shrink-0 rounded-lg border border-border/60 bg-background px-3 py-2 font-medium text-xs"
-												>
-													{dept}
-												</div>
-											),
-										)}
-									</div>
-								</div>
-							</div>
-							<div className="pointer-events-none absolute inset-px rounded-lg ring-1 ring-border/60" />
-						</div>
-
-						{/* Large card - right */}
-						<div className="relative lg:row-span-2">
-							<div className="absolute inset-px rounded-lg bg-card max-lg:rounded-b-4xl lg:rounded-r-4xl" />
-							<div className="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] max-lg:rounded-b-[calc(2rem+1px)] lg:rounded-r-[calc(2rem+1px)]">
-								<div className="px-8 pt-8 pb-3 sm:px-10 sm:pt-10 sm:pb-0">
-									<p className="mt-2 font-medium text-lg tracking-tight max-lg:text-center">
-										Works Offline
-									</p>
-									<p className="mt-2 max-w-lg text-muted-foreground text-sm max-lg:text-center">
-										Keep working even without internet. Everything syncs when
-										you're back online.
-									</p>
-								</div>
-								<div className="relative min-h-120 w-full grow">
-									<div className="absolute top-10 right-0 bottom-0 left-10 overflow-hidden rounded-tl-xl border-border/60 border-t border-l bg-muted/30">
-										<div className="flex border-border/40 border-b bg-muted/50">
-											<div className="flex font-medium text-muted-foreground text-sm">
-												<div className="border-border/40 border-r border-b bg-background px-4 py-2 text-foreground text-xs">
-													sync-status.tsx
-												</div>
-												<div className="border-border/40 border-r px-4 py-2 text-xs">
-													app.tsx
-												</div>
-											</div>
-										</div>
-										<div className="space-y-1 px-6 pt-6 font-mono text-muted-foreground text-xs">
-											<p>
-												<span className="text-blue-400">const</span> status =
-												useSync();
-											</p>
-											<p className="mt-4">
-												<span className="text-blue-400">if</span>{" "}
-												(status.offline) {"{"}
-											</p>
-											<p className="pl-4">
-												<span className="text-green-400">{`// Work continues locally`}</span>
-											</p>
-											<p className="pl-4">saveToLocalCache(data)</p>
-											<p>{"}"}</p>
-											<p className="mt-4">
-												<span className="text-green-400">{`// Auto-sync when back`}</span>
-											</p>
-											<p>syncWhenOnline();</p>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div className="pointer-events-none absolute inset-px rounded-lg ring-1 ring-border/60 max-lg:rounded-b-4xl lg:rounded-r-4xl" />
-						</div>
-					</div>
-				</div>
-			</section>
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mb-12 text-center">
-						<p className="mb-4 font-medium text-primary text-sm">
-							Enterprise Ready
-						</p>
-						<h2 className="font-bold text-3xl tracking-tight md:text-4xl">
-							Built for scale
-						</h2>
-					</div>
-					<div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
-						{enterprise.map(({ icon: Icon, title, description }) => (
-							<div key={title} className="group relative">
-								<div className="absolute inset-px rounded-xl bg-card" />
-								<div className="relative rounded-xl p-6 text-center">
-									<div className="mx-auto mb-3 flex size-10 items-center justify-center rounded-lg bg-muted/50">
-										<Icon className="size-5 text-muted-foreground" />
-									</div>
-									<h3 className="mb-1 font-medium text-sm">{title}</h3>
-									<p className="text-muted-foreground text-xs">{description}</p>
-								</div>
-								<div className="pointer-events-none absolute inset-px rounded-xl ring-1 ring-border/60" />
+					<div className="grid grid-cols-1 border-foreground/10 border-t border-l md:grid-cols-3">
+						{[
+							{
+								title: "Structured Tasks",
+								desc: "Every job has an owner, deadline, and priority. Ambiguity is engineered out.",
+								icon: Layout,
+							},
+							{
+								title: "Offline First",
+								desc: "Works flawlessly without internet. Syncs automatically when you're back online.",
+								icon: Zap,
+							},
+							{
+								title: "Approval Gates",
+								desc: "Digital signatures and one-click approvals. Keep a perfect audit trail.",
+								icon: CheckCircle2,
+							},
+							{
+								title: "Team Spaces",
+								desc: "Keep Finance, HR, and Ops separate. Organizing your business made simple.",
+								icon: Users,
+							},
+							{
+								title: "Real-time Telemetry",
+								desc: "Live GPS and status updates. Know exactly what's happening on the ground.",
+								icon: Activity,
+							},
+							{
+								title: "Bank-Grade Security",
+								desc: "Your data is encrypted and secure. Far safer than a public chat app.",
+								icon: Lock,
+							},
+						].map((feature) => (
+							<div
+								key={feature.title}
+								className="group relative border-foreground/10 border-r border-b p-10 transition-colors hover:bg-muted/30"
+							>
+								<feature.icon className="mb-6 size-8 stroke-1 text-foreground transition-transform group-hover:scale-110" />
+								<h3 className="mb-3 font-medium font-serif text-2xl">
+									{feature.title}
+								</h3>
+								<p className="text-muted-foreground leading-relaxed">
+									{feature.desc}
+								</p>
 							</div>
 						))}
 					</div>
 				</div>
 			</section>
 
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
-						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
-						<div className="relative">
-							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl lg:text-5xl">
-								Ready to get started?
-							</h2>
-							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-								Join teams who have moved their operations out of the chat and
-								into KaamSync.
-							</p>
-							<div className="flex flex-col justify-center gap-3 sm:flex-row">
-								<Button
-									size="lg"
-									className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
-									asChild
-								>
-									<Link to="/signup">Start for Free</Link>
-								</Button>
-								<Button
-									size="lg"
-									variant="outline"
-									className="h-11 rounded-lg px-8"
-									asChild
-								>
-									<Link to="/contact">Talk to Sales</Link>
-								</Button>
-							</div>
-							<p className="mt-6 text-muted-foreground/60 text-sm">
-								No credit card required • Free for teams up to 5
-							</p>
-						</div>
+			{/* SOCIAL PROOF: Authentic Origin (Option B) */}
+			<section className="border-border/40 border-y py-24">
+				<div className="container mx-auto max-w-3xl px-4 text-center">
+					<h2 className="font-medium font-serif text-3xl">
+						Built because we needed it ourselves.
+					</h2>
+
+					<p className="mt-6 text-lg text-muted-foreground leading-relaxed">
+						We run a real field operations team. WhatsApp was fine for talking,
+						but work kept falling through the cracks. KaamSync is the system we
+						use every day to track jobs, approvals, and updates — calmly and
+						clearly.
+					</p>
+
+					<div className="mt-8 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+						Internal usage • 50-person team • Offline-first by necessity
 					</div>
 				</div>
 			</section>
-		</>
+
+			{/* FINAL CTA: High Contrast */}
+			<section className="relative overflow-hidden py-32 text-center">
+				<div className="container mx-auto max-w-4xl px-4 md:px-6">
+					<h2 className="mb-8 font-medium font-serif text-5xl leading-[1.1] md:text-7xl">
+						Bring order to <br /> the chaos.
+					</h2>
+					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">
+						Join forward-thinking teams moving their operations out of the chat
+						and into KaamSync.
+					</p>
+					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+						<Button
+							asChild
+							size="lg"
+							className="h-16 min-w-[240px] rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground shadow-xl transition-all hover:scale-105 hover:bg-primary/90"
+						>
+							<Link to="/signup">
+								Create My Team Space <ChevronRight className="ml-2 size-5" />
+							</Link>
+						</Button>
+					</div>
+					<p className="mt-6 text-muted-foreground text-sm">
+						Free 14-day trial • Cancel anytime
+					</p>
+				</div>
+			</section>
+		</div>
 	);
 }

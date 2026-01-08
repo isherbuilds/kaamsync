@@ -1,223 +1,155 @@
-import { Building2, Heart, Shield, Target, Users, Zap } from "lucide-react";
+import { Building2, Shield, Target, Zap } from "lucide-react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 
 export const meta: MetaFunction = () => [
-	{ title: "About - KaamSync" },
+	{ title: "About - KaamSync Mission" },
 	{
 		name: "description",
 		content:
-			"We're building the future of work management. Learn about our mission, values, and the team behind KaamSync.",
+			"We built KaamSync because we were tired of managing field work in chat groups.",
 	},
-];
-
-const stats = [
-	{ value: "50K+", label: "Active users" },
-	{ value: "2,000+", label: "Teams worldwide" },
-	{ value: "99.9%", label: "Uptime SLA" },
-	{ value: "4.9", label: "Customer rating" },
-];
-
-const values = [
-	{
-		icon: Target,
-		title: "Focus",
-		description:
-			"We build tools that help teams concentrate on what matters most, cutting through noise and distraction.",
-	},
-	{
-		icon: Heart,
-		title: "Simplicity",
-		description:
-			"Powerful doesn't mean complex. We obsess over making our product intuitive and delightful to use.",
-	},
-	{
-		icon: Users,
-		title: "Collaboration",
-		description:
-			"Great work happens together. We design for teams, not individuals working in isolation.",
-	},
-	{
-		icon: Shield,
-		title: "Trust",
-		description:
-			"Your data is sacred. We build with security and privacy as foundational principles, not afterthoughts.",
-	},
-];
-
-const team = [
-	{ name: "Alex Chen", role: "CEO & Co-founder", initials: "AC" },
-	{ name: "Sarah Williams", role: "CTO & Co-founder", initials: "SW" },
-	{ name: "Michael Park", role: "Head of Product", initials: "MP" },
-	{ name: "Emily Rodriguez", role: "Head of Design", initials: "ER" },
 ];
 
 export default function AboutPage() {
 	return (
 		<>
 			{/* Hero */}
-			<section className="py-24 md:py-32">
+			<section className="bg-background py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto max-w-3xl text-center">
-						<p className="mb-4 font-medium text-primary text-sm">About Us</p>
-						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
-							Building the future
-							<br />
-							of work management
+					<div className="mx-auto max-w-4xl text-center">
+						<div className="mb-6 inline-flex border border-border bg-muted/50 px-3 py-1 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+							The Mission
+						</div>
+						<h1 className="mb-8 font-medium font-serif text-5xl tracking-tight md:text-7xl">
+							We built this to <br />
+							<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+								survive our own sites.
+							</span>
 						</h1>
-						<p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-							We started KaamSync because we believed teams deserve better tools
-							— ones that feel good to use and actually help you get things
-							done.
+						<p className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed md:text-xl">
+							We are an operations team first, software company second. We spent
+							years drowning in WhatsApp groups, losing invoices, and chasing
+							updates. We built KaamSync because we had to.
 						</p>
 					</div>
 				</div>
 			</section>
 
-			{/* Stats */}
-			<section className="border-border/40 border-y py-16">
+			{/* Authentic Stats (No Fake Scalability Numbers) */}
+			<section className="border-border/40 border-y bg-muted/20 py-16">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto grid max-w-4xl grid-cols-2 gap-8 text-center md:grid-cols-4">
-						{stats.map(({ value, label }) => (
-							<div key={label}>
-								<div className="mb-1 font-bold text-4xl md:text-5xl">
+					<div className="mx-auto grid max-w-5xl grid-cols-2 gap-12 text-center md:grid-cols-4">
+						{[
+							{ value: "100%", label: "Offline Capable" },
+							{ value: "0", label: "Lost Invoices" },
+							{ value: "50+", label: "Field Staff" },
+							{ value: "24/7", label: "Sync Uptime" },
+						].map(({ value, label }) => (
+							<div key={label} className="flex flex-col items-center">
+								<div className="mb-2 font-bold font-mono text-4xl text-primary md:text-5xl">
 									{value}
 								</div>
-								<div className="text-muted-foreground text-sm">{label}</div>
+								<div className="font-mono text-muted-foreground text-xs uppercase tracking-widest">
+									{label}
+								</div>
 							</div>
 						))}
 					</div>
 				</div>
 			</section>
 
-			{/* Mission */}
+			{/* Origin Story - The "Why" */}
 			<section className="py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto grid max-w-5xl items-center gap-12 md:grid-cols-2">
-						<div>
-							<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-muted-foreground text-sm">
-								<Zap className="size-3.5" />
-								<span>Our Story</span>
+					<div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-16 lg:grid-cols-2">
+						<div className="sticky top-24">
+							<div className="mb-6 font-mono text-destructive text-xs uppercase tracking-widest">
+								The Problem
 							</div>
-							<h2 className="mb-6 font-bold text-3xl tracking-tight md:text-4xl">
-								Born from frustration with bloated tools
+							<h2 className="mb-6 font-medium font-serif text-4xl tracking-tight">
+								"Does anyone have the latest drawing?"
 							</h2>
-							<div className="space-y-4 text-muted-foreground">
-								<p>
-									We spent years using project management tools that promised
-									simplicity but delivered complexity. Features piled on
-									features until the tools became obstacles instead of enablers.
+							<p className="text-lg text-muted-foreground leading-relaxed">
+								That single question used to cost us hours.
+							</p>
+							<p className="mt-4 text-lg text-muted-foreground leading-relaxed">
+								In 2023, our field operations were a mess of 50+ WhatsApp
+								groups. Important decisions were buried under "Good Morning"
+								GIFs. Approvals were lost in the scroll. We tried generic PM
+								tools, but they were too complex for guys on site.
+							</p>
+							<p className="mt-4 border-primary border-l-4 pl-4 font-medium text-foreground text-xl italic">
+								"We didn't need a feature-rich SaaS. We needed a digital
+								clipboard that worked offline."
+							</p>
+						</div>
+
+						<div className="space-y-8">
+							<div className="border border-border bg-background p-8 shadow-sm">
+								<div className="mb-4 flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary">
+									<Target className="size-5" />
+								</div>
+								<h3 className="mb-2 font-bold font-serif text-2xl">
+									Principle 1: Clarity
+								</h3>
+								<p className="text-muted-foreground">
+									A message is not a task. We separated "chatter" from "work".
+									Every job in KaamSync has an owner, a status, and a deadline.
 								</p>
-								<p>
-									In 2023, we set out to build something different — a task
-									management platform that professionals actually enjoy using.
-									No feature bloat, no steep learning curves, just clean,
-									powerful tools.
+							</div>
+
+							<div className="border border-border bg-background p-8 shadow-sm">
+								<div className="mb-4 flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary">
+									<Zap className="size-5" />
+								</div>
+								<h3 className="mb-2 font-bold font-serif text-2xl">
+									Principle 2: Speed
+								</h3>
+								<p className="text-muted-foreground">
+									Field sites have bad reception. We engineered a local-first
+									database so your team can work in a basement or a tunnel, and
+									sync when they resurface.
 								</p>
-								<p>
-									Today, thousands of teams rely on KaamSync to manage their
-									most important work. We're just getting started.
+							</div>
+
+							<div className="border border-border bg-background p-8 shadow-sm">
+								<div className="mb-4 flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary">
+									<Shield className="size-5" />
+								</div>
+								<h3 className="mb-2 font-bold font-serif text-2xl">
+									Principle 3: Accountability
+								</h3>
+								<p className="text-muted-foreground">
+									No more "I didn't see that message." Every approval is logged.
+									Every change is tracked. The system is the single source of
+									truth.
 								</p>
 							</div>
 						</div>
-						<div className="relative">
-							<div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-border/60 bg-card/30 backdrop-blur-sm">
-								<div className="text-center">
-									<Building2 className="mx-auto mb-4 size-16 text-muted-foreground/50" />
-									<p className="text-muted-foreground text-sm">Founded 2023</p>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</section>
-
-			{/* Values */}
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mb-16 text-center">
-						<p className="mb-4 font-medium text-primary text-sm">Our Values</p>
-						<h2 className="font-bold text-3xl tracking-tight md:text-4xl">
-							What we believe in
-						</h2>
-					</div>
-					<div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
-						{values.map(({ icon: Icon, title, description }) => (
-							<div
-								key={title}
-								className="rounded-2xl border border-border/60 bg-card/30 p-8 backdrop-blur-sm"
-							>
-								<div className="mb-4 flex size-10 items-center justify-center rounded-lg bg-primary/10">
-									<Icon className="size-5 text-primary" />
-								</div>
-								<h3 className="mb-2 font-semibold text-lg">{title}</h3>
-								<p className="text-muted-foreground">{description}</p>
-							</div>
-						))}
-					</div>
-				</div>
-			</section>
-
-			{/* Team */}
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mb-16 text-center">
-						<p className="mb-4 font-medium text-primary text-sm">Our Team</p>
-						<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
-							The people behind KaamSync
-						</h2>
-						<p className="mx-auto max-w-xl text-muted-foreground">
-							A small, focused team obsessed with building the best work
-							management experience.
-						</p>
-					</div>
-					<div className="mx-auto grid max-w-4xl gap-6 sm:grid-cols-2 md:grid-cols-4">
-						{team.map(({ name, role, initials }) => (
-							<div key={name} className="text-center">
-								<div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm">
-									<span className="font-semibold text-muted-foreground text-xl">
-										{initials}
-									</span>
-								</div>
-								<h3 className="font-medium">{name}</h3>
-								<p className="text-muted-foreground text-sm">{role}</p>
-							</div>
-						))}
 					</div>
 				</div>
 			</section>
 
 			{/* CTA */}
-			<section className="border-border/40 border-t py-24 md:py-32">
+			<section className="border-border border-t bg-foreground py-24 text-center text-background">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
-						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
-						<div className="relative">
-							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
-								Join us on our journey
-							</h2>
-							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-								We're always looking for talented people who share our passion
-								for building great products.
-							</p>
-							<div className="flex flex-col justify-center gap-3 sm:flex-row">
-								<Button
-									size="lg"
-									className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
-									asChild
-								>
-									<Link to="/signup">Start Using KaamSync</Link>
-								</Button>
-								<Button
-									size="lg"
-									variant="outline"
-									className="h-11 rounded-lg border-border/60 px-8"
-									asChild
-								>
-									<Link to="/contact">Contact Us</Link>
-								</Button>
-							</div>
+					<div className="mx-auto max-w-3xl">
+						<h2 className="mb-6 font-medium font-serif text-3xl md:text-5xl">
+							Stop drowning in chat.
+						</h2>
+						<p className="mb-10 text-lg opacity-80">
+							Join us in the calm, organized world of structured operations.
+						</p>
+						<div className="flex flex-col justify-center gap-4 sm:flex-row">
+							<Button
+								size="lg"
+								className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+								asChild
+							>
+								<Link to="/signup">Create My Team Space</Link>
+							</Button>
 						</div>
 					</div>
 				</div>

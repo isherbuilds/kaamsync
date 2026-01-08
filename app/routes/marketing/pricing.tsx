@@ -1,193 +1,242 @@
-import { Check, HelpCircle } from "lucide-react";
+import { Check, Mail, Sparkles, Users, Zap } from "lucide-react";
+import { useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { type BillingInterval, type ProductKey, products } from "~/lib/billing";
+import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [
 	{ title: "Pricing - KaamSync" },
 	{
 		name: "description",
 		content:
-			"Simple, transparent pricing for teams of all sizes. Start free, upgrade when you're ready.",
-	},
-];
-
-const plans = [
-	{
-		name: "Free",
-		price: "$0",
-		period: "forever",
-		description:
-			"For small teams getting started with structured task management.",
-		features: [
-			"Up to 5 team members",
-			"Unlimited tasks",
-			"Basic teams",
-			"7-day activity history",
-			"Email support",
-		],
-		cta: "Get Started",
-		href: "/signup",
-		popular: false,
-	},
-	{
-		name: "Pro",
-		price: "$12",
-		period: "per user / month",
-		description:
-			"For growing teams that need advanced workflows and reporting.",
-		features: [
-			"Unlimited team members",
-			"Unlimited tasks",
-			"Advanced teams",
-			"Unlimited history",
-			"Priority support",
-			"Custom fields",
-			"Approval workflows",
-			"API access",
-			"Integrations",
-		],
-		cta: "Start Free Trial",
-		href: "/signup?plan=pro",
-		popular: true,
-	},
-	{
-		name: "Enterprise",
-		price: "Custom",
-		period: "contact us",
-		description:
-			"For large organizations with specific security and compliance needs.",
-		features: [
-			"Everything in Pro",
-			"SSO / SAML",
-			"Advanced security",
-			"Dedicated support",
-			"Custom integrations",
-			"SLA guarantee",
-			"Onboarding assistance",
-			"Custom contracts",
-		],
-		cta: "Contact Sales",
-		href: "/contact",
-		popular: false,
+			"Simple, transparent pricing for teams of all sizes. Start for free.",
 	},
 ];
 
 const faqs = [
 	{
-		q: "Can I change plans later?",
-		a: "Yes, you can upgrade or downgrade anytime. Changes take effect on your next billing cycle.",
+		q: "Can I change my plan later?",
+		a: "Yes, you can upgrade or downgrade at any time via your organization settings. Changes are reflected in your next billing cycle.",
 	},
 	{
 		q: "What payment methods do you accept?",
-		a: "All major credit cards. Enterprise customers can arrange invoicing.",
+		a: "We accept all major credit cards via Dodo Payments. Invoicing is available for Enterprise customers.",
 	},
 	{
-		q: "Is there a free trial for Pro?",
-		a: "Yes — 14 days free, no credit card required. Cancel anytime.",
+		q: "How does metered billing work?",
+		a: "For Growth and Pro plans, we include a generous base of members and storage. If you exceed these, you'll be billed for the additional usage at the end of your cycle.",
 	},
 	{
-		q: "What happens if I downgrade?",
-		a: "Your data stays safe. Some features become read-only until you upgrade again.",
-	},
-	{
-		q: "Do you offer discounts for nonprofits?",
-		a: "Yes, we offer 50% off for registered nonprofits. Contact us to apply.",
-	},
-	{
-		q: "Can I get a refund?",
-		a: "We offer a 30-day money-back guarantee for annual plans.",
+		q: "Is there a limit on teams?",
+		a: "The Starter plan allows up to 5 teams. Growth and Enterprise plans offer unlimited team creation.",
 	},
 ];
 
+const planIcons: Record<ProductKey, React.ReactNode> = {
+	starter: <Users className="h-5 w-5" />,
+	growth: <Zap className="h-5 w-5" />,
+	pro: <Sparkles className="h-5 w-5" />,
+	enterprise: <Mail className="h-5 w-5" />,
+};
+
+const planDescriptions: Record<ProductKey, string> = {
+	starter: "Small crews testing the waters.",
+	growth: "The standard for growing teams.",
+	pro: "Established teams requiring scale.",
+	enterprise: "Regional leads managing multiple sites.",
+};
+
 export default function PricingPage() {
+	const [interval, setInterval] = useState<BillingInterval>("monthly");
+	const planKeys: ProductKey[] = ["starter", "growth", "pro", "enterprise"];
+
 	return (
 		<>
 			{/* Hero */}
-			<section className="py-24 md:py-32">
+			<section className="bg-background py-24 text-center">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto mb-16 max-w-3xl text-center">
-						<p className="mb-4 font-medium text-primary text-sm">Pricing</p>
-						<h1 className="mb-6 font-bold text-4xl tracking-tight md:text-5xl lg:text-6xl">
-							Simple pricing for
-							<br />
-							every team size
+					<div className="mx-auto max-w-3xl">
+						<h1 className="mb-6 font-medium font-serif text-5xl tracking-tight md:text-7xl">
+							Simple, transparent <br />{" "}
+							<span className="text-muted-foreground italic">pricing.</span>
 						</h1>
-						<p className="text-lg text-muted-foreground">
-							Start free and scale as you grow. No hidden fees, no surprises.
+						<p className="mb-10 text-muted-foreground text-xl">
+							No hidden fees. No surprises. Start for free and scale as you
+							grow.
 						</p>
-					</div>
 
-					{/* Plans */}
-					<div className="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
-						{plans.map((plan) => (
-							<div
-								key={plan.name}
-								className={`relative rounded-2xl border bg-card/30 p-8 backdrop-blur-sm ${plan.popular ? "border-primary/50 bg-card/50 shadow-lg shadow-primary/5" : "border-border/60"}`}
+						{/* Billing Toggle */}
+						<div className="flex items-center justify-center">
+							<Tabs
+								value={interval}
+								onValueChange={(value) => setInterval(value as BillingInterval)}
+								className="w-full max-w-[300px]"
 							>
-								{plan.popular && (
-									<div className="absolute -top-3 left-1/2 -translate-x-1/2">
-										<span className="rounded-full bg-primary px-3 py-1 font-medium text-primary-foreground text-xs">
-											Most Popular
-										</span>
-									</div>
-								)}
-								<div className="mb-6">
-									<h3 className="mb-1 font-semibold text-lg">{plan.name}</h3>
-									<p className="text-muted-foreground text-sm">
-										{plan.description}
-									</p>
-								</div>
-								<div className="mb-6">
-									<span className="font-bold text-4xl">{plan.price}</span>
-									<span className="ml-1 text-muted-foreground">
-										/{plan.period}
-									</span>
-								</div>
-								<Button
-									asChild
-									className={`mb-6 h-10 w-full rounded-lg ${plan.popular ? "bg-foreground text-background hover:bg-foreground/90" : ""}`}
-									variant={plan.popular ? "default" : "outline"}
-								>
-									<Link to={plan.href}>{plan.cta}</Link>
-								</Button>
-								<ul className="space-y-3">
-									{plan.features.map((feature) => (
-										<li
-											key={feature}
-											className="flex items-start gap-2 text-sm"
+								<TabsList className="grid w-full grid-cols-2">
+									<TabsTrigger value="monthly">Monthly</TabsTrigger>
+									<TabsTrigger value="yearly" className="relative">
+										Yearly
+										<Badge
+											variant="secondary"
+											className="rounded bg-primary/10 text-primary"
 										>
-											<Check className="mt-0.5 size-4 shrink-0 text-primary" />
-											<span className="text-muted-foreground">{feature}</span>
-										</li>
-									))}
-								</ul>
-							</div>
-						))}
+											{/* 2 Months Free */}
+											Discount
+										</Badge>
+									</TabsTrigger>
+								</TabsList>
+							</Tabs>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			{/* Plans */}
+			<section className="relative bg-background pb-24">
+				<div className="container relative z-10 mx-auto px-4 md:px-6">
+					<div className="mx-auto grid max-w-7xl grid-cols-1 gap-px border border-border bg-border md:grid-cols-2 xl:grid-cols-4">
+						{planKeys.map((key) => {
+							const plan = products[key];
+							const monthlyPrice = plan.monthlyPrice;
+							const yearlyPrice = plan.yearlyPrice;
+
+							const isYearly = interval === "yearly";
+							const price = isYearly ? yearlyPrice : monthlyPrice;
+							const originalYearly = monthlyPrice ? monthlyPrice * 12 : 0;
+
+							const isPopular = plan.popular;
+							const isEnterprise = key === "enterprise";
+							const hasUsage = "usageBased" in plan && plan.usageBased;
+
+							return (
+								<div
+									key={key}
+									className={cn(
+										"relative flex flex-col bg-background p-8 transition-all duration-300",
+										isPopular && "z-10 ring-2 ring-primary",
+									)}
+								>
+									{isPopular && (
+										<div className="absolute top-0 right-1/2 left-1/2 -mt-3 w-max -translate-x-1/2">
+											<span className="bg-primary px-3 py-1 font-bold font-mono text-[10px] text-primary-foreground uppercase tracking-widest shadow-sm">
+												Recommended
+											</span>
+										</div>
+									)}
+									<div className="mb-8">
+										<div className="mb-4 flex items-center gap-2">
+											<div
+												className={cn(
+													"rounded-lg p-2",
+													isPopular ? "bg-primary/20" : "bg-muted",
+												)}
+											>
+												{planIcons[key]}
+											</div>
+											<h3 className="font-medium font-serif text-2xl">
+												{plan.name}
+											</h3>
+										</div>
+										<p className="text-muted-foreground text-sm leading-relaxed">
+											{planDescriptions[key]}
+										</p>
+									</div>
+
+									<div className="mb-8">
+										<div className="flex items-baseline gap-1">
+											{price === null ? (
+												<span className="font-bold font-sans text-4xl">
+													Custom
+												</span>
+											) : price === 0 ? (
+												<span className="font-bold font-sans text-4xl">
+													Free
+												</span>
+											) : (
+												<>
+													{isYearly && (
+														<span className="mr-2 text-2xl text-muted-foreground line-through decoration-muted-foreground/50">
+															${originalYearly / 100}
+														</span>
+													)}
+													<span className="font-bold font-sans text-4xl">
+														${price / 100}
+													</span>
+													<span className="font-mono text-muted-foreground text-xs uppercase tracking-wide">
+														{isYearly ? "/ year" : "/ month"}
+													</span>
+												</>
+											)}
+										</div>
+									</div>
+
+									{hasUsage && "addonsDescription" in plan && (
+										<div className="mb-6 rounded bg-muted/50 p-3">
+											<p className="mb-1 font-bold font-mono text-[10px] uppercase tracking-wider">
+												Base inclusions +
+											</p>
+											<p className="text-muted-foreground text-xs italic">
+												{plan.addonsDescription?.join(" • ")}
+											</p>
+										</div>
+									)}
+
+									<ul className="mb-10 flex-1 space-y-4">
+										{plan.features.map((feature) => (
+											<li
+												key={feature}
+												className="flex items-start gap-3 text-sm"
+											>
+												<div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
+													<Check className="size-3" />
+												</div>
+												<span className="text-muted-foreground">{feature}</span>
+											</li>
+										))}
+									</ul>
+
+									<Button
+										asChild
+										variant={isPopular ? "default" : "outline"}
+										className="h-12 font-bold"
+									>
+										<Link
+											to={
+												isEnterprise
+													? "/contact"
+													: `/signup?plan=${key}${interval === "yearly" ? "&interval=yearly" : ""}`
+											}
+										>
+											{plan.cta}
+										</Link>
+									</Button>
+								</div>
+							);
+						})}
 					</div>
 				</div>
 			</section>
 
 			{/* FAQs */}
-			<section className="border-border/40 border-t py-24 md:py-32">
+			<section className="border-border/40 border-t bg-muted/20 py-24">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mb-16 text-center">
-						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-4 py-1.5 text-muted-foreground text-sm">
-							<HelpCircle className="size-3.5" />
-							<span>FAQ</span>
-						</div>
-						<h2 className="font-bold text-3xl tracking-tight md:text-4xl">
-							Frequently asked questions
+						<h2 className="mb-4 font-bold text-3xl">
+							Frequently Asked Questions
 						</h2>
 					</div>
-					<div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-2">
+					<div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
 						{faqs.map(({ q, a }) => (
 							<div
 								key={q}
-								className="rounded-xl border border-border/60 bg-card/30 p-6 backdrop-blur-sm"
+								className="rounded-lg border border-border bg-background p-8 shadow-sm"
 							>
-								<h3 className="mb-2 font-medium">{q}</h3>
-								<p className="text-muted-foreground text-sm">{a}</p>
+								<h3 className="mb-3 font-bold text-lg">{q}</h3>
+								<p className="text-muted-foreground leading-relaxed">{a}</p>
 							</div>
 						))}
 					</div>
@@ -195,27 +244,22 @@ export default function PricingPage() {
 			</section>
 
 			{/* CTA */}
-			<section className="border-border/40 border-t py-24 md:py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
-						<div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-primary/5" />
-						<div className="relative">
-							<h2 className="mb-4 font-bold text-3xl tracking-tight md:text-4xl">
-								Still have questions?
-							</h2>
-							<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-								Our team is here to help. Reach out and we'll get back to you
-								within 24 hours.
-							</p>
-							<Button
-								size="lg"
-								className="h-11 rounded-lg bg-foreground px-8 text-background hover:bg-foreground/90"
-								asChild
-							>
-								<Link to="/contact">Contact Sales</Link>
-							</Button>
-						</div>
-					</div>
+			<section className="bg-foreground py-24 text-center text-background">
+				<div className="container mx-auto px-4">
+					<h2 className="mb-8 font-medium font-serif text-4xl tracking-tight md:text-5xl">
+						Still have questions?
+					</h2>
+					<p className="mx-auto mb-12 max-w-lg text-background/70 text-lg">
+						Our support team is standing by to help you choose the right plan
+						for your business.
+					</p>
+					<Button
+						size="lg"
+						className="h-14 bg-primary px-10 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+						asChild
+					>
+						<Link to="/contact">Contact Sales</Link>
+					</Button>
 				</div>
 			</section>
 		</>
