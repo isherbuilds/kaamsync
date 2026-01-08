@@ -76,7 +76,7 @@ export const planLimits = {
 	},
 	pro: {
 		members: 25,
-		teams: 15,
+		teams: -1,
 		storageGb: 25,
 		matters: -1,
 	},

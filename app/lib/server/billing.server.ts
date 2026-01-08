@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "~/db";
 import {
 	customersTable,
@@ -185,13 +185,27 @@ async function upsertSubscription(
 		cancelledAt: payload.cancelled_at ? new Date(payload.cancelled_at) : null,
 	};
 
-	await db
-		.insert(subscriptionsTable)
-		.values({ id: createId(), ...subscriptionData })
-		.onConflictDoUpdate({
-			target: subscriptionsTable.dodoSubscriptionId,
-			set: subscriptionData,
-		});
+	// Perform an explicit upsert by organizationId + productId.
+	// Rationale: `dodoSubscriptionId` can be null, so conflicts based on it
+	// may not be detected. Use org+product as the canonical uniqueness for
+	// webhook-driven updates, and fall back to insert when no match exists.
+	const existingSubscription = await db.query.subscriptionsTable.findFirst({
+		where: and(
+			eq(subscriptionsTable.organizationId, subscriptionData.organizationId),
+			eq(subscriptionsTable.productId, subscriptionData.productId),
+		),
+	});
+
+	if (existingSubscription) {
+		await db
+			.update(subscriptionsTable)
+			.set(subscriptionData)
+			.where(eq(subscriptionsTable.id, existingSubscription.id));
+	} else {
+		await db
+			.insert(subscriptionsTable)
+			.values({ id: createId(), ...subscriptionData });
+	}
 }
 
 /**

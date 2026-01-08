@@ -48,6 +48,24 @@ export const getUserOrganizationMembership = db
 	.prepare("getUserOrganizationMembership");
 
 /**
+ * Get organization owner user (prepared)
+ * Returns the related usersTable row for the member with role 'owner'
+ */
+export const getOrganizationOwnerUser = db
+	.select({ user: usersTable })
+	.from(membersTable)
+	.leftJoin(usersTable, eq(membersTable.userId, usersTable.id))
+	.where(
+		and(
+			eq(membersTable.organizationId, sql.placeholder("organizationId")),
+			eq(membersTable.role, sql.placeholder("role")),
+		),
+	)
+	.orderBy(desc(membersTable.createdAt))
+	.limit(1)
+	.prepare("getOrganizationOwnerUser");
+
+/**
  * Get organization matter count (prepared)
  */
 export const getOrganizationMatterCount = db

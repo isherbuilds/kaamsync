@@ -3,6 +3,10 @@ import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import { customersTable, organizationsTable } from "~/db/schema";
 import { dodoPayments } from "~/lib/billing";
+import {
+	getOrganizationCustomer,
+	getOrganizationOwnerUser,
+} from "~/lib/server/prepared-queries.server";
 
 /**
  * Get or create a Dodo Payments customer for an organization
@@ -14,30 +18,48 @@ export async function getOrCreateCustomer(organizationId: string): Promise<{
 	name: string | null;
 	organizationId: string;
 }> {
-	// Check if customer already exists
-	const existingCustomer = await db.query.customersTable.findFirst({
-		where: eq(customersTable.organizationId, organizationId),
+	// Check if customer already exists (use prepared statement)
+	const existingCustomerResult = await getOrganizationCustomer.execute({
+		organizationId,
 	});
+	const existingCustomer = existingCustomerResult[0] ?? null;
+	if (existingCustomer) return existingCustomer;
 
-	if (existingCustomer) {
-		return existingCustomer;
-	}
-
-	// Get organization details
-	const organization = await db.query.organizationsTable.findFirst({
-		where: eq(organizationsTable.id, organizationId),
-	});
+	// Fetch organization and owner in parallel
+	const [organization, ownerResult] = await Promise.all([
+		db.query.organizationsTable.findFirst({
+			where: eq(organizationsTable.id, organizationId),
+		}),
+		getOrganizationOwnerUser.execute({ organizationId, role: "owner" }),
+	]);
 
 	if (!organization) {
 		throw new Error("Organization not found");
 	}
+
+	const ownerUser = ownerResult[0]?.user ?? null;
+
+	// Resolve email: prefer owner -> organization.metadata -> fallback
+	let resolvedEmail: string | null = ownerUser?.email ?? null;
+	if (!resolvedEmail && organization.metadata) {
+		try {
+			const meta = JSON.parse(organization.metadata);
+			if (meta?.email && typeof meta.email === "string") {
+				resolvedEmail = meta.email;
+			}
+		} catch (err) {
+			// ignore parse errors
+		}
+	}
+
+	const emailToUse = resolvedEmail || `org-${organizationId}@kaamsync.com`;
 
 	// Create customer in Dodo Payments if billing is enabled
 	let dodoCustomerId: string | null = null;
 	if (dodoPayments) {
 		try {
 			const dodoCustomer = await dodoPayments.customers.create({
-				email: organization.email || `org-${organizationId}@kaamsync.com`,
+				email: emailToUse,
 				name: organization.name,
 				metadata: {
 					organization_id: organizationId,
@@ -57,7 +79,7 @@ export async function getOrCreateCustomer(organizationId: string): Promise<{
 		id: customerId,
 		organizationId,
 		dodoCustomerId,
-		email: organization.email || `org-${organizationId}@kaamsync.com`,
+		email: emailToUse,
 		name: organization.name,
 	};
 

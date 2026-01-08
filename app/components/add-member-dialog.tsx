@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,
@@ -13,7 +14,6 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Spinner } from "~/components/ui/spinner";
-import { toast } from "sonner";
 
 interface AddMemberDialogProps {
 	organizationId: string;
@@ -66,33 +66,32 @@ export function AddMemberDialog({
 		);
 	};
 
-	// Handle fetcher response
-	if (fetcher.data && !isLoading) {
-		const data = fetcher.data as {
-			success: boolean;
-			requiresPayment?: boolean;
-			paymentUrl?: string;
-			member?: { email: string };
-			error?: string;
-		};
+	useEffect(() => {
+		if (!isLoading && fetcher.data) {
+			const data = fetcher.data as {
+				success: boolean;
+				requiresPayment?: boolean;
+				paymentUrl?: string;
+				member?: { email: string };
+				error?: string;
+			};
 
-		if (data.success && data.requiresPayment && data.paymentUrl) {
-			// Redirect to payment
-			window.location.href = data.paymentUrl;
-			return null;
-		}
+			if (data.success && data.requiresPayment && data.paymentUrl) {
+				window.location.href = data.paymentUrl;
+				return;
+			}
 
-		if (data.success && data.member) {
-			// Member added successfully
-			toast.success(`${data.member.email} has been invited to your team!`);
-			setOpen(false);
-			setEmail("");
-		}
+			if (data.success && data.member) {
+				toast.success(`${data.member.email} has been invited to your team!`);
+				setOpen(false);
+				setEmail("");
+			}
 
-		if (data.error) {
-			toast.error(data.error);
+			if (data.error) {
+				toast.error(data.error);
+			}
 		}
-	}
+	}, [fetcher.data, isLoading]);
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>

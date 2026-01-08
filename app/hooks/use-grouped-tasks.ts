@@ -1,5 +1,5 @@
 import type { Row } from "@rocicorp/zero";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	COMPLETED_STATUS_TYPES,
 	STATUS_TYPE_ORDER,
@@ -30,33 +30,24 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
 /**
  * Hook to group and flatten tasks by status for virtualized lists.
- * Optimized with incremental updates and stable references.
+ * Always performs a full rebuild for clarity and correctness.
  */
 export function useGroupedTasks(
 	matters: readonly Matter[],
 	statuses: readonly Status[],
-	teamId: string,
+	_teamId: string,
 ) {
 	// Tracks statuses that have been manually toggled
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
 		new Set(),
 	);
 
-	// Cache previous results for incremental updates
-	const prevMattersRef = useRef<readonly Matter[]>([]);
-	const prevStatusesRef = useRef<readonly Status[]>([]);
-	const prevResultRef = useRef<{
-		flatItems: ListItem[];
-		activeCount: number;
-		stickyIndices: number[];
-	}>({ flatItems: [], activeCount: 0, stickyIndices: [] });
-
 	// Reset toggles when team changes
 	useEffect(() => {
 		setToggledStatuses(new Set());
-		prevMattersRef.current = [];
-		prevStatusesRef.current = [];
-	}, [teamId]);
+		// read _teamId to make it an explicit dependency (reset toggles on team change)
+		void _teamId;
+	}, [_teamId]);
 
 	// Stable toggle function with useCallback
 	const toggleGroup = useCallback((id: string) => {
@@ -74,19 +65,7 @@ export function useGroupedTasks(
 	const result = useMemo(() => {
 		// Early return for empty data
 		if (!matters.length || !statuses.length) {
-			const emptyResult = { flatItems: [], activeCount: 0, stickyIndices: [] };
-			prevResultRef.current = emptyResult;
-			return emptyResult;
-		}
-
-		// Check if we can use incremental update (only toggle state changed)
-		const mattersChanged = prevMattersRef.current !== matters;
-		const statusesChanged = prevStatusesRef.current !== statuses;
-		
-		if (!mattersChanged && !statusesChanged && prevResultRef.current.flatItems.length > 0) {
-			// Only toggle state changed - rebuild with cached groups
-			const cachedResult = rebuildWithToggles(prevResultRef.current, toggledStatuses);
-			return cachedResult;
+			return { flatItems: [], activeCount: 0, stickyIndices: [] };
 		}
 
 		// Full rebuild needed
@@ -157,12 +136,8 @@ export function useGroupedTasks(
 		}
 
 		const newResult = { flatItems, activeCount, stickyIndices };
-		
-		// Cache for next render
-		prevMattersRef.current = matters;
-		prevStatusesRef.current = statuses;
-		prevResultRef.current = newResult;
 
+		// Cache for next render is not needed: always rebuild on matters/statuses change
 		return newResult;
 	}, [matters, statuses, toggledStatuses]);
 
@@ -170,54 +145,4 @@ export function useGroupedTasks(
 		...result,
 		toggleGroup,
 	};
-}
-
-/**
- * Rebuild list items with new toggle state (optimization for toggle-only changes)
- */
-function rebuildWithToggles(
-	prevResult: { flatItems: ListItem[]; activeCount: number; stickyIndices: number[] },
-	toggledStatuses: Set<string>
-): { flatItems: ListItem[]; activeCount: number; stickyIndices: number[] } {
-	const flatItems: ListItem[] = [];
-	const stickyIndices: number[] = [];
-	let activeCount = prevResult.activeCount;
-
-	let i = 0;
-	while (i < prevResult.flatItems.length) {
-		const item = prevResult.flatItems[i];
-		
-		if (item.type === "header") {
-			const isCompletedType = COLLAPSED_TYPES.has(item.status.type as string);
-			const isExpanded = toggledStatuses.has(item.status.id)
-				? isCompletedType
-				: !isCompletedType;
-
-			// Add header with updated expansion state
-			stickyIndices.push(flatItems.length);
-			flatItems.push({
-				...item,
-				isExpanded,
-			});
-
-			// Skip or include tasks based on expansion
-			i++; // Move past header
-			if (isExpanded) {
-				// Include tasks
-				while (i < prevResult.flatItems.length && prevResult.flatItems[i].type === "task") {
-					flatItems.push(prevResult.flatItems[i]);
-					i++;
-				}
-			} else {
-				// Skip tasks
-				while (i < prevResult.flatItems.length && prevResult.flatItems[i].type === "task") {
-					i++;
-				}
-			}
-		} else {
-			i++;
-		}
-	}
-
-	return { flatItems, activeCount, stickyIndices };
 }
