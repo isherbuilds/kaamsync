@@ -169,7 +169,7 @@ export const products = {
 		usagePricing: usagePricing.pro,
 		features: [
 			"Up to 25 team members",
-			"15 teams",
+			"Unlimited teams",
 			"25GB storage",
 			"Priority support",
 			"Audit logs",
