@@ -1,6 +1,7 @@
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, Outlet, redirect } from "react-router";
+// import { ColorSchemeToggle } from "~/components/layout/color-scheme-toggle";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 
@@ -44,10 +45,10 @@ export default function MarketingLayout() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<header className="fixed inset-x-0 top-0 z-50">
-				<nav className="flex items-center justify-between gap-2 border-border/40 border-b bg-background/60 p-4 backdrop-blur-xl md:px-6">
+				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background/60 p-4 backdrop-blur-xl md:px-6">
 					<div className="flex md:flex-1">
 						<Link to="/" className="flex items-center gap-1">
-							<div className="flex size-7 items-center justify-center rounded-full bg-white">
+							<div className="flex size-7 items-center justify-center rounded bg-white">
 								<img
 									src="/static/kaamsync-logo.svg"
 									alt="KaamSync"
@@ -71,19 +72,19 @@ export default function MarketingLayout() {
 						))}
 					</div>
 
-					<div className="flex flex-1 items-center justify-end gap-2 md:gap-4">
+					<div className="flex flex-1 items-center justify-end gap-4">
 						<Link
 							to="/login"
-							className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
+							className="font-medium text-muted-foreground text-sm transition-colors hover:text-primary"
 						>
-							Log in
+							Log In
 						</Link>
 						<Button
 							asChild
 							size="sm"
-							className="h-8 rounded-lg bg-foreground px-4 text-background hover:bg-foreground/90"
+							className="h-8 rounded-md bg-primary px-4 font-bold text-primary-foreground text-xs hover:bg-primary/90"
 						>
-							<Link to="/signup">Sign up</Link>
+							<Link to="/signup">Sign Up</Link>
 						</Button>
 					</div>
 
@@ -91,7 +92,7 @@ export default function MarketingLayout() {
 					<div className="flex md:hidden">
 						<button type="button" onClick={() => setOpen(!open)}>
 							<span className="sr-only">Toggle menu</span>
-							{open ? <X className="size-4" /> : <Menu className="size-4" />}
+							{open ? <X className="size-5" /> : <Menu className="size-5" />}
 						</button>
 					</div>
 				</nav>
@@ -152,8 +153,12 @@ export default function MarketingLayout() {
 					<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
 						<div className="space-y-4 lg:col-span-2">
 							<Link to="/" className="flex items-center gap-2.5">
-								<div className="flex size-7 items-center justify-center rounded-md bg-linear-to-br from-primary/20 to-primary/10 text-primary">
-									<Zap className="size-4" />
+								<div className="flex size-7 items-center justify-center rounded bg-white">
+									<img
+										src="/static/kaamsync-logo.svg"
+										alt="KaamSync"
+										className="size-6 invert"
+									/>
 								</div>
 								<span className="font-semibold">KaamSync</span>
 							</Link>
@@ -185,8 +190,8 @@ export default function MarketingLayout() {
 							</div>
 						</div>
 					</div>
-					{/* <div className="mt-16 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
-						<p className="text-xs text-muted-foreground/60">
+					{/* <div className="mt-16 flex flex-col items-center justify-between gap-4 border-border/40 border-t pt-8 md:flex-row">
+						<p className="text-muted-foreground/60 text-xs">
 							© {new Date().getFullYear()} KaamSync. All rights reserved.
 						</p>
 						<ColorSchemeToggle />

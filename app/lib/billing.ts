@@ -67,10 +67,7 @@ export const planLimits = {
 		members: 3,
 		teams: 5,
 		storageGb: 0.5,
-		// Matters enforcement: Counted via getOrganizationMatterCount (prepared query),
-		// usage populated via getOrganizationUsagePrepared, and enforced via canCreateMatter()
-		// in billing.server.ts and assertCanCreateMatter() in zero/billing-limits.ts.
-		matters: 250, // Limit matters/tasks for free tier (fully enforced)
+		matters: 250, // Limit matters/tasks for free tier
 	},
 	growth: {
 		members: 10,
@@ -80,7 +77,7 @@ export const planLimits = {
 	},
 	pro: {
 		members: 25,
-		teams: -1,
+		teams: 15,
 		storageGb: 25,
 		matters: -1,
 	},
@@ -149,14 +146,14 @@ export const products = {
 		usageBased: true,
 		usagePricing: usagePricing.growth,
 		features: [
-			"Up to 10 team members",
+			"Includes up to 10 members",
 			"Unlimited teams",
-			"10GB storage",
-			"Advanced workflows",
+			"Includes 10GB storage",
+			"Audit Logs",
 			"Priority email support",
-			"Pay-per-member additions ($5 each)",
+			"$5/month per additional member",
 		],
-		addonsDescription: ["+$5/member"],
+		addonsDescription: ["+$5/member", "+$2/GB storage"],
 		cta: "Start Growing",
 	},
 	pro: {
@@ -172,17 +169,14 @@ export const products = {
 		usageBased: true,
 		usagePricing: usagePricing.pro,
 		features: [
-			"Up to 25 team members",
-			"15 teams",
-			"25GB storage",
-			"Custom workflows",
-			"Advanced analytics",
-			"Priority support",
-			"API access",
+			"Includes up to 25 members",
+			"Unlimited teams",
+			"Includes 25GB storage",
 			"Audit logs",
-			"Pay-per-member additions ($5 each)",
+			"Priority support",
+			"$4/month per additional member",
 		],
-		addonsDescription: ["+$5/member"],
+		addonsDescription: ["+$4/member", "+$1/GB storage"],
 		cta: "Go Pro",
 	},
 	enterprise: {
@@ -197,12 +191,11 @@ export const products = {
 			"Unlimited team members",
 			"Unlimited teams",
 			"Unlimited storage",
-			"SSO/SAML authentication",
 			"Dedicated account manager",
 			"Custom integrations",
-			"SLA guarantee",
 			"On-premise deployment option",
 			"24/7 phone & email support",
+			"Everything Customizable",
 		],
 		cta: "Contact Sales",
 		contactSales: true,
