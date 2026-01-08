@@ -1,4 +1,4 @@
-import { Check, Mail, Sparkles, Users, Zap } from "lucide-react";
+import { Building2, Check, Mail, ShieldCheck, Users, Zap } from "lucide-react";
 import { useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
@@ -39,15 +39,15 @@ const faqs = [
 const planIcons: Record<ProductKey, React.ReactNode> = {
 	starter: <Users className="h-5 w-5" />,
 	growth: <Zap className="h-5 w-5" />,
-	pro: <Sparkles className="h-5 w-5" />,
-	enterprise: <Mail className="h-5 w-5" />,
+	pro: <ShieldCheck className="h-5 w-5" />,
+	enterprise: <Building2 className="h-5 w-5" />,
 };
 
 const planDescriptions: Record<ProductKey, string> = {
-	starter: "Small crews testing the waters.",
-	growth: "The standard for growing teams.",
-	pro: "Established teams requiring scale.",
-	enterprise: "Regional leads managing multiple sites.",
+	starter: "For small teams getting started.",
+	growth: "For growing teams ready to scale.",
+	pro: "For established teams that need more control.",
+	enterprise: "For large organizations managing multiple sites.",
 };
 
 export default function PricingPage() {
@@ -74,9 +74,9 @@ export default function PricingPage() {
 							<Tabs
 								value={interval}
 								onValueChange={(value) => setInterval(value as BillingInterval)}
-								className="w-full max-w-[300px]"
+								className="w-full max-w-80"
 							>
-								<TabsList className="grid w-full grid-cols-2">
+								<TabsList className="w-full bg-secondary">
 									<TabsTrigger value="monthly">Monthly</TabsTrigger>
 									<TabsTrigger value="yearly" className="relative">
 										Yearly

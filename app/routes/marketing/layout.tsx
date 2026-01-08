@@ -1,6 +1,7 @@
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, Outlet, redirect } from "react-router";
+// import { ColorSchemeToggle } from "~/components/layout/color-scheme-toggle";
 import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth-client";
 
@@ -189,8 +190,8 @@ export default function MarketingLayout() {
 							</div>
 						</div>
 					</div>
-					{/* <div className="mt-16 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
-						<p className="text-xs text-muted-foreground/60">
+					{/* <div className="mt-16 flex flex-col items-center justify-between gap-4 border-border/40 border-t pt-8 md:flex-row">
+						<p className="text-muted-foreground/60 text-xs">
 							© {new Date().getFullYear()} KaamSync. All rights reserved.
 						</p>
 						<ColorSchemeToggle />
