@@ -141,6 +141,7 @@ export const CreateTeamDialog = memo(
 										isManual.current = true;
 									}, // Once they type here, auto-fill stops
 								}}
+								labelProps={{ children: "Code" }}
 								errors={fields.code.errors}
 							/>
 							{/* Real-time Preview */}

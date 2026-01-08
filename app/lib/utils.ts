@@ -94,9 +94,15 @@ export function formatCompactRelativeDate(
 	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp))
 		return "Invalid Date";
 
-	if (isToday(d)) return "Today";
+	// Check today relative to the reference date
+	const isTodayRelative =
+		d.getDate() === now.getDate() &&
+		d.getMonth() === now.getMonth() &&
+		d.getFullYear() === now.getFullYear();
 
-	// Helper for tomorrow check respecting the reference date if provided
+	if (isTodayRelative) return "Today";
+
+	// Check tomorrow relative to the reference date
 	const tomorrowOfNow = new Date(now);
 	tomorrowOfNow.setDate(tomorrowOfNow.getDate() + 1);
 	const isTomorrowRelative =

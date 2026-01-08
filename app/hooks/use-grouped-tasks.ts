@@ -35,7 +35,7 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 export function useGroupedTasks(
 	matters: readonly Matter[],
 	statuses: readonly Status[],
-	_teamId: string,
+	teamId: string,
 ) {
 	// Tracks statuses that have been manually toggled
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
@@ -46,8 +46,7 @@ export function useGroupedTasks(
 	useEffect(() => {
 		setToggledStatuses(new Set());
 		// read _teamId to make it an explicit dependency (reset toggles on team change)
-		void _teamId;
-	}, [_teamId]);
+	}, [teamId]);
 
 	// Stable toggle function with useCallback
 	const toggleGroup = useCallback((id: string) => {

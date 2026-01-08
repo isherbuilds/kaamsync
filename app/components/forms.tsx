@@ -228,6 +228,9 @@ export type SelectProps = {
 	placeholder: string;
 	defaultValue?: string;
 	["aria-describedby"]?: string;
+	errors?: ListOfErrors;
+	labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
+	className?: string;
 };
 
 export function SelectField({

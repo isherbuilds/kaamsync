@@ -233,7 +233,7 @@ export function PricingGrid({
 					value={interval}
 					onValueChange={(value) => setInterval(value as BillingInterval)}
 				>
-					<TabsList className="grid w-75 grid-cols-2">
+					<TabsList className="grid w-72 grid-cols-2">
 						<TabsTrigger value="monthly">Monthly</TabsTrigger>
 						<TabsTrigger value="yearly" className="relative">
 							Yearly

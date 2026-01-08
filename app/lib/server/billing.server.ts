@@ -109,6 +109,7 @@ async function upsertCustomer(
 			// Find their organization membership
 			const membership = await db.query.membersTable.findFirst({
 				where: eq(membersTable.userId, user.id),
+				orderBy: (m, { desc }) => desc(m.createdAt),
 			});
 
 			if (membership) {
@@ -228,9 +229,11 @@ async function recordPayment(
 	status: string,
 ): Promise<void> {
 	// Check for existing payment
-	const existing = await db.query.paymentsTable.findFirst({
-		where: eq(paymentsTable.dodoPaymentId, payload.payment_id ?? ""),
-	});
+	const existing = payload.payment_id
+		? await db.query.paymentsTable.findFirst({
+				where: eq(paymentsTable.dodoPaymentId, payload.payment_id),
+			})
+		: null;
 
 	if (existing) {
 		// Update status
@@ -650,11 +653,10 @@ export async function canAddMember(organizationId: string): Promise<{
 		// User said: "How about we kick? ... block ability to add tasks ... block the amount"
 		// User also said: "Soft Enforcement ... workspace enters Roach Motel".
 
-		// If plan supports usage-based billing (Growth/Pro) AND is Active, allow.
-		// If plan is Starter or Cancelled, BLOCK.
-
 		const sub = await getOrganizationSubscription(organizationId);
-		const isActivePaid = sub?.status === "active" && limits.members !== 3; // simplistic check for Paid
+		const planKey = sub?.planKey as ProductKey | undefined;
+		const isActivePaid =
+			sub?.status === "active" && planKey && planKey !== "starter";
 
 		if (isActivePaid) {
 			// Allow overage for paid plans (billable)

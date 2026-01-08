@@ -18,8 +18,8 @@ export { PERMISSION_ERRORS };
 /**
  * Assert user is logged in with active organization
  */
-export function assertLoggedIn(ctx: Context): asserts ctx is Context & { 
-	activeOrganizationId: string 
+export function assertLoggedIn(ctx: Context): asserts ctx is Context & {
+	activeOrganizationId: string;
 } {
 	if (!ctx.activeOrganizationId) {
 		throw new Error(PERMISSION_ERRORS.NOT_LOGGED_IN);
@@ -29,7 +29,11 @@ export function assertLoggedIn(ctx: Context): asserts ctx is Context & {
 /**
  * Get team membership for user with error handling
  */
-export async function getTeamMembership(tx: MutatorTx, ctx: Context, teamId: string) {
+export async function getTeamMembership(
+	tx: MutatorTx,
+	ctx: Context,
+	teamId: string,
+) {
 	assertLoggedIn(ctx);
 	return await tx.run(
 		zql.teamMembershipsTable
@@ -44,7 +48,11 @@ export async function getTeamMembership(tx: MutatorTx, ctx: Context, teamId: str
 /**
  * Assert user is a team member
  */
-export async function assertTeamMember(tx: MutatorTx, ctx: Context, teamId: string) {
+export async function assertTeamMember(
+	tx: MutatorTx,
+	ctx: Context,
+	teamId: string,
+) {
 	const membership = await getTeamMembership(tx, ctx, teamId);
 	if (!membership) {
 		throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
@@ -55,7 +63,11 @@ export async function assertTeamMember(tx: MutatorTx, ctx: Context, teamId: stri
 /**
  * Assert user is a team manager
  */
-export async function assertTeamManager(tx: MutatorTx, ctx: Context, teamId: string) {
+export async function assertTeamManager(
+	tx: MutatorTx,
+	ctx: Context,
+	teamId: string,
+) {
 	const membership = await assertTeamMember(tx, ctx, teamId);
 	if (membership.role !== "manager") {
 		throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
@@ -70,9 +82,13 @@ export async function assertTeamManager(tx: MutatorTx, ctx: Context, teamId: str
 /**
  * Check if user can modify a matter (author, assignee, or manager)
  */
-export async function canModifyMatter(tx: MutatorTx, ctx: Context, matterId: string) {
+export async function canModifyMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
 	assertLoggedIn(ctx);
-	
+
 	const matter = await tx.run(
 		zql.mattersTable
 			.where("id", matterId)
@@ -107,7 +123,11 @@ export async function canModifyMatter(tx: MutatorTx, ctx: Context, matterId: str
 /**
  * Assert user can modify a matter
  */
-export async function assertCanModifyMatter(tx: MutatorTx, ctx: Context, matterId: string) {
+export async function assertCanModifyMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
 	const result = await canModifyMatter(tx, ctx, matterId);
 	if (!result.canModify) {
 		throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
@@ -118,9 +138,13 @@ export async function assertCanModifyMatter(tx: MutatorTx, ctx: Context, matterI
 /**
  * Check if user can modify a deleted matter (for restore operations)
  */
-export async function canModifyDeletedMatter(tx: MutatorTx, ctx: Context, matterId: string) {
+export async function canModifyDeletedMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
 	assertLoggedIn(ctx);
-	
+
 	const matter = await tx.run(
 		zql.mattersTable
 			.where("id", matterId)
@@ -164,30 +188,32 @@ export function createPermissionHelpers(tx: MutatorTx, ctx: Context) {
 	return {
 		// Core assertions
 		assertLoggedIn: () => assertLoggedIn(ctx),
-		
+
 		// Team permissions
 		getTeamMembership: (teamId: string) => getTeamMembership(tx, ctx, teamId),
 		assertTeamMember: (teamId: string) => assertTeamMember(tx, ctx, teamId),
 		assertTeamManager: (teamId: string) => assertTeamManager(tx, ctx, teamId),
-		
+
 		// Matter permissions
 		canModifyMatter: (matterId: string) => canModifyMatter(tx, ctx, matterId),
-		assertCanModifyMatter: (matterId: string) => assertCanModifyMatter(tx, ctx, matterId),
-		canModifyDeletedMatter: (matterId: string) => canModifyDeletedMatter(tx, ctx, matterId),
-		
+		assertCanModifyMatter: (matterId: string) =>
+			assertCanModifyMatter(tx, ctx, matterId),
+		canModifyDeletedMatter: (matterId: string) =>
+			canModifyDeletedMatter(tx, ctx, matterId),
+
 		// Convenience methods
-		async assertMatterAuthor(matterId: string) {
-			const result = await this.assertCanModifyMatter(matterId);
+		assertMatterAuthor: async (matterId: string) => {
+			const result = await assertCanModifyMatter(tx, ctx, matterId);
 			if (!result.isAuthor) {
-				throw new Error("Only the matter author can perform this action");
+				throw new Error(PERMISSION_ERRORS.AUTHOR_REQUIRED);
 			}
 			return result;
 		},
-		
-		async assertMatterAssignee(matterId: string) {
-			const result = await this.assertCanModifyMatter(matterId);
+
+		assertMatterAssignee: async (matterId: string) => {
+			const result = await assertCanModifyMatter(tx, ctx, matterId);
 			if (!result.isAssignee) {
-				throw new Error("Only the matter assignee can perform this action");
+				throw new Error(PERMISSION_ERRORS.ASSIGNEE_REQUIRED);
 			}
 			return result;
 		},

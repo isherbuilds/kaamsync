@@ -17,6 +17,8 @@ export const PERMISSION_ERRORS = {
 	MATTER_NOT_FOUND: "Matter not found",
 	TEAM_NOT_FOUND: "Team not found",
 	ORGANIZATION_ACCESS_DENIED: "Access denied to this organization",
+	AUTHOR_REQUIRED: "Only the matter author can perform this action",
+	ASSIGNEE_REQUIRED: "Only the matter assignee can perform this action",
 } as const;
 
 // ============================================================================

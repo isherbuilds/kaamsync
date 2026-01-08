@@ -39,6 +39,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	} catch (error) {
 		console.error("[Billing Redirect] Error:", error);
 		// Fallback on error - redirect to home
-		return redirect("/");
+		return redirect(`/${queryString ? `?${queryString}` : ""}`);
 	}
 }

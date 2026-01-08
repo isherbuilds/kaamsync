@@ -47,7 +47,8 @@ function UsageItem({
 	formatValue,
 }: UsageItemProps) {
 	const isUnlimited = limit === -1;
-	const percentage = isUnlimited ? 0 : Math.min((current / limit) * 100, 100);
+	const percentage =
+		isUnlimited || limit === 0 ? 0 : Math.min((current / limit) * 100, 100);
 	const isOverLimit = !isUnlimited && current > limit;
 	const isNearLimit = !isUnlimited && percentage >= 80;
 	const overage = isOverLimit ? current - limit : 0;
@@ -82,7 +83,7 @@ function UsageItem({
 					>
 						{displayValue}
 						{unit} / {displayLimit}
-						{unit && !isUnlimited}
+						{!isUnlimited && unit}
 					</span>
 					{isOverLimit && (
 						<TooltipProvider>
@@ -190,7 +191,7 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 						<div className="flex items-center gap-2">
 							<AlertTriangle className="h-4 w-4" />
 							<span>
-								Usage limits exceeded. creating new items is blocked until you
+								Usage limits exceeded. Creating new items is blocked until you
 								upgrade.
 							</span>
 						</div>

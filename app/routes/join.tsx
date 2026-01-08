@@ -56,11 +56,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 		organizations.map((org) => [org.id, { name: org.name, slug: org.slug }]),
 	);
 
-	return pendingInvites.map((invite) => ({
-		...invite,
-		organizationName: orgInfoById[invite.organizationId].name,
-		organizationSlug: orgInfoById[invite.organizationId].slug,
-	}));
+	return pendingInvites
+		.filter((invite) => orgInfoById[invite.organizationId])
+		.map((invite) => ({
+			...invite,
+			organizationName: orgInfoById[invite.organizationId].name,
+			organizationSlug: orgInfoById[invite.organizationId].slug,
+		}));
 }
 
 export async function action({ request }: Route.ActionArgs) {

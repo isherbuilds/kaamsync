@@ -197,6 +197,7 @@ export default function OrgMembersPage() {
 								</div>
 								<div className="space-y-2">
 									<SelectField
+										labelProps={{ children: "Role" }}
 										id={fields.role.id}
 										name={fields.role.name}
 										placeholder="Select a role"

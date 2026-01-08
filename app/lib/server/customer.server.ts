@@ -69,7 +69,7 @@ export async function getOrCreateCustomer(organizationId: string): Promise<{
 			dodoCustomerId = dodoCustomer.customer_id;
 		} catch (error) {
 			console.error("[Customer] Failed to create Dodo customer:", error);
-			// Continue without Dodo customer - billing will be disabled
+			// Continue without Dodo customer - dodoCustomerId will be null
 		}
 	}
 
@@ -83,7 +83,15 @@ export async function getOrCreateCustomer(organizationId: string): Promise<{
 		name: organization.name,
 	};
 
-	await db.insert(customersTable).values(customerData);
+	await db.insert(customersTable).values(customerData).onConflictDoNothing();
 
-	return customerData;
+	// Re-fetch to handle race condition - another request may have inserted first
+	const finalCustomerResult = await getOrganizationCustomer.execute({
+		organizationId,
+	});
+	const finalCustomer = finalCustomerResult[0];
+	if (finalCustomer) return finalCustomer;
+
+	// This should not happen if unique constraint exists
+	throw new Error("Failed to create or retrieve customer");
 }

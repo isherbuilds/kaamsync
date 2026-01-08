@@ -15,8 +15,9 @@ export function BillingStatus({
 	className,
 }: BillingStatusProps) {
 	const isUnlimited = planLimit === -1;
-	const isOverLimit = !isUnlimited && currentMembers > planLimit;
-	const isNearLimit = !isUnlimited && currentMembers >= planLimit * 0.8;
+	const hasValidLimit = !isUnlimited && planLimit > 0;
+	const isOverLimit = hasValidLimit && currentMembers > planLimit;
+	const isNearLimit = hasValidLimit && currentMembers >= planLimit * 0.8;
 
 	const getStatusColor = () => {
 		if (isUnlimited) return "default";
@@ -50,7 +51,7 @@ export function BillingStatus({
 				</div>
 
 				{!isUnlimited && (
-					<div className="w-full bg-secondary rounded-full h-2">
+					<div className="h-2 w-full rounded-full bg-secondary">
 						<div
 							className={`h-2 rounded-full transition-all ${
 								isOverLimit

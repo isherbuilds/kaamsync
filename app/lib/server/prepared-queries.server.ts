@@ -94,9 +94,9 @@ export const getTeamByCode = db
 	.prepare("getTeamByCode");
 
 /**
- * Get team membership (prepared)
+ * Get organization membership (prepared)
  */
-export const getTeamMembership = db
+export const getOrganizationMembership = db
 	.select()
 	.from(membersTable)
 	.where(
@@ -105,7 +105,7 @@ export const getTeamMembership = db
 			eq(membersTable.organizationId, sql.placeholder("organizationId")),
 		),
 	)
-	.prepare("getTeamMembership");
+	.prepare("getOrganizationMembership");
 
 // ============================================================================
 // MATTER QUERIES

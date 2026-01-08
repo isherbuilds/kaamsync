@@ -19,8 +19,14 @@ export const baseSlugSchema = z.object({
 		.string()
 		.min(2, "Slug must be at least 2 characters")
 		.max(50, "Slug too long")
-		.regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens")
-		.refine(s => !s.startsWith("-") && !s.endsWith("-"), "Slug cannot start or end with hyphen"),
+		.regex(
+			/^[a-z0-9-]+$/,
+			"Slug can only contain lowercase letters, numbers, and hyphens",
+		)
+		.refine(
+			(s) => !s.startsWith("-") && !s.endsWith("-"),
+			"Slug cannot start or end with hyphen",
+		),
 });
 
 // ============================================================================
@@ -38,8 +44,9 @@ export const userIdSchema = z.string().min(1, "User is required");
 
 export const emailSchema = z
 	.string()
+	.trim()
 	.email("Invalid email address")
-	.transform(email => email.toLowerCase().trim());
+	.transform((email) => email.toLowerCase());
 
 export const passwordSchema = z
 	.string()
@@ -62,10 +69,7 @@ export const colorSchema = z
 	.regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex color (e.g., #FF0000)")
 	.optional();
 
-export const urlSchema = z
-	.string()
-	.url("Invalid URL")
-	.optional();
+export const urlSchema = z.string().url("Invalid URL").optional();
 
 // ============================================================================
 // VALIDATION HELPERS
@@ -75,16 +79,19 @@ export const urlSchema = z
  * Create a schema for confirming passwords match
  */
 export const createPasswordConfirmationSchema = (passwordField = "password") =>
-	z.object({
-		[passwordField]: passwordSchema,
-		confirmPassword: z.string(),
-	}).refine(
-		data => data[passwordField as keyof typeof data] === data.confirmPassword,
-		{
-			message: "Passwords do not match",
-			path: ["confirmPassword"],
-		}
-	);
+	z
+		.object({
+			[passwordField]: passwordSchema,
+			confirmPassword: z.string(),
+		})
+		.refine(
+			(data) =>
+				data[passwordField as keyof typeof data] === data.confirmPassword,
+			{
+				message: "Passwords do not match",
+				path: ["confirmPassword"],
+			},
+		);
 
 /**
  * Create a schema for unique slug validation (client-side only)
@@ -92,7 +99,7 @@ export const createPasswordConfirmationSchema = (passwordField = "password") =>
 export const createUniqueSlugSchema = (reservedSlugs: string[] = []) =>
 	baseSlugSchema.extend({
 		slug: baseSlugSchema.shape.slug.refine(
-			slug => !reservedSlugs.includes(slug),
-			"This slug is reserved and cannot be used"
+			(slug) => !reservedSlugs.includes(slug),
+			"This slug is reserved and cannot be used",
 		),
 	});

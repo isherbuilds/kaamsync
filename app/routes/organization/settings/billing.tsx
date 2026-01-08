@@ -208,6 +208,8 @@ export default function BillingSettings() {
 					// If you encounter SSL errors with test.checkout.dodopayments.com,
 					// you can copy this URL and open it in a different browser
 					window.location.href = data.url;
+				} else {
+					toast.error("Checkout URL not received. Please try again.");
 				}
 			} catch (err) {
 				console.error("Checkout error:", err);
@@ -260,8 +262,8 @@ export default function BillingSettings() {
 			if (plan === "starter") {
 				if (subscription && subscription.status === "active") {
 					// Redirect to portal for downgrade
-					handleManageSubscription();
 					toast.info("Please downgrade your plan in the customer portal.");
+					handleManageSubscription();
 					return;
 				}
 				toast.info("You are already on the Starter plan.");

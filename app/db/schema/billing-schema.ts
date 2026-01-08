@@ -104,6 +104,7 @@ export const paymentsTable = pgTable(
 			.references(() => organizationsTable.id, { onDelete: "cascade" }),
 		subscriptionId: text("subscription_id").references(
 			() => subscriptionsTable.id,
+			{ onDelete: "set null" },
 		),
 		dodoPaymentId: text("dodo_payment_id").unique(),
 		amount: integer("amount").notNull(), // in cents
