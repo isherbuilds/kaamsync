@@ -52,7 +52,7 @@ export async function getOrCreateCustomer(organizationId: string): Promise<{
 		}
 	}
 
-	const emailToUse = resolvedEmail || `org-${organizationId}@kaamsync.com`;
+	const emailToUse = resolvedEmail || "billing-fallback@kaamsync.com";
 
 	// Create customer in Dodo Payments if billing is enabled
 	let dodoCustomerId: string | null = null;

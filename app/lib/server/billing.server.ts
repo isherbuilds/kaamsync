@@ -185,16 +185,26 @@ async function upsertSubscription(
 		cancelledAt: payload.cancelled_at ? new Date(payload.cancelled_at) : null,
 	};
 
-	// Perform an explicit upsert by organizationId + productId.
-	// Rationale: `dodoSubscriptionId` can be null, so conflicts based on it
-	// may not be detected. Use org+product as the canonical uniqueness for
-	// webhook-driven updates, and fall back to insert when no match exists.
-	const existingSubscription = await db.query.subscriptionsTable.findFirst({
-		where: and(
-			eq(subscriptionsTable.organizationId, subscriptionData.organizationId),
-			eq(subscriptionsTable.productId, subscriptionData.productId),
-		),
-	});
+	// First, try to find by dodoSubscriptionId (most specific, handles webhook retries)
+	let existingSubscription = payload.subscription_id
+		? await db.query.subscriptionsTable.findFirst({
+				where: eq(
+					subscriptionsTable.dodoSubscriptionId,
+					payload.subscription_id,
+				),
+			})
+		: null;
+
+	// If not found by dodo ID, try by organizationId + productId
+	// This handles cases where we might have a local record without a dodo ID yet
+	if (!existingSubscription) {
+		existingSubscription = await db.query.subscriptionsTable.findFirst({
+			where: and(
+				eq(subscriptionsTable.organizationId, subscriptionData.organizationId),
+				eq(subscriptionsTable.productId, subscriptionData.productId),
+			),
+		});
+	}
 
 	if (existingSubscription) {
 		await db

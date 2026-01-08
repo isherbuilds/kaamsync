@@ -12,6 +12,7 @@ import {
 	paymentsTable,
 	subscriptionsTable,
 	teamsTable,
+	usersTable,
 } from "~/db/schema";
 
 // ============================================================================

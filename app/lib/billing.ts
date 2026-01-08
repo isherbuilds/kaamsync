@@ -1,3 +1,4 @@
+import { createId } from "@paralleldrive/cuid2";
 import DodoPayments from "dodopayments";
 
 // Safe environment variable access (server-side only)
@@ -66,7 +67,10 @@ export const planLimits = {
 		members: 3,
 		teams: 5,
 		storageGb: 0.5,
-		matters: 250, // Limit matters/tasks for free tier
+		// Matters enforcement: Counted via getOrganizationMatterCount (prepared query),
+		// usage populated via getOrganizationUsagePrepared, and enforced via canCreateMatter()
+		// in billing.server.ts and assertCanCreateMatter() in zero/billing-limits.ts.
+		matters: 250, // Limit matters/tasks for free tier (fully enforced)
 	},
 	growth: {
 		members: 10,
@@ -365,7 +369,7 @@ export async function reportSeatCount(
 ): Promise<boolean> {
 	const result = await ingestUsageEvents([
 		{
-			event_id: `seat_count_${customerId}_${Date.now()}`,
+			event_id: createId(),
 			customer_id: customerId,
 			event_name: meterEvents.memberSeat,
 			timestamp: new Date().toISOString(),

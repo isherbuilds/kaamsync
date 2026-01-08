@@ -61,6 +61,7 @@ export default [
 		route("zero/query", "routes/api/zero/query.ts"),
 		route("zero/mutate", "routes/api/zero/mutate.ts"),
 		route("billing/redirect", "routes/api/billing/redirect.ts"),
+		// Webhook handled by Better Auth at /api/auth/dodopayments/webhooks
 		// route("billing/debug", "routes/api/billing/debug.ts"),
 		route("billing/check-limits", "routes/api/billing/check-limits.ts"),
 		// route("billing/change-plan", "routes/api/billing/change-plan.ts"),

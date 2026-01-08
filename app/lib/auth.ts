@@ -19,7 +19,6 @@ import { handleBillingWebhook } from "~/lib/server/billing.server";
 import { trackMembershipChange } from "~/lib/server/billing-tracking.server";
 import {
 	env,
-	hasGoogleOAuth,
 	isDevelopment,
 	isProduction,
 } from "~/lib/server/env-validation.server";
@@ -255,48 +254,15 @@ export const auth = betterAuth({
 							usage(),
 							webhooks({
 								webhookKey: billingConfig.webhookSecret,
-								onPayload: async (payload: any) => {
-									const maxRetries = 3;
-									let lastError: Error | null = null;
-
-									for (let attempt = 0; attempt < maxRetries; attempt++) {
-										try {
-											await handleBillingWebhook({
-												business_id: payload.business_id,
-												type: payload.type,
-												timestamp: payload.timestamp,
-												data: payload.data as unknown as Parameters<
-													typeof handleBillingWebhook
-												>[0]["data"],
-											});
-											return; // Success - exit retry loop
-										} catch (error) {
-											lastError =
-												error instanceof Error
-													? error
-													: new Error(String(error));
-
-											if (attempt < maxRetries - 1) {
-												// Exponential backoff: 1s, 2s, 4s
-												const delay = 1000 * 2 ** attempt;
-												console.warn(
-													`[Billing] Webhook attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
-													lastError.message,
-												);
-												await new Promise((resolve) =>
-													setTimeout(resolve, delay),
-												);
-											}
-										}
-									}
-
-									// All retries exhausted
-									console.error(
-										`[Billing] Webhook failed after ${maxRetries} attempts:`,
-										lastError,
+								// Primary webhook handler - register this URL in Dodo Payments dashboard:
+								// https://your-domain.com/api/auth/dodopayments/webhooks
+								onPayload: async (payload) => {
+									// Cast to unknown first to handle type differences between SDK versions
+									await handleBillingWebhook(
+										payload as unknown as Parameters<
+											typeof handleBillingWebhook
+										>[0],
 									);
-									// Re-throw to signal failure to Better Auth
-									throw lastError;
 								},
 							}),
 						],
