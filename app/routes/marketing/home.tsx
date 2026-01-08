@@ -311,7 +311,6 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-			;
 			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto mb-16 max-w-2xl text-center">
@@ -506,7 +505,7 @@ export default function HomePage() {
 											<p className="pl-4">
 												<span className="text-green-400">{`// Work continues locally`}</span>
 											</p>
-											<p className="pl-4">saveToLocalCache(data);</p>
+											<p className="pl-4">saveToLocalCache(data)</p>
 											<p>{"}"}</p>
 											<p className="mt-4">
 												<span className="text-green-400">{`// Auto-sync when back`}</span>
@@ -521,7 +520,6 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-			;
 			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mb-12 text-center">
@@ -549,7 +547,7 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-			;
+
 			<section className="border-border/40 border-t py-24 md:py-32">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border border-border/60 bg-card/30 p-12 text-center backdrop-blur-sm md:p-16">
@@ -586,7 +584,6 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-			;
 		</>
 	);
 }

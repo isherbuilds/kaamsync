@@ -11,21 +11,21 @@ import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
 import { cn } from "~/lib/utils";
 import { createMatterSchema } from "~/lib/validations/matter";
-import { matterType, teamRole } from "../db/helpers";
-import {
-	MemberSelect,
-	type MemberSelectorItem,
-	PrioritySelect,
-	StatusSelect,
-} from "./matter-field-selectors";
-import { Button } from "./ui/button";
+import { matterType, teamRole } from "../../db/helpers";
+import { Button } from "../ui/button";
 import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
 	DialogTitle,
 	DialogTrigger,
-} from "./ui/dialog";
+} from "../ui/dialog";
+import {
+	MemberSelect,
+	type MemberSelectorItem,
+	PrioritySelect,
+	StatusSelect,
+} from "./matter-field-selectors";
 
 interface MatterDialogProps {
 	type: "task" | "request";
@@ -56,7 +56,7 @@ export const MatterDialog = memo(
 		const submitLabel = isRequest ? "Submit Request" : "Create Task";
 		const submittingLabel = isRequest ? "Submitting..." : "Creating...";
 
-		// For requests, only managers can be assigned
+		// Memoize filtered members to prevent recalculation on every render
 		const filteredMembers = useMemo(
 			() =>
 				isRequest

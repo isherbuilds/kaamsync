@@ -47,7 +47,7 @@ export function NavUser({
 							className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 							size="lg"
 						>
-							<CustomAvatar name={user.name} />
+							<CustomAvatar name={user.name} avatar={user.avatar} />
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{user.name}</span>
 								<span className="truncate text-xs">{user.email}</span>
@@ -95,9 +95,7 @@ export function NavUser({
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							onClick={() => {
-								setTimeout(() => {
-									submit(null, { method: "POST", action: "/logout" });
-								}, 100);
+								submit(null, { method: "POST", action: "/logout" });
 							}}
 						>
 							<LogOutIcon />

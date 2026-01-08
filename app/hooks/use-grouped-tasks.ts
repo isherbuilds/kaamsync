@@ -30,7 +30,7 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
 /**
  * Hook to group and flatten tasks by status for virtualized lists.
- * Handles expanded/collapsed state and provides optimized memoized results.
+ * Always performs a full rebuild for clarity and correctness.
  */
 export function useGroupedTasks(
 	matters: readonly Matter[],
@@ -47,6 +47,7 @@ export function useGroupedTasks(
 		setToggledStatuses(new Set());
 	}, [teamId]);
 
+	// Stable toggle function with useCallback
 	const toggleGroup = useCallback((id: string) => {
 		setToggledStatuses((prev) => {
 			const next = new Set(prev);
@@ -60,10 +61,12 @@ export function useGroupedTasks(
 	}, []);
 
 	const result = useMemo(() => {
+		// Early return for empty data
 		if (!matters.length || !statuses.length) {
 			return { flatItems: [], activeCount: 0, stickyIndices: [] };
 		}
 
+		// Full rebuild needed
 		const groups = new Map<
 			string,
 			{ status: Status; tasks: Matter[]; order: number }

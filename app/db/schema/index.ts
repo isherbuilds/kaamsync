@@ -21,6 +21,15 @@ import {
 	usersTable,
 	verificationsTable,
 } from "./auth-schema";
+import {
+	customersTable,
+	customersTableRelations,
+	paymentsTable,
+	paymentsTableRelations,
+	subscriptionsTable,
+	subscriptionsTableRelations,
+	webhookEventsTable,
+} from "./billing-schema";
 
 // --------------------------------------------------------
 // 1. RE-EXPORT AUTH TABLES
@@ -33,6 +42,19 @@ export {
 	verificationsTable,
 	membersTable,
 	invitationsTable,
+};
+
+// --------------------------------------------------------
+// 1.1. RE-EXPORT BILLING TABLES
+// --------------------------------------------------------
+export {
+	customersTable,
+	customersTableRelations,
+	subscriptionsTable,
+	subscriptionsTableRelations,
+	paymentsTable,
+	paymentsTableRelations,
+	webhookEventsTable,
 };
 
 // --------------------------------------------------------
@@ -231,8 +253,11 @@ export const mattersTable = pgTable(
 			table.teamCode,
 			table.shortID,
 		),
+		// Optimized indexes for better query performance
 		index("matters_short_id_idx").on(table.shortID),
 		index("matters_team_idx").on(table.teamId),
+		
+		// Composite indexes for common query patterns
 		index("matters_team_archived_updated_idx").on(
 			table.teamId,
 			table.archived,
@@ -243,28 +268,51 @@ export const mattersTable = pgTable(
 			table.statusId,
 			table.updatedAt,
 		),
-		index("matters_assignee_archived_idx").on(table.assigneeId, table.archived),
-		index("matters_team_priority_archived_idx").on(
-			table.teamId,
-			table.priority,
-			table.archived,
-		),
-		index("matters_due_date_idx").on(table.dueDate),
-		index("matters_org_archived_updated_idx").on(
-			table.orgId,
-			table.archived,
-			table.updatedAt,
-		),
-		index("matters_author_idx").on(table.authorId),
 		index("matters_team_assignee_archived_idx").on(
 			table.teamId,
 			table.assigneeId,
 			table.archived,
 		),
-		// New indexes for REQUEST/TASK workflow
-		// New indexes for REQUEST/TASK workflow
+		index("matters_team_priority_archived_idx").on(
+			table.teamId,
+			table.priority,
+			table.archived,
+		),
+		
+		// User-centric indexes for dashboard queries
+		index("matters_assignee_archived_idx").on(table.assigneeId, table.archived),
+		index("matters_author_idx").on(table.authorId),
+		index("matters_author_type_archived_idx").on(
+			table.authorId,
+			table.type,
+			table.archived,
+		),
+		
+		// Organization-level indexes
+		index("matters_org_archived_updated_idx").on(
+			table.orgId,
+			table.archived,
+			table.updatedAt,
+		),
+		
+		// Due date and time-based indexes
+		index("matters_due_date_idx").on(table.dueDate),
+		index("matters_due_date_archived_idx").on(table.dueDate, table.archived),
+		
+		// Request/Task workflow indexes
 		index("matters_team_type_idx").on(table.teamId, table.type),
 		index("matters_approved_by_idx").on(table.approvedBy),
+		index("matters_type_approved_by_idx").on(table.type, table.approvedBy),
+		
+		// Performance optimization: covering index for matter list queries
+		index("matters_team_list_covering_idx").on(
+			table.teamId,
+			table.archived,
+			table.priority,
+			table.updatedAt,
+			table.statusId,
+			table.assigneeId,
+		),
 	],
 );
 

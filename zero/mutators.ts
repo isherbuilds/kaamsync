@@ -11,6 +11,7 @@ import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
 import { reservedTeamSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
 import type { Context } from "./auth";
+import { assertCanCreateMatter, assertCanCreateTeam } from "./billing-limits";
 import { allocateShortID, type MutatorTx } from "./mutator-helpers";
 import { zql } from "./schema";
 
@@ -128,6 +129,9 @@ export const mutators = defineMutators({
 				if (!membership) {
 					throw new Error("Not a member of this team");
 				}
+
+				// Check billing limits
+				await assertCanCreateMatter(tx, membership.orgId);
 
 				// Permission checks using unified permission system
 				if (
@@ -452,6 +456,9 @@ export const mutators = defineMutators({
 					throw new Error("Not a member of this organization");
 				}
 
+				// Check billing limits before creating team
+				await assertCanCreateTeam(tx, orgMembership.organizationId);
+
 				// Find unique code by checking existing teams
 				const existingTeams = await tx.run(
 					zql.teamsTable.where("orgId", orgMembership.organizationId),
@@ -489,7 +496,7 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
-				// Prepare defaults
+				// Prepare defaults - note: isRequestStatus is not in Zero schema, only in Drizzle
 				const statusRows = DEFAULT_STATUSES.map((status, i) => ({
 					id: createId(),
 					teamId,
@@ -499,7 +506,6 @@ export const mutators = defineMutators({
 					position: i,
 					isDefault: status.isDefault,
 					archived: false,
-					isRequestStatus: status.isRequestStatus,
 					creatorId: ctx.userId,
 					createdAt: now,
 					updatedAt: now,
@@ -524,6 +530,9 @@ export const mutators = defineMutators({
 					}),
 					...statusRows.map((row) => tx.mutate.statusesTable.insert(row)),
 				]);
+
+				// PERFORMANCE: Invalidate organization cache after team creation
+				ctx.invalidateUsageCache?.(orgMembership.organizationId);
 			},
 		),
 

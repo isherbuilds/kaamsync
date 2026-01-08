@@ -5,21 +5,21 @@ import { queries } from "zero/queries";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth";
 import { getActiveOrganization } from "~/lib/server/organization.server";
+import { 
+	withErrorHandler, 
+	assertAuthenticated, 
+	ErrorFactory 
+} from "~/lib/server/error-handler.server";
 
-export async function action({ request }: { request: Request }) {
+export const action = withErrorHandler(async ({ request }: { request: Request }) => {
 	const authSession = await getServerSession(request);
 
-	let activeOrgId = authSession?.session.activeOrganizationId;
+	// Use standardized authentication check
+	assertAuthenticated(authSession?.user, "Authentication required for Zero queries");
 
-	if (!authSession?.user) {
-		console.error("❌ [zero.query] Unauthorized - no session");
-		return new Response(JSON.stringify({ error: "Unauthorized" }), {
-			status: 401,
-			headers: { "Content-Type": "application/json" },
-		});
-	}
+	let activeOrgId = authSession.session.activeOrganizationId;
 
-	// Get active organization
+	// Get active organization if not in session
 	if (!authSession.session.activeOrganizationId) {
 		activeOrgId = await getActiveOrganization(authSession.user.id);
 	}
@@ -30,15 +30,19 @@ export async function action({ request }: { request: Request }) {
 		activeOrganizationId: activeOrgId ?? null,
 	};
 
-	return data(
-		await handleQueryRequest(
-			(name, args) => {
-				const query = mustGetQuery(queries, name);
-				// query.fn receives ctx and args, returns ZQL
-				return query.fn({ ctx, args });
-			},
-			schema,
-			request,
-		),
-	);
-}
+	try {
+		return data(
+			await handleQueryRequest(
+				(name, args) => {
+					const query = mustGetQuery(queries, name);
+					return query.fn({ ctx, args });
+				},
+				schema,
+				request,
+			),
+		);
+	} catch (error) {
+		console.error("❌ [zero.query] Query execution failed:", error);
+		throw ErrorFactory.internal("Query execution failed");
+	}
+});

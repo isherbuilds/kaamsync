@@ -10,7 +10,7 @@ import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
 import { CustomChildrenField } from "~/components/forms";
-import { MemberSelect } from "~/components/matter-field-selectors";
+import { MemberSelect } from "~/components/matter/matter-field-selectors";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";

@@ -1,6 +1,6 @@
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { AlertCircle } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
 	createContext,
 	isRouteErrorResponse,
@@ -11,8 +11,8 @@ import {
 import { ClientOnly } from "remix-utils/client-only";
 import { preloadAllTeams } from "zero/preload";
 import { queries } from "zero/queries";
-import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
-import { AppSidebar } from "~/components/app-sidebar";
+import { CACHE_LONG, CACHE_USER_DATA } from "zero/query-cache-policy";
+import { AppSidebar } from "~/components/layout/app-sidebar";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
@@ -105,28 +105,35 @@ function Layout({
 }) {
 	const z = useZero();
 
-	// Context is now automatic from ZeroProvider - no need to pass queryCtx
+	// Use optimized cache policies - org data changes less frequently
 	const [orgsData] = useQuery(queries.getOrganizationList(), CACHE_LONG);
-	const [teamsData] = useQuery(queries.getTeamsList(), CACHE_NAV);
+	const [teamsData] = useQuery(queries.getTeamsList(), CACHE_USER_DATA);
 
-	// Preload teams for instant switching
 	const activeOrgId = authSession.session.activeOrganizationId;
 
+	// Memoize team IDs to prevent unnecessary preloading re-runs
+	const teamIds = useMemo(() => teamsData.map((t) => t.id), [teamsData]);
+
+	// Optimize preloading with reduced timeout and memoized dependencies
 	useEffect(() => {
-		if (teamsData.length > 0 && activeOrgId) {
+		if (teamIds.length > 0 && activeOrgId) {
 			const timeout = setTimeout(() => {
-				preloadAllTeams(
-					z,
-					teamsData.map((w) => w.id),
-					activeOrgId,
-				);
-			}, 100); // Defer to next event loop tick to avoid UI blocking
+				preloadAllTeams(z, teamIds, activeOrgId);
+			}, 50); // Reduced from 100ms for faster preloading
 			return () => clearTimeout(timeout);
 		}
-	}, [z, activeOrgId, teamsData]);
+	}, [z, activeOrgId, teamIds]);
 
-	// Direct find - O(n) on small array, no memoization overhead needed
-	const selectedOrg = orgsData.find((o) => o.slug === orgSlug);
+	// Memoize org lookup to prevent unnecessary re-renders
+	const selectedOrg = useMemo(
+		() =>
+			orgsData.find((o) => o.slug === orgSlug) ?? {
+				id: "",
+				name: "",
+				slug: "",
+			},
+		[orgsData, orgSlug],
+	);
 
 	return (
 		<SidebarProvider>
@@ -134,7 +141,7 @@ function Layout({
 				{() => (
 					<AppSidebar
 						authUser={authSession.user}
-						selectedOrg={selectedOrg ?? { id: "", name: "", slug: "" }}
+						selectedOrg={selectedOrg}
 						organizations={orgsData}
 						teams={teamsData}
 					/>

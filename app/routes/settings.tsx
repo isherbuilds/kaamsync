@@ -12,6 +12,7 @@ const sidebarNavItems = [
 		title: "Security",
 		href: "/settings/security",
 	},
+	// Note: Billing is managed at the organization level (/:orgSlug/settings/billing)
 ];
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
@@ -55,7 +56,7 @@ export default function SettingsLayout() {
 	return (
 		<div className="hidden space-y-6 p-10 pb-16 md:block">
 			<div className="space-y-0.5">
-				<h2 className="text-2xl font-bold tracking-tight">Settings</h2>
+				<h2 className="font-bold text-2xl tracking-tight">Settings</h2>
 				<p className="text-muted-foreground">
 					Manage your account settings and preferences.
 				</p>

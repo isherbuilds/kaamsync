@@ -1,4 +1,5 @@
 import { LaptopIcon, MoonIcon, SunIcon } from "lucide-react";
+import { Button } from "~/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -10,7 +11,6 @@ import {
 	useColorScheme,
 	useSetColorScheme,
 } from "~/lib/color-scheme/components";
-import { Button } from "./ui/button";
 
 const THEME_ICONS = {
 	light: <SunIcon className="size-4" />,

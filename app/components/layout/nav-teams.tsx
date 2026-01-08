@@ -3,6 +3,8 @@
 import { Cog, MoreHorizontal, Plus, Users2Icon } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
+import { StableLink } from "~/components/stable-link";
+import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -19,8 +21,6 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "~/components/ui/sidebar";
-import { CreateTeamDialog } from "./create-team-dialog";
-import { StableLink } from "./stable-link";
 
 export function NavTeams({
 	teams,

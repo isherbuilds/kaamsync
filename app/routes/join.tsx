@@ -8,8 +8,8 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useState } from "react";
 import { data, Form, href, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
-import { BasicLayout } from "~/components/basic-layout";
 import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
+import { BasicLayout } from "~/components/layout/basic-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { AppInfo } from "~/lib/app-config";
 import { auth, getServerSession } from "~/lib/auth";
@@ -34,12 +34,16 @@ export async function loader({ request }: Route.LoaderArgs) {
 		query: { email: session.user.email },
 	});
 
-	if (!invitations?.length) {
+	const pendingInvites = invitations.filter(
+		(invite) => !invite.status || invite.status === "pending",
+	);
+
+	if (!pendingInvites?.length) {
 		return [];
 	}
 
 	// Collect unique orgIds
-	const orgIds = [...new Set(invitations.map((inv) => inv.organizationId))];
+	const orgIds = [...new Set(pendingInvites.map((inv) => inv.organizationId))];
 
 	// Fetch organizations if needed
 	const organizations = orgIds.length
@@ -52,11 +56,13 @@ export async function loader({ request }: Route.LoaderArgs) {
 		organizations.map((org) => [org.id, { name: org.name, slug: org.slug }]),
 	);
 
-	return invitations.map((invite) => ({
-		...invite,
-		organizationName: orgInfoById[invite.organizationId]?.name ?? "",
-		organizationSlug: orgInfoById[invite.organizationId]?.slug ?? "",
-	}));
+	return pendingInvites
+		.filter((invite) => orgInfoById[invite.organizationId])
+		.map((invite) => ({
+			...invite,
+			organizationName: orgInfoById[invite.organizationId].name,
+			organizationSlug: orgInfoById[invite.organizationId].slug,
+		}));
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -92,7 +98,6 @@ export async function action({ request }: Route.ActionArgs) {
 	if (submission.status !== "success") {
 		return data(
 			{ result: submission.reply() },
-			// biome-ig
 			{ status: submission.status === "error" ? 400 : 200 },
 			// toast.error("Invalid form data.")
 		);

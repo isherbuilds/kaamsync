@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
+import { InputField, SelectField } from "~/components/forms.js";
 
 // UI Components
 import { CustomAvatar } from "~/components/ui/avatar";
@@ -34,7 +35,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -42,6 +42,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/select";
+
 import { orgRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 // Auth & Hooks
@@ -77,17 +78,50 @@ export default function OrgMembersPage() {
 			if (submission?.status !== "success") return;
 
 			startTransition(async () => {
-				const { error } = await authClient.organization.inviteMember({
-					email: submission.value.email,
-					role: submission.value.role,
-				});
+				// Check billing limits before inviting
+				let memberRequiresPayment = false;
+				try {
+					const limitsRes = await fetch("/api/billing/check-limits");
+					const limits = await limitsRes.json();
 
-				if (error) {
-					toast.error(error.message || "Failed to send invitation");
-				} else {
-					toast.success(`Invitation sent to ${submission.value.email}`);
-					setInviteOpen(false);
+					if (!limits.canAddMember) {
+						toast.error(
+							limits.memberMessage ||
+								"Member limit reached. Please upgrade your plan.",
+						);
+						return;
+					}
+
+					memberRequiresPayment = limits.memberRequiresPayment;
+				} catch (err) {
+					console.error("[Billing] Failed to check limits:", err);
+					// Continue with invite on error - server will reject if truly over limit
 				}
+
+				toast.promise(
+					(async () => {
+						const { data: invite, error } =
+							await authClient.organization.inviteMember({
+								email: submission.value.email,
+								role: submission.value.role,
+							});
+
+						if (error) throw error;
+						return invite;
+					})(),
+					{
+						loading: "Sending invitation...",
+						success: () => {
+							setInviteOpen(false);
+							if (memberRequiresPayment) {
+								return `Invitation sent to ${submission.value.email}. Note: This will add $5/mo to your upcoming invoice.`;
+							}
+							return `Invitation sent to ${submission.value.email}`;
+						},
+						error: (err: unknown) =>
+							err instanceof Error ? err.message : "Failed to send invitation",
+					},
+				);
 			});
 		},
 	});
@@ -151,33 +185,28 @@ export default function OrgMembersPage() {
 							</DialogHeader>
 							<form {...getFormProps(form)} className="space-y-4 pt-4">
 								<div className="space-y-2">
-									<Input
-										{...getInputProps(fields.email, { type: "email" })}
-										placeholder="name@company.com"
-										className="h-10"
-										autoFocus
+									<InputField
+										labelProps={{ children: "Email Address" }}
+										inputProps={{
+											...getInputProps(fields.email, { type: "email" }),
+											placeholder: "name@company.com",
+											autoFocus: true,
+										}}
+										errors={fields.email.errors}
 									/>
-									{fields.email.errors && (
-										<p className="text-[10px] text-destructive">
-											{fields.email.errors}
-										</p>
-									)}
 								</div>
 								<div className="space-y-2">
-									<Select
-										onValueChange={(val) =>
-											form.update({ name: fields.role.name, value: val })
-										}
-										defaultValue={fields.role.value}
-									>
-										<SelectTrigger className="h-10 capitalize">
-											<SelectValue placeholder="Select a role" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="member">Member</SelectItem>
-											<SelectItem value="admin">Admin</SelectItem>
-										</SelectContent>
-									</Select>
+									<SelectField
+										labelProps={{ children: "Role" }}
+										id={fields.role.id}
+										name={fields.role.name}
+										placeholder="Select a role"
+										defaultValue={fields.role.defaultValue}
+										items={[
+											{ name: "Admin", value: "admin" },
+											{ name: "Member", value: "member" },
+										]}
+									/>
 								</div>
 								<Button
 									type="submit"

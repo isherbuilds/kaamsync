@@ -1,10 +1,18 @@
+import { useControl } from "@conform-to/react/future";
 import type { VariantProps } from "class-variance-authority";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import type { buttonVariants } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
 import { cn } from "~/lib/utils";
 import {
@@ -208,6 +216,77 @@ export function TextareaField({
 				id={id}
 				{...textareaProps}
 			/>
+			{errorId ? <ErrorList errors={errors} id={errorId} /> : null}
+		</div>
+	);
+}
+
+export type SelectProps = {
+	id?: string;
+	name: string;
+	items: Array<{ name: string; value: string }>;
+	placeholder: string;
+	defaultValue?: string;
+	["aria-describedby"]?: string;
+	errors?: ListOfErrors;
+	labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
+	className?: string;
+};
+
+export function SelectField({
+	name,
+	items,
+	placeholder,
+	defaultValue,
+	labelProps,
+	className,
+	id,
+	errors,
+	...props
+}: SelectProps) {
+	const fallbackId = useId();
+	const selectId = id || fallbackId;
+	const errorId = errors?.length ? `${selectId}-error` : undefined;
+	const selectRef = useRef<React.ComponentRef<typeof SelectTrigger>>(null);
+	const control = useControl({
+		defaultValue,
+		onFocus() {
+			selectRef.current?.focus();
+		},
+	});
+
+	return (
+		<div className={cn(className, "flex flex-col gap-2")}>
+			<input name={name} ref={control.register} hidden />
+			{labelProps && <Label htmlFor={selectId} {...labelProps} />}
+			<Select
+				value={control.value}
+				onValueChange={(value) => control.change(value)}
+				onOpenChange={(open) => {
+					if (!open) {
+						control.blur();
+					}
+				}}
+			>
+				<SelectTrigger
+					{...props}
+					ref={selectRef}
+					id={selectId}
+					aria-describedby={errorId}
+					aria-invalid={errorId ? true : undefined}
+				>
+					<SelectValue placeholder={placeholder} />
+				</SelectTrigger>
+				<SelectContent>
+					{items.map((item) => {
+						return (
+							<SelectItem key={item.value} value={item.value}>
+								{item.name}
+							</SelectItem>
+						);
+					})}
+				</SelectContent>
+			</Select>
 			{errorId ? <ErrorList errors={errors} id={errorId} /> : null}
 		</div>
 	);

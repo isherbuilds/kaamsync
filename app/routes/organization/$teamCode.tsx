@@ -6,12 +6,12 @@ import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
-import { MatterDialog } from "~/components/matter-dialog";
+import { MatterDialog } from "~/components/matter/matter-dialog";
 import {
 	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
-} from "~/components/matter-field-selectors";
+} from "~/components/matter/matter-field-selectors";
 import { StableLink } from "~/components/stable-link";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -246,7 +246,7 @@ const GroupHeader = memo(
 			<button
 				type="button"
 				onClick={() => onToggle(status.id)}
-				className="sticky top-0 z-20 flex h-11 w-full items-center gap-2 border-b bg-background px-4 transition-colors hover:bg-muted/50"
+				className="sticky top-0 z-20 flex h-11 w-full items-center gap-2 border-b bg-background px-4 transition-colors hover:bg-muted"
 			>
 				<ChevronDown
 					className={cn(

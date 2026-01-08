@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { useCallback } from "react";
 import { useLocation } from "react-router";
 import { StableLink } from "~/components/stable-link";
 import {
@@ -27,6 +28,11 @@ export function NavMain({
 	const location = useLocation();
 	const { setOpenMobile } = useSidebar();
 
+	const handleLinkClick = useCallback(() => {
+		const timeoutId = setTimeout(() => setOpenMobile(false), 100);
+		return () => clearTimeout(timeoutId);
+	}, [setOpenMobile]);
+
 	return (
 		<SidebarGroup>
 			<SidebarMenu>
@@ -40,7 +46,7 @@ export function NavMain({
 							<StableLink
 								prefetch="viewport"
 								to={`/${orgSlug}${item.url}`}
-								onClick={() => setTimeout(() => setOpenMobile(false), 100)}
+								onClick={handleLinkClick}
 							>
 								{item.icon && <item.icon />}
 								<span>{item.title}</span>

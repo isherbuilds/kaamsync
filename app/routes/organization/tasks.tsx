@@ -6,7 +6,7 @@ import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { renderPriorityIcon } from "~/components/icons";
-import { MatterListLayout } from "~/components/matter-list-layout";
+import { MatterListLayout } from "~/components/matter/matter-list-layout";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Item, ItemContent, ItemTitle } from "~/components/ui/item";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";

@@ -1,5 +1,414 @@
-import UnderConstruction from "~/components/under-construction";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { LoaderFunctionArgs } from "react-router";
+import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
+import { toast } from "sonner";
+import {
+	PaymentHistory,
+	PricingComparison,
+	PricingGrid,
+	SubscriptionStatus,
+	UsageDisplay,
+} from "~/components/billing";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+import { Button } from "~/components/ui/button";
+import { Separator } from "~/components/ui/separator";
+import { getServerSession } from "~/lib/auth";
+import { authClient } from "~/lib/auth-client";
+import {
+	type BillingInterval,
+	billingConfig,
+	canCheckout,
+	getCheckoutSlug,
+	getPlanByProductId,
+	type ProductKey,
+	products,
+} from "~/lib/billing";
+import {
+	canManageBilling,
+	canViewBilling,
+	type OrgRole,
+} from "~/lib/permissions";
+import {
+	getOrganizationPayments,
+	getOrganizationSubscription,
+	getOrganizationUsage,
+} from "~/lib/server/billing.server";
+import { getOrganizationMemberRole } from "~/lib/server/organization.server";
+
+export async function loader({ request }: LoaderFunctionArgs) {
+	const session = await getServerSession(request);
+	if (!session?.session?.activeOrganizationId) {
+		return {
+			subscription: null,
+			payments: [],
+			usage: { members: 0, teams: 0 },
+			billingEnabled: billingConfig.enabled,
+			organizationId: null,
+			userRole: null as OrgRole | null,
+			currentPlan: null as ProductKey | null,
+		};
+	}
+
+	const orgId = session.session.activeOrganizationId;
+	const userId = session.user.id;
+
+	// Fetch role, billing data, and usage in parallel
+	const [subscription, payments, userRole, usage] = await Promise.all([
+		getOrganizationSubscription(orgId),
+		getOrganizationPayments(orgId),
+		getOrganizationMemberRole(orgId, userId),
+		getOrganizationUsage(orgId),
+	]);
+
+	// Determine current plan - use stored planKey if available, fallback to productId lookup
+	const currentPlan: ProductKey | null =
+		(subscription?.planKey as ProductKey | null) ??
+		(subscription?.productId
+			? getPlanByProductId(subscription.productId)
+			: null);
+
+	return {
+		subscription,
+		payments,
+		usage,
+		billingEnabled: billingConfig.enabled,
+		organizationId: orgId,
+		userRole,
+		currentPlan,
+	};
+}
+
+interface SelectedPlan {
+	plan: ProductKey;
+	interval: BillingInterval;
+}
 
 export default function BillingSettings() {
-	return <UnderConstruction message="Under Construction" route="/billing" />;
+	const loaderData = useLoaderData<typeof loader>();
+	const {
+		subscription,
+		payments,
+		usage,
+		billingEnabled,
+		organizationId,
+		userRole,
+		currentPlan,
+	} = loaderData;
+	const [searchParams] = useSearchParams();
+	const revalidator = useRevalidator();
+	const [loading, setLoading] = useState(false);
+	const [showPricing, setShowPricing] = useState(false);
+	const [showComparison, setShowComparison] = useState(false);
+	const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null);
+
+	// Permission checks
+	const canManage = canManageBilling(userRole);
+	const canView = canViewBilling(userRole);
+
+	// Rate limiting for checkout attempts (5 per minute)
+	const checkoutAttempts = useRef<number[]>([]);
+	const MAX_CHECKOUT_ATTEMPTS = 5;
+	const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+
+	// Show success/error toasts based on URL params
+	const success = searchParams.get("success");
+	const cancelled = searchParams.get("cancelled");
+
+	useEffect(() => {
+		if (success === "true") {
+			toast.success("Subscription updated successfully!");
+			// Revalidate to get fresh data
+			revalidator.revalidate();
+		} else if (cancelled === "true") {
+			toast.info("Checkout cancelled");
+		}
+	}, [success, cancelled, revalidator]);
+
+	const handleCheckout = useCallback(
+		async (plan: ProductKey, interval: BillingInterval) => {
+			// Permission check - only owner/admin can manage billing
+			if (!canManage) {
+				toast.error(
+					"You don't have permission to manage billing. Contact your organization admin.",
+				);
+				return;
+			}
+
+			if (plan === "starter") {
+				toast.info(
+					"You're on the Starter plan. Manage your subscription to downgrade.",
+				);
+				return;
+			}
+
+			if (plan === "enterprise") {
+				window.location.href =
+					"mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry";
+				return;
+			}
+
+			// Rate limiting check
+			const now = Date.now();
+			checkoutAttempts.current = checkoutAttempts.current.filter(
+				(ts) => now - ts < RATE_LIMIT_WINDOW_MS,
+			);
+
+			if (checkoutAttempts.current.length >= MAX_CHECKOUT_ATTEMPTS) {
+				const oldestAttempt = checkoutAttempts.current[0];
+				const retryAfterSeconds = Math.ceil(
+					(RATE_LIMIT_WINDOW_MS - (now - oldestAttempt)) / 1000,
+				);
+				toast.error(
+					`Too many checkout attempts. Please try again in ${retryAfterSeconds} seconds.`,
+				);
+				return;
+			}
+
+			checkoutAttempts.current.push(now);
+
+			if (!canCheckout(plan)) {
+				toast.error("This plan is not available for checkout");
+				return;
+			}
+
+			const slug = getCheckoutSlug(plan, interval);
+
+			if (!slug) {
+				toast.error(
+					`Product not configured for ${plan} (${interval}). Please contact support.`,
+				);
+				return;
+			}
+
+			setLoading(true);
+			try {
+				const { data, error } = await authClient.dodopayments.checkoutSession({
+					slug,
+					metadata: organizationId ? { organizationId } : undefined,
+				});
+
+				if (error) {
+					throw new Error(error.message || "Checkout failed");
+				}
+
+				if (data?.url) {
+					// Log checkout URL for debugging SSL issues in test mode
+					console.log("[Checkout] Redirecting to:", data.url);
+
+					// If you encounter SSL errors with test.checkout.dodopayments.com,
+					// you can copy this URL and open it in a different browser
+					window.location.href = data.url;
+				} else {
+					toast.error("Checkout URL not received. Please try again.");
+				}
+			} catch (err) {
+				console.error("Checkout error:", err);
+				toast.error(err instanceof Error ? err.message : "Checkout failed");
+			} finally {
+				setLoading(false);
+			}
+		},
+		[organizationId, canManage],
+	);
+
+	const handleManageSubscription = useCallback(async () => {
+		// Permission check
+		if (!canManage) {
+			toast.error(
+				"You don't have permission to manage billing. Contact your organization admin.",
+			);
+			return;
+		}
+
+		setLoading(true);
+		try {
+			const { data, error } = await authClient.dodopayments.customer.portal();
+
+			if (error) {
+				throw new Error(error.message || "Failed to open portal");
+			}
+
+			if (data?.url) {
+				window.location.href = data.url;
+			}
+		} catch (err) {
+			console.error("Portal error:", err);
+			toast.error(err instanceof Error ? err.message : "Failed to open portal");
+		} finally {
+			setLoading(false);
+		}
+	}, [canManage]);
+
+	const handlePlanSelect = useCallback(
+		(plan: ProductKey, interval: BillingInterval) => {
+			// Permission check
+			if (!canManage) {
+				toast.error(
+					"You don't have permission to change plans. Contact your organization admin.",
+				);
+				return;
+			}
+
+			if (plan === "starter") {
+				if (subscription && subscription.status === "active") {
+					// Redirect to portal for downgrade
+					toast.info("Please downgrade your plan in the customer portal.");
+					handleManageSubscription();
+					return;
+				}
+				toast.info("You are already on the Starter plan.");
+				return;
+			}
+			if (plan === "enterprise") {
+				window.location.href =
+					"mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry";
+				return;
+			}
+
+			// If user has an active subscription, redirect to portal for ANY plan change
+			if (subscription && subscription.status === "active") {
+				handleManageSubscription();
+				toast.info(
+					"Please manage your subscription details in the customer portal.",
+				);
+			} else {
+				// New subscription
+				setSelectedPlan({ plan, interval });
+			}
+		},
+		[canManage, subscription, handleManageSubscription],
+	);
+
+	const confirmPlanChange = useCallback(async () => {
+		if (!selectedPlan) return;
+		await handleCheckout(selectedPlan.plan, selectedPlan.interval);
+		setSelectedPlan(null);
+	}, [selectedPlan, handleCheckout]);
+
+	if (!billingEnabled) {
+		return (
+			<div className="space-y-6">
+				<div>
+					<h3 className="font-medium text-lg">Billing</h3>
+					<p className="text-muted-foreground text-sm">
+						Billing is not configured for this environment.
+					</p>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div className="space-y-6">
+			<div>
+				<h3 className="font-medium text-lg">Billing & Subscription</h3>
+				<p className="text-muted-foreground text-sm">
+					Manage your organization's subscription and billing details.
+				</p>
+			</div>
+			<Separator />
+
+			{/* Read-only access banner for non-admin users */}
+			{canView && !canManage && (
+				<Alert>
+					<AlertTitle>View-only access</AlertTitle>
+					<AlertDescription>
+						You can view billing information, but only organization owners and
+						admins can make changes to the subscription.
+					</AlertDescription>
+				</Alert>
+			)}
+
+			{/* Subscription Status */}
+			<SubscriptionStatus
+				subscription={subscription ?? null}
+				currentPlan={currentPlan}
+				onManage={handleManageSubscription}
+				onUpgrade={() => setShowPricing(true)}
+				loading={loading}
+			/>
+			{/* Usage Display - Shows current usage vs plan limits */}
+			<UsageDisplay usage={usage} currentPlan={currentPlan} />
+
+			{/* Pricing Grid (expandable) */}
+			{(showPricing || !subscription) && (
+				<div className="space-y-4">
+					<div className="flex items-center justify-between">
+						<h4 className="font-medium text-md">Available Plans</h4>
+						{showPricing && subscription && (
+							<button
+								type="button"
+								onClick={() => setShowPricing(false)}
+								className="text-muted-foreground text-sm hover:underline"
+							>
+								Hide plans
+							</button>
+						)}
+					</div>
+					<PricingGrid
+						currentPlan={currentPlan}
+						onSelectPlan={handlePlanSelect}
+						loading={loading}
+					/>
+
+					{/* Feature Comparison (toggleable) */}
+					<div className="space-y-2">
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => setShowComparison(!showComparison)}
+							className="text-muted-foreground text-sm"
+						>
+							{showComparison ? "Hide" : "Show"} feature comparison
+						</Button>
+						{showComparison && <PricingComparison />}
+					</div>
+				</div>
+			)}
+
+			{/* Payment History */}
+			{payments.length > 0 && (
+				<div className="space-y-4">
+					<h4 className="font-medium text-md">Payment History</h4>
+					<PaymentHistory payments={payments} />
+				</div>
+			)}
+
+			{/* Confirmation Dialog for New Subscriptions */}
+			<AlertDialog
+				open={!!selectedPlan}
+				onOpenChange={(open) => !open && setSelectedPlan(null)}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Confirm Plan Change</AlertDialogTitle>
+						<AlertDialogDescription>
+							You're about to upgrade to the{" "}
+							<strong>
+								{selectedPlan && products[selectedPlan.plan].name}
+							</strong>{" "}
+							plan ({selectedPlan?.interval} billing). You'll be redirected to
+							complete payment.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel className="mr-auto">Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={confirmPlanChange} disabled={loading}>
+							{loading ? "Processing..." : "Continue to Checkout"}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</div>
+	);
 }

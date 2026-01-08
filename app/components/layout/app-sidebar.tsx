@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 import { useMatches } from "react-router";
 
-import { NavMain } from "~/components/nav-main";
-import { NavUser } from "~/components/nav-user";
+import { NavMain } from "~/components/layout/nav-main";
+import { NavUser } from "~/components/layout/nav-user";
 import { OrgSwitcher } from "~/components/org-switcher";
 import {
 	Sidebar,
@@ -38,6 +38,7 @@ const navMain = [
 	},
 ];
 
+// Note: URLs with "/settings" are relative to org - they get /:orgSlug prefix
 const navSettings = [
 	{
 		title: "Back Home",
@@ -56,7 +57,7 @@ const navSettings = [
 	},
 	{
 		title: "Billing",
-		url: "/settings/billing",
+		url: "/settings/billing", // Organization billing (/:orgSlug/settings/billing)
 		icon: CreditCard,
 	},
 	{

@@ -152,6 +152,52 @@ const attachmentsTable = {
   primaryKey: ["id"],
   serverName: "attachments",
 } as const;
+const customersTable = {
+  name: "customersTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    organizationId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "organization_id",
+    },
+    dodoCustomerId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "dodo_customer_id",
+    },
+    email: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    name: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "customers",
+} as const;
 const invitationsTable = {
   name: "invitationsTable",
   columns: {
@@ -693,6 +739,63 @@ const organizationsTable = {
   primaryKey: ["id"],
   serverName: "organizations_table",
 } as const;
+const paymentsTable = {
+  name: "paymentsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    customerId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "customer_id",
+    },
+    organizationId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "organization_id",
+    },
+    subscriptionId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "subscription_id",
+    },
+    dodoPaymentId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "dodo_payment_id",
+    },
+    amount: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+    currency: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    status: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "payments",
+} as const;
 const sessionsTable = {
   name: "sessionsTable",
   columns: {
@@ -824,6 +927,99 @@ const statusesTable = {
   },
   primaryKey: ["id"],
   serverName: "statuses",
+} as const;
+const subscriptionsTable = {
+  name: "subscriptionsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    customerId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "customer_id",
+    },
+    organizationId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "organization_id",
+    },
+    dodoSubscriptionId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "dodo_subscription_id",
+    },
+    productId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "product_id",
+    },
+    planKey: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "plan_key",
+    },
+    status: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    billingInterval: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "billing_interval",
+    },
+    amount: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+    },
+    currency: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    currentPeriodStart: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "current_period_start",
+    },
+    currentPeriodEnd: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "current_period_end",
+    },
+    cancelledAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "cancelled_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "subscriptions",
 } as const;
 const teamMembershipsTable = {
   name: "teamMembershipsTable",
@@ -1191,6 +1387,41 @@ const verificationsTable = {
   primaryKey: ["id"],
   serverName: "verifications_table",
 } as const;
+const webhookEventsTable = {
+  name: "webhookEventsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    webhookId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "webhook_id",
+    },
+    eventType: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "event_type",
+    },
+    processedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "processed_at",
+    },
+    payload: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "webhook_events",
+} as const;
 const accountsTableRelationships = {
   usersTable: [
     {
@@ -1216,6 +1447,32 @@ const attachmentsTableRelationships = {
       destField: ["id"],
       destSchema: "usersTable",
       cardinality: "one",
+    },
+  ],
+} as const;
+const customersTableRelationships = {
+  organization: [
+    {
+      sourceField: ["organizationId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  subscriptions: [
+    {
+      sourceField: ["id"],
+      destField: ["customerId"],
+      destSchema: "subscriptionsTable",
+      cardinality: "many",
+    },
+  ],
+  payments: [
+    {
+      sourceField: ["id"],
+      destField: ["customerId"],
+      destSchema: "paymentsTable",
+      cardinality: "many",
     },
   ],
 } as const;
@@ -1509,6 +1766,32 @@ const organizationsTableRelationships = {
     },
   ],
 } as const;
+const paymentsTableRelationships = {
+  customer: [
+    {
+      sourceField: ["customerId"],
+      destField: ["id"],
+      destSchema: "customersTable",
+      cardinality: "one",
+    },
+  ],
+  organization: [
+    {
+      sourceField: ["organizationId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  subscription: [
+    {
+      sourceField: ["subscriptionId"],
+      destField: ["id"],
+      destSchema: "subscriptionsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
 const sessionsTableRelationships = {
   usersTable: [
     {
@@ -1541,6 +1824,32 @@ const statusesTableRelationships = {
       sourceField: ["id"],
       destField: ["statusId"],
       destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+} as const;
+const subscriptionsTableRelationships = {
+  customer: [
+    {
+      sourceField: ["customerId"],
+      destField: ["id"],
+      destSchema: "customersTable",
+      cardinality: "one",
+    },
+  ],
+  organization: [
+    {
+      sourceField: ["organizationId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  payments: [
+    {
+      sourceField: ["id"],
+      destField: ["subscriptionId"],
+      destSchema: "paymentsTable",
       cardinality: "many",
     },
   ],
@@ -1761,6 +2070,7 @@ export const schema = {
   tables: {
     accountsTable: accountsTable,
     attachmentsTable: attachmentsTable,
+    customersTable: customersTable,
     invitationsTable: invitationsTable,
     labelsTable: labelsTable,
     matterLabelsTable: matterLabelsTable,
@@ -1770,17 +2080,21 @@ export const schema = {
     mattersTable: mattersTable,
     membersTable: membersTable,
     organizationsTable: organizationsTable,
+    paymentsTable: paymentsTable,
     sessionsTable: sessionsTable,
     statusesTable: statusesTable,
+    subscriptionsTable: subscriptionsTable,
     teamMembershipsTable: teamMembershipsTable,
     teamsTable: teamsTable,
     timelinesTable: timelinesTable,
     usersTable: usersTable,
     verificationsTable: verificationsTable,
+    webhookEventsTable: webhookEventsTable,
   },
   relationships: {
     accountsTable: accountsTableRelationships,
     attachmentsTable: attachmentsTableRelationships,
+    customersTable: customersTableRelationships,
     invitationsTable: invitationsTableRelationships,
     labelsTable: labelsTableRelationships,
     matterLabelsTable: matterLabelsTableRelationships,
@@ -1790,8 +2104,10 @@ export const schema = {
     mattersTable: mattersTableRelationships,
     membersTable: membersTableRelationships,
     organizationsTable: organizationsTableRelationships,
+    paymentsTable: paymentsTableRelationships,
     sessionsTable: sessionsTableRelationships,
     statusesTable: statusesTableRelationships,
+    subscriptionsTable: subscriptionsTableRelationships,
     teamMembershipsTable: teamMembershipsTableRelationships,
     teamsTable: teamsTableRelationships,
     timelinesTable: timelinesTableRelationships,
@@ -1820,6 +2136,13 @@ export type AccountsTable = Row["accountsTable"];
  * @deprecated Use Row["attachmentsTable"] instead from "@rocicorp/zero".
  */
 export type AttachmentsTable = Row["attachmentsTable"];
+/**
+ * Represents a row from the "customersTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["customersTable"] instead from "@rocicorp/zero".
+ */
+export type CustomersTable = Row["customersTable"];
 /**
  * Represents a row from the "invitationsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
@@ -1884,6 +2207,13 @@ export type MembersTable = Row["membersTable"];
  */
 export type OrganizationsTable = Row["organizationsTable"];
 /**
+ * Represents a row from the "paymentsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["paymentsTable"] instead from "@rocicorp/zero".
+ */
+export type PaymentsTable = Row["paymentsTable"];
+/**
  * Represents a row from the "sessionsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  *
@@ -1897,6 +2227,13 @@ export type SessionsTable = Row["sessionsTable"];
  * @deprecated Use Row["statusesTable"] instead from "@rocicorp/zero".
  */
 export type StatusesTable = Row["statusesTable"];
+/**
+ * Represents a row from the "subscriptionsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["subscriptionsTable"] instead from "@rocicorp/zero".
+ */
+export type SubscriptionsTable = Row["subscriptionsTable"];
 /**
  * Represents a row from the "teamMembershipsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
@@ -1932,6 +2269,13 @@ export type UsersTable = Row["usersTable"];
  * @deprecated Use Row["verificationsTable"] instead from "@rocicorp/zero".
  */
 export type VerificationsTable = Row["verificationsTable"];
+/**
+ * Represents a row from the "webhookEventsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["webhookEventsTable"] instead from "@rocicorp/zero".
+ */
+export type WebhookEventsTable = Row["webhookEventsTable"];
 
 /**
  * Represents the ZQL query builder.
