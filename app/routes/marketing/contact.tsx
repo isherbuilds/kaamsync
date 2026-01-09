@@ -1,6 +1,7 @@
-import { Mail, MessageSquare } from "lucide-react";
+import { Clock, Globe, Mail, MapPin, MessageSquare } from "lucide-react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -134,10 +135,12 @@ export default function ContactPage() {
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="message">Project Details</Label>
+									<Label htmlFor="message">
+										Operation Scale / Matter Volume
+									</Label>
 									<Textarea
 										id="message"
-										placeholder="Tell us about the scale of your operations..."
+										placeholder="Tell us about your team size, site count, and average monthly Matters..."
 										className="min-h-[150px] resize-none rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 									/>
 								</div>
@@ -150,17 +153,88 @@ export default function ContactPage() {
 				</div>
 			</section>
 
-			{/* Enterprise CTA */}
-			<section className="border-border/40 border-t bg-muted/20 py-24">
-				<div className="container mx-auto px-4 text-center md:px-6">
-					<h2 className="mb-6 font-bold text-3xl">Need Enterprise Support?</h2>
-					<p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-						For custom integrations, SLA guarantees, and dedicated support
-						channels.
-					</p>
-					<Button size="lg" variant="outline" className="h-12 px-8" asChild>
-						<Link to="/contact">Contact Enterprise Sales</Link>
-					</Button>
+			{/* BASE OF OPERATIONS */}
+			<section className="bg-muted/30 py-32">
+				<div className="container mx-auto px-4 md:px-6">
+					<div className="mx-auto max-w-4xl">
+						<div className="mb-16">
+							<Badge
+								variant="outline"
+								className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
+							>
+								Presence
+							</Badge>
+							<h2 className="font-medium font-serif text-5xl tracking-tight md:text-6xl">
+								Base of{" "}
+								<span className="text-muted-foreground italic">
+									operations.
+								</span>
+							</h2>
+						</div>
+
+						<div className="grid gap-12 md:grid-cols-3">
+							{[
+								{
+									icon: MapPin,
+									title: "Coordinates",
+									line1: "Sector 18, Cyber Hub",
+									line2: "Gurugram, HR 122002",
+								},
+								{
+									icon: Clock,
+									title: "Operational Hours",
+									line1: "Mon — Fri: 08:00 - 20:00",
+									line2: "Sat: 09:00 - 15:00",
+								},
+								{
+									icon: Globe,
+									title: "Regional Reach",
+									line1: "Supporting 500+ sites",
+									line2: "Across South East Asia",
+								},
+							].map((item) => (
+								<div
+									key={item.title}
+									className="group flex flex-col items-start gap-4"
+								>
+									<div className="flex size-12 items-center justify-center rounded-none border border-border bg-background transition-colors group-hover:border-primary group-hover:bg-primary/5">
+										<item.icon className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
+									</div>
+									<div>
+										<h3 className="mb-2 font-bold font-mono text-xs uppercase tracking-widest">
+											{item.title}
+										</h3>
+										<p className="font-medium text-foreground">{item.line1}</p>
+										<p className="text-muted-foreground text-sm">
+											{item.line2}
+										</p>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
+			</section>
+
+			{/* Enterprise CTA - Final section refinement */}
+			<section className="bg-foreground py-32 text-center text-background">
+				<div className="container mx-auto px-4 md:px-6">
+					<div className="mx-auto max-w-2xl">
+						<h2 className="mb-8 font-medium font-serif text-4xl leading-tight md:text-5xl">
+							Scale your field ops <br /> with confidence.
+						</h2>
+						<p className="mb-12 text-background/70 text-lg">
+							For custom integrations, SLA guarantees, and dedicated support
+							channels, our engineering team is here to help.
+						</p>
+						<Button
+							size="lg"
+							className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+							asChild
+						>
+							<Link to="/contact">Request Enterprise Tour</Link>
+						</Button>
+					</div>
 				</div>
 			</section>
 		</>

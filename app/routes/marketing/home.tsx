@@ -5,12 +5,16 @@ import {
 	ChevronRight,
 	Layout,
 	Lock,
+	Plus,
 	Users,
 	Zap,
 } from "lucide-react";
+import { useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [
 	{ title: "KaamSync - Stop Managing Work in WhatsApp" },
@@ -20,6 +24,63 @@ export const meta: MetaFunction = () => [
 			"Stop drowning in chat groups. KaamSync helps field teams manage tasks, approvals, and operations in one simple, offline-first app.",
 	},
 ];
+
+const faqs = [
+	{
+		q: "How fast can we get started?",
+		a: "Setup takes less than 2 minutes. You can create your organization, invite your first 3 team members for free, and start tracking Matters immediately.",
+	},
+	{
+		q: "Does it really work offline?",
+		a: "Yes. Our Zero-synced architecture ensures that your team can open the app, log work, and take photos without any internet connection. Everything syncs with zero latency once they're back online.",
+	},
+	{
+		q: "Can we migrate from WhatsApp / Slack?",
+		a: "While there's no 'import' from chat, most teams find that starting fresh with structured flows in KaamSync immediately clears up the chaos. You can keep WhatsApp for social chatter and KaamSync for work. (Maybe in the future)",
+	},
+	{
+		q: "Is my data secure?",
+		a: "Absolutely. We use bank-grade AES-256 encryption. Your operational Matters are far more secure in KaamSync than in a public messaging app.",
+	},
+];
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<div className="group border-border/60 border-b last:border-0">
+			<button
+				type="button"
+				onClick={() => setIsOpen(!isOpen)}
+				className="flex w-full items-center justify-between py-6 text-left transition-all hover:text-primary"
+			>
+				<span className="font-serif text-xl tracking-tight md:text-2xl">
+					{q}
+				</span>
+				<Plus
+					className={cn(
+						"h-5 w-5 shrink-0 transition-transform duration-300",
+						isOpen && "rotate-45",
+					)}
+				/>
+			</button>
+			<div
+				className={cn(
+					"grid transition-all duration-300 ease-in-out",
+					isOpen
+						? "grid-rows-[1fr] pb-6 opacity-100"
+						: "grid-rows-[0fr] opacity-0",
+				)}
+			>
+				<div className="overflow-hidden">
+					<p className="max-w-3xl text-lg text-muted-foreground leading-relaxed">
+						{a}
+					</p>
+				</div>
+			</div>
+		</div>
+	);
+}
 
 export default function HomePage() {
 	return (
@@ -99,7 +160,7 @@ export default function HomePage() {
 						<div className="col-span-2 hidden flex-col gap-4 border-border border-r bg-background p-4 md:flex">
 							{[...Array(6)].map((_, i) => (
 								<div
-									key={i}
+									key={`sidebar-skeleton-${i}`}
 									className="h-6 w-full rounded-sm bg-muted/50"
 									style={{ animationDelay: `${i * 100}ms` }}
 								/>
@@ -134,7 +195,7 @@ export default function HomePage() {
 							<div className="grid grid-cols-1 gap-8 md:grid-cols-3">
 								<div className="relative col-span-2 min-h-[300px] border border-border bg-background p-4">
 									{/* Fake Map Grid */}
-									<div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] opacity-50 [background-size:16px_16px]" />
+									<div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] opacity-50" />
 									<div className="relative z-10 flex h-full items-center justify-center">
 										<div className="absolute size-32 animate-ping rounded-full border border-primary/30" />
 										<div className="size-4 rounded-full bg-primary ring-4 ring-primary/20" />
@@ -227,11 +288,11 @@ export default function HomePage() {
 
 						{/* The Chat Simulator */}
 						<div className="relative mx-auto w-full max-w-md">
-							<div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent blur-2xl filter" />
+							<div className="absolute inset-0 bg-linear-to-tr from-primary/20 to-transparent blur-2xl filter" />
 							<div className="relative rounded-2xl border border-white/10 bg-black/40 p-6 font-sans shadow-2xl backdrop-blur-md">
 								<div className="mb-4 flex items-center justify-between border-white/10 border-b pb-4">
 									<div className="flex items-center gap-3">
-										<div className="size-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500" />
+										<div className="size-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500" />
 										<div>
 											<div className="font-bold text-sm text-white">
 												Project Alpha Group
@@ -342,12 +403,12 @@ export default function HomePage() {
 							},
 							{
 								title: "Real-time Telemetry",
-								desc: "Live GPS and status updates. Know exactly what's happening on the ground.",
+								desc: "Live GPS and status updates. Know exactly what's happening on the ground with high-fidelity logs.",
 								icon: Activity,
 							},
 							{
 								title: "Bank-Grade Security",
-								desc: "Your data is encrypted and secure. Far safer than a public chat app.",
+								desc: "AES-256 encryption. Your operational Matters are secure and private. Better than any public chat.",
 								icon: Lock,
 							},
 						].map((feature) => (
@@ -364,6 +425,28 @@ export default function HomePage() {
 								</p>
 							</div>
 						))}
+					</div>
+				</div>
+			</section>
+
+			{/* FAQ SECTION */}
+			<section className="py-32">
+				<div className="container mx-auto px-4 md:px-6">
+					<div className="mx-auto max-w-4xl text-center">
+						<Badge
+							variant="outline"
+							className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
+						>
+							FAQ
+						</Badge>
+						<h2 className="mb-16 font-medium font-serif text-4xl md:text-5xl">
+							Common Questions
+						</h2>
+						<div className="border-border/60 border-t text-left">
+							{faqs.map((faq) => (
+								<FAQItem key={faq.q} {...faq} />
+							))}
+						</div>
 					</div>
 				</div>
 			</section>
@@ -410,7 +493,7 @@ export default function HomePage() {
 						</Button>
 					</div>
 					<p className="mt-6 text-muted-foreground text-sm">
-						Free 14-day trial • Cancel anytime
+						Free for small teams • No credit card required
 					</p>
 				</div>
 			</section>

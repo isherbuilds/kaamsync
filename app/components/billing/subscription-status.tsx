@@ -92,14 +92,12 @@ export function SubscriptionStatus({
 			<Card>
 				<CardHeader>
 					<CardTitle>Subscription</CardTitle>
-					<CardDescription>
-						You're currently on the Starter plan
-					</CardDescription>
+					<CardDescription>You're currently on the Free Plan</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<p className="text-muted-foreground text-sm">
-						Upgrade to unlock more features, add team members, and increase your
-						team's productivity.
+						Upgrade to unlock additional members, unlimited teams, and more
+						storage for your growing business.
 					</p>
 				</CardContent>
 				<CardFooter>

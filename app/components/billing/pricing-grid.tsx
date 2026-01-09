@@ -32,10 +32,10 @@ interface PlanCardProps {
 }
 
 const planDescriptions: Record<ProductKey, string> = {
-	starter: "Perfect for individuals and small teams getting started",
-	growth: "For growing teams that need more power and flexibility",
-	pro: "For established teams requiring advanced features",
-	enterprise: "For large organizations with custom requirements",
+	starter: "Free forever for small teams up to 3 members",
+	growth: "For teams ready to unify their operations",
+	pro: "For scaling organizations requiring maximum control",
+	enterprise: "Customized infrastructure for large-scale operations",
 };
 
 const planIcons: Record<ProductKey, React.ReactNode> = {
@@ -277,7 +277,7 @@ export function PricingComparison() {
 			name: "Teams",
 			starter: "5",
 			growth: "Unlimited",
-			pro: "15",
+			pro: "Unlimited",
 			enterprise: "Unlimited",
 		},
 		{

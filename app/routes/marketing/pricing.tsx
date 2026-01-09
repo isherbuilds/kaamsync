@@ -1,4 +1,4 @@
-import { Building2, Check, Mail, ShieldCheck, Users, Zap } from "lucide-react";
+import { Building2, Check, Plus, ShieldCheck, Users, Zap } from "lucide-react";
 import { useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
@@ -13,28 +13,82 @@ export const meta: MetaFunction = () => [
 	{
 		name: "description",
 		content:
-			"Simple, transparent pricing for teams of all sizes. Start for free.",
+			"Simple, transparent pricing. No hidden fees. No surprises. Start for free and scale as you grow.",
 	},
 ];
 
 const faqs = [
 	{
 		q: "Can I change my plan later?",
-		a: "Yes, you can upgrade or downgrade at any time via your organization settings. Changes are reflected in your next billing cycle.",
+		a: "Absolutely. You can upgrade or downgrade your plan at any time directly through your dashboard. If you upgrade, the new features are available immediately, and we'll pro-rate the difference. Downgrades take effect at the start of your next billing cycle.",
+	},
+	{
+		q: "Is there really a free version?",
+		a: "Yes. Our Starter plan is genuinely free for small teams of up to 10 members. It's not a trial—it's a way for you to build your foundation without worry.",
 	},
 	{
 		q: "What payment methods do you accept?",
-		a: "We accept all major credit cards via Dodo Payments. Invoicing is available for Enterprise customers.",
+		a: "We accept all major credit cards (Visa, Mastercard, American Express) through our secure payment partner, Dodo Payments. For Enterprise customers, we also support bank transfers and custom invoicing.",
 	},
 	{
-		q: "How does metered billing work?",
-		a: "For Growth and Pro plans, we include a generous base of members and storage. If you exceed these, you'll be billed for the additional usage at the end of your cycle.",
+		q: "How secure is my data?",
+		a: "Security is our top priority. We use industry-standard AES-256 encryption for data at rest and TLS 1.2+ for data in transit. We are SOC2 compliant and perform regular third-party security audits.",
 	},
 	{
-		q: "Is there a limit on teams?",
-		a: "The Starter plan allows up to 5 teams. Growth and Enterprise plans offer unlimited team creation.",
+		q: "What happens if I exceed my usage limits?",
+		a: "For Growth and Pro plans, we provide a generous base of inclusions. If you go over, you'll be charged at our standard metered rates at the end of the month. We'll always notify you when you reach 80% and 100% of your limits.",
+	},
+	{
+		q: "Do you offer discounts for non-profits?",
+		a: "We love supporting organizations that do good. Registered non-profits and educational institutions are eligible for a 50% discount on all annual plans. Reach out to our support team to get started.",
+	},
+	{
+		q: "Can I cancel my subscription at any time?",
+		a: "Yes, you can cancel your subscription whenever you like. You'll continue to have access to your paid features until the end of your current billing period, after which your account will revert to the Starter plan.",
+	},
+	{
+		q: "What kind of support can I expect?",
+		a: "All plans include access to our documentation and community forums. Growth and Pro plans include priority email support with a 24-hour response time, while Enterprise customers receive a dedicated account manager and 24/7 phone support.",
 	},
 ];
+
+function FAQItem({ q, a }: { q: string; a: string }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<div className="group border-border/60 border-b last:border-0">
+			<button
+				type="button"
+				onClick={() => setIsOpen(!isOpen)}
+				className="flex w-full items-center justify-between py-6 text-left transition-all hover:text-primary"
+			>
+				<span className="font-serif text-xl tracking-tight md:text-2xl">
+					{q}
+				</span>
+				<Plus
+					className={cn(
+						"h-5 w-5 shrink-0 transition-transform duration-300",
+						isOpen && "rotate-45",
+					)}
+				/>
+			</button>
+			<div
+				className={cn(
+					"grid transition-all duration-300 ease-in-out",
+					isOpen
+						? "grid-rows-[1fr] pb-6 opacity-100"
+						: "grid-rows-[0fr] opacity-0",
+				)}
+			>
+				<div className="overflow-hidden">
+					<p className="max-w-3xl text-lg text-muted-foreground leading-relaxed">
+						{a}
+					</p>
+				</div>
+			</div>
+		</div>
+	);
+}
 
 const planIcons: Record<ProductKey, React.ReactNode> = {
 	starter: <Users className="h-5 w-5" />,
@@ -222,23 +276,28 @@ export default function PricingPage() {
 			</section>
 
 			{/* FAQs */}
-			<section className="border-border/40 border-t bg-muted/20 py-24">
+			<section className="bg-muted/30 py-32">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="mb-16 text-center">
-						<h2 className="mb-4 font-bold text-3xl">
-							Frequently Asked Questions
-						</h2>
-					</div>
-					<div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
-						{faqs.map(({ q, a }) => (
-							<div
-								key={q}
-								className="rounded-lg border border-border bg-background p-8 shadow-sm"
+					<div className="mx-auto max-w-4xl">
+						<div className="mb-20">
+							<Badge
+								variant="outline"
+								className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
 							>
-								<h3 className="mb-3 font-bold text-lg">{q}</h3>
-								<p className="text-muted-foreground leading-relaxed">{a}</p>
-							</div>
-						))}
+								Support & FAQ
+							</Badge>
+							<h2 className="font-medium font-serif text-5xl tracking-tight md:text-6xl">
+								Got{" "}
+								<span className="text-muted-foreground italic">questions?</span>
+								<br />
+								We've got answers.
+							</h2>
+						</div>
+						<div className="border-border/60 border-t">
+							{faqs.map((faq) => (
+								<FAQItem key={faq.q} {...faq} />
+							))}
+						</div>
 					</div>
 				</div>
 			</section>
