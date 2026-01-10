@@ -53,7 +53,7 @@ export const OrgInvitationEmail = ({
 							KaamSync.
 						</Text>
 						<Button
-							className="block rounded bg-[#292cf5ca] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"
+							className="block rounded bg-[#bd491b] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"
 							href={inviteLink}
 						>
 							Join Team
