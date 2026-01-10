@@ -51,6 +51,15 @@ export default function PricingPage() {
 	const [interval, setInterval] = useState<BillingInterval>("monthly");
 	const planKeys: ProductKey[] = ["starter", "growth", "pro", "enterprise"];
 
+	const formatPrice = (cents: number) => {
+		return new Intl.NumberFormat("en-US", {
+			style: "currency",
+			currency: "USD",
+			minimumFractionDigits: 0,
+			maximumFractionDigits: 0,
+		}).format(cents / 100);
+	};
+
 	return (
 		<>
 			{/* Hero */}
@@ -161,11 +170,11 @@ export default function PricingPage() {
 												<>
 													{isYearly && (
 														<span className="mr-2 text-2xl text-muted-foreground line-through decoration-muted-foreground/50">
-															${originalYearly / 100}
+															{formatPrice(originalYearly)}
 														</span>
 													)}
 													<span className="font-bold font-sans text-4xl">
-														${price / 100}
+														{formatPrice(price)}
 													</span>
 													<span className="font-mono text-muted-foreground text-xs uppercase tracking-wide">
 														{isYearly ? "/ year" : "/ month"}

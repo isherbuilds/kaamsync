@@ -128,7 +128,7 @@ export default function MarketingLayout() {
 										onClick={() => setOpen(false)}
 										className="flex items-center justify-center rounded-xl bg-muted/50 px-3 py-3 font-medium text-base text-foreground transition-colors hover:bg-muted"
 									>
-										Log in
+										Log In
 									</Link>
 									<Link
 										to="/signup"
