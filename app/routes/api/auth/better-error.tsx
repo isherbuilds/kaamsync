@@ -1,9 +1,14 @@
-import { Link, type LoaderFunctionArgs, useSearchParams } from "react-router";
+import {
+	Link,
+	type LoaderFunctionArgs,
+	type MetaFunction,
+	useSearchParams,
+} from "react-router";
 import { Button } from "~/components/ui/button";
 
 import { auth } from "~/lib/auth";
 
-export const meta = () => [{ title: "Authentication Error" }];
+export const meta: MetaFunction = () => [{ title: "Authentication Error" }];
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	return await auth.handler(request);

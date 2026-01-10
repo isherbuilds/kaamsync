@@ -35,10 +35,7 @@ export function parseMatterKey(
 ): { code: string; shortID: number } | null {
 	const match = MATTER_KEY_REGEX.exec(key);
 	if (!match) {
-		return {
-			code: "",
-			shortID: 0,
-		};
+		return null;
 	}
 	return {
 		code: match[1],

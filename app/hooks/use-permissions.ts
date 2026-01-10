@@ -1,16 +1,33 @@
 import type { Row } from "@rocicorp/zero";
 import { useMemo } from "react";
 import {
-	canApproveRequests as canApprove,
-	canDeleteMatter as canDel,
-	canEditMatter as canEdit,
-	canManageMembers as canMem,
-	canCreateRequests as canReq,
-	canCreateTasks as canTask,
-	canManageTeam as canWs,
+	canApproveRequests,
+	canCreateRequests,
+	canCreateTasks,
+	canDeleteMatter,
+	canEditMatter,
+	canManageMembers,
+	canManageTeam,
 	type TeamRole,
 } from "~/lib/permissions";
 import { useOrgLoaderData } from "./use-loader-data";
+
+export type UsePermissionsResult = {
+	role: TeamRole | undefined;
+	canCreateTasks: boolean;
+	canCreateRequests: boolean;
+	canApproveRequests: boolean;
+	canManageMembers: boolean;
+	canManageTeam: boolean;
+	canEditMatter: (
+		matterAuthorId: string,
+		matterAssigneeId?: string | null,
+	) => boolean;
+	canDeleteMatter: () => boolean;
+	isManager: boolean;
+	isMember: boolean;
+	isViewer: boolean;
+};
 
 /**
  * Unified hook for accessing organization and team permissions.
@@ -19,7 +36,7 @@ import { useOrgLoaderData } from "./use-loader-data";
 export function usePermissions(
 	teamId?: string,
 	teamMemberships?: readonly Row["teamMembershipsTable"][],
-) {
+): UsePermissionsResult {
 	const { authSession } = useOrgLoaderData();
 	const userId = authSession.user.id;
 
@@ -38,20 +55,24 @@ export function usePermissions(
 		() => ({
 			role,
 			// Team permissions
-			canCreateTasks: canTask(role),
-			canCreateRequests: canReq(role),
-			canApproveRequests: canApprove(role),
-			canManageMembers: canMem(role),
-			canManageTeam: canWs(role),
+			canCreateTasks: canCreateTasks(role),
+			canCreateRequests: canCreateRequests(role),
+			canApproveRequests: canApproveRequests(role),
+			canManageMembers: canManageMembers(role),
+			canManageTeam: canManageTeam(role),
 
 			// Matter specific permissions (curried)
 			canEditMatter: (
 				matterAuthorId: string,
 				matterAssigneeId?: string | null,
 			) =>
-				canEdit(role, matterAuthorId === userId, matterAssigneeId === userId),
+				canEditMatter(
+					role,
+					matterAuthorId === userId,
+					matterAssigneeId === userId,
+				),
 
-			canDeleteMatter: () => canDel(role),
+			canDeleteMatter: () => canDeleteMatter(role),
 
 			// Helper to check for multiple roles easily
 			isManager: role === "manager",

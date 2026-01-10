@@ -13,7 +13,12 @@ type BreakpointVariant = keyof typeof BREAKPOINTS;
  * Hook that returns an object containing all breakpoint states.
  * Uses useSyncExternalStore for correct SSR/hydration and avoided effects.
  */
-export function useBreakpoints() {
+export function useBreakpoints(): {
+	isMobile: boolean;
+	isTablet: boolean;
+	isLargeScreen: boolean;
+	isExtraLargeScreen: boolean;
+} {
 	return useSyncExternalStore(
 		subscribeToAllBreakpoints,
 		getSnapshot,
@@ -25,7 +30,7 @@ export function useBreakpoints() {
  * Hook to determine if the window width matches a specific breakpoint variant.
  * Optimized to only listen to the specific query requested.
  */
-export function useIsMobile(variant: BreakpointVariant = "mobile") {
+export function useIsMobile(variant: BreakpointVariant = "mobile"): boolean {
 	const query =
 		variant === "extraLargeScreen"
 			? `(min-width: ${BREAKPOINTS[variant]}px)`

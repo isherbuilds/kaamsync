@@ -32,10 +32,17 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
  * Hook to group and flatten tasks by status for virtualized lists.
  * Always performs a full rebuild for clarity and correctness.
  */
+export type UseGroupedTasksResult = {
+	flatItems: ListItem[];
+	activeCount: number;
+	stickyIndices: number[];
+	toggleGroup: (id: string) => void;
+};
+
 export function useGroupedTasks(
 	matters: readonly Matter[],
 	statuses: readonly Status[],
-) {
+): UseGroupedTasksResult {
 	// Tracks statuses that have been manually toggled
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
 		new Set(),
@@ -68,23 +75,23 @@ export function useGroupedTasks(
 		let activeCount = 0;
 
 		// First pass: group tasks by status
-		for (const m of matters) {
-			const s = m.status;
-			if (!s) continue;
+		for (const matter of matters) {
+			const status = matter.status;
+			if (!status) continue;
 
-			let g = groups.get(s.id);
-			if (!g) {
-				const type = (s.type ?? "not_started") as StatusType;
-				g = {
-					status: s,
+			let group = groups.get(status.id);
+			if (!group) {
+				const type = (status.type ?? "not_started") as StatusType;
+				group = {
+					status,
 					tasks: [],
 					order: STATUS_TYPE_ORDER[type] ?? 99,
 				};
-				groups.set(s.id, g);
+				groups.set(status.id, group);
 			}
-			g.tasks.push(m);
+			group.tasks.push(matter);
 
-			if (!COLLAPSED_TYPES.has(s.type as string)) {
+			if (!COLLAPSED_TYPES.has(status.type as string)) {
 				activeCount++;
 			}
 		}
@@ -98,9 +105,9 @@ export function useGroupedTasks(
 		const stickyIndices: number[] = [];
 
 		// Second pass: flatten into list items
-		for (const g of sortedGroups) {
-			const isCompletedType = COLLAPSED_TYPES.has(g.status.type as string);
-			const isExpanded = toggledStatuses.has(g.status.id)
+		for (const group of sortedGroups) {
+			const isCompletedType = COLLAPSED_TYPES.has(group.status.type as string);
+			const isExpanded = toggledStatuses.has(group.status.id)
 				? isCompletedType // Toggle from default
 				: !isCompletedType; // Default expanded for active, collapsed for completed
 
@@ -108,19 +115,19 @@ export function useGroupedTasks(
 			stickyIndices.push(flatItems.length);
 			flatItems.push({
 				type: "header",
-				id: `h-${g.status.id}`,
-				status: g.status,
-				count: g.tasks.length,
+				id: `h-${group.status.id}`,
+				status: group.status,
+				count: group.tasks.length,
 				isExpanded,
 			});
 
 			// Add tasks if expanded
 			if (isExpanded) {
-				for (const t of g.tasks) {
+				for (const task of group.tasks) {
 					flatItems.push({
 						type: "task",
-						id: t.id,
-						task: t,
+						id: task.id,
+						task,
 						isCompleted: isCompletedType,
 					});
 				}
