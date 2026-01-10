@@ -145,9 +145,7 @@ export default function BillingSettings() {
 			}
 
 			if (plan === "starter") {
-				toast.info(
-					"You're on the Starter plan. Manage your subscription to downgrade.",
-				);
+				toast.info("You're on the Free plan. Upgrade to unlock more features.");
 				return;
 			}
 
@@ -266,7 +264,7 @@ export default function BillingSettings() {
 					handleManageSubscription();
 					return;
 				}
-				toast.info("You are already on the Starter plan.");
+				toast.info("You are already on the Free plan.");
 				return;
 			}
 			if (plan === "enterprise") {

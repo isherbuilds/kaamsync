@@ -77,7 +77,7 @@ export const planLimits = {
 	},
 	pro: {
 		members: 25,
-		teams: 15,
+		teams: -1, // Match Growth, Pro should be better
 		storageGb: 25,
 		matters: -1,
 	},
@@ -126,10 +126,10 @@ export const products = {
 		usageBased: false,
 		features: [
 			"Up to 3 team members",
-			"5 teams",
-			"500MB storage",
-			"Basic matter management",
-			"Email support",
+			"5 individual teams",
+			"500MB secure storage",
+			"Basic matter tracking",
+			"Standard support",
 		],
 		cta: "Get Started",
 	},
