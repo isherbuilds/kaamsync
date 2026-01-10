@@ -6,7 +6,7 @@ import {
 } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useState } from "react";
-import { data, Form, href, redirect, useNavigation } from "react-router";
+import { data, Form, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
 import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
@@ -120,11 +120,13 @@ export async function action({ request }: Route.ActionArgs) {
 					return null;
 				}
 
+				console.log("Created new organization:", newOrg);
+
 				await seedTeamDefaults({
 					orgId: newOrg.id,
 				});
 
-				return redirect(href("/:orgSlug/tasks", { orgSlug: newOrg.slug }));
+				return redirect(`/${newOrg.slug}/tasks`);
 			} catch {
 				// toast.message(`Organization creation failed. ${err}`);
 				toast.error("Organization creation failed.");

@@ -117,6 +117,20 @@ export const MatterDialog = memo(
 						);
 						setOpen(false);
 						form.reset();
+
+						// Send push notification to assignee (fire and forget)
+						if (assigneeId) {
+							import("~/hooks/use-push-notifications").then(
+								({ sendNotificationToUser }) => {
+									sendNotificationToUser(
+										assigneeId,
+										isRequest ? "New Request Assigned" : "New Task Assigned",
+										`${teamCode}-${clientShortID}: ${title}`,
+										`/${teamCode}/matter/${teamCode}-${clientShortID}`,
+									);
+								},
+							);
+						}
 					})
 					.catch(() => toast.error(`Failed to create ${type}`))
 					.finally(() => setIsSubmitting(false));

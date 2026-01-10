@@ -58,8 +58,8 @@ export const auth = betterAuth({
 		enabled: true,
 		requireEmailVerification: isProduction,
 		sendResetPassword: async ({ user, url }) => {
+			console.log("Reset password link:", url);
 			if (isDevelopment) {
-				console.log("Reset password link:", url);
 				return;
 			}
 
@@ -75,8 +75,8 @@ export const auth = betterAuth({
 		sendOnSignUp: true,
 		autoSignInAfterVerification: true,
 		sendVerificationEmail: async ({ user, url }) => {
+			console.log("Email verification link:", url);
 			if (isDevelopment) {
-				console.log("Email verification link:", url);
 				return;
 			}
 

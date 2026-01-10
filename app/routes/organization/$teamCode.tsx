@@ -97,9 +97,28 @@ export default function TeamIndex() {
 		[z],
 	);
 	const onAssign = useCallback(
-		(id: string, u: string | null) =>
-			z.mutate(mutators.matter.assign({ id, assigneeId: u })),
-		[z],
+		(id: string, u: string | null, taskTitle?: string, taskCode?: string) => {
+			z.mutate(mutators.matter.assign({ id, assigneeId: u })).server.then(
+				() => {
+					// Send push notification to new assignee (fire and forget)
+					if (u) {
+						import("~/hooks/use-push-notifications").then(
+							({ sendNotificationToUser }) => {
+								sendNotificationToUser(
+									u,
+									"Task Assigned to You",
+									taskTitle
+										? `${taskCode}: ${taskTitle}`
+										: "A task was assigned to you",
+									`/${teamCode}/matter/${taskCode}`,
+								);
+							},
+						);
+					}
+				},
+			);
+		},
+		[z, teamCode],
 	);
 
 	// Filter statuses for task-only view (exclude request statuses)
@@ -278,7 +297,12 @@ interface TaskRowProps {
 	statuses: readonly Status[];
 	onPriority: (id: string, p: PriorityValue) => void;
 	onStatus: (id: string, s: string) => void;
-	onAssign: (id: string, u: string | null) => void;
+	onAssign: (
+		id: string,
+		u: string | null,
+		taskTitle?: string,
+		taskCode?: string,
+	) => void;
 }
 
 const TaskRow = memo(
@@ -306,8 +330,8 @@ const TaskRow = memo(
 		);
 
 		const handleAssign = useCallback(
-			(u: string | null) => onAssign(task.id, u),
-			[onAssign, task.id],
+			(u: string | null) => onAssign(task.id, u, task.title, taskCode),
+			[onAssign, task.id, task.title, taskCode],
 		);
 
 		return (
