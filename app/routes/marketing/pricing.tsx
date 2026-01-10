@@ -118,8 +118,12 @@ export default function PricingPage() {
 									)}
 								>
 									{isPopular && (
-										<div className="absolute top-0 right-1/2 left-1/2 -mt-3 w-max -translate-x-1/2">
-											<span className="bg-primary px-3 py-1 font-bold font-mono text-[10px] text-primary-foreground uppercase tracking-widest shadow-sm">
+										<div className="absolute top-0 left-1/2 -mt-3 w-max -translate-x-1/2">
+											<span 
+												className="bg-primary px-3 py-1 font-bold font-mono text-[10px] text-primary-foreground uppercase tracking-widest shadow-sm"
+												role="status"
+												aria-label="Most popular plan"
+											>
 												Recommended
 											</span>
 										</div>
