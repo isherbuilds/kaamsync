@@ -24,7 +24,7 @@ export const meta: MetaFunction = () => [
 const faqs = [
 	{
 		q: "How fast can we get started?",
-		a: "Setup takes less than 2 minutes. You can create your organization, invite your first 3 team members for free, and start tracking Matters immediately.",
+		a: "Setup takes less than 2 minutes. You can create your organization, invite up to 3 team members for free, and start tracking Matters immediately.",
 	},
 	{
 		q: "Does it really work offline?",
@@ -62,7 +62,7 @@ export default function HomePage() {
 					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
 						<Button
 							size="lg"
-							className="h-14 w-full rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground/90 hover:shadow-none md:max-w-2xs"
+							className="h-14 w-full rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] transition-all hover:bg-foreground/90 hover:shadow-none md:max-w-2xs"
 							asChild
 						>
 							<Link to="/signup">
@@ -211,7 +211,7 @@ export default function HomePage() {
 						</Button>
 					</div>
 					<p className="mt-6 text-muted-foreground text-sm">
-						Free for small teams • No credit card required
+						Free for small teams • No Credit Card Required
 					</p>
 				</div>
 			</MarketingContainer>
