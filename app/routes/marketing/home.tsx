@@ -1,4 +1,13 @@
-import { ArrowRight, ChevronRight } from "lucide-react";
+import {
+	Activity,
+	ArrowRight,
+	CheckCircle2,
+	ChevronRight,
+	Layout,
+	Lock,
+	Users,
+	Zap,
+} from "lucide-react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { ChatSimulator } from "~/components/marketing/chat-simulator";
@@ -21,40 +30,35 @@ export const meta: MetaFunction = () => [
 	},
 ];
 
-const faqs = [
-	{
-		q: "How fast can we get started?",
-		a: "Setup takes less than 2 minutes. You can create your organization, invite your first 3 team members for free, and start tracking Matters immediately.",
-	},
-	{
-		q: "Does it really work offline?",
-		a: "Yes. Our Zero-synced architecture ensures that your team can open the app, log work, and take photos without any internet connection. Everything syncs with zero latency once they're back online.",
-	},
-	{
-		q: "Can we migrate from WhatsApp / Slack?",
-		a: "While there's no 'import' from chat, most teams find that starting fresh with structured flows in KaamSync immediately clears up the chaos. You can keep WhatsApp for social chatter and KaamSync for work.",
-	},
-	{
-		q: "Is my data secure?",
-		a: "Absolutely. Everything in KaamSync is designed to keep your work safe and secure. We force HTTPS for all connections and encrypt data in-transit with TLS 1.2+. For storage, we rely on best-in-class infrastructure partners who utilize industry-standard physical disk encryption to safeguard your data at rest.",
-	},
-];
-
 export default function HomePage() {
 	return (
 		<div className="flex flex-col bg-background text-foreground">
-			{/* HERO SECTION */}
+			{/* HERO SECTION: Design 3 Structure + Design 2 Typography */}
 			<section className="relative flex flex-col items-center justify-center border-border/40 border-b pt-24 pb-32">
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
 				<div className="container relative z-10 px-4 text-center md:px-6">
-					<MarketingHeading as="h1" className="mx-auto mb-8 max-w-5xl">
+					{/* Status Indicator */}
+					{/* <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-border bg-background/50 px-3 py-1 backdrop-blur-sm">
+						<span className="relative flex size-2">
+							<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+							<span className="relative inline-flex size-2 rounded-full bg-green-500" />
+						</span>
+						<span className="font-medium font-mono text-muted-foreground text-xs uppercase tracking-widest">
+							System Online v2.1
+						</span>
+					</div> */}
+
+					{/* Headline from Plan */}
+					{/* Headline from Plan */}
+					<h1 className="mx-auto mb-8 max-w-5xl font-medium font-serif text-5xl leading-[1.1] tracking-tight sm:text-7xl md:text-8xl">
 						Turn conversations into <br />
 						<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
 							clear, trackable work.
 						</span>
-					</MarketingHeading>
+					</h1>
 
+					{/* Subheadline from Plan */}
 					<p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground leading-relaxed md:text-xl">
 						KaamSync helps operations teams track jobs, approvals, and updates
 						in one calm workspace — even when teams are offline.
@@ -76,7 +80,7 @@ export default function HomePage() {
 							className="h-14 min-w-[200px] rounded-none border-foreground/20 bg-transparent px-8 font-medium text-foreground text-lg hover:bg-muted"
 							asChild
 						>
-							<Link to="/contact">Talk to Us</Link>
+							<Link to="/contact">Watch 2-Min Demo</Link>
 						</Button>
 					</div>
 
@@ -86,16 +90,109 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* VISUALIZATION: The Blueprint */}
+			{/* VISUALIZATION: The Blueprint (Design 3) */}
 			<section className="container relative z-20 mx-auto -mt-20 px-4 md:px-6">
-				<DashboardPreview />
+				<div className="relative overflow-hidden rounded-none border border-border bg-background shadow-2xl">
+					<div className="flex items-center gap-4 border-border border-b bg-muted/30 px-4 py-2">
+						<div className="flex gap-2">
+							<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
+							<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
+							<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
+						</div>
+						<div className="flex-1 text-center font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+							kaamsync_dashboard.view
+						</div>
+					</div>
+					<div className="grid min-h-[400px] grid-cols-12 bg-muted/5 md:min-h-[600px]">
+						{/* Sidebar */}
+						<div className="col-span-2 hidden flex-col gap-4 border-border border-r bg-background p-4 md:flex">
+							{[...Array(6)].map((_, i) => (
+								<div
+									key={i}
+									className="h-6 w-full rounded-sm bg-muted/50"
+									style={{ animationDelay: `${i * 100}ms` }}
+								/>
+							))}
+						</div>
+
+						{/* Main View */}
+						<div className="col-span-12 grid content-start gap-8 p-6 md:col-span-10 md:p-8">
+							{/* Stats Row */}
+							<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+								{[
+									{ label: "Active Jobs", val: "42" },
+									{ label: "Completed", val: "18" },
+									{ label: "Team Online", val: "12" },
+									{ label: "Pending", val: "3" },
+								].map((stat) => (
+									<div
+										key={stat.label}
+										className="group border border-border bg-background p-4 transition-colors hover:border-primary"
+									>
+										<div className="mb-2 font-mono text-[10px] text-muted-foreground uppercase group-hover:text-primary">
+											{stat.label}
+										</div>
+										<div className="font-bold font-sans text-3xl tracking-tighter">
+											{stat.val}
+										</div>
+									</div>
+								))}
+							</div>
+
+							{/* Map / List Hybrid */}
+							<div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+								<div className="relative col-span-2 min-h-[300px] border border-border bg-background p-4">
+									{/* Fake Map Grid */}
+									<div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] opacity-50 [background-size:16px_16px]" />
+									<div className="relative z-10 flex h-full items-center justify-center">
+										<div className="absolute size-32 animate-ping rounded-full border border-primary/30" />
+										<div className="size-4 rounded-full bg-primary ring-4 ring-primary/20" />
+										<div className="absolute top-4 right-4 border border-border bg-background px-2 py-1 font-mono text-xs shadow-sm">
+											LIVE GPS: ACTIVE
+										</div>
+									</div>
+								</div>
+								<div className="flex flex-col gap-3">
+									<div className="mb-2 font-bold font-mono text-xs uppercase">
+										Recent Updates
+									</div>
+									{[...Array(5)].map((_, i) => (
+										<div
+											// biome-ignore lint/suspicious/noArrayIndexKey: visualization only
+											key={i}
+											className="flex items-center justify-between border-border/50 border-b pb-2 last:border-0"
+										>
+											<div className="flex items-center gap-2">
+												<div className="size-2 rounded-full bg-green-500" />
+												<div className="flex flex-col">
+													<span className="font-medium text-xs">
+														Site Visit #{204 + i}
+													</span>
+													<span className="text-[10px] text-muted-foreground">
+														Updated by Rahul
+													</span>
+												</div>
+											</div>
+											<div className="font-mono text-[10px] text-muted-foreground">
+												{10 + i}:00 AM
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</section>
 
-			{/* PROBLEM SECTION: The WhatsApp Pain */}
+			{/* PROBLEM SECTION: The WhatsApp Pain (Design 3) */}
 			<section className="bg-foreground py-32 text-background">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="grid items-center gap-16 md:grid-cols-2">
 						<div>
+							<div className="mb-4 font-mono text-primary text-sm uppercase tracking-widest">
+								{/* THE PROBLEM */}
+							</div>
 							<h2 className="mb-8 max-w-xl font-bold font-serif text-4xl tracking-tight md:text-5xl">
 								<span className="text-destructive underline decoration-4 decoration-destructive underline-offset-4">
 									Drowning
@@ -137,26 +234,155 @@ export default function HomePage() {
 							</div>
 						</div>
 
-						<ChatSimulator />
+						{/* The Chat Simulator */}
+						<div className="relative mx-auto w-full max-w-md">
+							<div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent blur-2xl filter" />
+							<div className="relative rounded-2xl border border-white/10 bg-black/40 p-6 font-sans shadow-2xl backdrop-blur-md">
+								<div className="mb-4 flex items-center justify-between border-white/10 border-b pb-4">
+									<div className="flex items-center gap-3">
+										<div className="size-10 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500" />
+										<div>
+											<div className="font-bold text-sm text-white">
+												Project Alpha Group
+											</div>
+											<div className="text-white/50 text-xs">
+												12 participants
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div className="space-y-4 text-sm">
+									<div className="flex gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-orange-500" />
+										<div className="rounded-2xl rounded-tl-none bg-white/10 p-3 text-white/90">
+											Where is the updated invoice for the cement?
+											<div className="mt-1 text-[10px] text-white/40">
+												10:42 AM
+											</div>
+										</div>
+									</div>
+
+									<div className="flex flex-row-reverse gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-blue-500" />
+										<div className="rounded-2xl rounded-tr-none bg-primary/20 p-3 text-white/90">
+											I sent it yesterday. Check the files.
+											<div className="mt-1 text-right text-[10px] text-white/40">
+												10:45 AM
+											</div>
+										</div>
+									</div>
+
+									<div className="flex gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-orange-500" />
+										<div className="rounded-2xl rounded-tl-none bg-white/10 p-3 text-white/90">
+											I can't find it. Can you send it again?
+											<div className="mt-1 text-[10px] text-white/40">
+												10:48 AM
+											</div>
+										</div>
+									</div>
+
+									<div className="flex justify-center py-2">
+										<div className="rounded-full bg-white/5 px-3 py-1 text-white/40 text-xs">
+											New message from Client...
+										</div>
+									</div>
+
+									<div className="flex gap-3">
+										<div className="size-8 shrink-0 rounded-full bg-green-500" />
+										<div className="rounded-2xl rounded-tl-none bg-white/10 p-3 text-white/90">
+											<span className="font-bold text-destructive">@Team</span>{" "}
+											Why is the site closed today??
+											<div className="mt-1 text-[10px] text-white/40">
+												11:02 AM
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div className="mt-6 flex items-center gap-2 rounded-full bg-white/5 p-2 px-4 blur-[1px]">
+									<div className="text-white/30 text-xs">Type a message...</div>
+								</div>
+
+								{/* Overlay Error */}
+								<div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">
+									<div className="rotate-[-5deg] border-2 border-destructive bg-destructive/10 px-6 py-3 font-bold font-mono text-destructive text-xl uppercase tracking-widest backdrop-blur-sm">
+										System Failure
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
 
-			{/* FEATURES GRID: Swiss Utility */}
-			<MarketingContainer>
-				<div className="mb-20">
-					<MarketingHeading>Engineered for clarity.</MarketingHeading>
-					<div className="mt-4 h-1 w-24 bg-primary" />
-				</div>
-				<FeaturesGrid />
-			</MarketingContainer>
+			{/* FEATURES GRID: Swiss Utility (Design 2) */}
+			<section className="py-24 md:py-32">
+				<div className="container mx-auto max-w-7xl px-4 md:px-6">
+					<div className="mb-20">
+						<h2 className="font-medium font-serif text-4xl md:text-5xl">
+							Engineered for clarity.
+						</h2>
+						<div className="mt-4 h-1 w-24 bg-primary" />
+					</div>
 
-			{/* SOCIAL PROOF: Authentic Origin */}
+					<div className="grid grid-cols-1 border-foreground/10 border-t border-l md:grid-cols-3">
+						{[
+							{
+								title: "Structured Tasks",
+								desc: "Every job has an owner, deadline, and priority. Ambiguity is engineered out.",
+								icon: Layout,
+							},
+							{
+								title: "Offline First",
+								desc: "Works flawlessly without internet. Syncs automatically when you're back online.",
+								icon: Zap,
+							},
+							{
+								title: "Approval Gates",
+								desc: "Digital signatures and one-click approvals. Keep a perfect audit trail.",
+								icon: CheckCircle2,
+							},
+							{
+								title: "Team Spaces",
+								desc: "Keep Finance, HR, and Ops separate. Organizing your business made simple.",
+								icon: Users,
+							},
+							{
+								title: "Real-time Telemetry",
+								desc: "Live GPS and status updates. Know exactly what's happening on the ground.",
+								icon: Activity,
+							},
+							{
+								title: "Bank-Grade Security",
+								desc: "Your data is encrypted and secure. Far safer than a public chat app.",
+								icon: Lock,
+							},
+						].map((feature) => (
+							<div
+								key={feature.title}
+								className="group relative border-foreground/10 border-r border-b p-10 transition-colors hover:bg-muted/30"
+							>
+								<feature.icon className="mb-6 size-8 stroke-1 text-foreground transition-transform group-hover:scale-110" />
+								<h3 className="mb-3 font-medium font-serif text-2xl">
+									{feature.title}
+								</h3>
+								<p className="text-muted-foreground leading-relaxed">
+									{feature.desc}
+								</p>
+							</div>
+						))}
+					</div>
+				</div>
+			</section>
+
+			{/* SOCIAL PROOF: Authentic Origin (Option B) */}
 			<section className="border-border/40 border-y py-24">
 				<div className="container mx-auto max-w-3xl px-4 text-center">
-					<MarketingHeading as="h3">
+					<h2 className="font-medium font-serif text-3xl">
 						Built because we needed it ourselves.
-					</MarketingHeading>
+					</h2>
 
 					<p className="mt-6 text-lg text-muted-foreground leading-relaxed">
 						We run a real field operations team. WhatsApp was fine for talking,
@@ -171,30 +397,12 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* FAQ SECTION */}
-			<MarketingContainer className="py-32">
-				<div className="mx-auto max-w-4xl text-center">
-					<Badge
-						variant="outline"
-						className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
-					>
-						FAQ
-					</Badge>
-					<MarketingHeading className="mb-16">
-						Common Questions
-					</MarketingHeading>
-					<div className="text-left">
-						<FAQ items={faqs} />
-					</div>
-				</div>
-			</MarketingContainer>
-
 			{/* FINAL CTA: High Contrast */}
-			<MarketingContainer className="text-center">
-				<div className="mx-auto max-w-4xl">
-					<MarketingHeading as="h2" className="mb-8">
+			<section className="relative overflow-hidden py-32 text-center">
+				<div className="container mx-auto max-w-4xl px-4 md:px-6">
+					<h2 className="mb-8 font-medium font-serif text-5xl leading-[1.1] md:text-7xl">
 						Bring order to <br /> the chaos.
-					</MarketingHeading>
+					</h2>
 					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">
 						Join forward-thinking teams moving their operations out of the chat
 						and into KaamSync.
@@ -211,10 +419,10 @@ export default function HomePage() {
 						</Button>
 					</div>
 					<p className="mt-6 text-muted-foreground text-sm">
-						Free for small teams • No credit card required
+						Free 14-day trial • Cancel anytime
 					</p>
 				</div>
-			</MarketingContainer>
+			</section>
 		</div>
 	);
 }
