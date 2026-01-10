@@ -10,6 +10,22 @@ declare const self: ServiceWorkerGlobalScope & {
 	__WB_MANIFEST: Array<import("workbox-precaching").PrecacheEntry | string>;
 };
 
+interface SyncEvent extends Event {
+	readonly tag: string;
+	readonly lastChance: boolean;
+	// biome-ignore lint/suspicious/noExplicitAny: Standard SW API uses any
+	waitUntil(promise: Promise<any>): void;
+}
+
+interface ServiceWorkerRegistration {
+	readonly sync: SyncManager;
+}
+
+interface SyncManager {
+	register(tag: string): Promise<void>;
+	getTags(): Promise<string[]>;
+}
+
 const SHELL_CACHE = "KaamSync-shell";
 const STATIC_CACHE = "KaamSync-static";
 const SHELL_URLS = ["/"];
@@ -77,4 +93,51 @@ setCatchHandler(async ({ request }) => {
 		}
 	}
 	return Response.error();
+});
+
+// Push Notifications
+self.addEventListener("push", (event) => {
+	const data = event.data ? event.data.json() : {};
+	const title = data.title || "KaamSync Update";
+	const options: NotificationOptions = {
+		body: data.body || "You have a new notification",
+		icon: "/web-app-manifest-192x192.png",
+		badge: "/favicon-96x96.png",
+		tag: data.tag || "general",
+		data: data.data || {},
+	};
+
+	event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+	event.notification.close();
+	const urlToOpen = event.notification.data?.url || "/";
+
+	event.waitUntil(
+		self.clients
+			.matchAll({
+				type: "window",
+				includeUncontrolled: true,
+			})
+			.then((windowClients) => {
+				const matchingClient = windowClients.find(
+					(client) => client.url === urlToOpen,
+				);
+				if (matchingClient) {
+					return matchingClient.focus();
+				}
+				return self.clients.openWindow(urlToOpen);
+			}),
+	);
+});
+
+// Background Sync
+self.addEventListener("sync", (event) => {
+	const syncEvent = event as SyncEvent;
+	if (syncEvent.tag === "sync-data") {
+		// Implement your sync logic here or import it
+		// e.g., event.waitUntil(syncData());
+		console.log("Background sync triggered");
+	}
 });

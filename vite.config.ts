@@ -28,24 +28,46 @@ export default defineConfig({
 			strategies: "injectManifest",
 			srcDir: "app",
 			filename: "service-worker.ts",
-			injectRegister: "inline",
+			injectRegister: false,
 			injectManifest: {
 				// Pre-cache built client assets and html; exclude dev/HMR modules.
 				globDirectory: "build/client",
 				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webp,txt}"],
 			},
 			devOptions: {
-				enabled: false, // use `vite build && vite preview` to test SW; avoids dev HMR noise
+				enabled: true, // use `vite build && vite preview` to test SW; avoids dev HMR noise
 				type: "module",
 			},
 			manifest: {
-				name: "KaamSync",
+				name: "KaamSync - Organize Your Work Seamlessly",
 				short_name: "KaamSync",
 				start_url: "/",
 				display: "standalone",
-				background_color: "#0f172a",
-				theme_color: "#0f172a",
+				background_color: "#ffffff",
+				theme_color: "#ffffff",
 				icons: [
+					{
+						src: "/web-app-manifest-192x192.png",
+						sizes: "192x192",
+						type: "image/png",
+						purpose: "maskable",
+					},
+					{
+						src: "/web-app-manifest-512x512.png",
+						sizes: "512x512",
+						type: "image/png",
+						purpose: "maskable",
+					},
+					{
+						src: "/favicon-96x96.png",
+						sizes: "96x96",
+						type: "image/png",
+					},
+					{
+						src: "/favicon.svg",
+						sizes: "any",
+						type: "image/svg+xml",
+					},
 					{
 						src: "/favicon.ico",
 						sizes: "48x48",
