@@ -17,7 +17,7 @@ export function FAQItem({ q, a }: FAQItemProps) {
 			<button
 				type="button"
 				onClick={() => setIsOpen(!isOpen)}
-				className="flex w-full items-center justify-between py-6 text-left transition-all hover:text-primary"
+				className="flex w-full items-center justify-between py-6 text-left hover:text-primary"
 			>
 				<span className="font-serif text-xl tracking-tight md:text-2xl">
 					{q}

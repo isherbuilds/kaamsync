@@ -45,7 +45,7 @@ export default function MarketingLayout() {
 	return (
 		<div className="min-h-screen bg-background text-foreground">
 			<header className="fixed inset-x-0 top-0 z-50">
-				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background/60 p-4 backdrop-blur-xl md:px-6">
+				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
 						<Link to="/" className="flex items-center gap-1">
 							<div className="flex size-7 items-center justify-center rounded bg-white">
