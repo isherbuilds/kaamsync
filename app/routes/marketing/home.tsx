@@ -28,7 +28,7 @@ const faqs = [
 	},
 	{
 		q: "Does it really work offline?",
-		a: "Yes. Our Zero-synced architecture ensures that your team can open the app, log work, and take photos without any internet connection. Everything syncs with zero latency once they're back online.",
+		a: "Yes. Our Zero-sync architecture ensures that your team can open the app, log work, and take photos without any internet connection. Everything syncs automatically once they're back online.",
 	},
 	{
 		q: "Can we migrate from WhatsApp / Slack?",
