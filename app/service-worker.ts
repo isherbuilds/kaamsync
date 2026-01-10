@@ -87,10 +87,15 @@ registerRoute(
 // Fallback for failed navigations
 setCatchHandler(async ({ request }) => {
 	if (request.mode === "navigate") {
+		// Try to serve the app shell first
 		for (const url of SHELL_URLS) {
 			const cached = await caches.match(url);
 			if (cached) return cached;
 		}
+
+		// If shell is missing/fails, try offline.html
+		const offlineCache = await caches.match("/offline.html");
+		if (offlineCache) return offlineCache;
 	}
 	return Response.error();
 });

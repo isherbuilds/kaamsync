@@ -93,10 +93,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		if (typeof window === "undefined" || import.meta.env.DEV) return;
-		// Register service worker immediately so it installs even on prerendered/static pages
-		import("virtual:pwa-register").then(({ registerSW }) => {
-			registerSW({ immediate: true });
-		});
+
+		// Manual Service Worker Registration
+		if ("serviceWorker" in navigator) {
+			window.addEventListener("load", () => {
+				navigator.serviceWorker.register("/service-worker.js").then(
+					(registration) => {
+						console.log("SW registered: ", registration.scope);
+					},
+					(err) => {
+						console.log("SW registration failed: ", err);
+					},
+				);
+			});
+		}
 	}, []);
 
 	return (
