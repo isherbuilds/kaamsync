@@ -27,7 +27,12 @@ export function BasicLayout({
 					<ArrowLeftIcon className="size-4" /> Home
 				</Link>
 			</Button>
-			<div className={cn("mx-auto w-96 -translate-y-8", contentClassName)}>
+			<div
+				className={cn(
+					"mx-auto w-full max-w-sm -translate-y-8",
+					contentClassName,
+				)}
+			>
 				<div className="flex flex-col gap-6">
 					<div className="flex flex-col items-center gap-1 text-center">
 						<h1 className="font-semibold text-lg">{title}</h1>
