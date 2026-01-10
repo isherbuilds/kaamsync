@@ -1,7 +1,12 @@
-import { Building2, Check, Plus, ShieldCheck, Users, Zap } from "lucide-react";
+import { Building2, Check, ShieldCheck, Users, Zap } from "lucide-react";
 import { useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { FAQ } from "~/components/marketing/faq";
+import {
+	MarketingContainer,
+	MarketingHeading,
+} from "~/components/marketing/marketing-layout";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
@@ -52,44 +57,6 @@ const faqs = [
 	},
 ];
 
-function FAQItem({ q, a }: { q: string; a: string }) {
-	const [isOpen, setIsOpen] = useState(false);
-
-	return (
-		<div className="group border-border/60 border-b last:border-0">
-			<button
-				type="button"
-				onClick={() => setIsOpen(!isOpen)}
-				className="flex w-full items-center justify-between py-6 text-left transition-all hover:text-primary"
-			>
-				<span className="font-serif text-xl tracking-tight md:text-2xl">
-					{q}
-				</span>
-				<Plus
-					className={cn(
-						"h-5 w-5 shrink-0 transition-transform duration-300",
-						isOpen && "rotate-45",
-					)}
-				/>
-			</button>
-			<div
-				className={cn(
-					"grid transition-all duration-300 ease-in-out",
-					isOpen
-						? "grid-rows-[1fr] pb-6 opacity-100"
-						: "grid-rows-[0fr] opacity-0",
-				)}
-			>
-				<div className="overflow-hidden">
-					<p className="max-w-3xl text-lg text-muted-foreground leading-relaxed">
-						{a}
-					</p>
-				</div>
-			</div>
-		</div>
-	);
-}
-
 const planIcons: Record<ProductKey, React.ReactNode> = {
 	starter: <Users className="h-5 w-5" />,
 	growth: <Zap className="h-5 w-5" />,
@@ -114,10 +81,9 @@ export default function PricingPage() {
 			<section className="bg-background py-24 text-center">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
-						<h1 className="mb-6 font-medium font-serif text-5xl tracking-tight md:text-7xl">
+						<MarketingHeading as="h1" className="mb-6" italic="pricing.">
 							Simple, transparent <br />{" "}
-							<span className="text-muted-foreground italic">pricing.</span>
-						</h1>
+						</MarketingHeading>
 						<p className="mb-10 text-muted-foreground text-xl">
 							No hidden fees. No surprises. Start for free and scale as you
 							grow.
@@ -138,7 +104,6 @@ export default function PricingPage() {
 											variant="secondary"
 											className="rounded bg-primary/10 text-primary"
 										>
-											{/* 2 Months Free */}
 											Discount
 										</Badge>
 									</TabsTrigger>
@@ -276,31 +241,26 @@ export default function PricingPage() {
 			</section>
 
 			{/* FAQs */}
-			<section className="bg-muted/30 py-32">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto max-w-4xl">
-						<div className="mb-20">
-							<Badge
-								variant="outline"
-								className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
-							>
-								Support & FAQ
-							</Badge>
-							<h2 className="font-medium font-serif text-5xl tracking-tight md:text-6xl">
-								Got{" "}
-								<span className="text-muted-foreground italic">questions?</span>
-								<br />
-								We've got answers.
-							</h2>
-						</div>
-						<div className="border-border/60 border-t">
-							{faqs.map((faq) => (
-								<FAQItem key={faq.q} {...faq} />
-							))}
-						</div>
+			<MarketingContainer className="bg-muted/30">
+				<div className="mx-auto max-w-4xl">
+					<div className="mb-20">
+						<Badge
+							variant="outline"
+							className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
+						>
+							Support & FAQ
+						</Badge>
+						<MarketingHeading
+							className="text-5xl md:text-6xl"
+							italic="questions?"
+						>
+							Got <br />
+							We've got answers.
+						</MarketingHeading>
 					</div>
+					<FAQ items={faqs} />
 				</div>
-			</section>
+			</MarketingContainer>
 
 			{/* CTA */}
 			<section className="bg-foreground py-24 text-center text-background">
