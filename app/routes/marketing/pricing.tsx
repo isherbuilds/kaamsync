@@ -37,7 +37,7 @@ const faqs = [
 	},
 	{
 		q: "How secure is my data?",
-		a: "Security is our top priority. We use industry-standard AES-256 encryption for data at rest and TLS 1.2+ for data in transit. We are SOC2 compliant and perform regular third-party security audits.",
+		a: "Security is our top priority. Everything in KaamSync is designed to keep your work safe and secure. We force HTTPS for all connections and encrypt data in-transit with TLS 1.2+. For storage, we rely on best-in-class infrastructure partners who utilize industry-standard physical disk encryption to safeguard your data at rest.",
 	},
 	{
 		q: "What happens if I exceed my usage limits?",

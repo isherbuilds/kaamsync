@@ -36,7 +36,7 @@ const faqs = [
 	},
 	{
 		q: "Is my data secure?",
-		a: "Absolutely. We use bank-grade AES-256 encryption. Your operational Matters are far more secure in KaamSync than in a public messaging app.",
+		a: "Absolutely. Everything in KaamSync is designed to keep your work safe and secure. We force HTTPS for all connections and encrypt data in-transit with TLS 1.2+. For storage, we rely on best-in-class infrastructure partners who utilize industry-standard physical disk encryption to safeguard your data at rest.",
 	},
 ];
 
@@ -151,24 +151,6 @@ export default function HomePage() {
 				<FeaturesGrid />
 			</MarketingContainer>
 
-			{/* FAQ SECTION */}
-			<MarketingContainer className="py-32">
-				<div className="mx-auto max-w-4xl text-center">
-					<Badge
-						variant="outline"
-						className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
-					>
-						FAQ
-					</Badge>
-					<MarketingHeading className="mb-16">
-						Common Questions
-					</MarketingHeading>
-					<div className="text-left">
-						<FAQ items={faqs} />
-					</div>
-				</div>
-			</MarketingContainer>
-
 			{/* SOCIAL PROOF: Authentic Origin */}
 			<section className="border-border/40 border-y py-24">
 				<div className="container mx-auto max-w-3xl px-4 text-center">
@@ -188,6 +170,24 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
+
+			{/* FAQ SECTION */}
+			<MarketingContainer className="py-32">
+				<div className="mx-auto max-w-4xl text-center">
+					<Badge
+						variant="outline"
+						className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
+					>
+						FAQ
+					</Badge>
+					<MarketingHeading className="mb-16">
+						Common Questions
+					</MarketingHeading>
+					<div className="text-left">
+						<FAQ items={faqs} />
+					</div>
+				</div>
+			</MarketingContainer>
 
 			{/* FINAL CTA: High Contrast */}
 			<MarketingContainer className="text-center">

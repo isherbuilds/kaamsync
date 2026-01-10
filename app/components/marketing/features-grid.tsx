@@ -27,8 +27,8 @@ const features = [
 		icon: Activity,
 	},
 	{
-		title: "Bank-Grade Security",
-		desc: "AES-256 encryption. Your operational Matters are secure and private. Better than any public chat.",
+		title: "Enterprise-grade security",
+		desc: "Peace of mind-as-a-service. Built with best-in-class security practices, forced HTTPS/TLS encryption, and secure storage via trusted infrastructure partners.",
 		icon: Lock,
 	},
 ];
