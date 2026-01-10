@@ -32,7 +32,7 @@ const faqs = [
 	},
 	{
 		q: "Can we migrate from WhatsApp / Slack?",
-		a: "While there's no 'import' from chat, most teams find that starting fresh with structured flows in KaamSync immediately clears up the chaos. You can keep WhatsApp for social chatter and KaamSync for work. (Maybe in the future)",
+		a: "While there's no 'import' from chat, most teams find that starting fresh with structured flows in KaamSync immediately clears up the chaos. You can keep WhatsApp for social chatter and KaamSync for work.",
 	},
 	{
 		q: "Is my data secure?",
@@ -76,7 +76,7 @@ export default function HomePage() {
 							className="h-14 min-w-[200px] rounded-none border-foreground/20 bg-transparent px-8 font-medium text-foreground text-lg hover:bg-muted"
 							asChild
 						>
-							<Link to="/contact">Watch 2-Min Demo</Link>
+							<Link to="/contact">Talk to Us</Link>
 						</Button>
 					</div>
 
@@ -192,7 +192,7 @@ export default function HomePage() {
 			{/* FINAL CTA: High Contrast */}
 			<MarketingContainer className="text-center">
 				<div className="mx-auto max-w-4xl">
-					<MarketingHeading as="h1" className="mb-8">
+					<MarketingHeading as="h2" className="mb-8">
 						Bring order to <br /> the chaos.
 					</MarketingHeading>
 					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">

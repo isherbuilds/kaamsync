@@ -147,7 +147,7 @@ export const products = {
 		usagePricing: usagePricing.growth,
 		features: [
 			"Includes up to 10 members",
-			"Unlimited teams & spaces",
+			"Unlimited teams",
 			"Includes 10GB storage",
 			"Advanced Audit Logs",
 			"Priority email support",
@@ -170,7 +170,7 @@ export const products = {
 		usagePricing: usagePricing.pro,
 		features: [
 			"Includes up to 25 members",
-			"Unlimited everything",
+			"Unlimited teams",
 			"Includes 25GB storage",
 			"Full Audit history",
 			"Priority chat & email",

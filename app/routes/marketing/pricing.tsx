@@ -1,5 +1,5 @@
 import { Building2, Check, ShieldCheck, Users, Zap } from "lucide-react";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { FAQ } from "~/components/marketing/faq";
@@ -29,7 +29,7 @@ const faqs = [
 	},
 	{
 		q: "Is there really a free version?",
-		a: "Yes. Our Starter plan is genuinely free for small teams of up to 10 members. It's not a trial—it's a way for you to build your foundation without worry.",
+		a: "Yes. Our Starter plan is genuinely free for small teams of up to 3 members. It's not a trial—it's a way for you to build your foundation without worry.",
 	},
 	{
 		q: "What payment methods do you accept?",
@@ -57,7 +57,7 @@ const faqs = [
 	},
 ];
 
-const planIcons: Record<ProductKey, React.ReactNode> = {
+const planIcons: Record<ProductKey, ReactNode> = {
 	starter: <Users className="h-5 w-5" />,
 	growth: <Zap className="h-5 w-5" />,
 	pro: <ShieldCheck className="h-5 w-5" />,
@@ -140,7 +140,7 @@ export default function PricingPage() {
 									)}
 								>
 									{isPopular && (
-										<div className="absolute top-0 right-1/2 left-1/2 -mt-3 w-max -translate-x-1/2">
+										<div className="absolute top-0 left-1/2 -mt-3 w-max -translate-x-1/2">
 											<span className="bg-primary px-3 py-1 font-bold font-mono text-[10px] text-primary-foreground uppercase tracking-widest shadow-sm">
 												Recommended
 											</span>
@@ -205,9 +205,9 @@ export default function PricingPage() {
 									)}
 
 									<ul className="mb-10 flex-1 space-y-4">
-										{plan.features.map((feature) => (
+										{plan.features.map((feature, index) => (
 											<li
-												key={feature}
+												key={`${key}-${index}-${feature}`}
 												className="flex items-start gap-3 text-sm"
 											>
 												<div className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm bg-primary/10 text-primary">
