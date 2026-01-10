@@ -85,13 +85,15 @@ function getSnapshot() {
 	return cachedSnapshot;
 }
 
+const SERVER_SNAPSHOT = {
+	isMobile: false,
+	isTablet: false,
+	isLargeScreen: false,
+	isExtraLargeScreen: false,
+} as const;
+
 function getServerSnapshot() {
-	return {
-		isMobile: false,
-		isTablet: false,
-		isLargeScreen: false,
-		isExtraLargeScreen: false,
-	};
+	return SERVER_SNAPSHOT;
 }
 
 function subscribeToAllBreakpoints(callback: () => void) {

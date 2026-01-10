@@ -35,7 +35,7 @@ export default defineConfig({
 				globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,webp,txt}"],
 			},
 			devOptions: {
-				enabled: true, // use `vite build && vite preview` to test SW; avoids dev HMR noise
+				enabled: false, // `vite build && vite preview` to test SW; avoids dev HMR noise
 				type: "module",
 			},
 			manifest: {

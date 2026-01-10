@@ -94,9 +94,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		if (typeof window === "undefined" || import.meta.env.DEV) return;
 
-		import("virtual:pwa-register").then(({ registerSW }) => {
-			registerSW();
-		});
+		if ("serviceWorker" in navigator) {
+			navigator.serviceWorker.register("/service-worker.js");
+		}
 	}, []);
 
 	return (

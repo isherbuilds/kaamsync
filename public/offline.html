@@ -39,10 +39,24 @@
 </head>
 <body>
   <div class="offline-content">
-    <div class="offline-icon">📡</div>
+    <div class="offline-icon" role="img" aria-label="No connection">📡</div>
+    <h1>You're offline</h1>
+    <h1>You're offline</h1>
     <h1>You're offline</h1>
     <p>KaamSync works best online, but you can see your synced data.</p>
-    <button onclick="window.location.reload()">Try Reconnecting</button>
+    <button id="reconnect-btn">Try Reconnecting</button>
   </div>
+  <script>
+    document.getElementById('reconnect-btn').addEventListener('click', () => {
+      if (navigator.onLine) {
+        window.location.reload();
+      } else {
+        alert('Still offline. Please check your internet connection.');
+      }
+    });
+  </script>
+    <a href="/" style="display: inline-block; margin-bottom: 1rem; color: #60a5fa; text-decoration: none;">View Cached Data</a>
+    <button onclick="window.location.reload()">Try Reconnecting</button>
+    <button onclick="window.location.reload()">Try Reconnecting</button>
 </body>
 </html>

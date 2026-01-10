@@ -50,25 +50,43 @@ export async function action({ request }: Route.ActionArgs) {
 
 	// Check if subscription already exists (by endpoint)
 	const existing = await db
-		.select({ id: pushSubscriptionsTable.id })
+		.select({
+			id: pushSubscriptionsTable.id,
+			userId: pushSubscriptionsTable.userId,
+		})
 		.from(pushSubscriptionsTable)
 		.where(eq(pushSubscriptionsTable.endpoint, endpoint))
 		.limit(1);
 
 	if (existing.length > 0) {
-		// Update existing subscription (might be a different user or refreshed keys)
-		await db
-			.update(pushSubscriptionsTable)
-			.set({
-				userId: session.user.id,
-				p256dh: keys.p256dh,
-				auth: keys.auth,
-				userAgent,
-				updatedAt: new Date(),
-			})
-			.where(eq(pushSubscriptionsTable.id, existing[0].id));
+		const existingRow = existing[0];
 
-		return { success: true, updated: true };
+		// Only update if this subscription already belongs to the current user.
+		if (existingRow.userId === session.user.id) {
+			// Update existing subscription (refresh keys / metadata)
+			await db
+				.update(pushSubscriptionsTable)
+				.set({
+					p256dh: keys.p256dh,
+					auth: keys.auth,
+					userAgent,
+					updatedAt: new Date(),
+				})
+				.where(eq(pushSubscriptionsTable.id, existingRow.id));
+
+			return { success: true, updated: true };
+		} else {
+			// Do NOT transfer ownership silently. Log / audit and reject the attempt.
+			// TODO: Emit a proper audit event or write to an audit table so this attempt is recorded for security/forensics.
+			console.warn(
+				`Push subscription ownership transfer denied: subscription=${existingRow.id}, endpoint=${endpoint}, owner=${existingRow.userId}, attemptedBy=${session.user.id}`,
+			);
+
+			return data(
+				{ error: "Subscription endpoint is registered to another user" },
+				{ status: 403 },
+			);
+		}
 	}
 
 	// Create new subscription

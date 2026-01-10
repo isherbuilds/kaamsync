@@ -18,7 +18,13 @@ export function usePushNotifications() {
 				"Notification" in window;
 
 			setIsSupported(supported);
-			setPermission(Notification.permission);
+			if (supported) {
+				setPermission(Notification.permission);
+			}
+
+			if (!supported) {
+				return;
+			}
 
 			if (!supported) {
 				setIsLoading(false);
@@ -107,6 +113,13 @@ export function usePushNotifications() {
 			const subscription = await registration.pushManager.getSubscription();
 
 			if (subscription) {
+				// Notify server before unsubscribing
+				await fetch("/api/notifications/subscribe", {
+					method: "DELETE",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(subscription.toJSON()),
+				});
+
 				await subscription.unsubscribe();
 			}
 

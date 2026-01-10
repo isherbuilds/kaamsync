@@ -41,10 +41,6 @@ export function getInitials(name: string): string {
 // Date Utilities (Intl-based)
 // ============================================================================
 
-// ============================================================================
-// Date Utilities (Intl-based)
-// ============================================================================
-
 const MS_MINUTE = 60 * 1000;
 const MS_HOUR = 60 * MS_MINUTE;
 const MS_DAY = 24 * MS_HOUR;

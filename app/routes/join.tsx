@@ -120,8 +120,6 @@ export async function action({ request }: Route.ActionArgs) {
 					return null;
 				}
 
-				console.log("Created new organization:", newOrg);
-
 				await seedTeamDefaults({
 					orgId: newOrg.id,
 				});
