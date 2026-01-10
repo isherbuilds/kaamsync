@@ -1,5 +1,5 @@
 import type { Row } from "@rocicorp/zero";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	COMPLETED_STATUS_TYPES,
 	STATUS_TYPE_ORDER,
@@ -35,17 +35,11 @@ const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 export function useGroupedTasks(
 	matters: readonly Matter[],
 	statuses: readonly Status[],
-	teamId: string,
 ) {
 	// Tracks statuses that have been manually toggled
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
 		new Set(),
 	);
-
-	// Reset toggles when team changes
-	useEffect(() => {
-		setToggledStatuses(new Set());
-	}, [teamId]);
 
 	// Stable toggle function with useCallback
 	const toggleGroup = useCallback((id: string) => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 const BREAKPOINTS = {
 	mobile: 768,
@@ -11,64 +11,14 @@ type BreakpointVariant = keyof typeof BREAKPOINTS;
 
 /**
  * Hook that returns an object containing all breakpoint states.
- * Uses shallow comparison to prevent unnecessary re-renders.
+ * Uses useSyncExternalStore for correct SSR/hydration and avoided effects.
  */
 export function useBreakpoints() {
-	const [breakpoints, setBreakpoints] = useState({
-		isMobile: false,
-		isTablet: false,
-		isLargeScreen: false,
-		isExtraLargeScreen: false,
-	});
-
-	useEffect(() => {
-		const queries = {
-			isMobile: window.matchMedia(`(max-width: ${BREAKPOINTS.mobile - 1}px)`),
-			isTablet: window.matchMedia(`(max-width: ${BREAKPOINTS.tablet - 1}px)`),
-			isLargeScreen: window.matchMedia(
-				`(max-width: ${BREAKPOINTS.largeScreen - 1}px)`,
-			),
-			isExtraLargeScreen: window.matchMedia(
-				`(min-width: ${BREAKPOINTS.extraLargeScreen}px)`,
-			),
-		};
-
-		const handler = () => {
-			const next = {
-				isMobile: queries.isMobile.matches,
-				isTablet: queries.isTablet.matches,
-				isLargeScreen: queries.isLargeScreen.matches,
-				isExtraLargeScreen: queries.isExtraLargeScreen.matches,
-			};
-
-			setBreakpoints((prev) => {
-				if (
-					prev.isMobile === next.isMobile &&
-					prev.isTablet === next.isTablet &&
-					prev.isLargeScreen === next.isLargeScreen &&
-					prev.isExtraLargeScreen === next.isExtraLargeScreen
-				) {
-					return prev;
-				}
-				return next;
-			});
-		};
-
-		handler();
-
-		const entries = Object.values(queries);
-		for (const mql of entries) {
-			mql.addEventListener("change", handler);
-		}
-
-		return () => {
-			for (const mql of entries) {
-				mql.removeEventListener("change", handler);
-			}
-		};
-	}, []);
-
-	return breakpoints;
+	return useSyncExternalStore(
+		subscribeToAllBreakpoints,
+		getSnapshot,
+		getServerSnapshot,
+	);
 }
 
 /**
@@ -76,21 +26,77 @@ export function useBreakpoints() {
  * Optimized to only listen to the specific query requested.
  */
 export function useIsMobile(variant: BreakpointVariant = "mobile") {
-	const [matches, setMatches] = useState(false);
+	const query =
+		variant === "extraLargeScreen"
+			? `(min-width: ${BREAKPOINTS[variant]}px)`
+			: `(max-width: ${BREAKPOINTS[variant] - 1}px)`;
 
-	useEffect(() => {
-		const queryStr =
-			variant === "extraLargeScreen"
-				? `(min-width: ${BREAKPOINTS[variant]}px)`
-				: `(max-width: ${BREAKPOINTS[variant] - 1}px)`;
-		
-		const mql = window.matchMedia(queryStr);
-		const handler = () => setMatches(mql.matches);
-		
-		handler();
-		mql.addEventListener("change", handler);
-		return () => mql.removeEventListener("change", handler);
-	}, [variant]);
+	return useSyncExternalStore(
+		(callback) => {
+			const mql = window.matchMedia(query);
+			mql.addEventListener("change", callback);
+			return () => mql.removeEventListener("change", callback);
+		},
+		() => window.matchMedia(query).matches,
+		() => false,
+	);
+}
 
-	return matches;
+// Helpers for useBreakpoints
+const queries = {
+	isMobile: `(max-width: ${BREAKPOINTS.mobile - 1}px)`,
+	isTablet: `(max-width: ${BREAKPOINTS.tablet - 1}px)`,
+	isLargeScreen: `(max-width: ${BREAKPOINTS.largeScreen - 1}px)`,
+	isExtraLargeScreen: `(min-width: ${BREAKPOINTS.extraLargeScreen}px)`,
+};
+
+// Mutable cache for reference stability
+let cachedSnapshot: {
+	isMobile: boolean;
+	isTablet: boolean;
+	isLargeScreen: boolean;
+	isExtraLargeScreen: boolean;
+} | null = null;
+
+function getSnapshot() {
+	const newSnapshot = {
+		isMobile: window.matchMedia(queries.isMobile).matches,
+		isTablet: window.matchMedia(queries.isTablet).matches,
+		isLargeScreen: window.matchMedia(queries.isLargeScreen).matches,
+		isExtraLargeScreen: window.matchMedia(queries.isExtraLargeScreen).matches,
+	};
+
+	if (
+		cachedSnapshot &&
+		cachedSnapshot.isMobile === newSnapshot.isMobile &&
+		cachedSnapshot.isTablet === newSnapshot.isTablet &&
+		cachedSnapshot.isLargeScreen === newSnapshot.isLargeScreen &&
+		cachedSnapshot.isExtraLargeScreen === newSnapshot.isExtraLargeScreen
+	) {
+		return cachedSnapshot;
+	}
+
+	cachedSnapshot = newSnapshot;
+	return cachedSnapshot;
+}
+
+function getServerSnapshot() {
+	return {
+		isMobile: false,
+		isTablet: false,
+		isLargeScreen: false,
+		isExtraLargeScreen: false,
+	};
+}
+
+function subscribeToAllBreakpoints(callback: () => void) {
+	const mqls = Object.values(queries).map((q) => window.matchMedia(q));
+	for (const mql of mqls) {
+		mql.addEventListener("change", callback);
+	}
+	return () => {
+		for (const mql of mqls) {
+			mql.removeEventListener("change", callback);
+		}
+	};
 }

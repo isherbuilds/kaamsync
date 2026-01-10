@@ -79,7 +79,7 @@ export default function TeamIndex() {
 
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
-		useGroupedTasks(matters as Matter[], statuses, teamId);
+		useGroupedTasks(matters as Matter[], statuses);
 
 	const { isManager, canCreateRequests } = usePermissions(
 		teamId,

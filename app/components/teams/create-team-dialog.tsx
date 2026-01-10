@@ -42,24 +42,32 @@ export const CreateTeamDialog = memo(
 
 		// Check billing limits when dialog opens
 		useEffect(() => {
-			if (open) {
-				fetch("/api/billing/check-limits")
-					.then((res) => res.json())
-					.then((data) => {
-						// Only show a blocking limit for plans that enforce hard limits (eg. Starter)
-						if (!data.canCreateTeam) {
-							setBillingLimit({
-								blocked: true,
-								message:
-									data.teamMessage ||
-									"Team limit reached. Please upgrade your plan.",
-							});
-						} else {
-							setBillingLimit(null); // No message for usage-based overages (unlimited teams)
-						}
-					})
-					.catch(() => setBillingLimit(null));
-			}
+			if (!open) return;
+
+			const controller = new AbortController();
+
+			fetch("/api/billing/check-limits", { signal: controller.signal })
+				.then((res) => res.json())
+				.then((data) => {
+					// Only show a blocking limit for plans that enforce hard limits (eg. Starter)
+					if (!data.canCreateTeam) {
+						setBillingLimit({
+							blocked: true,
+							message:
+								data.teamMessage ||
+								"Team limit reached. Please upgrade your plan.",
+						});
+					} else {
+						setBillingLimit(null); // No message for usage-based overages (unlimited teams)
+					}
+				})
+				.catch((err) => {
+					if (err.name !== "AbortError") {
+						setBillingLimit(null);
+					}
+				});
+
+			return () => controller.abort();
 		}, [open]);
 
 		const [form, fields] = useForm({
