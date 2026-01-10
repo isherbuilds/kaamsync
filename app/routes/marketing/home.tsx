@@ -1,13 +1,4 @@
-import {
-	Activity,
-	ArrowRight,
-	CheckCircle2,
-	ChevronRight,
-	Layout,
-	Lock,
-	Users,
-	Zap,
-} from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { ChatSimulator } from "~/components/marketing/chat-simulator";
