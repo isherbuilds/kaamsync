@@ -29,6 +29,7 @@ export default defineConfig({
 			strategies: "injectManifest",
 			srcDir: "app",
 			filename: "service-worker.ts",
+			manifestFilename: "manifest.webmanifest",
 			injectRegister: false,
 			injectManifest: {
 				// Pre-cache built client assets and html; exclude dev/HMR modules.

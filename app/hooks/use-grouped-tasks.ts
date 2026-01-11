@@ -1,5 +1,5 @@
 import type { Row } from "@rocicorp/zero";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	COMPLETED_STATUS_TYPES,
 	STATUS_TYPE_ORDER,
@@ -29,8 +29,8 @@ export type ListItem = HeaderItem | TaskItem;
 const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
 /**
- * Optimized hook to group and flatten tasks by status for virtualized lists.
- * Uses incremental updates instead of full rebuilds for better performance.
+ * Hook to group and flatten tasks by status for virtualized lists.
+ * Always rebuilds groups from matters for correctness; the operation is O(n).
  */
 export type UseGroupedTasksResult = {
 	flatItems: ListItem[];
@@ -38,13 +38,6 @@ export type UseGroupedTasksResult = {
 	stickyIndices: number[];
 	toggleGroup: (id: string) => void;
 };
-
-interface GroupState {
-	groups: Map<string, { status: Status; tasks: Matter[]; order: number }>;
-	activeCount: number;
-	flatItems: ListItem[];
-	stickyIndices: number[];
-}
 
 export function useGroupedTasks(
 	matters: readonly Matter[],
@@ -54,14 +47,6 @@ export function useGroupedTasks(
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
 		new Set(),
 	);
-
-	// Cache previous state to detect changes
-	const prevStateRef = useRef<GroupState>({
-		groups: new Map(),
-		activeCount: 0,
-		flatItems: [],
-		stickyIndices: [],
-	});
 
 	// Stable toggle function with useCallback
 	const toggleGroup = useCallback((id: string) => {
@@ -79,81 +64,35 @@ export function useGroupedTasks(
 	const result = useMemo(() => {
 		// Early return for empty data
 		if (!matters.length || !statuses.length) {
-			prevStateRef.current = {
-				groups: new Map(),
-				activeCount: 0,
-				flatItems: [],
-				stickyIndices: [],
-			};
 			return { flatItems: [], activeCount: 0, stickyIndices: [], toggleGroup };
 		}
 
-		// Check if we can do incremental update
-		const prevGroups = prevStateRef.current.groups;
-		const shouldRebuild =
-			!prevGroups.size ||
-			matters.length !==
-				prevStateRef.current.flatItems.filter((item) => item.type === "task")
-					.length ||
-			statuses.length !== prevGroups.size;
+		// Always rebuild groups from scratch for correctness and simplicity
+		const groups = new Map<
+			string,
+			{ status: Status; tasks: Matter[]; order: number }
+		>();
+		let activeCount = 0;
 
-		let groups: Map<string, { status: Status; tasks: Matter[]; order: number }>;
-		let activeCount: number;
+		// First pass: group tasks by status
+		for (const matter of matters) {
+			const status = matter.status;
+			if (!status) continue;
 
-		if (shouldRebuild) {
-			// Full rebuild
-			groups = new Map();
-			activeCount = 0;
-
-			// First pass: group tasks by status
-			for (const matter of matters) {
-				const status = matter.status;
-				if (!status) continue;
-
-				let group = groups.get(status.id);
-				if (!group) {
-					const type = (status.type ?? "not_started") as StatusType;
-					group = {
-						status,
-						tasks: [],
-						order: STATUS_TYPE_ORDER[type] ?? 99,
-					};
-					groups.set(status.id, group);
-				}
-				group.tasks.push(matter);
-
-				if (!COLLAPSED_TYPES.has(status.type as string)) {
-					activeCount++;
-				}
+			let group = groups.get(status.id);
+			if (!group) {
+				const type = (status.type ?? "not_started") as StatusType;
+				group = {
+					status,
+					tasks: [],
+					order: STATUS_TYPE_ORDER[type] ?? 99,
+				};
+				groups.set(status.id, group);
 			}
-		} else {
-			// Incremental update - just update task assignments
-			groups = new Map(prevGroups);
-			// Start with previous activeCount and adjust for changes
-			activeCount = prevStateRef.current.activeCount;
+			group.tasks.push(matter);
 
-			// Create a map of current matters by status for quick lookup
-			const mattersByStatus = new Map<string, Matter[]>();
-			for (const matter of matters) {
-				const statusId = matter.status?.id;
-				if (!statusId) continue;
-				let list = mattersByStatus.get(statusId);
-				if (!list) {
-					list = [];
-					mattersByStatus.set(statusId, list);
-				}
-				list.push(matter);
-			}
-
-			// Update groups with new task lists
-			for (const [statusId, group] of groups) {
-				const newTasks = mattersByStatus.get(statusId) || [];
-				const oldTaskCount = group.tasks.length;
-				group.tasks = newTasks;
-
-				if (!COLLAPSED_TYPES.has(group.status.type as string)) {
-					activeCount += newTasks.length - oldTaskCount;
-				}
+			if (!COLLAPSED_TYPES.has(status.type as string)) {
+				activeCount++;
 			}
 		}
 
@@ -195,17 +134,8 @@ export function useGroupedTasks(
 			}
 		}
 
-		// Update cache
-		const newState: GroupState = {
-			groups,
-			activeCount,
-			flatItems,
-			stickyIndices,
-		};
-		prevStateRef.current = newState;
-
 		return { flatItems, activeCount, stickyIndices };
-	}, [matters, statuses, toggledStatuses]);
+	}, [matters, statuses, toggledStatuses, toggleGroup]);
 
 	return {
 		...result,

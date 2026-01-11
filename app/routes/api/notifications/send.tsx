@@ -51,8 +51,8 @@ async function requireSession(request: Request) {
  * Authorization criteria (strict):
  * 1. If `organizationId` is provided, both users must be members of that org.
  * 2. If not provided, users must share exactly one org (unambiguous).
- * 2. TODO: Add follower relationship check if implemented
- * 3. TODO: Add allowlist check if implemented
+ * 3. TODO: Add follower relationship check if implemented
+ * 4. TODO: Add allowlist check if implemented
  */
 async function isAuthorizedToNotify(
 	senderId: string,

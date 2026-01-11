@@ -113,11 +113,6 @@ export async function upsertCustomer(
 						previousDodoId: existing.dodoCustomerId,
 						newDodoId: dodoCustomerId,
 						email,
-						// This helps ops investigate if this was legitimate or an error
-						matchedBy:
-							existing.dodoCustomerId === dodoCustomerId
-								? "dodoCustomerId"
-								: "organizationId",
 					},
 				);
 			}
@@ -233,6 +228,11 @@ export async function recordPayment(
 	const paymentId = payload.payment_id;
 	if (!paymentId) {
 		// Payment events are expected to have a payment_id; avoid inserting non-idempotent rows.
+		logger.warn("[Billing] Payment event missing payment_id - skipping", {
+			customerId,
+			organizationId,
+			subscriptionId: payload.subscription_id,
+		});
 		return;
 	}
 

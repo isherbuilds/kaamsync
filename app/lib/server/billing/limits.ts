@@ -1,4 +1,5 @@
 import { type ProductKey, planLimits, usagePricing } from "~/lib/billing";
+import { getOrganizationMatterCount } from "~/lib/server/prepared-queries.server";
 import {
 	getOrganizationUsage, // Renamed from prepared import in original, now from cache
 } from "./cache";
@@ -53,6 +54,13 @@ export async function checkPlanLimits(
 	}
 
 	const usage = await getOrganizationUsage(organizationId);
+	// Ensure matters usage is populated (fallback to prepared query if missing)
+	if (typeof usage.matters !== "number") {
+		const matterResult = await getOrganizationMatterCount.execute({
+			orgId: organizationId,
+		});
+		usage.matters = matterResult[0]?.count ?? 0;
+	}
 	const limits = planLimits[effectivePlan];
 
 	const violations: PlanLimitCheck["violations"] = {};
@@ -101,9 +109,10 @@ export async function getOrganizationPlanKey(
 		subscription.status === "cancelled" ||
 		subscription.status === "expired"
 	) {
+		// Check cancellation date - if no date, give benefit of doubt until we have data
 		const periodEnded = subscription.currentPeriodEnd
 			? new Date(subscription.currentPeriodEnd) < new Date()
-			: true;
+			: false;
 		if (periodEnded) return "starter";
 	}
 
@@ -290,7 +299,7 @@ export async function canCreateMatter(organizationId: string): Promise<{
 }> {
 	const limitCheck = await checkPlanLimits(organizationId);
 	const limits = limitCheck.limits;
-	// Warning: usage.matters is explicitly 0 for now until query updated
+	// usage.matters is populated from prepared statements (ensured in checkPlanLimits)
 	const usage = limitCheck.usage;
 
 	if (limits.matters === -1) {
