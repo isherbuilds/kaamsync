@@ -110,7 +110,7 @@ export default function TeamIndex() {
 									taskTitle
 										? `${taskCode}: ${taskTitle}`
 										: "A task was assigned to you",
-									`/${teamCode}/matter/${taskCode}`,
+									`/${orgSlug}/matter/${taskCode}`,
 								);
 							},
 						);
@@ -118,7 +118,7 @@ export default function TeamIndex() {
 				},
 			);
 		},
-		[z, teamCode],
+		[z, orgSlug],
 	);
 
 	// Filter statuses for task-only view (exclude request statuses)

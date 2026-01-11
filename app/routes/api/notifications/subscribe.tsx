@@ -138,31 +138,102 @@ export async function action({ request }: Route.ActionArgs) {
 		);
 	}
 
-	// Create new subscription
+	// Create new subscription (guard for races on unique endpoint)
 	const newSubscriptionId = createId();
-	await db.insert(pushSubscriptionsTable).values({
-		id: newSubscriptionId,
-		userId: user.id,
-		endpoint,
-		p256dh: keys.p256dh,
-		auth: keys.auth,
-		userAgent,
-		createdAt: new Date(),
-		updatedAt: new Date(),
-	});
+	try {
+		await db.insert(pushSubscriptionsTable).values({
+			id: newSubscriptionId,
+			userId: user.id,
+			endpoint,
+			p256dh: keys.p256dh,
+			auth: keys.auth,
+			userAgent,
+			createdAt: new Date(),
+			updatedAt: new Date(),
+		});
 
-	// Audit log successful creation
-	auditLog({
-		action: "notification.subscribe.create",
-		actorId: user.id,
-		outcome: "success",
-		metadata: {
-			subscriptionId: newSubscriptionId,
-			endpoint: endpoint.substring(0, 50), // Truncate for privacy
-		},
-		ip: getRequestIP(request),
-		userAgent: getRequestUserAgent(request),
-	});
+		// Audit log successful creation
+		auditLog({
+			action: "notification.subscribe.create",
+			actorId: user.id,
+			outcome: "success",
+			metadata: {
+				subscriptionId: newSubscriptionId,
+				endpoint: endpoint.substring(0, 50), // Truncate for privacy
+			},
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
 
-	return { success: true, created: true };
+		return { success: true, created: true };
+	} catch (err) {
+		// Handle unique-constraint races by inspecting the existing row
+		if (err instanceof Error && err.message.includes("unique constraint")) {
+			const existingAfterConflict = await db
+				.select({
+					id: pushSubscriptionsTable.id,
+					userId: pushSubscriptionsTable.userId,
+				})
+				.from(pushSubscriptionsTable)
+				.where(eq(pushSubscriptionsTable.endpoint, endpoint))
+				.limit(1);
+
+			if (existingAfterConflict.length > 0) {
+				const existingRow = existingAfterConflict[0];
+
+				// If the subscription belongs to the same user, update it
+				if (existingRow.userId === user.id) {
+					await db
+						.update(pushSubscriptionsTable)
+						.set({
+							p256dh: keys.p256dh,
+							auth: keys.auth,
+							userAgent,
+							updatedAt: new Date(),
+						})
+						.where(eq(pushSubscriptionsTable.id, existingRow.id));
+
+					// Audit log successful update
+					auditLog({
+						action: "notification.subscribe.update",
+						actorId: user.id,
+						outcome: "success",
+						metadata: {
+							subscriptionId: existingRow.id,
+							endpoint: endpoint.substring(0, 50), // Truncate for privacy
+						},
+						ip: getRequestIP(request),
+						userAgent: getRequestUserAgent(request),
+					});
+
+					return { success: true, updated: true };
+				}
+
+				// SECURITY: Subscription hijacking attempt detected
+				auditLog({
+					action: "notification.subscribe.hijack_attempt",
+					actorId: user.id,
+					targetId: existingRow.userId,
+					outcome: "denied",
+					reason:
+						"Attempted to register subscription endpoint owned by another user",
+					metadata: {
+						subscriptionId: existingRow.id,
+						endpoint: endpoint.substring(0, 50), // Truncate for privacy
+						actualOwner: existingRow.userId,
+					},
+					ip: getRequestIP(request),
+					userAgent: getRequestUserAgent(request),
+				});
+
+				return data(
+					{ error: "Subscription endpoint is registered to another user" },
+					{ status: 403 },
+				);
+			}
+		}
+
+		// If we didn't handle it, rethrow
+		throw err;
+	}
 }

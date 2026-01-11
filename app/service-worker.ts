@@ -47,6 +47,7 @@ self.addEventListener("install", (event) => {
 							})
 							.catch((e) => {
 								console.error(`[SW] Precache failed for ${url}`, e);
+								throw e; // Fail installation if critical shell resources can't be cached
 							}),
 					),
 				),
@@ -107,17 +108,27 @@ setCatchHandler(async ({ request }) => {
 
 // Push Notifications
 self.addEventListener("push", (event) => {
-	const data = event.data ? event.data.json() : {};
-	const title = data.title || "KaamSync Update";
-	const options: NotificationOptions = {
-		body: data.body || "You have a new notification",
-		icon: "/web-app-manifest-192x192.png",
-		badge: "/favicon-96x96.png",
-		tag: data.tag || "general",
-		data: data.data || {},
-	};
-
-	event.waitUntil(self.registration.showNotification(title, options));
+	try {
+		const data = event.data ? event.data.json() : {};
+		const title = data.title || "KaamSync Update";
+		const options: NotificationOptions = {
+			body: data.body || "You have a new notification",
+			icon: "/web-app-manifest-192x192.png",
+			badge: "/favicon-96x96.png",
+			tag: data.tag || "general",
+			data: data.data || {},
+		};
+		event.waitUntil(self.registration.showNotification(title, options));
+	} catch (error) {
+		console.error("[SW] Push event error:", error);
+		// Show a generic notification even if parsing fails
+		event.waitUntil(
+			self.registration.showNotification("KaamSync Update", {
+				body: "You have a new notification",
+				icon: "/web-app-manifest-192x192.png",
+			}),
+		);
+	}
 });
 
 self.addEventListener("notificationclick", (event) => {

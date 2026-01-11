@@ -56,10 +56,16 @@ const withMatterRelations = <T>(q: T): T =>
 		.related("status")
 		.related("labels", (q: any) => q.related("label"));
 
+/**
+ * Apply keyset pagination. Uses a consistent sort direction ("desc") for both
+ * `createdAt` and `id`. The `direction` parameter is accepted for API
+ * compatibility but is ignored here — callers should reverse results if they
+ * need the opposite presentation (e.g., to show oldest-first).
+ */
 const withPagination = <T>(
 	q: T,
 	cursor: { id: string; createdAt: number } | null,
-	direction: "forward" | "backward",
+	_direction: "forward" | "backward",
 	limit: number,
 ): T => {
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
@@ -67,11 +73,7 @@ const withPagination = <T>(
 	if (cursor) {
 		query = query.start(cursor);
 	}
-	const orderDir = direction === "forward" ? "desc" : "asc";
-	return query
-		.orderBy("createdAt", orderDir)
-		.orderBy("id", orderDir)
-		.limit(limit);
+	return query.orderBy("createdAt", "desc").orderBy("id", "desc").limit(limit);
 };
 
 export const queries = defineQueries({

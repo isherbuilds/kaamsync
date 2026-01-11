@@ -8,7 +8,6 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
 	build: {
 		outDir: "build/client",
-		// Optimize assets for better performance
 	},
 
 	plugins: [

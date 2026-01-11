@@ -14,6 +14,7 @@ import type { PlanUsage } from "./types";
 export interface PlanLimitCheck {
 	withinLimits: boolean;
 	usage: PlanUsage;
+	effectivePlan: ProductKey;
 	limits: (typeof planLimits)[ProductKey];
 	violations: {
 		members?: { current: number; limit: number };
@@ -104,6 +105,7 @@ export async function checkPlanLimits(
 	return {
 		withinLimits,
 		usage,
+		effectivePlan,
 		limits,
 		violations,
 	};
@@ -215,7 +217,7 @@ export async function getMemberCount(organizationId: string): Promise<{
 		currentMembers: limitCheck.usage.members,
 		planLimit: limitCheck.limits.members,
 		plan: planKey,
-		effectivePlan: planKey, // Could differ if strictly enforcing starter
+		effectivePlan: limitCheck.effectivePlan,
 	};
 }
 
