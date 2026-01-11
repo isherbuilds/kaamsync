@@ -58,7 +58,7 @@ export const AuthService = {
 				from: "welcome@mail.kaamsync.com",
 				to: user.email,
 				subject: "KaamSync: Verify your email address",
-				react: VerifyEmail({ verifyUrl: url }),
+				react: <VerifyEmail verifyUrl={url} />,
 			});
 		} catch (err) {
 			console.error(
@@ -92,12 +92,14 @@ export const AuthService = {
 			from: "KaamSync@mail.kaamsync.com",
 			to: email,
 			subject: `You're invited to join ${organization.name} on KaamSync`,
-			react: OrgInvitationEmail({
-				organizationName: organization.name,
-				inviterName: inviter.user.name,
-				inviterEmail: inviter.user.email,
-				inviteLink,
-			}),
+			react: (
+				<OrgInvitationEmail
+					organizationName={organization.name}
+					inviterName={inviter.user.name}
+					inviterEmail={inviter.user.email}
+					inviteLink={inviteLink}
+				/>
+			),
 		});
 	},
 

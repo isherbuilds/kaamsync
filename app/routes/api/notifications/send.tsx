@@ -17,7 +17,7 @@ const sendNotificationSchema = z.object({
 	organizationId: z.string().optional(),
 	title: z.string(),
 	body: z.string(),
-	url: z.url().optional(),
+	url: z.string().optional(),
 	tag: z.string().optional(),
 });
 
