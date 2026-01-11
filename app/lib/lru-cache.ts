@@ -26,9 +26,13 @@ export class LRUCache<K, V> {
 		if (maxSize <= 0) {
 			throw new Error("LRUCache maxSize must be positive");
 		}
-		if (memoryPressureThreshold <= 0 || memoryPressureThreshold >= 1) {
+		if (
+			!Number.isFinite(memoryPressureThreshold) ||
+			memoryPressureThreshold <= 0 ||
+			memoryPressureThreshold >= 1
+		) {
 			throw new Error(
-				"LRUCache memoryPressureThreshold must be greater than 0 and less than 1",
+				"LRUCache memoryPressureThreshold must be a finite number in the range (0, 1)",
 			);
 		}
 		this.#maxSize = maxSize;
