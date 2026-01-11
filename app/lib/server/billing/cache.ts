@@ -1,3 +1,4 @@
+import { logger } from "~/lib/logger";
 import { getOrganizationUsagePrepared } from "~/lib/server/prepared-queries.server";
 import type { PlanUsage } from "./types";
 
@@ -50,29 +51,36 @@ export async function getOrganizationUsage(
 	}
 
 	// SECURE & OPTIMIZED: Use prepared statements for better performance and security
-	const usage = await usagePromise;
+	let usage: PlanUsage;
+	try {
+		usage = await usagePromise;
+	} catch (error) {
+		logger.error("Failed to get organization usage", {
+			function: "getOrganizationUsage",
+			organizationId,
+			error,
+		});
+		throw error;
+	}
 
-	// If cache is full, remove oldest expired entry or oldest entry
+	// If cache is full, remove all expired entries and track oldest non-expired entry
 	if (usageCache.size >= MAX_CACHE_SIZE) {
 		const now = Date.now();
 		let oldestKey: string | undefined;
 		let oldestExpires = Number.POSITIVE_INFINITY;
-		let deletedExpired = false;
 
+		// Delete all expired entries and track oldest non-expired entry
 		for (const [key, value] of usageCache.entries()) {
 			if (value.expires < now) {
 				usageCache.delete(key);
-				deletedExpired = true;
-				break; // remove a single expired entry to make space
-			}
-			if (value.expires < oldestExpires) {
+			} else if (value.expires < oldestExpires) {
 				oldestExpires = value.expires;
 				oldestKey = key;
 			}
 		}
 
-		// If no expired entries were deleted and we're still at capacity, remove the oldest
-		if (!deletedExpired && usageCache.size >= MAX_CACHE_SIZE && oldestKey) {
+		// If cache is still full after removing expired entries, evict oldest non-expired
+		if (usageCache.size >= MAX_CACHE_SIZE && oldestKey) {
 			usageCache.delete(oldestKey);
 		}
 	}
@@ -88,16 +96,14 @@ export async function getOrganizationUsage(
 
 /**
  * Invalidate usage cache for an organization (call after membership/team changes)
- * ENHANCED: Also invalidate related caches
  */
 export function invalidateUsageCache(organizationId: string): void {
 	usageCache.delete(organizationId);
 
-	// Also clear any related cached data that might be affected
-	// This ensures consistency across all cached organization data
-	console.log(
-		`[Cache] Invalidated usage cache for organization: ${organizationId}`,
-	);
+	logger.info("Invalidated usage cache entry", {
+		function: "invalidateUsageCache",
+		organizationId,
+	});
 }
 
 /**
@@ -106,9 +112,10 @@ export function invalidateUsageCache(organizationId: string): void {
 export function invalidateAllOrganizationCaches(organizationId: string): void {
 	invalidateUsageCache(organizationId);
 	// Add other cache invalidations here as needed
-	console.log(
-		`[Cache] Invalidated all caches for organization: ${organizationId}`,
-	);
+	logger.info("Invalidated all caches for organization", {
+		function: "invalidateAllOrganizationCaches",
+		organizationId,
+	});
 }
 
 /**
