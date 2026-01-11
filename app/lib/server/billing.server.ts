@@ -61,7 +61,22 @@ export async function handleBillingWebhook(
 		typeof payload.timestamp === "object"
 			? payload.timestamp.toISOString()
 			: payload.timestamp;
-	const generatedWebhookId = `${eventType}_${payloadTimestamp}_${payload.business_id}_${payload.data?.subscription_id ?? ""}_${payload.data?.payment_id ?? ""}_${payload.data?.customer_id ?? ""}`;
+import { createHash } from "crypto";
+
+export async function handleBillingWebhook(
+	payload: WebhookPayload,
+): Promise<void> {
+	const eventType = payload.type || payload.event_type || "";
+	const payloadTimestamp =
+		typeof payload.timestamp === "object"
+			? payload.timestamp.toISOString()
+			: payload.timestamp;
+	// Use hash of full payload for guaranteed uniqueness
+	const payloadHash = createHash("sha256")
+		.update(JSON.stringify(payload))
+		.digest("hex")
+		.substring(0, 16);
+	const generatedWebhookId = `${eventType}_${payloadTimestamp}_${payloadHash}`;
 
 	// Attempt to claim webhook idempotency atomically. If another
 	// process has already claimed this webhook, exit early.
