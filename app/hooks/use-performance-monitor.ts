@@ -22,6 +22,8 @@ export function usePerformanceMonitor(enabled: boolean = import.meta.env.DEV) {
 	useEffect(() => {
 		if (!enabled) return;
 
+		let rafId: number;
+
 		const updateFPS = () => {
 			frameCountRef.current++;
 			const now = performance.now();
@@ -35,10 +37,16 @@ export function usePerformanceMonitor(enabled: boolean = import.meta.env.DEV) {
 				setMetrics((prev) => ({ ...prev, fps }));
 			}
 
-			requestAnimationFrame(updateFPS);
+			rafId = requestAnimationFrame(updateFPS);
 		};
 
-		requestAnimationFrame(updateFPS);
+		rafId = requestAnimationFrame(updateFPS);
+
+		return () => {
+			if (rafId) {
+				cancelAnimationFrame(rafId);
+			}
+		};
 	}, [enabled]);
 
 	useEffect(() => {
