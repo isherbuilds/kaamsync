@@ -28,7 +28,7 @@ interface SyncManager {
 
 const SHELL_CACHE = "KaamSync-shell";
 const STATIC_CACHE = "KaamSync-static";
-const SHELL_URLS = ["/"];
+const SHELL_URLS = ["/", "/offline.html"];
 
 // Immediately take control
 self.addEventListener("install", (event) => {

@@ -32,11 +32,10 @@ export const AuthService = {
 				html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
 			});
 		} catch (err) {
-			console.error(
-				"[AuthService] Failed to send reset password email",
-				{ email: user.email, url },
-				err,
-			);
+			console.error("[AuthService] Failed to send reset password email", {
+				email: user.email,
+				hasUrl: !!url,
+			});
 			throw normalizeError(err);
 		}
 	},
@@ -61,11 +60,11 @@ export const AuthService = {
 				react: <VerifyEmail verifyUrl={url} />,
 			});
 		} catch (err) {
-			console.error(
-				"[AuthService] Failed to send verification email",
-				{ email: user.email, url },
-				err,
-			);
+			const redactedUrl = url.split("?")[0] + "...";
+			console.error("[AuthService] Failed to send verification email", {
+				email: user.email,
+				url: redactedUrl,
+			});
 			throw normalizeError(err);
 		}
 	},
@@ -88,19 +87,28 @@ export const AuthService = {
 			return;
 		}
 
-		await usesend.emails.send({
-			from: "KaamSync@mail.kaamsync.com",
-			to: email,
-			subject: `You're invited to join ${organization.name} on KaamSync`,
-			react: (
-				<OrgInvitationEmail
-					organizationName={organization.name}
-					inviterName={inviter.user.name}
-					inviterEmail={inviter.user.email}
-					inviteLink={inviteLink}
-				/>
-			),
-		});
+		try {
+			await usesend.emails.send({
+				from: "KaamSync@mail.kaamsync.com",
+				to: email,
+				subject: `You're invited to join ${organization.name} on KaamSync`,
+				react: (
+					<OrgInvitationEmail
+						organizationName={organization.name}
+						inviterName={inviter.user.name}
+						inviterEmail={inviter.user.email}
+						inviteLink={inviteLink}
+					/>
+				),
+			});
+		} catch (err) {
+			console.error("[AuthService] Failed to send invitation email", {
+				email,
+				organization: organization.name,
+				inviter: inviter.user.email,
+			});
+			throw normalizeError(err);
+		}
 	},
 
 	async handleMembershipChange(organizationId: string) {

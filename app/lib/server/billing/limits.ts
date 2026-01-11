@@ -71,7 +71,8 @@ export async function checkPlanLimits(
 		}
 	}
 
-	const usage = await getOrganizationUsage(organizationId);
+	// Avoid mutating the cached usage object
+	const usage = { ...(await getOrganizationUsage(organizationId)) };
 	// Ensure matters usage is populated (fallback to prepared query if missing)
 	if (typeof usage.matters !== "number") {
 		const matterResult = await getOrganizationMatterCount.execute({
@@ -345,6 +346,11 @@ export async function handleSubscriptionDowngrade(
 		if (limitCheck.violations.teams) {
 			messages.push(
 				`Remove ${limitCheck.violations.teams.current - limitCheck.violations.teams.limit} teams`,
+			);
+		}
+		if (limitCheck.violations.matters) {
+			messages.push(
+				`Remove ${limitCheck.violations.matters.current - limitCheck.violations.matters.limit} matters`,
 			);
 		}
 

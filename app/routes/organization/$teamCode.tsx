@@ -102,18 +102,27 @@ export default function TeamIndex() {
 				() => {
 					// Send push notification to new assignee (fire and forget)
 					if (u) {
-						import("~/hooks/use-push-notifications").then(
-							({ sendNotificationToUser }) => {
+						const notificationUrl = taskCode
+							? `/${orgSlug}/matter/${taskCode}`
+							: `/${orgSlug}/matter`;
+
+						import("~/hooks/use-push-notifications")
+							.then(({ sendNotificationToUser }) => {
 								sendNotificationToUser(
 									u,
 									"Task Assigned to You",
 									taskTitle
 										? `${taskCode}: ${taskTitle}`
 										: "A task was assigned to you",
-									`/${orgSlug}/matter/${taskCode}`,
+									notificationUrl,
 								);
-							},
-						);
+							})
+							.catch((err) => {
+								console.error(
+									"[PushNotification] Failed to send notification:",
+									err,
+								);
+							});
 					}
 				},
 			);
