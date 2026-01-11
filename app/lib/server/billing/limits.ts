@@ -246,9 +246,8 @@ export async function canCreateTeam(organizationId: string): Promise<{
 
 	// Strict "Roach Motel" check
 	if (usage.teams >= limits.teams) {
-		// Allows overage for paid plans?
-		// Plan config says Growth="-1", Pro="15".
-		// If Pro user wants 16 teams? UsagePricing exists for "teamCreated", so Yes allow for Paid.
+		// Allow overage for paid plans (both Growth and Pro have unlimited teams in planLimits,
+		// but this check exists for potential future tiered limits with usage-based pricing).
 
 		const sub = await getOrganizationSubscription(organizationId);
 		const isActivePaid =
