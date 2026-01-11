@@ -313,10 +313,11 @@ export async function canCreateMatter(organizationId: string): Promise<{
 	if (usage.matters >= limits.matters) {
 		return {
 			allowed: false,
-			reason: `You have reached the matter limit (${limits.matters}) for the Starter plan. Upgrade for unlimited.`,
+			reason: `You have reached the matter limit (${limits.matters}). Upgrade for unlimited matters.`,
 			currentCount: usage.matters,
 			limit: limits.matters,
 		};
+	}
 	}
 
 	return {
