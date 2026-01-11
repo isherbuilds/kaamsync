@@ -4,6 +4,11 @@ import { data } from "react-router";
 import { z } from "zod";
 import { db } from "~/db";
 import { pushSubscriptionsTable } from "~/db/schema";
+import {
+	auditLog,
+	getRequestIP,
+	getRequestUserAgent,
+} from "~/lib/audit-logger";
 import { getServerSession } from "~/lib/auth";
 import { getVapidPublicKey } from "~/lib/notifications.server";
 import type { Route } from "./+types/subscribe";
@@ -16,8 +21,33 @@ const subscriptionSchema = z.object({
 	}),
 });
 
+/**
+ * Helper to require authentication in action
+ * Returns session or throws 401 response
+ *
+ * Note: Rate limiting is handled globally by Better Auth
+ * configured at /api/notifications/subscribe (20 req/min) in auth.ts
+ */
+async function requireSession(request: Request) {
+	const session = await getServerSession(request);
+
+	if (!session?.user) {
+		auditLog({
+			action: "notification.subscribe",
+			actorId: "anonymous",
+			outcome: "denied",
+			reason: "Unauthenticated request",
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+		throw data({ error: "Unauthorized" }, { status: 401 });
+	}
+
+	return session;
+}
+
 // GET: Return the VAPID public key for client-side subscription
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader(_args: Route.LoaderArgs) {
 	const vapidPublicKey = getVapidPublicKey();
 
 	if (!vapidPublicKey) {
@@ -32,16 +62,22 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 // POST: Save a push subscription for the authenticated user
 export async function action({ request }: Route.ActionArgs) {
-	const session = await getServerSession(request);
-
-	if (!session?.user?.id) {
-		return data({ error: "Unauthorized" }, { status: 401 });
-	}
+	const session = await requireSession(request);
+	const user = session.user;
 
 	const body = await request.json();
 	const result = subscriptionSchema.safeParse(body);
 
 	if (!result.success) {
+		auditLog({
+			action: "notification.subscribe",
+			actorId: user.id,
+			outcome: "error",
+			reason: "Invalid subscription data",
+			metadata: { errors: result.error.issues },
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
 		return data({ error: "Invalid subscription data" }, { status: 400 });
 	}
 
@@ -62,7 +98,7 @@ export async function action({ request }: Route.ActionArgs) {
 		const existingRow = existing[0];
 
 		// Only update if this subscription already belongs to the current user.
-		if (existingRow.userId === session.user.id) {
+		if (existingRow.userId === user.id) {
 			// Update existing subscription (refresh keys / metadata)
 			await db
 				.update(pushSubscriptionsTable)
@@ -74,31 +110,70 @@ export async function action({ request }: Route.ActionArgs) {
 				})
 				.where(eq(pushSubscriptionsTable.id, existingRow.id));
 
-			return { success: true, updated: true };
-		} else {
-			// Do NOT transfer ownership silently. Log / audit and reject the attempt.
-			// TODO: Emit a proper audit event or write to an audit table so this attempt is recorded for security/forensics.
-			console.warn(
-				`Push subscription ownership transfer denied: subscription=${existingRow.id}, endpoint=${endpoint}, owner=${existingRow.userId}, attemptedBy=${session.user.id}`,
-			);
+			// Audit log successful update
+			auditLog({
+				action: "notification.subscribe.update",
+				actorId: user.id,
+				outcome: "success",
+				metadata: {
+					subscriptionId: existingRow.id,
+					endpoint: endpoint.substring(0, 50), // Truncate for privacy
+				},
+				ip: getRequestIP(request),
+				userAgent: getRequestUserAgent(request),
+			});
 
-			return data(
-				{ error: "Subscription endpoint is registered to another user" },
-				{ status: 403 },
-			);
+			return { success: true, updated: true };
 		}
+
+		// SECURITY: Subscription hijacking attempt detected
+		// Do NOT transfer ownership silently - log and reject
+		auditLog({
+			action: "notification.subscribe.hijack_attempt",
+			actorId: user.id,
+			targetId: existingRow.userId,
+			outcome: "denied",
+			reason:
+				"Attempted to register subscription endpoint owned by another user",
+			metadata: {
+				subscriptionId: existingRow.id,
+				endpoint: endpoint.substring(0, 50), // Truncate for privacy
+				actualOwner: existingRow.userId,
+			},
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+
+		return data(
+			{ error: "Subscription endpoint is registered to another user" },
+			{ status: 403 },
+		);
 	}
 
 	// Create new subscription
+	const newSubscriptionId = createId();
 	await db.insert(pushSubscriptionsTable).values({
-		id: createId(),
-		userId: session.user.id,
+		id: newSubscriptionId,
+		userId: user.id,
 		endpoint,
 		p256dh: keys.p256dh,
 		auth: keys.auth,
 		userAgent,
 		createdAt: new Date(),
 		updatedAt: new Date(),
+	});
+
+	// Audit log successful creation
+	auditLog({
+		action: "notification.subscribe.create",
+		actorId: user.id,
+		outcome: "success",
+		metadata: {
+			subscriptionId: newSubscriptionId,
+			endpoint: endpoint.substring(0, 50), // Truncate for privacy
+		},
+		ip: getRequestIP(request),
+		userAgent: getRequestUserAgent(request),
 	});
 
 	return { success: true, created: true };

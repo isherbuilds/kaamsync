@@ -13,11 +13,15 @@
  * ```
  */
 export class LRUCache<K, V> {
+	// How often to run a more-expensive memory pressure check on gets.
+	// Must be a power of two to allow fast modulus via bitmask.
+	static readonly GET_CHECK_FREQUENCY = 128;
+
 	readonly #maxSize: number;
 	readonly #cache: Map<K, V>;
 	readonly #memoryPressureThreshold: number;
 	#lastCleanup: number;
-
+	#_getCounter = 0; // lightweight counter; intentionally not shared across threads
 	constructor(maxSize: number, memoryPressureThreshold = 0.8) {
 		if (maxSize <= 0) {
 			throw new Error("LRUCache maxSize must be positive");
@@ -29,7 +33,11 @@ export class LRUCache<K, V> {
 	}
 
 	/**
-	 * Check for memory pressure and cleanup if needed
+	 * Check for memory pressure and cleanup if needed.
+	 *
+	 * This method is intentionally invoked only on mutations (`set()`) and
+	 * periodically from `get()` (sampled every `GET_CHECK_FREQUENCY` reads) to
+	 * avoid the Date.now() overhead on the hot read path.
 	 */
 	private checkMemoryPressure(): void {
 		const now = Date.now();
@@ -59,6 +67,11 @@ export class LRUCache<K, V> {
 
 	/**
 	 * Get a value from cache. Moves item to "most recently used" position.
+	 *
+	 * This is a hot path; avoid expensive operations here. We increment a
+	 * lightweight counter and only perform memory-pressure checks every
+	 * GET_CHECK_FREQUENCY calls to avoid adding Date.now() overhead to each
+	 * read. `set()` still performs checks on mutation.
 	 */
 	get(key: K): V | undefined {
 		const value = this.#cache.get(key);
@@ -69,8 +82,11 @@ export class LRUCache<K, V> {
 		this.#cache.delete(key);
 		this.#cache.set(key, value);
 
-		// Check memory pressure periodically
-		this.checkMemoryPressure();
+		// Lightweight sampling to avoid Date.now() on every get.
+		// Use a power-of-two `GET_CHECK_FREQUENCY` so we can use a fast bitmask.
+		if ((++this.#_getCounter & (LRUCache.GET_CHECK_FREQUENCY - 1)) === 0) {
+			this.checkMemoryPressure();
+		}
 
 		return value;
 	}

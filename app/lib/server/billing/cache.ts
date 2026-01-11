@@ -3,11 +3,13 @@ import type { PlanUsage } from "./types";
 
 // Simple in-memory cache for organization usage (5-minute TTL)
 const usageCache = new Map<string, { data: PlanUsage; expires: number }>();
+// Track in-flight requests to dedupe parallel callers
+const inFlightRequests = new Map<string, Promise<PlanUsage>>();
 const USAGE_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const MAX_CACHE_SIZE = 1000; // Limit cache to 1000 organizations
 
-// Periodic cleanup of expired entries
-setInterval(() => {
+// Periodic cleanup of expired entries (unref'd to not block process exit)
+const cleanupInterval = setInterval(() => {
 	const now = Date.now();
 	for (const [key, value] of usageCache.entries()) {
 		if (value.expires < now) {
@@ -15,6 +17,12 @@ setInterval(() => {
 		}
 	}
 }, USAGE_CACHE_TTL); // Run cleanup every 5 minutes
+cleanupInterval.unref();
+
+// Export for graceful shutdown if needed
+export function stopCacheCleanup(): void {
+	clearInterval(cleanupInterval);
+}
 
 /**
  * Get current usage for an organization (SECURE & OPTIMIZED: Using prepared statements)
@@ -28,27 +36,43 @@ export async function getOrganizationUsage(
 		return cached.data;
 	}
 
+	// Dedupe concurrent misses by sharing the same in-flight promise.
+	// All concurrent callers await the same promise; once it settles we clear it so
+	// subsequent requests can retry after errors.
+	let usagePromise = inFlightRequests.get(organizationId);
+	if (!usagePromise) {
+		// Cache the promise and always cleanup when it settles.
+		usagePromise = getOrganizationUsagePrepared(organizationId).finally(() => {
+			// Clear from in-flight map after resolution (success or failure)
+			inFlightRequests.delete(organizationId);
+		});
+		inFlightRequests.set(organizationId, usagePromise);
+	}
+
 	// SECURE & OPTIMIZED: Use prepared statements for better performance and security
-	const usage = await getOrganizationUsagePrepared(organizationId);
+	const usage = await usagePromise;
 
 	// If cache is full, remove oldest expired entry or oldest entry
 	if (usageCache.size >= MAX_CACHE_SIZE) {
 		const now = Date.now();
 		let oldestKey: string | undefined;
 		let oldestExpires = Number.POSITIVE_INFINITY;
-		
+		let deletedExpired = false;
+
 		for (const [key, value] of usageCache.entries()) {
 			if (value.expires < now) {
 				usageCache.delete(key);
-				break;
+				deletedExpired = true;
+				break; // remove a single expired entry to make space
 			}
 			if (value.expires < oldestExpires) {
 				oldestExpires = value.expires;
 				oldestKey = key;
 			}
 		}
-		
-		if (usageCache.size >= MAX_CACHE_SIZE && oldestKey) {
+
+		// If no expired entries were deleted and we're still at capacity, remove the oldest
+		if (!deletedExpired && usageCache.size >= MAX_CACHE_SIZE && oldestKey) {
 			usageCache.delete(oldestKey);
 		}
 	}
@@ -97,7 +121,8 @@ export function getCacheStats() {
 			entries: Array.from(usageCache.entries()).map(([key, value]) => ({
 				key,
 				expires: new Date(value.expires).toISOString(),
-				data: value.data,
+				// Omit sensitive data; include only metadata
+				isExpired: value.expires < Date.now(),
 			})),
 		},
 	};

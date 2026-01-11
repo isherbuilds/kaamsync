@@ -114,22 +114,40 @@ function Layout({
 	// Memoize team IDs to prevent unnecessary preloading re-runs
 	const teamIds = useMemo(() => teamsData.map((t) => t.id), [teamsData]);
 
-	// Optimize preloading with requestIdleCallback instead of artificial delay
+	// Optimize preloading and guard requestIdleCallback for Safari
 	useEffect(() => {
 		if (teamIds.length > 0 && activeOrgId) {
 			const preloadFn = () => {
 				preloadAllTeams(z, teamIds, activeOrgId);
 			};
 
-			// Use requestIdleCallback for better performance
-			const idleId = requestIdleCallback(
-				() => {
-					preloadFn();
-				},
-				{ timeout: 100 },
-			);
+			// Feature-detect requestIdleCallback; fallback to setTimeout if unavailable
+			if (typeof window !== "undefined") {
+				const w = window as unknown as {
+					requestIdleCallback?: (
+						cb: () => void,
+						opts?: { timeout?: number },
+					) => number;
+					cancelIdleCallback?: (id: number) => void;
+				};
 
-			return () => cancelIdleCallback(idleId);
+				if (typeof w.requestIdleCallback === "function") {
+					const idleId = w.requestIdleCallback(() => {
+						preloadFn();
+					});
+
+					return () => {
+						w.cancelIdleCallback?.(idleId);
+					};
+				}
+
+				const timeoutId = setTimeout(() => {
+					preloadFn();
+				}, 0);
+				return () => {
+					clearTimeout(timeoutId);
+				};
+			}
 		}
 	}, [z, activeOrgId, teamIds]);
 

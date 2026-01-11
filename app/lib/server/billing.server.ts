@@ -1,10 +1,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import { membersTable, usersTable } from "~/db/schema";
-import {
-	getCustomerByDodoId,
-	getOrganizationSubscription as getOrgSubscriptionPrepared,
-} from "~/lib/server/prepared-queries.server";
+import { getCustomerByDodoId } from "~/lib/server/prepared-queries.server";
 
 // Re-export cache functions
 export {
@@ -33,7 +30,6 @@ export {
 	getOrganizationCustomer,
 	getOrganizationPayments,
 	getOrganizationSubscription,
-	isWebhookProcessed,
 	linkCustomerToOrganization,
 	recordPayment,
 	recordWebhookEvent,
@@ -45,7 +41,7 @@ export type { PlanUsage, WebhookPayload } from "./billing/types";
 
 // Import what we need for the webhook handler in this file
 import {
-	isWebhookProcessed,
+	deleteWebhookEvent,
 	recordPayment,
 	recordWebhookEvent,
 	upsertCustomer,
@@ -67,10 +63,14 @@ export async function handleBillingWebhook(
 			: payload.timestamp;
 	const generatedWebhookId = `${eventType}_${payloadTimestamp}_${payload.business_id}_${payload.data?.subscription_id ?? ""}_${payload.data?.payment_id ?? ""}_${payload.data?.customer_id ?? ""}`;
 
-	// Idempotency check
-	if (await isWebhookProcessed(generatedWebhookId)) {
-		return;
-	}
+	// Attempt to claim webhook idempotency atomically. If another
+	// process has already claimed this webhook, exit early.
+	const claimed = await recordWebhookEvent(
+		generatedWebhookId,
+		eventType,
+		JSON.stringify(payload),
+	);
+	if (!claimed) return;
 
 	try {
 		const data = payload.data;
@@ -160,14 +160,24 @@ export async function handleBillingWebhook(
 		if (paymentStatus && customerId) {
 			await recordPayment(customerId, organizationId, data, paymentStatus);
 		}
-
-		await recordWebhookEvent(
-			generatedWebhookId,
-			eventType,
-			JSON.stringify(payload),
-		);
 	} catch (error) {
 		console.error(`[Billing] Webhook processing error:`, error);
+		// If processing failed, remove the claimed webhook event so it can be retried
+		try {
+			await deleteWebhookEvent(generatedWebhookId);
+		} catch (deleteErr) {
+			// Log cleanup failure as critical - this leaves the webhook claim locked
+			console.error(
+				"[Billing] CRITICAL: Failed to clean up webhook claim. Manual intervention may be required.",
+				{
+					webhookId: generatedWebhookId,
+					originalError: error,
+					cleanupError: deleteErr,
+				},
+			);
+			// In production, emit alert/metric here to notify ops team
+			// Example: Sentry.captureException(deleteErr, { tags: { critical: true } });
+		}
 		throw error;
 	}
 }

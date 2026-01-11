@@ -129,6 +129,7 @@ export function useGroupedTasks(
 		} else {
 			// Incremental update - just update task assignments
 			groups = new Map(prevGroups);
+			// Start with previous activeCount and adjust for changes
 			activeCount = prevStateRef.current.activeCount;
 
 			// Create a map of current matters by status for quick lookup
@@ -136,17 +137,23 @@ export function useGroupedTasks(
 			for (const matter of matters) {
 				const statusId = matter.status?.id;
 				if (!statusId) continue;
-
-				if (!mattersByStatus.has(statusId)) {
-					mattersByStatus.set(statusId, []);
+				let list = mattersByStatus.get(statusId);
+				if (!list) {
+					list = [];
+					mattersByStatus.set(statusId, list);
 				}
-				mattersByStatus.get(statusId)!.push(matter);
+				list.push(matter);
 			}
 
 			// Update groups with new task lists
 			for (const [statusId, group] of groups) {
 				const newTasks = mattersByStatus.get(statusId) || [];
+				const oldTaskCount = group.tasks.length;
 				group.tasks = newTasks;
+
+				if (!COLLAPSED_TYPES.has(group.status.type as string)) {
+					activeCount += newTasks.length - oldTaskCount;
+				}
 			}
 		}
 

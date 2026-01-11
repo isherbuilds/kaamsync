@@ -16,30 +16,39 @@ import {
 } from "~/lib/server/prepared-queries.server";
 import type { WebhookPayload } from "./types";
 
-/**
- * Check if webhook has already been processed (idempotency)
- */
-export async function isWebhookProcessed(webhookId: string): Promise<boolean> {
-	const existing = await db.query.webhookEventsTable.findFirst({
-		where: eq(webhookEventsTable.webhookId, webhookId),
-	});
-	return !!existing;
-}
+// Removed isWebhookProcessed: rely on recordWebhookEvent's unique constraint for idempotency
 
 /**
- * Record webhook event for idempotency
+ * Attempt to insert a webhook event atomically. Returns true if insert succeeded
+ * (this process should proceed), false if another process already inserted the
+ * same webhookId (idempotent/ignored).
  */
 export async function recordWebhookEvent(
 	webhookId: string,
 	eventType: string,
 	payload: string,
-): Promise<void> {
-	await db.insert(webhookEventsTable).values({
-		id: createId(),
-		webhookId,
-		eventType,
-		payload,
-	});
+): Promise<boolean> {
+	const inserted = await db
+		.insert(webhookEventsTable)
+		.values({
+			id: createId(),
+			webhookId,
+			eventType,
+			payload,
+		})
+		.onConflictDoNothing({ target: webhookEventsTable.webhookId })
+		.returning({ id: webhookEventsTable.id });
+
+	return inserted.length > 0;
+}
+
+/**
+ * Delete a webhook event by webhookId. Used to clean up a reserved claim if processing fails.
+ */
+export async function deleteWebhookEvent(webhookId: string): Promise<void> {
+	await db
+		.delete(webhookEventsTable)
+		.where(eq(webhookEventsTable.webhookId, webhookId));
 }
 
 /**
@@ -51,74 +60,76 @@ export async function upsertCustomer(
 	name?: string,
 	organizationId?: string,
 ): Promise<{ customerId: string; organizationId: string }> {
-	// 1. Try to find existing customer by Dodo ID
-	let existing = await db.query.customersTable.findFirst({
-		where: eq(customersTable.dodoCustomerId, dodoCustomerId),
-	});
-
-	// If no organizationId provided, try to find it from the user's email
-	let resolvedOrgId = organizationId ?? "";
-	if (!resolvedOrgId && email) {
-		// Find user by email
-		const user = await db.query.usersTable.findFirst({
-			where: eq(usersTable.email, email),
+	return await db.transaction(async (tx) => {
+		// 1. Try to find existing customer by Dodo ID
+		let existing = await tx.query.customersTable.findFirst({
+			where: eq(customersTable.dodoCustomerId, dodoCustomerId),
 		});
 
-		if (user) {
-			// Find their organization membership
-			const membership = await db.query.membersTable.findFirst({
-				where: eq(membersTable.userId, user.id),
-				orderBy: (m, { desc }) => desc(m.createdAt),
+		// If no organizationId provided, try to find it from the user's email
+		let resolvedOrgId = organizationId ?? "";
+		if (!resolvedOrgId && email) {
+			// Find user by email
+			const user = await tx.query.usersTable.findFirst({
+				where: eq(usersTable.email, email),
 			});
 
-			if (membership) {
-				resolvedOrgId = membership.organizationId;
+			if (user) {
+				// Find their organization membership
+				const membership = await tx.query.membersTable.findFirst({
+					where: eq(membersTable.userId, user.id),
+					orderBy: (m, { desc }) => desc(m.createdAt),
+				});
+
+				if (membership) {
+					resolvedOrgId = membership.organizationId;
+				}
 			}
 		}
-	}
 
-	// 2. If not found by Dodo ID, try to find by Organization ID (if we have one)
-	// This prevents unique constraint violations on organizationId
-	if (!existing && resolvedOrgId) {
-		existing = await db.query.customersTable.findFirst({
-			where: eq(customersTable.organizationId, resolvedOrgId),
-		});
-	}
+		// 2. If not found by Dodo ID, try to find by Organization ID (if we have one)
+		// This prevents unique constraint violations on organizationId
+		if (!existing && resolvedOrgId) {
+			existing = await tx.query.customersTable.findFirst({
+				where: eq(customersTable.organizationId, resolvedOrgId),
+			});
+		}
 
-	if (existing) {
-		// Update if email/name changed; allow organization override when provided
-		await db
-			.update(customersTable)
-			.set({
-				dodoCustomerId, // Update Dodo ID in case we found by Org ID and it's missing/different
-				email,
-				name: name ?? existing.name,
+		if (existing) {
+			// Update if email/name changed; allow organization override when provided
+			await tx
+				.update(customersTable)
+				.set({
+					dodoCustomerId, // Update Dodo ID in case we found by Org ID and it's missing/different
+					email,
+					name: name ?? existing.name,
+					organizationId: resolvedOrgId || existing.organizationId,
+				})
+				.where(eq(customersTable.id, existing.id));
+			return {
+				customerId: existing.id,
 				organizationId: resolvedOrgId || existing.organizationId,
-			})
-			.where(eq(customersTable.id, existing.id));
-		return {
-			customerId: existing.id,
-			organizationId: resolvedOrgId || existing.organizationId,
-		};
-	}
+			};
+		}
 
-	if (!resolvedOrgId) {
-		throw new Error(
-			"Cannot create customer without organization. Provide organizationId or ensure user has membership.",
-		);
-	}
+		if (!resolvedOrgId) {
+			throw new Error(
+				"Cannot create customer without organization. Provide organizationId or ensure user has membership.",
+			);
+		}
 
-	// Create new customer
-	const customerId = createId();
-	await db.insert(customersTable).values({
-		id: customerId,
-		dodoCustomerId,
-		email,
-		name,
-		organizationId: resolvedOrgId,
+		// Create new customer
+		const customerId = createId();
+		await tx.insert(customersTable).values({
+			id: customerId,
+			dodoCustomerId,
+			email,
+			name,
+			organizationId: resolvedOrgId,
+		});
+
+		return { customerId, organizationId: resolvedOrgId };
 	});
-
-	return { customerId, organizationId: resolvedOrgId };
 }
 
 /**
@@ -193,43 +204,56 @@ export async function recordPayment(
 	payload: WebhookPayload["data"],
 	status: string,
 ): Promise<void> {
-	// Check for existing payment
-	const existing = payload.payment_id
-		? await db.query.paymentsTable.findFirst({
-				where: eq(paymentsTable.dodoPaymentId, payload.payment_id),
-			})
-		: null;
-
-	if (existing) {
-		// Update status
-		await db
-			.update(paymentsTable)
-			.set({ status })
-			.where(eq(paymentsTable.id, existing.id));
+	const paymentId = payload.payment_id;
+	if (!paymentId) {
+		// Payment events are expected to have a payment_id; avoid inserting non-idempotent rows.
 		return;
 	}
 
-	// Find subscription if exists
-	let subscriptionId: string | null = null;
-	let resolvedOrganizationId = organizationId;
-	if (payload.subscription_id) {
-		const subscription = await db.query.subscriptionsTable.findFirst({
-			where: eq(subscriptionsTable.dodoSubscriptionId, payload.subscription_id),
+	await db.transaction(async (tx) => {
+		// Check for existing payment
+		const existing = await tx.query.paymentsTable.findFirst({
+			where: eq(paymentsTable.dodoPaymentId, paymentId),
 		});
-		subscriptionId = subscription?.id ?? null;
-		resolvedOrganizationId =
-			subscription?.organizationId || resolvedOrganizationId;
-	}
 
-	await db.insert(paymentsTable).values({
-		id: createId(),
-		customerId,
-		organizationId: resolvedOrganizationId,
-		subscriptionId,
-		dodoPaymentId: payload.payment_id,
-		amount: payload.total_amount ?? 0,
-		currency: payload.currency ?? "USD",
-		status,
+		// Find subscription if exists (used for both update and insert paths)
+		let subscriptionId: string | null = null;
+		let resolvedOrganizationId = organizationId;
+		if (payload.subscription_id) {
+			const subscription = await tx.query.subscriptionsTable.findFirst({
+				where: eq(
+					subscriptionsTable.dodoSubscriptionId,
+					payload.subscription_id,
+				),
+			});
+			subscriptionId = subscription?.id ?? null;
+			resolvedOrganizationId =
+				subscription?.organizationId || resolvedOrganizationId;
+		}
+
+		if (existing) {
+			// Update relevant fields atomically
+			await tx
+				.update(paymentsTable)
+				.set({
+					status,
+					amount: payload.total_amount ?? existing.amount,
+					currency: payload.currency ?? existing.currency,
+				})
+				.where(eq(paymentsTable.id, existing.id));
+			return;
+		}
+
+		await tx.insert(paymentsTable).values({
+			id: createId(),
+			customerId,
+			organizationId: resolvedOrganizationId,
+			subscriptionId,
+			dodoPaymentId: paymentId,
+			amount: payload.total_amount ?? 0,
+			currency: payload.currency ?? "USD",
+			status,
+		});
 	});
 }
 

@@ -131,7 +131,7 @@ export async function canModifyMatter(
 
 	return checkMatterPermissions(tx, ctx, matter);
 }
-// check if user can modify a deleted, needed for restore operations
+// Check if user can modify a deleted matter, needed for restore operations
 export async function canModifyDeletedMatter(
 	tx: MutatorTx,
 	ctx: Context,
@@ -164,10 +164,6 @@ export async function assertCanModifyMatter(
 	}
 	return result;
 }
-
-/**
- * Check if user can modify a deleted matter (for restore operations)
- */
 
 // ============================================================================
 // PERMISSION HELPER FACTORY

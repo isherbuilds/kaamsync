@@ -27,19 +27,26 @@ export const auth = betterAuth({
 		schema,
 	}),
 	// Built-in rate limiting (Better Auth v1.4+)
+	// Handles all /api/auth/* routes automatically
 	rateLimit: {
 		enabled: true,
 		window: 60, // 60 seconds
-		max: 100, // 100 requests per window
+		max: 100, // 100 requests per window (global default)
 		customRules: {
-			"/api/zero/*": { window: 60, max: 10 },
-			"/api/auth/*": { window: 60, max: 10 },
+			// Zero sync endpoints - moderate limits
+			"/api/zero/*": { window: 60, max: 30 },
+			// Auth endpoints - strict limits to prevent brute force
 			"/api/auth/sign-in/*": { window: 60, max: 10 },
 			"/api/auth/sign-up/*": { window: 60, max: 5 },
-			"/api/auth/forgot-password": { window: 60, max: 3 },
+			"/api/auth/forgot-password": { window: 300, max: 3 }, // 5 min window
+			"/api/auth/reset-password": { window: 300, max: 5 },
+			"/api/auth/verify-email": { window: 60, max: 10 },
+			// Billing endpoints - moderate limits
 			"/api/auth/dodopayments/checkout/*": { window: 60, max: 5 },
-			"/api/billing/*": { window: 60, max: 5 },
-			"/api/notifications/*": { window: 60, max: 5 },
+			"/api/billing/*": { window: 60, max: 10 },
+			// Notifications - moderate limits for normal use
+			"/api/notifications/send": { window: 60, max: 30 },
+			"/api/notifications/subscribe": { window: 60, max: 20 },
 		},
 		storage: "memory",
 	},

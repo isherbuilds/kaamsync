@@ -55,17 +55,7 @@ export async function createAdminUser() {
 			},
 		})
 		.catch((e) => {
-			// Ignore collision (user already exists), but rethrow others
-			// Assuming error message or code check here - generic catch for now but documented
-			const msg = e instanceof Error ? e.message : String(e);
-			if (
-				!msg.includes("already exists") &&
-				// better-auth specific error codes if available
-				!(e as any).code?.includes("P2002")
-			) {
-				console.error("Failed to seed admin user:", e);
-				// We don't rethrow here to allow seeding to continue, but we log explicitly
-			}
+			console.error("Failed to seed admin user:", e);
 		});
 
 	// Fetch the user to ensure we return the correct one (whether created now or before)

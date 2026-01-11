@@ -1,6 +1,7 @@
 import { UseSend } from "usesend-js";
 import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { VerifyEmail } from "~/components/email/verify-email";
+import { normalizeError } from "~/lib/error-utils";
 import { trackMembershipChange } from "~/lib/server/billing-tracking.server";
 import { env, isDevelopment } from "~/lib/server/env-validation.server";
 
@@ -23,12 +24,21 @@ export const AuthService = {
 			return;
 		}
 
-		await usesend.emails.send({
-			from: "support@mail.kaamsync.com",
-			to: user.email,
-			subject: "KaamSync: Reset your password",
-			html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
-		});
+		try {
+			await usesend.emails.send({
+				from: "support@mail.kaamsync.com",
+				to: user.email,
+				subject: "KaamSync: Reset your password",
+				html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
+			});
+		} catch (err) {
+			console.error(
+				"[AuthService] Failed to send reset password email",
+				{ email: user.email, url },
+				err,
+			);
+			throw normalizeError(err);
+		}
 	},
 
 	async sendVerificationEmail({
@@ -43,12 +53,21 @@ export const AuthService = {
 			return;
 		}
 
-		await usesend.emails.send({
-			from: "welcome@mail.kaamsync.com",
-			to: user.email,
-			subject: "KaamSync: Verify your email address",
-			react: VerifyEmail({ verifyUrl: url }),
-		});
+		try {
+			await usesend.emails.send({
+				from: "welcome@mail.kaamsync.com",
+				to: user.email,
+				subject: "KaamSync: Verify your email address",
+				react: VerifyEmail({ verifyUrl: url }),
+			});
+		} catch (err) {
+			console.error(
+				"[AuthService] Failed to send verification email",
+				{ email: user.email, url },
+				err,
+			);
+			throw normalizeError(err);
+		}
 	},
 
 	async sendInvitationEmail({

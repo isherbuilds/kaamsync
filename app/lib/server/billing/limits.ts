@@ -114,13 +114,17 @@ export async function getOrganizationPlanKey(
 
 	// Fallback: resolve from productId (for legacy subscriptions)
 	if (subscription.productId) {
-		// This import might be circular if we rely on it from lib/billing?
-		// No, lib/billing is safe.
-		// Actually getPlanByProductId is in lib/billing, we need to import it.
-		// Wait, I didn't import getPlanByProductId at the top.
-		// Let's add it.
-		const { getPlanByProductId } = await import("~/lib/billing");
-		return getPlanByProductId(subscription.productId) ?? "starter";
+		try {
+			const { getPlanByProductId } = await import("~/lib/billing");
+			return getPlanByProductId(subscription.productId) ?? "starter";
+		} catch (err) {
+			console.error(
+				"[Billing] Failed to resolve plan by productId",
+				{ productId: subscription.productId },
+				err,
+			);
+			return "starter";
+		}
 	}
 
 	return "starter";
@@ -153,13 +157,6 @@ export async function canAddMember(organizationId: string): Promise<{
 
 	// Strict Check: Are we ALREADY at or over the limit?
 	if (usage.members >= limits.members) {
-		// New Logic: Block new additions if over limit.
-		// Previous Logic allowed Pay-Per-Action.
-		// Now we want to STOP "adding new" if cancelled or over limit.
-		// Unless it's an active Growth/Pro plan that supports overages?
-		// User said: "How about we kick? ... block ability to add tasks ... block the amount"
-		// User also said: "Soft Enforcement ... workspace enters Roach Motel".
-
 		const sub = await getOrganizationSubscription(organizationId);
 		const planKey = sub?.planKey as ProductKey | undefined;
 		const isActivePaid =

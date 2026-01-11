@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "~/db";
 import { pushSubscriptionsTable } from "~/db/schema";
@@ -39,17 +39,27 @@ export async function sendPushNotificationToUser(
 		return { sent: 0, errors: [] };
 	}
 
-	// Get all subscriptions for this user
-	const subscriptions = await db
+	// Get all non-deleted subscriptions for this user
+	// Subscriptions with `deleted_at` set should not receive notifications.
+	type PushSubscriptionRow = typeof pushSubscriptionsTable.$inferSelect;
+	const subscriptions: PushSubscriptionRow[] = await db
 		.select()
 		.from(pushSubscriptionsTable)
-		.where(eq(pushSubscriptionsTable.userId, userId));
+		.where(
+			and(
+				eq(pushSubscriptionsTable.userId, userId),
+				isNull(pushSubscriptionsTable.deletedAt),
+			),
+		);
 
 	if (subscriptions.length === 0) {
 		return { sent: 0, errors: [] };
 	}
 
-	const results = await Promise.allSettled(
+	const results: PromiseSettledResult<{
+		success: true;
+		endpoint: string;
+	}>[] = await Promise.allSettled(
 		subscriptions.map(async (sub) => {
 			const pushSubscription = {
 				endpoint: sub.endpoint,
@@ -80,8 +90,8 @@ export async function sendPushNotificationToUser(
 
 	const sent = results.filter((r) => r.status === "fulfilled").length;
 	const errors = results
-		.filter((r) => r.status === "rejected")
-		.map((r) => (r as PromiseRejectedResult).reason);
+		.filter((r): r is PromiseRejectedResult => r.status === "rejected")
+		.map((r) => r.reason);
 
 	return { sent, errors };
 }

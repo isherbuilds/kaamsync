@@ -23,8 +23,13 @@ async function analyzeImages(dir: string): Promise<ImageInfo[]> {
 	const entries = await fs.readdir(dir, { withFileTypes: true });
 
 	for (const entry of entries) {
-		if (entry.isFile()) {
-			const fullPath = path.join(dir, entry.name);
+		const fullPath = path.join(dir, entry.name);
+
+		if (entry.isDirectory()) {
+			// Recursively scan subdirectories
+			const subImages = await analyzeImages(fullPath);
+			images.push(...subImages);
+		} else if (entry.isFile()) {
 			const ext = path.extname(entry.name).toLowerCase();
 
 			if ([".png", ".jpg", ".jpeg", ".webp", ".ico"].includes(ext)) {
