@@ -85,7 +85,7 @@ export function useGroupedTasks(
 				flatItems: [],
 				stickyIndices: [],
 			};
-			return { flatItems: [], activeCount: 0, stickyIndices: [] };
+			return { flatItems: [], activeCount: 0, stickyIndices: [], toggleGroup };
 		}
 
 		// Check if we can do incremental update
