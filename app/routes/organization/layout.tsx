@@ -114,13 +114,22 @@ function Layout({
 	// Memoize team IDs to prevent unnecessary preloading re-runs
 	const teamIds = useMemo(() => teamsData.map((t) => t.id), [teamsData]);
 
-	// Optimize preloading with reduced timeout and memoized dependencies
+	// Optimize preloading with requestIdleCallback instead of artificial delay
 	useEffect(() => {
 		if (teamIds.length > 0 && activeOrgId) {
-			const timeout = setTimeout(() => {
+			const preloadFn = () => {
 				preloadAllTeams(z, teamIds, activeOrgId);
-			}, 50); // Reduced from 100ms for faster preloading
-			return () => clearTimeout(timeout);
+			};
+
+			// Use requestIdleCallback for better performance
+			const idleId = requestIdleCallback(
+				() => {
+					preloadFn();
+				},
+				{ timeout: 100 },
+			);
+
+			return () => cancelIdleCallback(idleId);
 		}
 	}, [z, activeOrgId, teamIds]);
 

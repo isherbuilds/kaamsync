@@ -15,13 +15,46 @@
 export class LRUCache<K, V> {
 	readonly #maxSize: number;
 	readonly #cache: Map<K, V>;
+	readonly #memoryPressureThreshold: number;
+	#lastCleanup: number;
 
-	constructor(maxSize: number) {
+	constructor(maxSize: number, memoryPressureThreshold = 0.8) {
 		if (maxSize <= 0) {
 			throw new Error("LRUCache maxSize must be positive");
 		}
 		this.#maxSize = maxSize;
 		this.#cache = new Map();
+		this.#memoryPressureThreshold = memoryPressureThreshold;
+		this.#lastCleanup = Date.now();
+	}
+
+	/**
+	 * Check for memory pressure and cleanup if needed
+	 */
+	private checkMemoryPressure(): void {
+		const now = Date.now();
+		const timeSinceLastCleanup = now - this.#lastCleanup;
+
+		// Only check for memory pressure every 30 seconds
+		if (timeSinceLastCleanup < 30000) return;
+
+		const usageRatio = this.#cache.size / this.#maxSize;
+
+		// If we're above the threshold, aggressively cleanup
+		if (usageRatio > this.#memoryPressureThreshold) {
+			const targetSize = Math.floor(this.#maxSize * 0.6); // Reduce to 60%
+			const itemsToRemove = this.#cache.size - targetSize;
+
+			const keysToRemove = Array.from(this.#cache.keys()).slice(
+				0,
+				itemsToRemove,
+			);
+			for (const key of keysToRemove) {
+				this.#cache.delete(key);
+			}
+		}
+
+		this.#lastCleanup = now;
 	}
 
 	/**
@@ -35,6 +68,10 @@ export class LRUCache<K, V> {
 		// Move to end (most recently used)
 		this.#cache.delete(key);
 		this.#cache.set(key, value);
+
+		// Check memory pressure periodically
+		this.checkMemoryPressure();
+
 		return value;
 	}
 
@@ -42,6 +79,9 @@ export class LRUCache<K, V> {
 	 * Set a value in cache. Evicts oldest item if at capacity.
 	 */
 	set(key: K, value: V): void {
+		// Check memory pressure before adding new items
+		this.checkMemoryPressure();
+
 		// If key exists, delete it first to update position
 		if (this.#cache.has(key)) {
 			this.#cache.delete(key);
@@ -98,13 +138,15 @@ export class LRUCache<K, V> {
 /**
  * Cache for virtualized list item sizes/heights
  * Persist measurements to avoid recalculation on scroll
+ * Memory pressure threshold at 80% usage
  */
-export const itemSizeCache = new LRUCache<string, number>(1000);
+export const itemSizeCache = new LRUCache<string, number>(1000, 0.8);
 
 /**
  * Cache for computed/derived values that are expensive to calculate
+ * Lower threshold for computed values as they can be recreated
  */
-export const computedCache = new LRUCache<string, unknown>(200);
+export const computedCache = new LRUCache<string, unknown>(200, 0.7);
 
 /**
  * Sample values and compute running average (for estimateSize in virtualizers)

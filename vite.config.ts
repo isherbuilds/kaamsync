@@ -8,6 +8,18 @@ import tsconfigPaths from "vite-tsconfig-paths";
 export default defineConfig({
 	build: {
 		outDir: "build/client",
+		// Optimize assets for better performance
+		rollupOptions: {
+			output: {
+				// Manual chunks for better caching
+				manualChunks: {
+					vendor: ["react", "react-dom"],
+					router: ["react-router"],
+					ui: ["@radix-ui", "lucide-react"],
+					db: ["@rocicorp/zero", "drizzle-orm"],
+				},
+			},
+		},
 	},
 
 	plugins: [

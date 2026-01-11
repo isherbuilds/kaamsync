@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { safeError, warn } from "~/lib/logger";
 
 export function usePushNotifications() {
 	const [isSupported, setIsSupported] = useState(false);
@@ -36,7 +37,7 @@ export function usePushNotifications() {
 				const subscription = await registration.pushManager.getSubscription();
 				setIsSubscribed(!!subscription);
 			} catch (error) {
-				console.error("Error checking push subscription:", error);
+				safeError(error, "Error checking push subscription");
 			} finally {
 				setIsLoading(false);
 			}
@@ -47,7 +48,7 @@ export function usePushNotifications() {
 
 	const subscribe = useCallback(async (): Promise<boolean> => {
 		if (!isSupported) {
-			console.warn("Push notifications not supported");
+			warn("Push notifications not supported");
 			return false;
 		}
 
@@ -59,7 +60,7 @@ export function usePushNotifications() {
 			setPermission(notificationPermission);
 
 			if (notificationPermission !== "granted") {
-				console.warn("Notification permission denied");
+				warn("Notification permission denied");
 				setIsLoading(false);
 				return false;
 			}
@@ -96,7 +97,7 @@ export function usePushNotifications() {
 			setIsSubscribed(true);
 			return true;
 		} catch (error) {
-			console.error("Error subscribing to push notifications:", error);
+			safeError(error, "Error subscribing to push notifications");
 			return false;
 		} finally {
 			setIsLoading(false);
@@ -126,7 +127,7 @@ export function usePushNotifications() {
 			setIsSubscribed(false);
 			return true;
 		} catch (error) {
-			console.error("Error unsubscribing from push notifications:", error);
+			safeError(error, "Error unsubscribing from push notifications");
 			return false;
 		} finally {
 			setIsLoading(false);
@@ -161,7 +162,7 @@ export async function sendNotificationToUser(
 
 		return response.ok;
 	} catch (error) {
-		console.error("Error sending notification:", error);
+		safeError(error, "Error sending notification");
 		return false;
 	}
 }

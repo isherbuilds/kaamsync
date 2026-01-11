@@ -16,7 +16,7 @@ export function DashboardPreview() {
 				<div className="col-span-2 hidden flex-col gap-4 border-border border-r bg-background p-4 md:flex">
 					{[...Array(6)].map((_, i) => (
 						<div
-							key={`sidebar-skeleton-${i}`}
+							key={`skeleton-item-${i + 1}`}
 							className="h-6 w-full rounded-sm bg-muted/50"
 							style={{ animationDelay: `${i * 100}ms` }}
 						/>
@@ -28,13 +28,13 @@ export function DashboardPreview() {
 					{/* Stats Row */}
 					<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 						{[
-							{ label: "Active Jobs", val: "42" },
-							{ label: "Completed", val: "18" },
-							{ label: "Team Online", val: "12" },
-							{ label: "Pending", val: "3" },
+							{ label: "Active Jobs", val: "42", id: "active-jobs" },
+							{ label: "Completed", val: "18", id: "completed" },
+							{ label: "Team Online", val: "12", id: "team-online" },
+							{ label: "Pending", val: "3", id: "pending" },
 						].map((stat) => (
 							<div
-								key={stat.label}
+								key={stat.id}
 								className="group border border-border bg-background p-4 transition-colors hover:border-primary"
 							>
 								<div className="mb-2 font-mono text-[10px] text-muted-foreground uppercase group-hover:text-primary">
@@ -66,14 +66,14 @@ export function DashboardPreview() {
 							</div>
 							{[...Array(5)].map((_, i) => (
 								<div
-									key={`update-item-${i}`}
+									key={`site-visit-${204}-${i}`}
 									className="flex items-center justify-between border-border/50 border-b pb-2 last:border-0"
 								>
 									<div className="flex items-center gap-2">
 										<div className="size-2 rounded-full bg-green-500" />
 										<div className="flex flex-col">
 											<span className="font-medium text-xs">
-												Site Visit #{204 + i}
+												Site Visit #204-{i}
 											</span>
 											<span className="text-[10px] text-muted-foreground">
 												Updated by Rahul
