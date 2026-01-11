@@ -26,6 +26,9 @@ export class LRUCache<K, V> {
 		if (maxSize <= 0) {
 			throw new Error("LRUCache maxSize must be positive");
 		}
+		if (memoryPressureThreshold <= 0 || memoryPressureThreshold > 1) {
+			throw new Error("LRUCache memoryPressureThreshold must be between 0 and 1");
+		}
 		this.#maxSize = maxSize;
 		this.#cache = new Map();
 		this.#memoryPressureThreshold = memoryPressureThreshold;
