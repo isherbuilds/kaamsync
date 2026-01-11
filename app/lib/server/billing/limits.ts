@@ -1,4 +1,9 @@
-import { type ProductKey, planLimits, usagePricing } from "~/lib/billing";
+import {
+	getPlanByProductId,
+	type ProductKey,
+	planLimits,
+	usagePricing,
+} from "~/lib/billing";
 import { getOrganizationMatterCount } from "~/lib/server/prepared-queries.server";
 import {
 	getOrganizationUsage, // Renamed from prepared import in original, now from cache
@@ -19,6 +24,25 @@ export interface PlanLimitCheck {
 }
 
 /**
+ * Returns true when a cancelled/expired subscription's period has ended.
+ * If `defaultForMissingEnd` is true and `currentPeriodEnd` is missing, treat as ended.
+ * Default is false (benefit of doubt when end date missing).
+ */
+function hasSubscriptionPeriodEnded(
+	subscription: {
+		status?: string | null;
+		currentPeriodEnd?: string | Date | null;
+	},
+	defaultForMissingEnd = false,
+): boolean {
+	const isCancelled =
+		subscription?.status === "cancelled" || subscription?.status === "expired";
+	if (!isCancelled) return false;
+	if (!subscription?.currentPeriodEnd) return defaultForMissingEnd;
+	return new Date(subscription.currentPeriodEnd) < new Date();
+}
+
+/**
  * Check if an organization's usage is within plan limits
  * Strict enforcement for Cancelled/Expired plans
  */
@@ -30,14 +54,7 @@ export async function checkPlanLimits(
 	let effectivePlan: ProductKey = planKey ?? "starter";
 
 	if (subscription) {
-		const isCancelled =
-			subscription.status === "cancelled" || subscription.status === "expired";
-		// Check cancellation date
-		const periodEnded = subscription.currentPeriodEnd
-			? new Date(subscription.currentPeriodEnd) < new Date()
-			: false; // If no date, give benefit of doubt until we have data
-
-		if (isCancelled && periodEnded) {
+		if (hasSubscriptionPeriodEnded(subscription)) {
 			// If cancelled AND period ended, enforce Starter limits (or Strict 0?)
 			// User requested "Soft Enforcement", so Starter is a good fallback "Free Tier".
 			effectivePlan = "starter";
@@ -105,16 +122,7 @@ export async function getOrganizationPlanKey(
 	if (!subscription) return "starter";
 
 	// If cancelled/expired and period ended, they deemed 'starter' effectively
-	if (
-		subscription.status === "cancelled" ||
-		subscription.status === "expired"
-	) {
-		// Check cancellation date - if no date, give benefit of doubt until we have data
-		const periodEnded = subscription.currentPeriodEnd
-			? new Date(subscription.currentPeriodEnd) < new Date()
-			: false;
-		if (periodEnded) return "starter";
-	}
+	if (hasSubscriptionPeriodEnded(subscription)) return "starter";
 
 	// Use stored planKey first (set during webhook processing)
 	if (subscription.planKey) {
@@ -123,17 +131,7 @@ export async function getOrganizationPlanKey(
 
 	// Fallback: resolve from productId (for legacy subscriptions)
 	if (subscription.productId) {
-		try {
-			const { getPlanByProductId } = await import("~/lib/billing");
-			return getPlanByProductId(subscription.productId) ?? "starter";
-		} catch (err) {
-			console.error(
-				"[Billing] Failed to resolve plan by productId",
-				{ productId: subscription.productId },
-				err,
-			);
-			return "starter";
-		}
+		return getPlanByProductId(subscription.productId) ?? "starter";
 	}
 
 	return "starter";

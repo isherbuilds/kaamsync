@@ -9,8 +9,8 @@ import {
 	getRequestIP,
 	getRequestUserAgent,
 } from "~/lib/audit-logger";
-import { getServerSession } from "~/lib/auth";
 import { getVapidPublicKey } from "~/lib/notifications.server";
+import { requireSession } from "~/lib/server/auth-helper";
 import type { Route } from "./+types/subscribe";
 
 const subscriptionSchema = z.object({
@@ -20,31 +20,6 @@ const subscriptionSchema = z.object({
 		auth: z.string(),
 	}),
 });
-
-/**
- * Helper to require authentication in action
- * Returns session or throws 401 response
- *
- * Note: Rate limiting is handled globally by Better Auth
- * configured at /api/notifications/subscribe (20 req/min) in auth.ts
- */
-async function requireSession(request: Request) {
-	const session = await getServerSession(request);
-
-	if (!session?.user) {
-		auditLog({
-			action: "notification.subscribe",
-			actorId: "anonymous",
-			outcome: "denied",
-			reason: "Unauthenticated request",
-			ip: getRequestIP(request),
-			userAgent: getRequestUserAgent(request),
-		});
-		throw data({ error: "Unauthorized" }, { status: 401 });
-	}
-
-	return session;
-}
 
 // GET: Return the VAPID public key for client-side subscription
 export async function loader(_args: Route.LoaderArgs) {
@@ -62,7 +37,7 @@ export async function loader(_args: Route.LoaderArgs) {
 
 // POST: Save a push subscription for the authenticated user
 export async function action({ request }: Route.ActionArgs) {
-	const session = await requireSession(request);
+	const session = await requireSession(request, "notification.subscribe");
 	const user = session.user;
 
 	let body: unknown;

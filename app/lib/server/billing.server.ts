@@ -39,6 +39,7 @@ export {
 // Re-export types
 export type { PlanUsage, WebhookPayload } from "./billing/types";
 
+import { createHash } from "crypto";
 // Import what we need for the webhook handler in this file
 import {
 	deleteWebhookEvent,
@@ -53,15 +54,6 @@ import type { WebhookPayload } from "./billing/types";
  * Main webhook handler - processes all Dodo Payments events
  * NOTE: Signature verification is handled by Better Auth's webhooks plugin automatically
  */
-export async function handleBillingWebhook(
-	payload: WebhookPayload,
-): Promise<void> {
-	const eventType = payload.type || payload.event_type || "";
-	const payloadTimestamp =
-		typeof payload.timestamp === "object"
-			? payload.timestamp.toISOString()
-			: payload.timestamp;
-import { createHash } from "crypto";
 
 export async function handleBillingWebhook(
 	payload: WebhookPayload,

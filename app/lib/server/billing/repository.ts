@@ -194,12 +194,14 @@ export async function upsertSubscription(
 		: null;
 
 	// If not found by dodo ID, try by organizationId + productId
+	// Only consider active subscriptions to avoid matching cancelled historical subscriptions
 	// This handles cases where we might have a local record without a dodo ID yet
 	if (!existingSubscription) {
 		existingSubscription = await db.query.subscriptionsTable.findFirst({
 			where: and(
 				eq(subscriptionsTable.organizationId, subscriptionData.organizationId),
 				eq(subscriptionsTable.productId, subscriptionData.productId),
+				eq(subscriptionsTable.status, "active"),
 			),
 		});
 	}

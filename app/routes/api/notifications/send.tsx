@@ -8,8 +8,8 @@ import {
 	getRequestIP,
 	getRequestUserAgent,
 } from "~/lib/audit-logger";
-import { getServerSession } from "~/lib/auth";
 import { sendPushNotificationToUser } from "~/lib/notifications.server";
+import { requireSession } from "~/lib/server/auth-helper";
 import type { Route } from "./+types/send";
 
 const sendNotificationSchema = z.object({
@@ -17,34 +17,9 @@ const sendNotificationSchema = z.object({
 	organizationId: z.string().optional(),
 	title: z.string(),
 	body: z.string(),
-	url: z.string().optional(),
+	url: z.url().optional(),
 	tag: z.string().optional(),
 });
-
-/**
- * Helper to require authentication in action
- * Returns session or throws 401 response
- *
- * Note: Rate limiting is handled globally by Better Auth
- * configured at /api/notifications/send (30 req/min) in auth.ts
- */
-async function requireSession(request: Request) {
-	const session = await getServerSession(request);
-
-	if (!session?.user) {
-		auditLog({
-			action: "notification.send",
-			actorId: "anonymous",
-			outcome: "denied",
-			reason: "Unauthenticated request",
-			ip: getRequestIP(request),
-			userAgent: getRequestUserAgent(request),
-		});
-		throw data({ error: "Unauthorized" }, { status: 401 });
-	}
-
-	return session;
-}
 
 /**
  * Check if sender is authorized to send notifications to recipient
@@ -139,7 +114,7 @@ async function isAuthorizedToNotify(
 
 // POST: Send a push notification to a specific user
 export async function action({ request }: Route.ActionArgs) {
-	const session = await requireSession(request);
+	const session = await requireSession(request, "notification.send");
 	const user = session.user;
 
 	let body: unknown;
