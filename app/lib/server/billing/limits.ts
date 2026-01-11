@@ -290,13 +290,7 @@ export async function canCreateTeam(organizationId: string): Promise<{
 /**
  * Check if creating a new matter (task) is allowed
  */
-export async function canCreateMatter(organizationId: string): Promise<{
-	allowed: boolean;
-	reason?: string;
-	currentCount: number;
-	limit: number;
-	isOverage?: boolean;
-}> {
+export async function canCreateMatter(organizationId: string) {
 	const limitCheck = await checkPlanLimits(organizationId);
 	const limits = limitCheck.limits;
 	// usage.matters is populated from prepared statements (ensured in checkPlanLimits)
@@ -317,7 +311,6 @@ export async function canCreateMatter(organizationId: string): Promise<{
 			currentCount: usage.matters,
 			limit: limits.matters,
 		};
-	}
 	}
 
 	return {
