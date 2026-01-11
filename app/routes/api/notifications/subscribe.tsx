@@ -65,7 +65,20 @@ export async function action({ request }: Route.ActionArgs) {
 	const session = await requireSession(request);
 	const user = session.user;
 
-	const body = await request.json();
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		auditLog({
+			action: "notification.subscribe",
+			actorId: user.id,
+			outcome: "error",
+			reason: "Malformed JSON body",
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+		return data({ error: "Invalid JSON body" }, { status: 400 });
+	}
 	const result = subscriptionSchema.safeParse(body);
 
 	if (!result.success) {
