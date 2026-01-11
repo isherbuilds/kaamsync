@@ -2,6 +2,7 @@ import { Clock, Globe, Mail, MapPin, MessageSquare } from "lucide-react";
 
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { MarketingCTA } from "~/components/marketing/cta-section";
 import {
 	MarketingBadge,
 	MarketingContainer,
@@ -199,26 +200,24 @@ export default function ContactPage() {
 			</MarketingContainer> */}
 
 			{/* Enterprise CTA */}
-			<section className="bg-foreground py-32 text-center text-background">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto max-w-2xl">
-						<MarketingHeading as="h2" className="mb-8 leading-tight">
-							Scale your field ops <br /> with confidence.
-						</MarketingHeading>
-						<p className="mb-12 text-background/70 text-lg">
-							For custom integrations, SLA guarantees, and dedicated support
-							channels, our engineering team is here to help.
-						</p>
-						<Button
-							size="lg"
-							className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
-							asChild
-						>
-							<Link to="/contact">Request Enterprise Tour</Link>
-						</Button>
-					</div>
-				</div>
-			</section>
+			<MarketingCTA
+				className="py-32"
+				title={
+					<MarketingHeading as="h2" className="mb-8 leading-tight">
+						Scale your field ops <br /> with confidence.
+					</MarketingHeading>
+				}
+				description="For custom integrations, SLA guarantees, and dedicated support channels, our engineering team is here to help."
+				action={
+					<Button
+						size="lg"
+						className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+						asChild
+					>
+						<Link to="/contact">Request Enterprise Tour</Link>
+					</Button>
+				}
+			/>
 		</>
 	);
 }

@@ -128,7 +128,9 @@ export function ColorSchemeScript({ nonce }: { nonce: string }) {
 					document.documentElement.classList.remove("dark");
 					document.documentElement.style.backgroundColor = "#ffffff";
 				}
-			} catch (e) {}
+			} catch (e) {
+				console.error("Theme script failed:", e);
+			}
 		`,
 		[],
 		// we don't want this script to ever change

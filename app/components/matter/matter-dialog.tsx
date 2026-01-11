@@ -132,7 +132,14 @@ export const MatterDialog = memo(
 							);
 						}
 					})
-					.catch(() => toast.error(`Failed to create ${type}`))
+					.catch((e) => {
+						console.error(`Failed to create ${type}:`, e);
+						toast.error(
+							e instanceof Error
+								? e.message
+								: `Failed to create ${type}. Please try again.`,
+						);
+					})
 					.finally(() => setIsSubmitting(false));
 			},
 		});

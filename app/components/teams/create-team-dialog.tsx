@@ -85,7 +85,12 @@ export const CreateTeamDialog = memo(
 						toast.success("Team created");
 						close();
 					})
-					.catch(() => toast.error("Failed to create team"))
+					.catch((e) => {
+						console.error("Failed to create team:", e);
+						toast.error(
+							e instanceof Error ? e.message : "Failed to create team",
+						);
+					})
 					.finally(() => setIsSubmitting(false));
 			},
 		});

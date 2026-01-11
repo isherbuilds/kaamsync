@@ -80,23 +80,14 @@ export async function assertTeamManager(
 // ============================================================================
 
 /**
- * Check if user can modify a matter (author, assignee, or manager)
+ * Common logic to check permissions for a matter (already fetched)
  */
-export async function canModifyMatter(
+// biome-ignore lint/suspicious/noExplicitAny: generic matter type
+async function checkMatterPermissions(
 	tx: MutatorTx,
 	ctx: Context,
-	matterId: string,
+	matter: any,
 ) {
-	assertLoggedIn(ctx);
-
-	const matter = await tx.run(
-		zql.mattersTable
-			.where("id", matterId)
-			.where("orgId", ctx.activeOrganizationId)
-			.where("deletedAt", "IS", null)
-			.one(),
-	);
-
 	if (!matter) {
 		throw new Error(PERMISSION_ERRORS.MATTER_NOT_FOUND);
 	}
@@ -118,6 +109,45 @@ export async function canModifyMatter(
 		isAssignee,
 		isManager,
 	};
+}
+
+/**
+ * Check if user can modify a matter (author, assignee, or manager)
+ */
+export async function canModifyMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
+	assertLoggedIn(ctx);
+
+	const matter = await tx.run(
+		zql.mattersTable
+			.where("id", matterId)
+			.where("orgId", ctx.activeOrganizationId)
+			.where("deletedAt", "IS", null)
+			.one(),
+	);
+
+	return checkMatterPermissions(tx, ctx, matter);
+}
+// check if user can modify a deleted, needed for restore operations
+export async function canModifyDeletedMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
+	assertLoggedIn(ctx);
+
+	const matter = await tx.run(
+		zql.mattersTable
+			.where("id", matterId)
+			.where("orgId", ctx.activeOrganizationId)
+			.where("deletedAt", "IS NOT", null)
+			.one(),
+	);
+
+	return checkMatterPermissions(tx, ctx, matter);
 }
 
 /**
@@ -138,43 +168,6 @@ export async function assertCanModifyMatter(
 /**
  * Check if user can modify a deleted matter (for restore operations)
  */
-export async function canModifyDeletedMatter(
-	tx: MutatorTx,
-	ctx: Context,
-	matterId: string,
-) {
-	assertLoggedIn(ctx);
-
-	const matter = await tx.run(
-		zql.mattersTable
-			.where("id", matterId)
-			.where("orgId", ctx.activeOrganizationId)
-			.where("deletedAt", "IS NOT", null)
-			.one(),
-	);
-
-	if (!matter) {
-		throw new Error(PERMISSION_ERRORS.MATTER_NOT_FOUND);
-	}
-
-	const membership = await getTeamMembership(tx, ctx, matter.teamId);
-	if (!membership) {
-		throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
-	}
-
-	const isAuthor = matter.authorId === ctx.userId;
-	const isAssignee = matter.assigneeId === ctx.userId;
-	const isManager = membership.role === "manager";
-
-	return {
-		matter,
-		membership,
-		canModify: isAuthor || isAssignee || isManager,
-		isAuthor,
-		isAssignee,
-		isManager,
-	};
-}
 
 // ============================================================================
 // PERMISSION HELPER FACTORY

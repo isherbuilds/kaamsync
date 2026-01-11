@@ -40,9 +40,14 @@ self.addEventListener("install", (event) => {
 					SHELL_URLS.map((url) =>
 						fetch(url, { cache: "reload" })
 							.then((r) => {
-								if (r.ok) cache.put(url, r);
+								if (!r.ok) {
+									throw new Error(`Failed to fetch ${url}: ${r.status}`);
+								}
+								return cache.put(url, r);
 							})
-							.catch(() => {}),
+							.catch((e) => {
+								console.error(`[SW] Precache failed for ${url}`, e);
+							}),
 					),
 				),
 			),

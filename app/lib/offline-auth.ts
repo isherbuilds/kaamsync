@@ -19,7 +19,8 @@ function loadFromStorage(): CachedSession | null {
 		if (!raw) return null;
 		const cached = JSON.parse(raw) as CachedSession;
 		return isExpired(cached.timestamp) ? null : cached;
-	} catch {
+	} catch (e) {
+		console.warn("Retrieved invalid auth session from storage", e);
 		return null;
 	}
 }
@@ -120,7 +121,8 @@ export async function getAuthSessionSWR(
 		const session = result.data ?? null;
 		saveAuthSessionToLocalStorage(session);
 		return session;
-	} catch {
+	} catch (e) {
+		console.warn("Failed to fetch session (blocking)", e);
 		return null;
 	}
 }

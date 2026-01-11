@@ -2,6 +2,7 @@ import { Building2, Check, ShieldCheck, Users, Zap } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
+import { MarketingCTA } from "~/components/marketing/cta-section";
 import { FAQ } from "~/components/marketing/faq";
 import {
 	MarketingContainer,
@@ -270,25 +271,7 @@ export default function PricingPage() {
 				</div>
 			</MarketingContainer>
 
-			{/* CTA */}
-			<section className="bg-foreground py-24 text-center text-background">
-				<div className="container mx-auto px-4">
-					<h2 className="mb-8 font-medium font-serif text-4xl tracking-tight md:text-5xl">
-						Still have questions?
-					</h2>
-					<p className="mx-auto mb-12 max-w-lg text-background/70 text-lg">
-						Our support team is standing by to help you choose the right plan
-						for your business.
-					</p>
-					<Button
-						size="lg"
-						className="h-14 bg-primary px-10 font-bold text-lg text-primary-foreground hover:bg-primary/90"
-						asChild
-					>
-						<Link to="/contact">Contact Sales</Link>
-					</Button>
-				</div>
-			</section>
+			<MarketingCTA />
 		</>
 	);
 }
