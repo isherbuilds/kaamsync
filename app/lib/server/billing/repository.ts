@@ -10,6 +10,7 @@ import {
 	webhookEventsTable,
 } from "~/db/schema";
 import { getPlanByProductId } from "~/lib/billing";
+import { logger } from "~/lib/logger";
 import {
 	getOrganizationCustomer as getOrgCustomerPrepared,
 	getOrganizationSubscription as getOrgSubscriptionPrepared,
@@ -96,6 +97,31 @@ export async function upsertCustomer(
 		}
 
 		if (existing) {
+			// Check if dodoCustomerId is being changed - this could indicate:
+			// 1. Customer switched payment accounts (legitimate)
+			// 2. Wrong customer record matched by organizationId (data integrity issue)
+			const isChangingDodoId =
+				existing.dodoCustomerId && existing.dodoCustomerId !== dodoCustomerId;
+
+			if (isChangingDodoId) {
+				// Log a warning - this is a significant change that ops should be aware of
+				logger.warn(
+					"[Billing] dodoCustomerId change detected for existing customer",
+					{
+						customerId: existing.id,
+						organizationId: resolvedOrgId || existing.organizationId,
+						previousDodoId: existing.dodoCustomerId,
+						newDodoId: dodoCustomerId,
+						email,
+						// This helps ops investigate if this was legitimate or an error
+						matchedBy:
+							existing.dodoCustomerId === dodoCustomerId
+								? "dodoCustomerId"
+								: "organizationId",
+					},
+				);
+			}
+
 			// Update if email/name changed; allow organization override when provided
 			await tx
 				.update(customersTable)

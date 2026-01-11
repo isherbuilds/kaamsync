@@ -29,35 +29,40 @@ export interface AuditLogEntry {
  * Log an audit event
  * @param entry Audit log entry
  */
-export function auditLog(entry: AuditLogEntry): void {
-	const timestamp = new Date().toISOString();
+export async function auditLog(entry: AuditLogEntry): Promise<void> {
+	try {
+		const timestamp = new Date().toISOString();
 
-	const logEntry = {
-		timestamp,
-		...entry,
-	};
+		const logEntry = {
+			timestamp,
+			...entry,
+		};
 
-	// In production, write to audit table or external service
-	// For now, log to console with clear formatting
-	if (entry.outcome === "denied" || entry.outcome === "error") {
-		logger.warn("[AUDIT]", JSON.stringify(logEntry, null, 2));
-	} else {
-		logger.info("[AUDIT]", JSON.stringify(logEntry, null, 2));
+		// In production, write to audit table or external service
+		// For now, log to console with clear formatting
+		if (entry.outcome === "denied" || entry.outcome === "error") {
+			logger.warn("[AUDIT]", JSON.stringify(logEntry, null, 2));
+		} else {
+			logger.info("[AUDIT]", JSON.stringify(logEntry, null, 2));
+		}
+
+		// TODO: Write to database audit table
+		// await db.insert(auditLogsTable).values({
+		//   id: createId(),
+		//   action: entry.action,
+		//   actorId: entry.actorId,
+		//   targetId: entry.targetId,
+		//   outcome: entry.outcome,
+		//   reason: entry.reason,
+		//   metadata: JSON.stringify(entry.metadata),
+		//   ip: entry.ip,
+		//   userAgent: entry.userAgent,
+		//   createdAt: new Date(),
+		// });
+	} catch (error) {
+		// Audit logging failure should not crash the app
+		console.error("[AUDIT] Failed to log audit event:", error);
 	}
-
-	// TODO: Write to database audit table
-	// await db.insert(auditLogsTable).values({
-	//   id: createId(),
-	//   action: entry.action,
-	//   actorId: entry.actorId,
-	//   targetId: entry.targetId,
-	//   outcome: entry.outcome,
-	//   reason: entry.reason,
-	//   metadata: JSON.stringify(entry.metadata),
-	//   ip: entry.ip,
-	//   userAgent: entry.userAgent,
-	//   createdAt: new Date(),
-	// });
 }
 
 /**

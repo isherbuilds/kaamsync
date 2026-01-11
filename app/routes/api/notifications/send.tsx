@@ -142,7 +142,20 @@ export async function action({ request }: Route.ActionArgs) {
 	const session = await requireSession(request);
 	const user = session.user;
 
-	const body = await request.json();
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		auditLog({
+			action: "notification.send",
+			actorId: user.id,
+			outcome: "error",
+			reason: "Invalid JSON in request body",
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+		return data({ error: "Invalid JSON in request body" }, { status: 400 });
+	}
 	const result = sendNotificationSchema.safeParse(body);
 
 	if (!result.success) {
