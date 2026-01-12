@@ -54,7 +54,9 @@ export async function createAdminUser() {
 				image: `https://i.pravatar.cc/150?u=${email}`,
 			},
 		})
-		.catch(() => {}); // Ignore collision
+		.catch((e) => {
+			console.error("Failed to seed admin user:", e);
+		});
 
 	// Fetch the user to ensure we return the correct one (whether created now or before)
 	const users = await db

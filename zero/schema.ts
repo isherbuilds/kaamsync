@@ -796,6 +796,63 @@ const paymentsTable = {
   primaryKey: ["id"],
   serverName: "payments",
 } as const;
+const pushSubscriptionsTable = {
+  name: "pushSubscriptionsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    endpoint: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    p256dh: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    auth: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    userAgent: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "user_agent",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "push_subscriptions",
+} as const;
 const sessionsTable = {
   name: "sessionsTable",
   columns: {
@@ -1792,6 +1849,16 @@ const paymentsTableRelationships = {
     },
   ],
 } as const;
+const pushSubscriptionsTableRelationships = {
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
 const sessionsTableRelationships = {
   usersTable: [
     {
@@ -2061,6 +2128,14 @@ const usersTableRelationships = {
       cardinality: "many",
     },
   ],
+  pushSubscriptions: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "pushSubscriptionsTable",
+      cardinality: "many",
+    },
+  ],
 } as const;
 /**
  * The Zero schema object.
@@ -2081,6 +2156,7 @@ export const schema = {
     membersTable: membersTable,
     organizationsTable: organizationsTable,
     paymentsTable: paymentsTable,
+    pushSubscriptionsTable: pushSubscriptionsTable,
     sessionsTable: sessionsTable,
     statusesTable: statusesTable,
     subscriptionsTable: subscriptionsTable,
@@ -2105,6 +2181,7 @@ export const schema = {
     membersTable: membersTableRelationships,
     organizationsTable: organizationsTableRelationships,
     paymentsTable: paymentsTableRelationships,
+    pushSubscriptionsTable: pushSubscriptionsTableRelationships,
     sessionsTable: sessionsTableRelationships,
     statusesTable: statusesTableRelationships,
     subscriptionsTable: subscriptionsTableRelationships,
@@ -2213,6 +2290,13 @@ export type OrganizationsTable = Row["organizationsTable"];
  * @deprecated Use Row["paymentsTable"] instead from "@rocicorp/zero".
  */
 export type PaymentsTable = Row["paymentsTable"];
+/**
+ * Represents a row from the "pushSubscriptionsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["pushSubscriptionsTable"] instead from "@rocicorp/zero".
+ */
+export type PushSubscriptionsTable = Row["pushSubscriptionsTable"];
 /**
  * Represents a row from the "sessionsTable" table.
  * This type is auto-generated from your Drizzle schema definition.

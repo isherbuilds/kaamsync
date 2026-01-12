@@ -41,8 +41,12 @@ export async function seedTeamDefaults({
 }: SeedOptions) {
 	// Pre-generate all IDs upfront
 	const teamId = createId();
-	const labelIds = Array.from({ length: 5 }, () => createId());
-	const statusIds = Array.from({ length: 5 }, () => createId());
+	const labelIds = Array.from({ length: DEFAULT_LABELS.length }, () =>
+		createId(),
+	);
+	const statusIds = Array.from({ length: DEFAULT_STATUSES.length }, () =>
+		createId(),
+	);
 
 	// Prepare candidates (used for BOTH slug and code)
 	const candidates = makeTeamIdentifierCandidates(teamName, 10);
@@ -176,5 +180,3 @@ export async function seedTeamDefaults({
 		statusIds,
 	};
 }
-
-// export default seedTeamDefaults;

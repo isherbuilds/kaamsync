@@ -58,7 +58,7 @@ export const links: Route.LinksFunction = () => [
 	},
 	{
 		rel: "manifest",
-		href: "/site.webmanifest",
+		href: "/manifest.webmanifest",
 	},
 ];
 
@@ -93,10 +93,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 	useEffect(() => {
 		if (typeof window === "undefined" || import.meta.env.DEV) return;
-		// Register service worker immediately so it installs even on prerendered/static pages
-		import("virtual:pwa-register").then(({ registerSW }) => {
-			registerSW({ immediate: true });
-		});
+
+		if ("serviceWorker" in navigator) {
+			navigator.serviceWorker.register("/service-worker.js").catch((error) => {
+				console.error("Service worker registration failed:", error);
+			});
+		}
 	}, []);
 
 	return (

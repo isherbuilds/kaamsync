@@ -66,6 +66,10 @@ export default [
 		route("billing/check-limits", "routes/api/billing/check-limits.ts"),
 		// route("billing/change-plan", "routes/api/billing/change-plan.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
+
+		// Push Notifications
+		route("notifications/subscribe", "routes/api/notifications/subscribe.tsx"),
+		route("notifications/send", "routes/api/notifications/send.tsx"),
 	]),
 
 	layout("routes/auth/layout.tsx", [

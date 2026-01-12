@@ -48,6 +48,34 @@ const withTeamAccess = <T>(q: T, ctx: Context, teamId: string): T =>
 				),
 		);
 
+const withMatterRelations = <T>(q: T): T =>
+	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
+	(q as any)
+		.related("author")
+		.related("assignee")
+		.related("status")
+		.related("labels", (q: any) => q.related("label"));
+
+/**
+ * Apply keyset pagination. Uses a consistent sort direction ("desc") for both
+ * `createdAt` and `id`. The `direction` parameter is accepted for API
+ * compatibility but is ignored here — callers should reverse results if they
+ * need the opposite presentation (e.g., to show oldest-first).
+ */
+const withPagination = <T>(
+	q: T,
+	cursor: { id: string; createdAt: number } | null,
+	_direction: "forward" | "backward",
+	limit: number,
+): T => {
+	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
+	let query = q as any;
+	if (cursor) {
+		query = query.start(cursor);
+	}
+	return query.orderBy("createdAt", "desc").orderBy("id", "desc").limit(limit);
+};
+
 export const queries = defineQueries({
 	// TEAM QUERIES
 	getTeamsList: defineQuery(({ ctx }) =>
@@ -336,22 +364,8 @@ export const queries = defineQueries({
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
 		({ ctx, args: { teamId, limit, cursor, direction } }) => {
-			let q = withTeamAccess(zql.mattersTable, ctx, teamId)
-				.related("author")
-				.related("assignee")
-				.related("status")
-				.related("labels", (q) => q.related("label"));
-
-			// Keyset pagination - more efficient than offset for large datasets
-			if (cursor) {
-				q = q.start(cursor);
-			}
-
-			const orderDir = direction === "forward" ? "desc" : "asc";
-			return q
-				.orderBy("createdAt", orderDir)
-				.orderBy("id", orderDir)
-				.limit(limit);
+			const q = withTeamAccess(zql.mattersTable, ctx, teamId);
+			return withPagination(withMatterRelations(q), cursor, direction, limit);
 		},
 	),
 
@@ -365,26 +379,14 @@ export const queries = defineQueries({
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
 		({ ctx, args: { limit, cursor, direction } }) => {
-			let q = withOrg(zql.mattersTable, ctx)
+			const q = withOrg(zql.mattersTable, ctx)
 				.where("assigneeId", ctx.userId)
 				.where("type", matterType.task)
 				.whereExists("status", (w) =>
 					w.where("type", "IN", [statusType.notStarted, statusType.started]),
-				)
-				.related("author")
-				.related("assignee")
-				.related("status")
-				.related("labels", (q) => q.related("label"));
+				);
 
-			if (cursor) {
-				q = q.start(cursor);
-			}
-
-			const orderDir = direction === "forward" ? "desc" : "asc";
-			return q
-				.orderBy("createdAt", orderDir)
-				.orderBy("id", orderDir)
-				.limit(limit);
+			return withPagination(withMatterRelations(q), cursor, direction, limit);
 		},
 	),
 
@@ -398,25 +400,14 @@ export const queries = defineQueries({
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
 		({ ctx, args: { limit, cursor, direction } }) => {
-			let q = withOrg(zql.mattersTable, ctx)
+			const q = withOrg(zql.mattersTable, ctx)
 				.where("authorId", ctx.userId)
 				.where("type", matterType.request)
 				.whereExists("status", (w) =>
 					w.where("type", "IN", [statusType.pendingApproval]),
-				)
-				.related("assignee")
-				.related("status")
-				.related("labels", (q) => q.related("label"));
+				);
 
-			if (cursor) {
-				q = q.start(cursor);
-			}
-
-			const orderDir = direction === "forward" ? "desc" : "asc";
-			return q
-				.orderBy("createdAt", orderDir)
-				.orderBy("id", orderDir)
-				.limit(limit);
+			return withPagination(withMatterRelations(q), cursor, direction, limit);
 		},
 	),
 });

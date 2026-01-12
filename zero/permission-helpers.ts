@@ -80,6 +80,38 @@ export async function assertTeamManager(
 // ============================================================================
 
 /**
+ * Common logic to check permissions for a matter (already fetched)
+ */
+// biome-ignore lint/suspicious/noExplicitAny: generic matter type
+async function checkMatterPermissions(
+	tx: MutatorTx,
+	ctx: Context,
+	matter: any,
+) {
+	if (!matter) {
+		throw new Error(PERMISSION_ERRORS.MATTER_NOT_FOUND);
+	}
+
+	const membership = await getTeamMembership(tx, ctx, matter.teamId);
+	if (!membership) {
+		throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
+	}
+
+	const isAuthor = matter.authorId === ctx.userId;
+	const isAssignee = matter.assigneeId === ctx.userId;
+	const isManager = membership.role === "manager";
+
+	return {
+		matter,
+		membership,
+		canModify: isAuthor || isAssignee || isManager,
+		isAuthor,
+		isAssignee,
+		isManager,
+	};
+}
+
+/**
  * Check if user can modify a matter (author, assignee, or manager)
  */
 export async function canModifyMatter(
@@ -97,47 +129,9 @@ export async function canModifyMatter(
 			.one(),
 	);
 
-	if (!matter) {
-		throw new Error(PERMISSION_ERRORS.MATTER_NOT_FOUND);
-	}
-
-	const membership = await getTeamMembership(tx, ctx, matter.teamId);
-	if (!membership) {
-		throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
-	}
-
-	const isAuthor = matter.authorId === ctx.userId;
-	const isAssignee = matter.assigneeId === ctx.userId;
-	const isManager = membership.role === "manager";
-
-	return {
-		matter,
-		membership,
-		canModify: isAuthor || isAssignee || isManager,
-		isAuthor,
-		isAssignee,
-		isManager,
-	};
+	return checkMatterPermissions(tx, ctx, matter);
 }
-
-/**
- * Assert user can modify a matter
- */
-export async function assertCanModifyMatter(
-	tx: MutatorTx,
-	ctx: Context,
-	matterId: string,
-) {
-	const result = await canModifyMatter(tx, ctx, matterId);
-	if (!result.canModify) {
-		throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-	}
-	return result;
-}
-
-/**
- * Check if user can modify a deleted matter (for restore operations)
- */
+// Check if user can modify a deleted matter, needed for restore operations
 export async function canModifyDeletedMatter(
 	tx: MutatorTx,
 	ctx: Context,
@@ -153,27 +147,22 @@ export async function canModifyDeletedMatter(
 			.one(),
 	);
 
-	if (!matter) {
-		throw new Error(PERMISSION_ERRORS.MATTER_NOT_FOUND);
+	return checkMatterPermissions(tx, ctx, matter);
+}
+
+/**
+ * Assert user can modify a matter
+ */
+export async function assertCanModifyMatter(
+	tx: MutatorTx,
+	ctx: Context,
+	matterId: string,
+) {
+	const result = await canModifyMatter(tx, ctx, matterId);
+	if (!result.canModify) {
+		throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 	}
-
-	const membership = await getTeamMembership(tx, ctx, matter.teamId);
-	if (!membership) {
-		throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
-	}
-
-	const isAuthor = matter.authorId === ctx.userId;
-	const isAssignee = matter.assigneeId === ctx.userId;
-	const isManager = membership.role === "manager";
-
-	return {
-		matter,
-		membership,
-		canModify: isAuthor || isAssignee || isManager,
-		isAuthor,
-		isAssignee,
-		isManager,
-	};
+	return result;
 }
 
 // ============================================================================

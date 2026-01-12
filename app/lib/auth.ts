@@ -9,22 +9,13 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
 import { cache } from "react";
-import { UseSend } from "usesend-js";
-import { OrgInvitationEmail } from "~/components/email/org-invitation";
-import { VerifyEmail } from "~/components/email/verify-email";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
 import { billingConfig, dodoPayments } from "~/lib/billing";
+import { AuthService } from "~/lib/server/auth-service";
 import { handleBillingWebhook } from "~/lib/server/billing.server";
-import { trackMembershipChange } from "~/lib/server/billing-tracking.server";
-import {
-	env,
-	isDevelopment,
-	isProduction,
-} from "~/lib/server/env-validation.server";
+import { env, isProduction } from "~/lib/server/env-validation.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
-
-const usesend = new UseSend(env.USESEND_API_KEY, env.USESEND_SELF_HOSTED_URL);
 
 export const auth = betterAuth({
 	experimental: {
@@ -36,15 +27,26 @@ export const auth = betterAuth({
 		schema,
 	}),
 	// Built-in rate limiting (Better Auth v1.4+)
+	// Handles all /api/auth/* routes automatically
 	rateLimit: {
 		enabled: true,
 		window: 60, // 60 seconds
-		max: 100, // 100 requests per window
+		max: 100, // 100 requests per window (global default)
 		customRules: {
+			// Zero sync endpoints - moderate limits
+			"/api/zero/*": { window: 60, max: 30 },
+			// Auth endpoints - strict limits to prevent brute force
 			"/api/auth/sign-in/*": { window: 60, max: 10 },
 			"/api/auth/sign-up/*": { window: 60, max: 5 },
-			"/api/auth/forgot-password": { window: 60, max: 3 },
+			"/api/auth/forgot-password": { window: 300, max: 3 }, // 5 min window
+			"/api/auth/reset-password": { window: 300, max: 5 },
+			"/api/auth/verify-email": { window: 60, max: 10 },
+			// Billing endpoints - moderate limits
 			"/api/auth/dodopayments/checkout/*": { window: 60, max: 5 },
+			"/api/billing/*": { window: 60, max: 10 },
+			// Notifications - moderate limits for normal use
+			"/api/notifications/send": { window: 60, max: 30 },
+			"/api/notifications/subscribe": { window: 60, max: 20 },
 		},
 		storage: "memory",
 	},
@@ -57,36 +59,12 @@ export const auth = betterAuth({
 	emailAndPassword: {
 		enabled: true,
 		requireEmailVerification: isProduction,
-		sendResetPassword: async ({ user, url }) => {
-			if (isDevelopment) {
-				console.log("Reset password link:", url);
-				return;
-			}
-
-			await usesend.emails.send({
-				from: "support@mail.kaamsync.com",
-				to: user.email,
-				subject: "KaamSync: Reset your password",
-				html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
-			});
-		},
+		sendResetPassword: AuthService.sendResetPasswordEmail,
 	},
 	emailVerification: {
 		sendOnSignUp: true,
 		autoSignInAfterVerification: true,
-		sendVerificationEmail: async ({ user, url }) => {
-			if (isDevelopment) {
-				console.log("Email verification link:", url);
-				return;
-			}
-
-			await usesend.emails.send({
-				from: "welcome@mail.kaamsync.com",
-				to: user.email,
-				subject: "KaamSync: Verify your email address",
-				react: VerifyEmail({ verifyUrl: url }),
-			});
-		},
+		sendVerificationEmail: AuthService.sendVerificationEmail,
 	},
 	socialProviders: {
 		google: {
@@ -145,60 +123,21 @@ export const auth = betterAuth({
 				},
 			},
 
-			async sendInvitationEmail({ email, organization, inviter }) {
-				const inviteLink = `${env.SITE_URL}/join`;
-
-				if (isDevelopment) {
-					console.log(
-						`Invitation email to ${email}: ${inviteLink} (organization: ${organization.name}, invited by: ${inviter.user.email})`,
-					);
-					return;
-				}
-
-				await usesend.emails.send({
-					from: "KaamSync@mail.kaamsync.com",
-					to: email,
-					subject: `You're invited to join ${organization.name} on KaamSync`,
-					react: OrgInvitationEmail({
-						organizationName: organization.name,
-						inviterName: inviter.user.name,
-						inviterEmail: inviter.user.email,
-						inviteLink,
-					}),
-				});
-			},
+			sendInvitationEmail: AuthService.sendInvitationEmail,
 			organizationHooks: {
 				afterAcceptInvitation: async ({ member }) => {
 					if (member.organizationId) {
-						// Use unified tracking function (handles cache invalidation + billing)
-						trackMembershipChange(member.organizationId).catch((err) =>
-							console.error(
-								"[Billing] Failed to track membership change:",
-								err,
-							),
-						);
+						await AuthService.handleMembershipChange(member.organizationId);
 					}
 				},
 				afterAddMember: async ({ member }) => {
 					if (member.organizationId) {
-						// Use unified tracking function (handles cache invalidation + billing)
-						trackMembershipChange(member.organizationId).catch((err) =>
-							console.error(
-								"[Billing] Failed to track membership change:",
-								err,
-							),
-						);
+						await AuthService.handleMembershipChange(member.organizationId);
 					}
 				},
 				afterRemoveMember: async ({ member }) => {
 					if (member.organizationId) {
-						// Use unified tracking function (handles cache invalidation + billing)
-						trackMembershipChange(member.organizationId).catch((err) =>
-							console.error(
-								"[Billing] Failed to track membership change:",
-								err,
-							),
-						);
+						await AuthService.handleMembershipChange(member.organizationId);
 					}
 				},
 			},

@@ -45,17 +45,16 @@ const MS_MINUTE = 60 * 1000;
 const MS_HOUR = 60 * MS_MINUTE;
 const MS_DAY = 24 * MS_HOUR;
 
-function isToday(date: Date): boolean {
-	const today = new Date();
+function isToday(date: Date, now = new Date()): boolean {
 	return (
-		date.getDate() === today.getDate() &&
-		date.getMonth() === today.getMonth() &&
-		date.getFullYear() === today.getFullYear()
+		date.getDate() === now.getDate() &&
+		date.getMonth() === now.getMonth() &&
+		date.getFullYear() === now.getFullYear()
 	);
 }
 
-function isTomorrow(date: Date): boolean {
-	const tomorrow = new Date();
+function isTomorrow(date: Date, now = new Date()): boolean {
+	const tomorrow = new Date(now);
 	tomorrow.setDate(tomorrow.getDate() + 1);
 	return (
 		date.getDate() === tomorrow.getDate() &&
@@ -64,8 +63,8 @@ function isTomorrow(date: Date): boolean {
 	);
 }
 
-function isYesterday(date: Date): boolean {
-	const yesterday = new Date();
+function isYesterday(date: Date, now = new Date()): boolean {
+	const yesterday = new Date(now);
 	yesterday.setDate(yesterday.getDate() - 1);
 	return (
 		date.getDate() === yesterday.getDate() &&
@@ -74,9 +73,8 @@ function isYesterday(date: Date): boolean {
 	);
 }
 
-function isThisYear(date: Date): boolean {
-	const today = new Date();
-	return date.getFullYear() === today.getFullYear();
+function isThisYear(date: Date, now = new Date()): boolean {
+	return date.getFullYear() === now.getFullYear();
 }
 
 /**
@@ -91,26 +89,12 @@ export function formatCompactRelativeDate(
 	const d = new Date(date);
 	const timestamp = d.getTime();
 
-	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp))
+	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp)) {
 		return "Invalid Date";
+	}
 
-	// Check today relative to the reference date
-	const isTodayRelative =
-		d.getDate() === now.getDate() &&
-		d.getMonth() === now.getMonth() &&
-		d.getFullYear() === now.getFullYear();
-
-	if (isTodayRelative) return "Today";
-
-	// Check tomorrow relative to the reference date
-	const tomorrowOfNow = new Date(now);
-	tomorrowOfNow.setDate(tomorrowOfNow.getDate() + 1);
-	const isTomorrowRelative =
-		d.getDate() === tomorrowOfNow.getDate() &&
-		d.getMonth() === tomorrowOfNow.getMonth() &&
-		d.getFullYear() === tomorrowOfNow.getFullYear();
-
-	if (isTomorrowRelative) return "Tomorrow";
+	if (isToday(d, now)) return "Today";
+	if (isTomorrow(d, now)) return "Tomorrow";
 
 	const diffMs = timestamp - now.getTime();
 
@@ -132,8 +116,9 @@ export function formatCompactRelativeDate(
  * Shows: just now, Xm ago, Xh ago, Xd ago, or "Mon DD" for older dates.
  */
 export function formatTimelineDate(timestamp: number): string {
-	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp) || timestamp < 0)
+	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp) || timestamp < 0) {
 		return "";
+	}
 
 	const d = new Date(timestamp);
 	const now = new Date();
@@ -145,11 +130,11 @@ export function formatTimelineDate(timestamp: number): string {
 		return new Intl.DateTimeFormat("en-US", {
 			month: "short",
 			day: "numeric",
-			year: isThisYear(d) ? undefined : "numeric",
+			year: isThisYear(d, now) ? undefined : "numeric",
 		}).format(d);
 	}
 
-	if (isToday(d)) {
+	if (isToday(d, now)) {
 		if (diffHours < 1) {
 			const minutes = Math.floor(diffMs / MS_MINUTE);
 			return minutes < 1 ? "Just Now" : `${minutes}m ago`;
@@ -157,7 +142,7 @@ export function formatTimelineDate(timestamp: number): string {
 		return `${Math.floor(diffHours)}h ago`;
 	}
 
-	if (isYesterday(d)) {
+	if (isYesterday(d, now)) {
 		const timeStr = new Intl.DateTimeFormat("en-US", {
 			hour: "numeric",
 			minute: "numeric",
@@ -174,7 +159,7 @@ export function formatTimelineDate(timestamp: number): string {
 	return new Intl.DateTimeFormat("en-US", {
 		month: "short",
 		day: "numeric",
-		year: isThisYear(d) ? undefined : "numeric",
+		year: isThisYear(d, now) ? undefined : "numeric",
 	}).format(d);
 }
 
@@ -183,14 +168,9 @@ export function formatTimelineDate(timestamp: number): string {
  */
 export function formatDate(ms: number): string {
 	if (!Number.isFinite(ms) || Number.isNaN(ms)) return "";
-
-	try {
-		return new Date(ms).toLocaleDateString("en-US", {
-			month: "numeric",
-			day: "numeric",
-			year: "numeric",
-		});
-	} catch {
-		return "";
-	}
+	return new Date(ms).toLocaleDateString("en-US", {
+		month: "numeric",
+		day: "numeric",
+		year: "numeric",
+	});
 }

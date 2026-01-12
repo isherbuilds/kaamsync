@@ -117,8 +117,29 @@ export const MatterDialog = memo(
 						);
 						setOpen(false);
 						form.reset();
+
+						// Send push notification to assignee (fire and forget)
+						if (assigneeId) {
+							import("~/hooks/use-push-notifications").then(
+								({ sendNotificationToUser }) => {
+									sendNotificationToUser(
+										assigneeId,
+										isRequest ? "New Request Assigned" : "New Task Assigned",
+										`${teamCode}-${clientShortID}: ${title}`,
+										`/${teamCode}/matter/${teamCode}-${clientShortID}`,
+									);
+								},
+							);
+						}
 					})
-					.catch(() => toast.error(`Failed to create ${type}`))
+					.catch((e) => {
+						console.error(`Failed to create ${type}:`, e);
+						toast.error(
+							e instanceof Error
+								? e.message
+								: `Failed to create ${type}. Please try again.`,
+						);
+					})
 					.finally(() => setIsSubmitting(false));
 			},
 		});
