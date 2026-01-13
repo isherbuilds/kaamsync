@@ -4,10 +4,11 @@
  */
 import {
 	dodoPayments,
-	invalidateUsageCache,
+	getOrganizationCustomer,
 } from "~/lib/server/billing.server";
 import { getOrganizationMemberCount } from "~/lib/server/organization.server";
 import { getOrganizationStorageUsage } from "~/lib/server/storage.server";
+import { logger } from "../logger.js";
 
 /**
  * Report current seat count to DodoPayments usage metering
@@ -16,15 +17,25 @@ export async function reportSeatCount(organizationId: string) {
 	if (!dodoPayments) return;
 
 	try {
-		invalidateUsageCache(organizationId);
+		const [memberCount, customer] = await Promise.all([
+			getOrganizationMemberCount(organizationId),
+			getOrganizationCustomer(organizationId),
+		]);
 
-		const memberCount = await getOrganizationMemberCount(organizationId);
+		const dodoCustomerId = customer?.dodoCustomerId;
+
+		if (!dodoCustomerId) {
+			console.error(
+				`[Billing] Skipping Dodo usage ingest: no Dodo customer found for org ${organizationId}`,
+			);
+			return;
+		}
 
 		await dodoPayments.usageEvents.ingest({
 			events: [
 				{
 					event_id: `seat_count_${organizationId}_${Date.now()}`,
-					customer_id: organizationId,
+					customer_id: dodoCustomerId,
 					event_name: "seat_count",
 					timestamp: new Date().toISOString(),
 					metadata: {
@@ -46,23 +57,33 @@ export async function reportSeatCount(organizationId: string) {
 /**
  * Report storage usage to DodoPayments for billing
  */
-export async function reportStorageUsage(organizationId: string) {
+export async function reportStorageUsage(orgId: string) {
 	if (!dodoPayments) return;
 
 	try {
-		invalidateUsageCache(organizationId);
+		const [usage, customer] = await Promise.all([
+			getOrganizationStorageUsage(orgId),
+			getOrganizationCustomer(orgId),
+		]);
 
-		const usage = await getOrganizationStorageUsage(organizationId);
+		const dodoCustomerId = customer?.dodoCustomerId;
+
+		if (!dodoCustomerId) {
+			logger.error(
+				`[Storage] Skipping Dodo usage ingest: no Dodo customer found for org ${orgId}`,
+			);
+			return;
+		}
 
 		await dodoPayments.usageEvents.ingest({
 			events: [
 				{
-					event_id: `storage_${organizationId}_${Date.now()}`,
-					customer_id: organizationId,
+					event_id: `storage_${orgId}_${Date.now()}`,
+					customer_id: dodoCustomerId,
 					event_name: "storage_usage",
 					timestamp: new Date().toISOString(),
 					metadata: {
-						organization_id: organizationId,
+						organization_id: orgId,
 						storage_bytes: usage.totalBytes,
 						storage_gb: Math.round(usage.totalGb * 100) / 100,
 						file_count: usage.fileCount,
@@ -71,10 +92,10 @@ export async function reportStorageUsage(organizationId: string) {
 			],
 		});
 
-		console.log(
-			`[Billing] Reported storage: ${usage.totalGb.toFixed(2)}GB (${usage.fileCount} files) for org ${organizationId}`,
+		logger.log(
+			`[Storage] Reported usage: ${usage.totalGb.toFixed(2)}GB (${usage.fileCount} files) for org ${orgId}`,
 		);
 	} catch (error) {
-		console.error("[Billing] Failed to report storage usage:", error);
+		logger.error("[Storage] Failed to report usage:", error);
 	}
 }
