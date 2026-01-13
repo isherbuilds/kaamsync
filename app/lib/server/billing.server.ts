@@ -676,7 +676,7 @@ export const getPlanByProductId = (productId: string): ProductKey | null => {
 		DODO_PRODUCT_GROWTH_YEARLY,
 		DODO_PRODUCT_PROFESSIONAL_MONTHLY,
 		DODO_PRODUCT_PROFESSIONAL_YEARLY,
-	} = process.env;
+	} = env;
 	if (
 		productId === DODO_PRODUCT_GROWTH_MONTHLY ||
 		productId === DODO_PRODUCT_GROWTH_YEARLY

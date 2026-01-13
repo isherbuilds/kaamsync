@@ -22,25 +22,26 @@ import {
 } from "~/lib/permissions";
 import { getOrganizationPlanKey } from "~/lib/server/billing.server";
 import { reportStorageUsage } from "./billing-tracking.server";
+import { env } from "./env-validation.server";
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-const BUCKET_NAME = process.env.S3_BUCKET_NAME || "kaamsync-attachments";
-const S3_REGION = process.env.S3_REGION || "auto";
-const S3_ENDPOINT = process.env.S3_ENDPOINT; // For R2 or custom S3
-const S3_PUBLIC_URL = process.env.S3_PUBLIC_URL; // Public URL for downloads
+const BUCKET_NAME = env.S3_BUCKET_NAME || "kaamsync-attachments";
+const S3_REGION = env.S3_REGION || "auto";
+const S3_ENDPOINT = env.S3_ENDPOINT; // For R2 or custom S3
+const S3_PUBLIC_URL = env.S3_PUBLIC_URL; // Public URL for downloads
 
 // Initialize S3 client (works with AWS S3, Cloudflare R2, MinIO, etc.)
 const s3 =
-	process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
+	env.S3_ACCESS_KEY_ID && env.S3_SECRET_ACCESS_KEY
 		? new S3Client({
 				region: S3_REGION,
 				endpoint: S3_ENDPOINT,
 				credentials: {
-					accessKeyId: process.env.S3_ACCESS_KEY_ID,
-					secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+					accessKeyId: env.S3_ACCESS_KEY_ID,
+					secretAccessKey: env.S3_SECRET_ACCESS_KEY,
 				},
 				forcePathStyle: !!S3_ENDPOINT, // Required for R2/MinIO
 			})
