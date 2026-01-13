@@ -521,12 +521,18 @@ export async function deleteAttachment(
 	// Update storage cache (decrement)
 	await updateStorageUsageCache(orgId, -attachment.fileSize, -1);
 
-	await s3?.send(
-		new DeleteObjectCommand({
-			Bucket: BUCKET_NAME,
-			Key: attachment.storageKey,
-		}),
-	);
+	// Delete from S3 (best effort - lifecycle rules handle orphans)
+	try {
+		await s3?.send(
+			new DeleteObjectCommand({
+				Bucket: BUCKET_NAME,
+				Key: attachment.storageKey,
+			}),
+		);
+	} catch (error) {
+		logger.error(`[Storage] Failed to delete S3 object ${attachment.storageKey}:`, error);
+		// Continue - DB record is deleted, S3 lifecycle will clean up
+	}
 
 	logger.log(
 		`[Storage] Deleted attachment ${attachmentId} (${attachment.fileName}) by user ${userId}`,
