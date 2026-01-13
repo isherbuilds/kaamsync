@@ -1,3 +1,22 @@
+/**
+ * @file Client-side short ID cache for offline sequence generation
+ * @description Provides optimistic short ID generation for team-specific sequences
+ * using browser localStorage. Server remains authoritative; client cache is best-effort
+ * and automatically clears on version mismatch.
+ *
+ * Key exports:
+ * - seedNextShortId(teamId, next) - Initialize cache with server value
+ * - peekNextShortId(teamId) - Get next ID without incrementing
+ * - getAndIncrementNextShortId(teamId) - Get current and increment for next
+ * - clearTeamCache(teamId) - Clear cache for specific team
+ *
+ * @example
+ * // On load, seed with server value
+ * seedNextShortId(teamId, serverNextId);
+ * // Generate offline ID
+ * const localId = getAndIncrementNextShortId(teamId);
+ */
+
 // Simple per-team short ID cache using localStorage.
 // Provides a best-effort offline sequence; server remains authoritative.
 

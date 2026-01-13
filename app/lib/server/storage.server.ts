@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+	DeleteObjectCommand,
+	PutObjectCommand,
+	S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, sql } from "drizzle-orm";
@@ -155,17 +159,14 @@ export async function updateStorageUsageCache(
 	bytesChange: number,
 	countChange: number,
 ) {
-	// Ensure cache row exists and is initialized before applying incremental updates.
-	// This avoids cases where a delete occurs before the cache is created, which
-	// would otherwise insert incorrect zeroed values from negative deltas.
 	await getOrganizationStorageUsage(orgId);
 
 	await db
 		.insert(storageUsageCacheTable)
 		.values({
 			orgId,
-			totalBytes: Math.max(0, bytesChange),
-			fileCount: Math.max(0, countChange),
+			totalBytes: 0,
+			fileCount: 0,
 			updatedAt: new Date(),
 		})
 		.onConflictDoUpdate({
@@ -520,6 +521,13 @@ export async function deleteAttachment(
 	// Update storage cache (decrement)
 	await updateStorageUsageCache(orgId, -attachment.fileSize, -1);
 
+	await s3?.send(
+		new DeleteObjectCommand({
+			Bucket: BUCKET_NAME,
+			Key: attachment.storageKey,
+		}),
+	);
+
 	logger.log(
 		`[Storage] Deleted attachment ${attachmentId} (${attachment.fileName}) by user ${userId}`,
 	);
@@ -527,10 +535,6 @@ export async function deleteAttachment(
 	// Report storage decrease to billing
 	await reportStorageUsage(orgId);
 }
-
-// =============================================================================
-// EXPORTS
-// =============================================================================
 
 // Re-export from shared constants for backwards compatibility
 export {

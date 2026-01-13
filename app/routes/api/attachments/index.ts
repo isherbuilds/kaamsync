@@ -119,7 +119,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			const parsed = presignedUrlSchema.safeParse(body);
 			if (!parsed.success) {
 				throw data(
-					{ error: "Invalid request", details: parsed.error.flatten() },
+					{ error: "Invalid request", details: parsed.error },
 					{ status: 400 },
 				);
 			}
@@ -157,7 +157,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			const parsed = saveAttachmentSchema.safeParse(body);
 			if (!parsed.success) {
 				throw data(
-					{ error: "Invalid request", details: parsed.error.flatten() },
+					{ error: "Invalid request", details: parsed.error },
 					{ status: 400 },
 				);
 			}
@@ -180,13 +180,14 @@ export async function action({ request }: ActionFunctionArgs) {
 			const parsed = deleteAttachmentSchema.safeParse(body);
 			if (!parsed.success) {
 				throw data(
-					{ error: "Invalid request", details: parsed.error.flatten() },
+					{ error: "Invalid request", details: parsed.error },
 					{ status: 400 },
 				);
 			}
 
 			try {
 				await deleteAttachment(parsed.data.attachmentId, orgId, userId);
+
 				return data({ success: true });
 			} catch (error) {
 				const message =

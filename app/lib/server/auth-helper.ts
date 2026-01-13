@@ -1,3 +1,15 @@
+/**
+ * @file Server-side authentication utilities and middleware
+ * @description Provides session validation, authentication guards, and audit logging
+ * for protected routes. Used as middleware to ensure requests are authenticated.
+ *
+ * Key exports:
+ * - requireSession() - Validates session exists, logs denial events, throws 401 on failure
+ *
+ * @see app/lib/auth.ts for auth configuration
+ * @see app/lib/audit-logger.ts for audit event logging
+ */
+
 import { data } from "react-router";
 import {
 	auditLog,

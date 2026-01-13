@@ -272,6 +272,7 @@ export async function upsertSubscription(
 					eq(subscriptionsTable.productId, data.productId),
 					eq(subscriptionsTable.status, "active"),
 				),
+				orderBy: (s, { desc }) => desc(s.createdAt),
 			});
 		}
 

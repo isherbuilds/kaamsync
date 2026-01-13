@@ -1,3 +1,25 @@
+/**
+ * @file Billing configuration and utilities
+ * @description Defines billing plans, pricing tiers, product configurations, and utility
+ * functions for pricing calculations. Works with DodoPayments for payment processing.
+ *
+ * Key exports:
+ * - dodoPayments - DodoPayments client instance
+ * - billingConfig - Webhook configuration and settings
+ * - planLimits - Feature limits per plan (starter, growth, pro, enterprise)
+ * - usagePricing - Overage pricing in cents (memberSeat, teamCreated, storageGb)
+ * - products - Product definitions with features, pricing, and metadata
+ * - getPrice() - Get price for plan/interval
+ * - getMonthlyEquivalent() - Convert yearly to monthly equivalent
+ * - canCheckout() - Check if plan allows checkout
+ * - getPlanByProductId() - Map Dodo product ID to plan key
+ * - getMemberPrice() - Get per-member price for plan
+ *
+ * @see app/lib/server/billing.server.ts for server-side billing operations
+ * @see app/lib/server/billing-tracking.server.ts for billing event tracking
+ * @see zero/billing-limits.ts for usage limit validation
+ */
+
 // =============================================================================
 // PLAN LIMITS & PRICING
 // =============================================================================
