@@ -153,9 +153,9 @@ export default function MarketingLayout() {
 					<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
 						<div className="space-y-4 lg:col-span-2">
 							<Link to="/" className="flex items-center gap-2.5">
-								<div className="flex size-7 items-center justify-center rounded bg-white">
+								<div className="flex size-7 items-center justify-center bg-white">
 									<img
-										src="/static/kaamsync-logo.svg"
+										src="/static/kaamsync-logo.png"
 										alt="KaamSync"
 										className="size-6 invert"
 									/>

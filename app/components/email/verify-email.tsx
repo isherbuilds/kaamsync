@@ -30,8 +30,8 @@ export const VerifyEmail = ({ verifyUrl }: VerifyEmailProps) => (
 				<Container className="mx-auto my-0 max-w-2xl px-0 pt-5 pb-12">
 					<Img
 						src={`${baseUrl}/static/kaamsync-logo.png`}
-						width="42"
-						height="42"
+						width="48"
+						height="48"
 						alt="KaamSync"
 						className="h-12 w-12 bg-[#000] p-1"
 					/>

@@ -32,7 +32,7 @@ export const planLimits = {
 		teams: -1,
 		matters: -1,
 		storageGb: -1,
-		maxFileSizeMb: 100,
+		maxFileSizeMb: 1000,
 		maxFiles: -1,
 	},
 } as const;
