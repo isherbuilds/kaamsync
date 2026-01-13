@@ -36,11 +36,11 @@ export const OrgInvitationEmail = ({
 
 				<Container className="mx-auto my-0 max-w-2xl px-0 pt-5 pb-12">
 					<Img
-						src={`${baseUrl}/static/kaamsync-logo.svg`}
+						src={`${baseUrl}/static/kaamsync-logo.png`}
 						width="42"
 						height="42"
 						alt="KaamSync"
-						className="h-12 w-12 rounded-full bg-[#242424ca] p-1"
+						className="h-12 w-12 bg-[#000] p-1"
 					/>
 					<Heading className="px-0 pt-10 pb-0 font-normal text-[#484848] text-[24px] leading-[1.3] tracking-[-0.5px]">
 						Join <strong>{organizationName}</strong> on KaamSync
@@ -53,7 +53,7 @@ export const OrgInvitationEmail = ({
 							KaamSync.
 						</Text>
 						<Button
-							className="block rounded bg-[#bd491b] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"
+							className="block rounded bg-[#e53300] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"
 							href={inviteLink}
 						>
 							Join Team

@@ -1,7 +1,3 @@
-/**
- * Storage Service - S3-compatible file storage with billing integration
- * Following zbugs patterns for attachments
- */
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
@@ -17,14 +13,18 @@ import {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES_SET,
 } from "~/lib/attachment-constants";
-import { dodoPayments, type ProductKey, planLimits } from "~/lib/billing";
+import { type ProductKey, planLimits } from "~/lib/billing";
 import { logger } from "~/lib/logger";
 import {
 	canModifyAttachment,
 	PERMISSION_ERRORS,
 	type TeamRole,
 } from "~/lib/permissions";
-import { getOrganizationPlanKey } from "~/lib/server/billing.server";
+import {
+	dodoPayments,
+	getOrganizationCustomer,
+	getOrganizationPlanKey,
+} from "~/lib/server/billing.server";
 
 // =============================================================================
 // CONFIGURATION
@@ -156,7 +156,7 @@ export async function updateStorageUsageCache(
 	orgId: string,
 	bytesChange: number,
 	countChange: number,
-): Promise<void> {
+) {
 	await db
 		.insert(storageUsageCacheTable)
 		.values({
@@ -501,7 +501,7 @@ export async function deleteAttachment(
 	attachmentId: string,
 	orgId: string,
 	userId: string,
-): Promise<void> {
+) {
 	// Authorization: verify user can delete this attachment
 	const { attachment } = await assertUserCanDeleteAttachment(
 		userId,
@@ -532,17 +532,27 @@ export async function deleteAttachment(
 /**
  * Report storage usage to DodoPayments for billing
  */
-export async function reportStorageUsage(orgId: string): Promise<void> {
+export async function reportStorageUsage(orgId: string) {
 	if (!dodoPayments) return;
 
 	try {
 		const usage = await getOrganizationStorageUsage(orgId);
 
+		// Lookup the organization's Dodo customer record to get the dodoCustomerId
+		const customer = await getOrganizationCustomer(orgId);
+		const dodoCustomerId = customer?.dodoCustomerId;
+		if (!dodoCustomerId) {
+			logger.error(
+				`[Storage] Skipping Dodo usage ingest: no Dodo customer found for org ${orgId}`,
+			);
+			return;
+		}
+
 		await dodoPayments.usageEvents.ingest({
 			events: [
 				{
 					event_id: `storage_${orgId}_${Date.now()}`,
-					customer_id: orgId,
+					customer_id: dodoCustomerId,
 					event_name: "storage_usage",
 					timestamp: new Date().toISOString(),
 					metadata: {

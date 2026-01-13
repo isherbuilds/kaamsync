@@ -32,7 +32,7 @@ export default defineConfig({
 			strategies: "injectManifest",
 			srcDir: "app",
 			filename: "service-worker.ts",
-			manifestFilename: "manifest.webmanifest",
+			manifestFilename: "site.webmanifest",
 			injectRegister: false,
 			injectManifest: {
 				// Pre-cache built client assets and html; exclude dev/HMR modules.
@@ -44,8 +44,8 @@ export default defineConfig({
 				type: "module",
 			},
 			manifest: {
-				name: "KaamSync - Organize Your Work Seamlessly",
-				short_name: "KaamSync",
+				name: "KaamSync",
+				short_name: "Kaam",
 				start_url: "/",
 				display: "standalone",
 				background_color: "#ffffff",
@@ -62,21 +62,6 @@ export default defineConfig({
 						sizes: "512x512",
 						type: "image/png",
 						purpose: "maskable",
-					},
-					{
-						src: "/favicon-96x96.png",
-						sizes: "96x96",
-						type: "image/png",
-					},
-					{
-						src: "/favicon.svg",
-						sizes: "any",
-						type: "image/svg+xml",
-					},
-					{
-						src: "/favicon.ico",
-						sizes: "48x48",
-						type: "image/x-icon",
 					},
 				],
 			},

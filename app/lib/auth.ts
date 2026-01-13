@@ -11,9 +11,12 @@ import { organization } from "better-auth/plugins";
 import { cache } from "react";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
-import { billingConfig, dodoPayments } from "~/lib/billing";
 import { AuthService } from "~/lib/server/auth-service";
-import { handleBillingWebhook } from "~/lib/server/billing.server";
+import {
+	billingConfig,
+	dodoPayments,
+	handleBillingWebhook,
+} from "~/lib/server/billing.server";
 import { env, isProduction } from "~/lib/server/env-validation.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
 

@@ -12,10 +12,7 @@ export function MarketingContainer({
 	id,
 }: MarketingContainerProps) {
 	return (
-		<section
-			id={id}
-			className={cn("overflow-hidden py-24 md:py-32", className)}
-		>
+		<section id={id} className={cn("overflow-hidden py-16", className)}>
 			<div className="container mx-auto px-4 md:px-6">{children}</div>
 		</section>
 	);
@@ -44,12 +41,7 @@ export function MarketingHeading({
 	return (
 		<Component className={cn(baseStyles, variantStyles[Component], className)}>
 			{children}
-			{italic && (
-				<>
-					{" "}
-					<span className="text-muted-foreground italic">{italic}</span>
-				</>
-			)}
+			{italic && <span className="text-muted-foreground italic">{italic}</span>}
 		</Component>
 	);
 }

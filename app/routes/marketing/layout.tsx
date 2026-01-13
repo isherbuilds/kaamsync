@@ -48,9 +48,9 @@ export default function MarketingLayout() {
 				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
 						<Link to="/" className="flex items-center gap-1">
-							<div className="flex size-7 items-center justify-center rounded bg-white">
+							<div className="flex size-7 items-center justify-center bg-white">
 								<img
-									src="/static/kaamsync-logo.svg"
+									src="/static/kaamsync-logo.png"
 									alt="KaamSync"
 									className="size-6 invert"
 								/>

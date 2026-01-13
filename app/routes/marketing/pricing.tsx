@@ -87,10 +87,10 @@ export default function PricingPage() {
 	return (
 		<>
 			{/* Hero */}
-			<section className="bg-background py-24 text-center">
+			<section className="bg-background py-16 text-center">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
-						<MarketingHeading as="h1" className="mb-6" italic="pricing.">
+						<MarketingHeading as="h2" className="mb-6" italic="pricing.">
 							Simple, transparent <br />{" "}
 						</MarketingHeading>
 						<p className="mb-10 text-muted-foreground text-xl">

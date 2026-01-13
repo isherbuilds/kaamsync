@@ -84,10 +84,7 @@ export async function getOrgPlan(
  * Check if the organization can create a new team
  * Returns void or throws an error
  */
-export async function assertCanCreateTeam(
-	tx: MutatorTx,
-	orgId: string,
-): Promise<void> {
+export async function assertCanCreateTeam(tx: MutatorTx, orgId: string) {
 	if (tx.location !== "server") {
 		return; // Client-side: optimistic
 	}
@@ -121,10 +118,7 @@ export async function assertCanCreateTeam(
 /**
  * Check if the organization can create a new matter (task/request)
  */
-export async function assertCanCreateMatter(
-	tx: MutatorTx,
-	orgId: string,
-): Promise<void> {
+export async function assertCanCreateMatter(tx: MutatorTx, orgId: string) {
 	if (tx.location !== "server") {
 		return; // Client-side: optimistic
 	}

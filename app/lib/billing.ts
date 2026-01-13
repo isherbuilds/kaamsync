@@ -1,41 +1,3 @@
-/**
- * Billing configuration - shared between client and server
- * Simplified: ~130 lines vs original 414 lines
- */
-import DodoPayments from "dodopayments";
-
-const isServer = typeof window === "undefined";
-
-// =============================================================================
-// DODO PAYMENTS CLIENT (server-only)
-// =============================================================================
-
-export const dodoPayments =
-	isServer && process.env.DODO_PAYMENTS_API_KEY
-		? new DodoPayments({
-				bearerToken: process.env.DODO_PAYMENTS_API_KEY,
-				environment:
-					(process.env.DODO_PAYMENTS_ENVIRONMENT as
-						| "test_mode"
-						| "live_mode") ?? "test_mode",
-			})
-		: null;
-
-const siteUrl = isServer ? process.env.SITE_URL || "http://localhost:3000" : "";
-
-export const billingConfig = {
-	webhookSecret: isServer
-		? process.env.DODO_PAYMENTS_WEBHOOK_SECRET
-		: undefined,
-	enabled: isServer
-		? !!(
-				process.env.DODO_PAYMENTS_API_KEY &&
-				process.env.DODO_PAYMENTS_WEBHOOK_SECRET
-			)
-		: false,
-	successUrl: `${siteUrl}/api/billing/redirect?success=true`,
-} as const;
-
 // =============================================================================
 // PLAN LIMITS & PRICING
 // =============================================================================
@@ -54,15 +16,15 @@ export const planLimits = {
 		teams: -1,
 		matters: -1,
 		storageGb: 10,
-		maxFileSizeMb: 25,
+		maxFileSizeMb: 500,
 		maxFiles: -1,
 	},
 	pro: {
 		members: 25,
 		teams: -1,
 		matters: -1,
-		storageGb: 25,
-		maxFileSizeMb: 50,
+		storageGb: 30,
+		maxFileSizeMb: 500,
 		maxFiles: -1,
 	},
 	enterprise: {
@@ -206,7 +168,7 @@ export const canCheckout = (plan: ProductKey): boolean =>
 	plan === "growth" || plan === "pro";
 
 export const getPlanByProductId = (productId: string): ProductKey | null => {
-	if (!isServer || !productId) return null;
+	if (!productId) return null;
 	const {
 		DODO_PRODUCT_GROWTH_MONTHLY,
 		DODO_PRODUCT_GROWTH_YEARLY,

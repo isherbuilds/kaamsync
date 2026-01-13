@@ -4,6 +4,7 @@
  */
 import { createId } from "@paralleldrive/cuid2";
 import { createHash } from "crypto";
+import DodoPayments from "dodopayments";
 import { and, eq } from "drizzle-orm";
 import { db } from "~/db";
 import {
@@ -21,6 +22,8 @@ import {
 	usagePricing,
 } from "~/lib/billing";
 import { logger } from "~/lib/logger";
+import { env } from "~/lib/server/env-validation.server";
+
 import {
 	getCustomerByDodoId,
 	getOrganizationMatterCount,
@@ -92,6 +95,22 @@ export function getCacheStats() {
 	return { usageCache: { size: usageCache.size } };
 }
 
+// Server-only DodoPayments client and billing config
+export const dodoPayments = env.DODO_PAYMENTS_API_KEY
+	? new DodoPayments({
+			bearerToken: env.DODO_PAYMENTS_API_KEY,
+			environment:
+				(env.DODO_PAYMENTS_ENVIRONMENT as "test_mode" | "live_mode") ??
+				"test_mode",
+		})
+	: null;
+
+export const billingConfig = {
+	webhookSecret: env.DODO_PAYMENTS_WEBHOOK_SECRET,
+	enabled: !!(env.DODO_PAYMENTS_API_KEY && env.DODO_PAYMENTS_WEBHOOK_SECRET),
+	successUrl: `${env.SITE_URL}/api/billing/redirect?success=true`,
+} as const;
+
 // =============================================================================
 // REPOSITORY
 // =============================================================================
@@ -121,7 +140,7 @@ export async function getOrganizationPayments(orgId: string, limit = 10) {
 export async function linkCustomerToOrganization(
 	dodoCustomerId: string,
 	orgId: string,
-): Promise<void> {
+) {
 	await db
 		.update(customersTable)
 		.set({ organizationId: orgId })
@@ -141,7 +160,7 @@ async function recordWebhookEvent(
 	return inserted.length > 0;
 }
 
-async function deleteWebhookEvent(webhookId: string): Promise<void> {
+async function deleteWebhookEvent(webhookId: string) {
 	await db
 		.delete(webhookEventsTable)
 		.where(eq(webhookEventsTable.webhookId, webhookId));
@@ -219,10 +238,11 @@ export async function upsertSubscription(
 	orgId: string,
 	payload: WebhookPayload["data"],
 	status: string,
-): Promise<void> {
+) {
 	const planKey = payload.product_id
 		? getPlanByProductId(payload.product_id)
 		: null;
+
 	const data = {
 		customerId,
 		organizationId: orgId,
@@ -253,6 +273,7 @@ export async function upsertSubscription(
 			existing = await tx.query.subscriptionsTable.findFirst({
 				where: and(
 					eq(subscriptionsTable.organizationId, orgId),
+					eq(subscriptionsTable.customerId, customerId),
 					eq(subscriptionsTable.productId, data.productId),
 					eq(subscriptionsTable.status, "active"),
 				),
@@ -561,9 +582,7 @@ const STATUS_MAP: Record<
 	"payment.cancelled": { type: "payment", status: "cancelled" },
 };
 
-export async function handleBillingWebhook(
-	payload: WebhookPayload,
-): Promise<void> {
+export async function handleBillingWebhook(payload: WebhookPayload) {
 	const eventType = payload.type || payload.event_type || "";
 	const payloadHash = createHash("sha256")
 		.update(JSON.stringify(payload))
@@ -636,13 +655,14 @@ export async function handleBillingWebhook(
 		}
 
 		const mapped = STATUS_MAP[eventType];
+
 		if (mapped && customerId) {
 			if (!orgId) {
-				logger.warn(
-					`[Billing] Skipping ${eventType} for customer ${customerId}: missing orgId`,
+				throw new Error(
+					`[Billing] Cannot process ${eventType} for customer ${customerId}: missing orgId`,
 				);
-				return;
 			}
+
 			if (mapped.type === "subscription")
 				await upsertSubscription(customerId, orgId, data, mapped.status);
 			else await recordPayment(customerId, orgId, data, mapped.status);

@@ -2,38 +2,23 @@
  * Billing Tracking - Server-side usage metering
  * Tracks seat counts, storage, and other usage metrics for billing
  */
-import { dodoPayments } from "~/lib/billing";
-import { invalidateUsageCache } from "~/lib/server/billing.server";
+import {
+	dodoPayments,
+	invalidateUsageCache,
+} from "~/lib/server/billing.server";
 import { getOrganizationMemberCount } from "~/lib/server/organization.server";
 import { getOrganizationStorageUsage } from "~/lib/server/storage.server";
 
 /**
- * Track membership changes - invalidates cache and reports seat count
- */
-export async function trackMembershipChange(
-	organizationId: string,
-): Promise<void> {
-	invalidateUsageCache(organizationId);
-	await reportSeatCount(organizationId);
-}
-
-/**
- * Track storage changes - reports storage usage to billing
- */
-export async function trackStorageChange(
-	organizationId: string,
-): Promise<void> {
-	await reportStorageUsage(organizationId);
-}
-
-/**
  * Report current seat count to DodoPayments usage metering
  */
-async function reportSeatCount(organizationId: string): Promise<void> {
+export async function reportSeatCount(organizationId: string) {
 	if (!dodoPayments) return;
 
 	try {
 		const memberCount = await getOrganizationMemberCount(organizationId);
+
+		invalidateUsageCache(organizationId);
 
 		await dodoPayments.usageEvents.ingest({
 			events: [
@@ -61,7 +46,7 @@ async function reportSeatCount(organizationId: string): Promise<void> {
 /**
  * Report storage usage to DodoPayments for billing
  */
-async function reportStorageUsage(organizationId: string): Promise<void> {
+export async function reportStorageUsage(organizationId: string) {
 	if (!dodoPayments) return;
 
 	try {

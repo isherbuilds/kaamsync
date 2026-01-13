@@ -29,7 +29,7 @@ export default function ContactPage() {
 			<MarketingContainer>
 				<div className="mx-auto mb-16 max-w-3xl text-center">
 					<MarketingBadge>Support</MarketingBadge>
-					<MarketingHeading as="h1" className="mb-6" italic="to your field.">
+					<MarketingHeading as="h2" className="mb-6" italic="to your field.">
 						Deploy KaamSync <br />
 					</MarketingHeading>
 					<p className="mx-auto max-w-xl text-lg text-muted-foreground">
