@@ -3,7 +3,8 @@
  * Replaces all console.log/warn/error calls throughout the app
  */
 
-import { isDevelopment, isTest } from "./server/env-validation.server";
+const isDevelopment = process.env.NODE_ENV === "development";
+const isTest = process.env.NODE_ENV === "test";
 
 type LogLevel = "log" | "warn" | "error" | "info" | "debug";
 

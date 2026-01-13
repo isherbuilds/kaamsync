@@ -164,11 +164,17 @@ export async function upsertCustomer(
 				where: eq(usersTable.email, email),
 			});
 			if (user) {
-				const membership = await tx.query.membersTable.findFirst({
+				const memberships = await tx.query.membersTable.findMany({
 					where: eq(membersTable.userId, user.id),
-					orderBy: (m, { desc }) => desc(m.createdAt),
 				});
-				resolvedOrgId = membership?.organizationId ?? "";
+				if (memberships.length === 1) {
+					resolvedOrgId = memberships[0].organizationId;
+				} else if (memberships.length > 1) {
+					throw new Error(
+						`Ambiguous organization resolution for email ${email}: user has multiple memberships`,
+					);
+				}
+				// If no memberships, resolvedOrgId remains empty, will throw later
 			}
 		}
 
@@ -592,17 +598,32 @@ export async function handleBillingWebhook(
 						})
 					: null,
 			]);
-			const membership = user
-				? await db.query.membersTable.findFirst({
-						where: eq(membersTable.userId, user.id),
-					})
-				: null;
 
 			if (existingCustomer.length > 0) {
 				customerId = existingCustomer[0].id;
 				orgId = orgId || existingCustomer[0].organizationId || "";
 			} else {
-				if (!orgId && membership) orgId = membership.organizationId;
+				if (!orgId) {
+					if (!user) {
+						throw new Error(
+							`Cannot resolve organization: no existing customer, no orgId in metadata, and no user found for email ${customer.email}`,
+						);
+					}
+					const memberships = await db.query.membersTable.findMany({
+						where: eq(membersTable.userId, user.id),
+					});
+					if (memberships.length === 1) {
+						orgId = memberships[0].organizationId;
+					} else if (memberships.length === 0) {
+						throw new Error(
+							`Cannot resolve organization: user ${customer.email} has no memberships`,
+						);
+					} else {
+						throw new Error(
+							`Ambiguous organization resolution for email ${customer.email}: user has ${memberships.length} memberships`,
+						);
+					}
+				}
 				const result = await upsertCustomer(
 					customer.customer_id,
 					customer.email,

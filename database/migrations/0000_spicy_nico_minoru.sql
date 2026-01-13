@@ -213,7 +213,7 @@ CREATE TABLE "storage_usage_cache" (
 	"org_id" text PRIMARY KEY NOT NULL,
 	"total_bytes" bigint DEFAULT 0 NOT NULL,
 	"file_count" integer DEFAULT 0 NOT NULL,
-	"last_updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscriptions" (

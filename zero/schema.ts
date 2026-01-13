@@ -1017,11 +1017,11 @@ const storageUsageCacheTable = {
       customType: null as unknown as number,
       serverName: "file_count",
     },
-    lastUpdatedAt: {
+    updatedAt: {
       type: "number",
-      optional: true,
+      optional: false,
       customType: null as unknown as number,
-      serverName: "last_updated_at",
+      serverName: "updated_at",
     },
   },
   primaryKey: ["orgId"],

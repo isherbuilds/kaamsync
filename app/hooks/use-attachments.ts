@@ -197,7 +197,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 					body: JSON.stringify({
 						_action: "save",
 						matterId,
-						storageId: fileKey,
+						storageKey: fileKey,
 						fileName: file.name,
 						fileType: file.type,
 						fileSize: file.size,

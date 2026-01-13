@@ -420,9 +420,8 @@ export const storageUsageCacheTable = pgTable("storage_usage_cache", {
 		.references(() => organizationsTable.id, { onDelete: "cascade" }),
 	totalBytes: bigint("total_bytes", { mode: "number" }).notNull().default(0),
 	fileCount: integer("file_count").notNull().default(0),
-	lastUpdatedAt: timestamp("last_updated_at", { withTimezone: true })
-		.defaultNow()
-		.notNull(),
+
+	updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
 
 export const matterViewsTable = pgTable(

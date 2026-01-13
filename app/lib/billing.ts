@@ -225,6 +225,3 @@ export const getPlanByProductId = (productId: string): ProductKey | null => {
 		return "pro";
 	return null;
 };
-
-export const getMemberPrice = (plan: ProductKey): number =>
-	plan === "growth" || plan === "pro" ? usagePricing[plan].memberSeat : 500;

@@ -115,7 +115,7 @@ export async function getOrganizationStorageUsage(
 	// Fallback: compute from attachments (direct query, no joins)
 	const result = await db
 		.select({
-			totalBytes: sql<number>`COALESCE(SUM(${attachmentsTable.fileSize}), 0)::int`,
+			totalBytes: sql<number>`COALESCE(SUM(${attachmentsTable.fileSize}), 0)::bigint`,
 			fileCount: sql<number>`COUNT(*)::int`,
 		})
 		.from(attachmentsTable)
@@ -127,10 +127,19 @@ export async function getOrganizationStorageUsage(
 	// Initialize cache entry
 	await db
 		.insert(storageUsageCacheTable)
-		.values({ orgId, totalBytes, fileCount })
+		.values({
+			orgId,
+			totalBytes,
+			fileCount,
+			updatedAt: new Date(),
+		})
 		.onConflictDoUpdate({
 			target: storageUsageCacheTable.orgId,
-			set: { totalBytes, fileCount, lastUpdatedAt: new Date() },
+			set: {
+				totalBytes,
+				fileCount,
+				updatedAt: new Date(),
+			},
 		});
 
 	return {
@@ -154,13 +163,14 @@ export async function updateStorageUsageCache(
 			orgId,
 			totalBytes: Math.max(0, bytesChange),
 			fileCount: Math.max(0, countChange),
+			updatedAt: new Date(),
 		})
 		.onConflictDoUpdate({
 			target: storageUsageCacheTable.orgId,
 			set: {
 				totalBytes: sql`GREATEST(0, ${storageUsageCacheTable.totalBytes} + ${bytesChange})`,
 				fileCount: sql`GREATEST(0, ${storageUsageCacheTable.fileCount} + ${countChange})`,
-				lastUpdatedAt: new Date(),
+				updatedAt: new Date(),
 			},
 		});
 }
