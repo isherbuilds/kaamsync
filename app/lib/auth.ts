@@ -26,7 +26,9 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema,
 	}),
-	// Built-in rate limiting (Better Auth v1.4+)
+
+	trustedOrigins: ["https://kaamsync.gapple.in", "http://localhost:3000"],
+
 	// Handles all /api/auth/* routes automatically
 	rateLimit: {
 		enabled: true,
@@ -151,7 +153,6 @@ export const auth = betterAuth({
 						use: [
 							checkout({
 								products: [
-									// Growth plans (monthly & yearly)
 									...(env.DODO_PRODUCT_GROWTH_MONTHLY
 										? [
 												{
@@ -168,7 +169,6 @@ export const auth = betterAuth({
 												},
 											]
 										: []),
-									// Pro plans (monthly & yearly)
 									...(env.DODO_PRODUCT_PROFESSIONAL_MONTHLY
 										? [
 												{
@@ -193,15 +193,8 @@ export const auth = betterAuth({
 							usage(),
 							webhooks({
 								webhookKey: billingConfig.webhookSecret,
-								// Primary webhook handler - register this URL in Dodo Payments dashboard:
-								// https://your-domain.com/api/auth/dodopayments/webhooks
-								onPayload: async (payload) => {
-									// Cast to unknown first to handle type differences between SDK versions
-									await handleBillingWebhook(
-										payload as unknown as Parameters<
-											typeof handleBillingWebhook
-										>[0],
-									);
+								onPayload: async (payload: any) => {
+									await handleBillingWebhook(payload);
 								},
 							}),
 						],

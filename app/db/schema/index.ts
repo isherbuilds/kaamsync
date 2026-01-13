@@ -380,6 +380,9 @@ export const attachmentsTable = pgTable(
 		id: text("id").primaryKey(),
 
 		// Foreign keys
+		orgId: text("org_id")
+			.notNull()
+			.references(() => organizationsTable.id, { onDelete: "cascade" }),
 		matterId: text("matter_id")
 			.notNull()
 			.references(() => mattersTable.id, { onDelete: "cascade" }),
@@ -388,15 +391,38 @@ export const attachmentsTable = pgTable(
 			.references(() => usersTable.id),
 
 		// File data
-		storageId: text("storage_id").notNull(),
+		storageKey: text("storage_key").notNull(), // S3 key
 		fileName: varchar("file_name", { length: 500 }).notNull(),
 		fileType: varchar("file_type", { length: 100 }).notNull(),
-		fileSize: integer("file_size").notNull(),
+		fileSize: integer("file_size").notNull(), // bytes
+		description: text("description"), // optional description
 
 		...commonColumns,
 	},
-	(table) => [index("attachments_matter_idx").on(table.matterId)],
+	(table) => [
+		// For listing attachments in a matter
+		index("attachments_matter_idx").on(table.matterId),
+		// For fast org-level storage usage queries (billing)
+		index("attachments_org_idx").on(table.orgId),
+		// For querying user's uploads
+		index("attachments_uploader_idx").on(table.uploaderId),
+	],
 );
+
+/**
+ * Storage usage cache - denormalized for fast billing queries
+ * Updated on upload/delete via triggers or application logic
+ */
+export const storageUsageCacheTable = pgTable("storage_usage_cache", {
+	orgId: text("org_id")
+		.primaryKey()
+		.references(() => organizationsTable.id, { onDelete: "cascade" }),
+	totalBytes: integer("total_bytes").notNull().default(0),
+	fileCount: integer("file_count").notNull().default(0),
+	lastUpdatedAt: timestamp("last_updated_at", { withTimezone: true })
+		.defaultNow()
+		.notNull(),
+});
 
 export const matterViewsTable = pgTable(
 	"matter_views",
@@ -710,6 +736,10 @@ export const timelinesRelations = relations(timelinesTable, ({ one }) => ({
 }));
 
 export const attachmentsRelations = relations(attachmentsTable, ({ one }) => ({
+	organization: one(organizationsTable, {
+		fields: [attachmentsTable.orgId],
+		references: [organizationsTable.id],
+	}),
 	matter: one(mattersTable, {
 		fields: [attachmentsTable.matterId],
 		references: [mattersTable.id],
@@ -719,6 +749,16 @@ export const attachmentsRelations = relations(attachmentsTable, ({ one }) => ({
 		references: [usersTable.id],
 	}),
 }));
+
+export const storageUsageCacheRelations = relations(
+	storageUsageCacheTable,
+	({ one }) => ({
+		organization: one(organizationsTable, {
+			fields: [storageUsageCacheTable.orgId],
+			references: [organizationsTable.id],
+		}),
+	}),
+);
 
 export const matterViewsTableRelations = relations(
 	matterViewsTable,

@@ -19,6 +19,9 @@ export const PERMISSION_ERRORS = {
 	ORGANIZATION_ACCESS_DENIED: "Access denied to this organization",
 	AUTHOR_REQUIRED: "Only the matter author can perform this action",
 	ASSIGNEE_REQUIRED: "Only the matter assignee can perform this action",
+	ATTACHMENT_NOT_FOUND: "Attachment not found",
+	ATTACHMENT_DELETE_DENIED:
+		"You do not have permission to delete this attachment",
 } as const;
 
 // ============================================================================
@@ -173,6 +176,23 @@ export function canEditMatter(
  */
 export function canDeleteMatter(role?: TeamRole | null): boolean {
 	return role === teamRole.manager;
+}
+
+/**
+ * Check if user can modify/delete an attachment.
+ * Uploader can always modify their own uploads.
+ * Otherwise uses same logic as canEditMatter (author, assignee, or manager).
+ */
+export function canModifyAttachment(
+	role?: TeamRole | null,
+	isUploader?: boolean,
+	isAuthor?: boolean,
+	isAssignee?: boolean,
+): boolean {
+	// Uploader can always delete their own uploads
+	if (isUploader === true) return true;
+	// Otherwise, same as matter edit permissions
+	return canEditMatter(role, isAuthor, isAssignee);
 }
 
 // ============================================================================

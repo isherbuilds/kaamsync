@@ -35,6 +35,14 @@ const envSchema = z.object({
 	USESEND_API_KEY: z.string().optional(),
 	USESEND_SELF_HOSTED_URL: z.string().optional(),
 
+	// Storage - S3-compatible (optional, works with AWS S3, Cloudflare R2, MinIO)
+	S3_ACCESS_KEY_ID: z.string().optional(),
+	S3_SECRET_ACCESS_KEY: z.string().optional(),
+	S3_BUCKET_NAME: z.string().optional(),
+	S3_REGION: z.string().default("auto"),
+	S3_ENDPOINT: z.string().optional(), // For R2/MinIO
+	S3_PUBLIC_URL: z.string().optional(), // Public URL for downloads
+
 	// Application
 	NODE_ENV: z
 		.enum(["development", "production", "test"])

@@ -18,6 +18,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.967.0",
+		"@aws-sdk/s3-request-presigner": "^3.967.0",
 		"@conform-to/react": "^1.15.1",
 		"@conform-to/zod": "^1.15.1",
 		"@dodopayments/better-auth": "^1.4.2",

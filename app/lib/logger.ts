@@ -3,10 +3,9 @@
  * Replaces all console.log/warn/error calls throughout the app
  */
 
-type LogLevel = "log" | "warn" | "error" | "info" | "debug";
+import { isDevelopment, isTest } from "./server/env-validation.server";
 
-const isDevelopment = import.meta.env.DEV;
-const isTest = import.meta.env.MODE === "test";
+type LogLevel = "log" | "warn" | "error" | "info" | "debug";
 
 class Logger {
 	private enabled: boolean;
