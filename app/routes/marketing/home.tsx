@@ -62,7 +62,7 @@ export default function HomePage() {
 					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
 						<Button
 							size="lg"
-							className="h-14 w-full rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground/90 hover:shadow-none md:max-w-2xs"
+							className="h-14 w-full rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground hover:shadow-none md:max-w-2xs"
 							asChild
 						>
 							<Link to="/signup">
@@ -202,7 +202,7 @@ export default function HomePage() {
 						<Button
 							asChild
 							size="lg"
-							className="h-16 min-w-[240px] rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground shadow-xl transition-all hover:scale-105 hover:bg-primary/90"
+							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-foreground text-lg transition-all hover:scale-105 hover:bg-primary/90"
 						>
 							<Link to="/signup">
 								Try it for your team

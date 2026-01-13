@@ -2,7 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
 import { customersTable, organizationsTable } from "~/db/schema";
-import { dodoPayments } from "~/lib/billing";
+import { dodoPayments } from "~/lib/server/billing.server";
 import {
 	getOrganizationCustomer,
 	getOrganizationOwnerUser,

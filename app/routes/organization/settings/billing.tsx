@@ -26,10 +26,8 @@ import { getServerSession } from "~/lib/auth";
 import { authClient } from "~/lib/auth-client";
 import {
 	type BillingInterval,
-	billingConfig,
 	canCheckout,
 	getCheckoutSlug,
-	getPlanByProductId,
 	type ProductKey,
 	products,
 } from "~/lib/billing";
@@ -39,9 +37,11 @@ import {
 	type OrgRole,
 } from "~/lib/permissions";
 import {
+	billingConfig,
 	getOrganizationPayments,
 	getOrganizationSubscription,
 	getOrganizationUsage,
+	getPlanByProductId,
 } from "~/lib/server/billing.server";
 import { getOrganizationMemberRole } from "~/lib/server/organization.server";
 

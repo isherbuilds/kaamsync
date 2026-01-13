@@ -67,6 +67,9 @@ export default [
 		// route("billing/change-plan", "routes/api/billing/change-plan.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 
+		// Storage / Attachments
+		route("attachments", "routes/api/attachments/index.ts"),
+
 		// Push Notifications
 		route("notifications/subscribe", "routes/api/notifications/subscribe.tsx"),
 		route("notifications/send", "routes/api/notifications/send.tsx"),

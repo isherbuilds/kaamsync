@@ -11,9 +11,12 @@ import { organization } from "better-auth/plugins";
 import { cache } from "react";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
-import { billingConfig, dodoPayments } from "~/lib/billing";
 import { AuthService } from "~/lib/server/auth-service";
-import { handleBillingWebhook } from "~/lib/server/billing.server";
+import {
+	billingConfig,
+	dodoPayments,
+	handleBillingWebhook,
+} from "~/lib/server/billing.server";
 import { env, isProduction } from "~/lib/server/env-validation.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
 
@@ -26,7 +29,9 @@ export const auth = betterAuth({
 		provider: "pg",
 		schema,
 	}),
-	// Built-in rate limiting (Better Auth v1.4+)
+
+	trustedOrigins: ["https://kaamsync.gapple.in", "http://localhost:3000"],
+
 	// Handles all /api/auth/* routes automatically
 	rateLimit: {
 		enabled: true,
@@ -151,7 +156,6 @@ export const auth = betterAuth({
 						use: [
 							checkout({
 								products: [
-									// Growth plans (monthly & yearly)
 									...(env.DODO_PRODUCT_GROWTH_MONTHLY
 										? [
 												{
@@ -168,7 +172,6 @@ export const auth = betterAuth({
 												},
 											]
 										: []),
-									// Pro plans (monthly & yearly)
 									...(env.DODO_PRODUCT_PROFESSIONAL_MONTHLY
 										? [
 												{
@@ -193,15 +196,8 @@ export const auth = betterAuth({
 							usage(),
 							webhooks({
 								webhookKey: billingConfig.webhookSecret,
-								// Primary webhook handler - register this URL in Dodo Payments dashboard:
-								// https://your-domain.com/api/auth/dodopayments/webhooks
-								onPayload: async (payload) => {
-									// Cast to unknown first to handle type differences between SDK versions
-									await handleBillingWebhook(
-										payload as unknown as Parameters<
-											typeof handleBillingWebhook
-										>[0],
-									);
+								onPayload: async (payload: any) => {
+									await handleBillingWebhook(payload);
 								},
 							}),
 						],

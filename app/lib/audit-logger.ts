@@ -29,7 +29,7 @@ export interface AuditLogEntry {
  * Log an audit event
  * @param entry Audit log entry
  */
-export async function auditLog(entry: AuditLogEntry): Promise<void> {
+export async function auditLog(entry: AuditLogEntry) {
 	try {
 		const timestamp = new Date().toISOString();
 

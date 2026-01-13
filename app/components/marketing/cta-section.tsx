@@ -16,7 +16,7 @@ export function MarketingCTA({
 	action = (
 		<Button
 			size="lg"
-			className="h-14 bg-primary px-10 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+			className="h-14 bg-primary px-10 font-bold text-foreground text-lg hover:bg-primary/90"
 			asChild
 		>
 			<Link to="/contact">Contact Sales</Link>

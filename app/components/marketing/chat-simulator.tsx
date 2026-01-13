@@ -2,7 +2,7 @@ export function ChatSimulator() {
 	return (
 		<div className="relative mx-auto w-full max-w-md">
 			<div className="absolute inset-0 bg-linear-to-tr from-primary/20 to-transparent blur-2xl filter" />
-			<div className="relative rounded-2xl border border-white/10 bg-black/40 p-6 font-sans shadow-2xl backdrop-blur-md">
+			<div className="relative rounded-2xl border border-white/10 bg-black p-6 font-sans shadow-2xl backdrop-blur-md">
 				<div className="mb-4 flex items-center justify-between border-white/10 border-b pb-4">
 					<div className="flex items-center gap-3">
 						<div className="size-10 rounded-full bg-linear-to-br from-purple-500 to-indigo-500" />
@@ -58,12 +58,12 @@ export function ChatSimulator() {
 					</div>
 				</div>
 
-				<div className="mt-6 flex items-center gap-2 rounded-full bg-white/5 p-2 px-4 blur-[1px]">
+				<div className="mt-6 flex items-center gap-2 rounded-full bg-white/20 p-2 px-4 blur-[1px]">
 					<div className="text-white/30 text-xs">Type a message...</div>
 				</div>
 
 				{/* Overlay Error */}
-				<div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/60">
+				<div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30">
 					<div className="rotate-[-5deg] border-2 border-destructive bg-destructive/10 px-6 py-3 font-bold font-mono text-destructive text-xl uppercase tracking-widest backdrop-blur-sm">
 						System Failure
 					</div>

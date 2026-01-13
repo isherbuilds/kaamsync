@@ -1,8 +1,23 @@
+/**
+ * @file Authentication service for email notifications and side effects
+ * @description Handles sending authentication-related emails (password reset, verification,
+ * invitations) and triggers billing/audit events during auth operations.
+ * Uses UseSend for email delivery with fallback logging in development.
+ *
+ * Key exports:
+ * - AuthService.sendResetPasswordEmail() - Password reset link email
+ * - AuthService.sendVerificationEmail() - Email verification with React component
+ * - AuthService.sendInvitationEmail() - Organization invitation with details
+ *
+ * @see app/lib/server/env-validation.server.ts for email configuration
+ * @see app/components/email/ for email component templates
+ */
+
 import { UseSend } from "usesend-js";
 import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { VerifyEmail } from "~/components/email/verify-email";
 import { normalizeError } from "~/lib/error-utils";
-import { trackMembershipChange } from "~/lib/server/billing-tracking.server";
+import { reportSeatCount } from "~/lib/server/billing-tracking.server";
 import { env, isDevelopment } from "~/lib/server/env-validation.server";
 
 const usesend = new UseSend(env.USESEND_API_KEY, env.USESEND_SELF_HOSTED_URL);
@@ -60,7 +75,7 @@ export const AuthService = {
 				react: <VerifyEmail verifyUrl={url} />,
 			});
 		} catch (err) {
-			const redactedUrl = url.split("?")[0] + "...";
+			const redactedUrl = `${url.split("?")[0]}...`;
 			console.error("[AuthService] Failed to send verification email", {
 				email: user.email,
 				url: redactedUrl,
@@ -114,7 +129,7 @@ export const AuthService = {
 	async handleMembershipChange(organizationId: string) {
 		// Use unified tracking function (handles cache invalidation + billing)
 		try {
-			await trackMembershipChange(organizationId);
+			await reportSeatCount(organizationId);
 		} catch (err) {
 			console.error("[Billing] Failed to track membership change:", err);
 		}

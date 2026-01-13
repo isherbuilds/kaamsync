@@ -25,7 +25,7 @@ export default function AboutPage() {
 				<div className="mx-auto max-w-4xl">
 					<MarketingBadge>The Mission</MarketingBadge>
 					<MarketingHeading
-						as="h1"
+						as="h2"
 						className="mb-8"
 						italic="survive our own sites."
 					>

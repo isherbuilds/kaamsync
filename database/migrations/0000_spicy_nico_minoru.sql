@@ -6,22 +6,24 @@ CREATE TABLE "accounts_table" (
 	"access_token" text,
 	"refresh_token" text,
 	"id_token" text,
-	"access_token_expires_at" timestamp,
-	"refresh_token_expires_at" timestamp,
+	"access_token_expires_at" timestamp with time zone,
+	"refresh_token_expires_at" timestamp with time zone,
 	"scope" text,
 	"password" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "attachments" (
 	"id" text PRIMARY KEY NOT NULL,
+	"org_id" text NOT NULL,
 	"matter_id" text NOT NULL,
 	"uploader_id" text NOT NULL,
-	"storage_id" text NOT NULL,
+	"storage_key" text NOT NULL,
 	"file_name" varchar(500) NOT NULL,
 	"file_type" varchar(100) NOT NULL,
 	"file_size" integer NOT NULL,
+	"description" text,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	"deleted_at" timestamp with time zone
@@ -45,8 +47,8 @@ CREATE TABLE "invitations_table" (
 	"email" text NOT NULL,
 	"role" text,
 	"status" text DEFAULT 'pending' NOT NULL,
-	"expires_at" timestamp NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"inviter_id" text NOT NULL
 );
 --> statement-breakpoint
@@ -142,7 +144,7 @@ CREATE TABLE "members_table" (
 	"organization_id" text NOT NULL,
 	"user_id" text NOT NULL,
 	"role" text DEFAULT 'member' NOT NULL,
-	"created_at" timestamp NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "organizations_table" (
@@ -150,7 +152,7 @@ CREATE TABLE "organizations_table" (
 	"name" text NOT NULL,
 	"slug" text NOT NULL,
 	"logo" text,
-	"created_at" timestamp NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"metadata" text
 );
 --> statement-breakpoint
@@ -181,10 +183,10 @@ CREATE TABLE "push_subscriptions" (
 --> statement-breakpoint
 CREATE TABLE "sessions_table" (
 	"id" text PRIMARY KEY NOT NULL,
-	"expires_at" timestamp NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
 	"token" text NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"ip_address" text,
 	"user_agent" text,
 	"user_id" text NOT NULL,
@@ -205,6 +207,13 @@ CREATE TABLE "statuses" (
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
 	"deleted_at" timestamp with time zone
+);
+--> statement-breakpoint
+CREATE TABLE "storage_usage_cache" (
+	"org_id" text PRIMARY KEY NOT NULL,
+	"total_bytes" bigint DEFAULT 0 NOT NULL,
+	"file_count" integer DEFAULT 0 NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "subscriptions" (
@@ -287,8 +296,8 @@ CREATE TABLE "users_table" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_table_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
@@ -296,9 +305,9 @@ CREATE TABLE "verifications_table" (
 	"id" text PRIMARY KEY NOT NULL,
 	"identifier" text NOT NULL,
 	"value" text NOT NULL,
-	"expires_at" timestamp NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "webhook_events" (
@@ -311,6 +320,7 @@ CREATE TABLE "webhook_events" (
 );
 --> statement-breakpoint
 ALTER TABLE "accounts_table" ADD CONSTRAINT "accounts_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "attachments" ADD CONSTRAINT "attachments_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "attachments" ADD CONSTRAINT "attachments_uploader_id_users_table_id_fk" FOREIGN KEY ("uploader_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "customers" ADD CONSTRAINT "customers_organization_id_organizations_table_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -333,6 +343,7 @@ ALTER TABLE "matters" ADD CONSTRAINT "matters_author_id_users_table_id_fk" FOREI
 ALTER TABLE "matters" ADD CONSTRAINT "matters_assignee_id_users_table_id_fk" FOREIGN KEY ("assignee_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matters" ADD CONSTRAINT "matters_status_id_statuses_id_fk" FOREIGN KEY ("status_id") REFERENCES "public"."statuses"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matters" ADD CONSTRAINT "matters_approved_by_users_table_id_fk" FOREIGN KEY ("approved_by") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "matters" ADD CONSTRAINT "matters_archived_by_users_table_id_fk" FOREIGN KEY ("archived_by") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "members_table" ADD CONSTRAINT "members_table_organization_id_organizations_table_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "members_table" ADD CONSTRAINT "members_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_customer_id_customers_id_fk" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -342,6 +353,7 @@ ALTER TABLE "push_subscriptions" ADD CONSTRAINT "push_subscriptions_user_id_user
 ALTER TABLE "sessions_table" ADD CONSTRAINT "sessions_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "statuses" ADD CONSTRAINT "statuses_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "statuses" ADD CONSTRAINT "statuses_creator_id_users_table_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "storage_usage_cache" ADD CONSTRAINT "storage_usage_cache_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_customer_id_customers_id_fk" FOREIGN KEY ("customer_id") REFERENCES "public"."customers"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_organization_id_organizations_table_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "team_memberships" ADD CONSTRAINT "team_memberships_team_id_teams_id_fk" FOREIGN KEY ("team_id") REFERENCES "public"."teams"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -352,6 +364,8 @@ ALTER TABLE "timelines" ADD CONSTRAINT "timelines_matter_id_matters_id_fk" FOREI
 ALTER TABLE "timelines" ADD CONSTRAINT "timelines_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "accountsTable_userId_idx" ON "accounts_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "attachments_matter_idx" ON "attachments" USING btree ("matter_id");--> statement-breakpoint
+CREATE INDEX "attachments_org_idx" ON "attachments" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "attachments_uploader_idx" ON "attachments" USING btree ("uploader_id");--> statement-breakpoint
 CREATE INDEX "customers_org_idx" ON "customers" USING btree ("organization_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "customers_dodo_idx" ON "customers" USING btree ("dodo_customer_id");--> statement-breakpoint
 CREATE INDEX "customers_email_idx" ON "customers" USING btree ("email");--> statement-breakpoint
@@ -387,6 +401,7 @@ CREATE INDEX "matters_type_approved_by_idx" ON "matters" USING btree ("type","ap
 CREATE INDEX "matters_team_list_covering_idx" ON "matters" USING btree ("team_id","archived","priority","updated_at","status_id","assignee_id");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "membersTable_org_user_uidx" ON "members_table" USING btree ("organization_id","user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "organizationsTable_slug_uidx" ON "organizations_table" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "payments_customer_idx" ON "payments" USING btree ("customer_id");--> statement-breakpoint
 CREATE INDEX "payments_org_idx" ON "payments" USING btree ("organization_id");--> statement-breakpoint

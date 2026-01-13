@@ -16,7 +16,7 @@ export async function batchInsert<T>(
 	table: any,
 	values: T[],
 	batchSize: number = 500,
-): Promise<void> {
+) {
 	if (values.length === 0) return;
 	for (let i = 0; i < values.length; i += batchSize) {
 		await db

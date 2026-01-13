@@ -1,12 +1,31 @@
 /**
- * Conditional logging system that can be disabled in production
- * Replaces all console.log/warn/error calls throughout the app
+ * @file Conditional logging system for development and production
+ * @description Provides a centralized logger that replaces console.log/warn/error calls.
+ * Only logs errors and warnings in production; all levels available in development/test.
+ * Supports log levels, grouped logging, timing, and safe error logging with context.
+ *
+ * Key exports:
+ * - logger.log() - General logging (dev only)
+ * - logger.warn() - Warnings (always enabled)
+ * - logger.error() - Errors (always enabled)
+ * - logger.info() - Info logging (dev only)
+ * - logger.debug() - Debug logging (dev only)
+ * - logger.time(label) - Start performance timing
+ * - logger.timeEnd(label) - End timing and log duration
+ * - logger.group(label) - Start grouped logging
+ * - logger.groupEnd() - End grouped logging
+ * - logger.safeError() - Safe error logging with context
+ *
+ * @example
+ * // Instead of console.log()
+ * logger.log("User logged in", userId);
+ * logger.error("Operation failed:", error);
  */
 
-type LogLevel = "log" | "warn" | "error" | "info" | "debug";
+const isDevelopment = process.env.NODE_ENV === "development";
+const isTest = process.env.NODE_ENV === "test";
 
-const isDevelopment = import.meta.env.DEV;
-const isTest = import.meta.env.MODE === "test";
+type LogLevel = "log" | "warn" | "error" | "info" | "debug";
 
 class Logger {
 	private enabled: boolean;

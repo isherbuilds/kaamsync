@@ -1,3 +1,19 @@
+/**
+ * @file Core utility functions and helpers
+ * @description Common utilities used throughout the application including class merging,
+ * string operations (slug generation, initials), and date formatting functions.
+ *
+ * Key exports:
+ * - cn() - Merges Tailwind classes with clsx and twMerge
+ * - sanitizeSlug() - Converts strings to URL-safe slugs (max 30 chars)
+ * - getInitials() - Extracts initials from names (e.g., "John Doe" → "JD")
+ * - formatDate() - Formats Date → MM/DD/YYYY
+ * - formatCompactRelativeDate() - Formats due dates (Today, Tomorrow, Overdue, Xhrs, Xdays)
+ * - formatTimelineDate() - Formats for activity timeline (Just Now, Xm ago, Yesterday at X)
+ *
+ * @see app/lib/validations/shared.ts for slug validation schemas
+ */
+
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 

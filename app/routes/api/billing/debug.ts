@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { db } from "~/db";
 import { customersTable, subscriptionsTable } from "~/db/schema";
 import { getServerSession } from "~/lib/auth";
-import { productIds } from "~/lib/billing";
 import { getOrganizationPlanKey } from "~/lib/server/billing.server";
 
 /**
@@ -74,7 +73,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				status: s.status,
 			})),
 			effectivePlan,
-			configuredProductIds: productIds,
 		},
 	});
 }

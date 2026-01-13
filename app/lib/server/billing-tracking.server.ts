@@ -1,166 +1,101 @@
-import { count, eq } from "drizzle-orm";
-import { db } from "~/db";
-import { customersTable, membersTable, subscriptionsTable } from "~/db/schema";
+/**
+ * Billing Tracking - Server-side usage metering
+ * Tracks seat counts, storage, and other usage metrics for billing
+ */
 import {
-	reportSeatCount,
-	trackStorageUsage,
-	trackTeamCreated,
-} from "~/lib/billing";
-import { invalidateUsageCache } from "~/lib/server/billing.server";
-import { getOrCreateCustomer } from "~/lib/server/customer.server";
+	dodoPayments,
+	getOrganizationCustomer,
+} from "~/lib/server/billing.server";
+import { getOrganizationMemberCount } from "~/lib/server/organization.server";
+import { getOrganizationStorageUsage } from "~/lib/server/storage.server";
+import { logger } from "../logger.js";
 
 /**
- * Get the Dodo customer ID for an organization
+ * Report current seat count to DodoPayments usage metering
  */
-export async function getOrganizationCustomerId(
-	organizationId: string,
-): Promise<string | null> {
-	const customer = await db.query.customersTable.findFirst({
-		where: eq(customersTable.organizationId, organizationId),
-	});
-	return customer?.dodoCustomerId ?? null;
-}
+export async function reportSeatCount(organizationId: string) {
+	if (!dodoPayments) return;
 
-/**
- * Check if organization has an active subscription that supports usage metering
- */
-export async function hasActiveSubscription(
-	organizationId: string,
-): Promise<boolean> {
-	const subscription = await db.query.subscriptionsTable.findFirst({
-		where: eq(subscriptionsTable.organizationId, organizationId),
-	});
-	return subscription?.status === "active";
-}
-
-/**
- * Sync current seat count to Dodo Payments
- * Call this on: member add, member remove, or periodically
- *
- * This reports the CURRENT seat count, not a delta.
- * Dodo uses Max aggregation to track peak usage in billing period.
- * Billing occurs at end of month with base subscription.
- */
-export async function syncOrganizationSeats(
-	organizationId: string,
-): Promise<void> {
 	try {
-		// Use getOrCreateCustomer to ensure we have a record
-		// This fixes the issue where new orgs don't have a customer record yet
-		const customer = await getOrCreateCustomer(organizationId);
-		const customerId = customer.dodoCustomerId;
+		const [memberCount, customer] = await Promise.all([
+			getOrganizationMemberCount(organizationId),
+			getOrganizationCustomer(organizationId),
+		]);
 
-		if (!customerId) {
-			return;
-		}
+		const dodoCustomerId = customer?.dodoCustomerId;
 
-		const hasActive = await hasActiveSubscription(organizationId);
-		if (!hasActive) {
-			return;
-		}
-
-		// Get current member count
-		const [result] = await db
-			.select({ count: count() })
-			.from(membersTable)
-			.where(eq(membersTable.organizationId, organizationId));
-
-		const currentSeats = result?.count ?? 0;
-
-		const success = await reportSeatCount(customerId, currentSeats);
-		if (!success) {
-			console.warn(
-				`[Billing] FAILED: reportSeatCount returned false for customer ${customerId}`,
+		if (!dodoCustomerId) {
+			console.error(
+				`[Billing] Skipping Dodo usage ingest: no Dodo customer found for org ${organizationId}`,
 			);
+			return;
 		}
-	} catch (error) {
-		console.error(
-			`[Billing] FATAL ERROR syncing seats for ${organizationId}:`,
-			error,
+
+		await dodoPayments.usageEvents.ingest({
+			events: [
+				{
+					event_id: `seat_count_${organizationId}_${Date.now()}`,
+					customer_id: dodoCustomerId,
+					event_name: "seat_count",
+					timestamp: new Date().toISOString(),
+					metadata: {
+						organization_id: organizationId,
+						seat_count: memberCount,
+					},
+				},
+			],
+		});
+
+		console.log(
+			`[Billing] Reported seat count: ${memberCount} for org ${organizationId}`,
 		);
-		// Don't throw - billing tracking should not break member operations
+	} catch (error) {
+		console.error("[Billing] Failed to report seat count:", error);
 	}
 }
 
 /**
- * Track membership changes (unified function for add/remove)
- * Called after invitation acceptance, direct member addition, or member removal
- * Syncs absolute seat count and invalidates cache
+ * Report storage usage to DodoPayments for billing
  */
-export async function trackMembershipChange(
-	organizationId: string,
-): Promise<void> {
-	// Invalidate usage cache first
-	invalidateUsageCache(organizationId);
+export async function reportStorageUsage(orgId: string) {
+	if (!dodoPayments) return;
 
-	await syncOrganizationSeats(organizationId);
-}
-
-/**
- * Track when a new team is created
- * Called after team creation in Zero mutators (via server action)
- */
-export async function trackNewTeam(organizationId: string): Promise<void> {
 	try {
-		const customerId = await getOrganizationCustomerId(organizationId);
-		if (!customerId) {
-			console.log(
-				"[Billing] No customer found for org, skipping team tracking",
+		const [usage, customer] = await Promise.all([
+			getOrganizationStorageUsage(orgId),
+			getOrganizationCustomer(orgId),
+		]);
+
+		const dodoCustomerId = customer?.dodoCustomerId;
+
+		if (!dodoCustomerId) {
+			logger.error(
+				`[Storage] Skipping Dodo usage ingest: no Dodo customer found for org ${orgId}`,
 			);
 			return;
 		}
 
-		const hasActive = await hasActiveSubscription(organizationId);
-		if (!hasActive) {
-			console.log("[Billing] No active subscription, skipping team tracking");
-			return;
-		}
+		await dodoPayments.usageEvents.ingest({
+			events: [
+				{
+					event_id: `storage_${orgId}_${Date.now()}`,
+					customer_id: dodoCustomerId,
+					event_name: "storage_usage",
+					timestamp: new Date().toISOString(),
+					metadata: {
+						organization_id: orgId,
+						storage_bytes: usage.totalBytes,
+						storage_gb: Math.round(usage.totalGb * 100) / 100,
+						file_count: usage.fileCount,
+					},
+				},
+			],
+		});
 
-		const success = await trackTeamCreated(customerId);
-		if (success) {
-			console.log("[Billing] Successfully tracked new team");
-		} else {
-			console.warn("[Billing] Failed to track team creation");
-		}
+		logger.log(
+			`[Storage] Reported usage: ${usage.totalGb.toFixed(2)}GB (${usage.fileCount} files) for org ${orgId}`,
+		);
 	} catch (error) {
-		console.error("[Billing] Error tracking team:", error);
-	}
-}
-
-/**
- * Track storage usage for an organization
- * Call this periodically or after file uploads
- * @param organizationId - The organization ID
- * @param gbUsed - Total storage used in GB
- */
-export async function trackOrgStorage(
-	organizationId: string,
-	gbUsed: number,
-): Promise<void> {
-	try {
-		const customerId = await getOrganizationCustomerId(organizationId);
-		if (!customerId) {
-			console.log(
-				"[Billing] No customer found for org, skipping storage tracking",
-			);
-			return;
-		}
-
-		const hasActive = await hasActiveSubscription(organizationId);
-		if (!hasActive) {
-			console.log(
-				"[Billing] No active subscription, skipping storage tracking",
-			);
-			return;
-		}
-
-		const success = await trackStorageUsage(customerId, gbUsed);
-		if (success) {
-			console.log(`[Billing] Successfully tracked ${gbUsed}GB storage usage`);
-		} else {
-			console.warn("[Billing] Failed to track storage usage");
-		}
-	} catch (error) {
-		console.error("[Billing] Error tracking storage:", error);
+		logger.error("[Storage] Failed to report usage:", error);
 	}
 }

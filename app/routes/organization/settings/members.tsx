@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
-import { InputField, SelectField } from "~/components/forms.js";
+import { InputField, SelectField } from "~/components/forms";
 
 // UI Components
 import { CustomAvatar } from "~/components/ui/avatar";

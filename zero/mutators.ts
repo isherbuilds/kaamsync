@@ -10,99 +10,17 @@ import {
 import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
 import { reservedTeamSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
-import type { Context } from "./auth";
 import { assertCanCreateMatter, assertCanCreateTeam } from "./billing-limits";
-import { allocateShortID, type MutatorTx } from "./mutator-helpers";
+import { allocateShortID } from "./mutator-helpers";
+import {
+	assertLoggedIn,
+	assertTeamManager,
+	canModifyDeletedMatter,
+	canModifyMatter,
+	getTeamMembership,
+	PERMISSION_ERRORS,
+} from "./permission-helpers";
 import { zql } from "./schema";
-
-function assertLoggedIn(ctx: Context) {
-	if (!ctx.activeOrganizationId) {
-		throw new Error("User must be logged in");
-	}
-}
-
-async function getTeamMembership(tx: MutatorTx, ctx: Context, teamId: string) {
-	assertLoggedIn(ctx);
-	return await tx.run(
-		zql.teamMembershipsTable
-			.where("teamId", teamId)
-			.where("userId", ctx.userId)
-			.where("orgId", ctx.activeOrganizationId ?? "")
-			.where("deletedAt", "IS", null)
-			.one(),
-	);
-}
-
-async function assertManager(tx: MutatorTx, ctx: Context, teamId: string) {
-	const membership = await getTeamMembership(tx, ctx, teamId);
-	if (!membership || membership.role !== "manager") {
-		throw new Error("Only team managers can perform this action");
-	}
-}
-
-async function canModifyMatter(tx: MutatorTx, ctx: Context, matterId: string) {
-	assertLoggedIn(ctx);
-	const matter = await tx.run(
-		zql.mattersTable
-			.where("id", matterId)
-			.where("orgId", ctx.activeOrganizationId ?? "")
-			.where("deletedAt", "IS", null)
-			.one(),
-	);
-
-	if (!matter) {
-		throw new Error("Matter not found");
-	}
-
-	const membership = await getTeamMembership(tx, ctx, matter.teamId);
-	if (!membership) {
-		throw new Error("Not a member of this team");
-	}
-
-	const isAuthor = matter.authorId === ctx.userId;
-	const isAssignee = matter.assigneeId === ctx.userId;
-	const isManager = membership.role === "manager";
-
-	return {
-		matter,
-		membership,
-		canModify: isAuthor || isAssignee || isManager,
-	};
-}
-
-async function canModifyDeletedMatter(
-	tx: MutatorTx,
-	ctx: Context,
-	matterId: string,
-) {
-	assertLoggedIn(ctx);
-	const matter = await tx.run(
-		zql.mattersTable
-			.where("id", matterId)
-			.where("orgId", ctx.activeOrganizationId ?? "")
-			.where("deletedAt", "IS NOT", null)
-			.one(),
-	);
-
-	if (!matter) {
-		throw new Error("Matter not found");
-	}
-
-	const membership = await getTeamMembership(tx, ctx, matter.teamId);
-	if (!membership) {
-		throw new Error("Not a member of this team");
-	}
-
-	const isAuthor = matter.authorId === ctx.userId;
-	const isAssignee = matter.assigneeId === ctx.userId;
-	const isManager = membership.role === "manager";
-
-	return {
-		matter,
-		membership,
-		canModify: isAuthor || isAssignee || isManager,
-	};
-}
 
 // ============================================================================
 // MUTATORS
@@ -127,7 +45,7 @@ export const mutators = defineMutators({
 				assertLoggedIn(ctx);
 				const membership = await getTeamMembership(tx, ctx, args.teamId);
 				if (!membership) {
-					throw new Error("Not a member of this team");
+					throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
 				}
 
 				// Check billing limits
@@ -138,7 +56,7 @@ export const mutators = defineMutators({
 					args.type === matterType.task &&
 					!canCreateTasks(membership.role as TeamRole)
 				) {
-					throw new Error("Only managers can create tasks directly");
+					throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
 				}
 				if (
 					args.type === matterType.request &&
@@ -197,7 +115,7 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const { canModify } = await canModifyMatter(tx, ctx, args.id);
 				if (!canModify) {
-					throw new Error("Not allowed to update this matter");
+					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -214,7 +132,7 @@ export const mutators = defineMutators({
 
 				// Permission: Only assignee or manager can change status
 				if (matter.assigneeId !== ctx.userId && membership.role !== "manager") {
-					throw new Error("Not allowed to change status");
+					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -236,7 +154,7 @@ export const mutators = defineMutators({
 					args.assigneeId === ctx.userId || matter.assigneeId === ctx.userId;
 
 				if (!isManager && !isSelfAssignment) {
-					throw new Error("Only managers can change assignee");
+					throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -252,7 +170,7 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const { canModify } = await canModifyMatter(tx, ctx, args.id);
 				if (!canModify) {
-					throw new Error("Not allowed to delete this matter");
+					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -268,7 +186,7 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const { canModify } = await canModifyDeletedMatter(tx, ctx, args.id);
 				if (!canModify) {
-					throw new Error("Not allowed to restore this matter");
+					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -284,7 +202,7 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const { canModify } = await canModifyMatter(tx, ctx, args.id);
 				if (!canModify) {
-					throw new Error("Not allowed to archive this matter");
+					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -302,7 +220,7 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const { canModify } = await canModifyMatter(tx, ctx, args.id);
 				if (!canModify) {
-					throw new Error("Not allowed to unarchive this matter");
+					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
 				await tx.mutate.mattersTable.update({
@@ -336,7 +254,7 @@ export const mutators = defineMutators({
 				}
 
 				// Permission: Only managers can approve
-				await assertManager(tx, ctx, matter.teamId);
+				await assertTeamManager(tx, ctx, matter.teamId);
 
 				// Find a default task status (not request status) to assign
 				const taskStatuses = await tx.run(
@@ -384,7 +302,7 @@ export const mutators = defineMutators({
 				}
 
 				// Permission: Only managers can reject
-				await assertManager(tx, ctx, matter.teamId);
+				await assertTeamManager(tx, ctx, matter.teamId);
 
 				// Find rejected status
 				const rejectedStatus = await tx.run(
@@ -544,7 +462,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can add members
-				await assertManager(tx, ctx, args.teamId);
+				await assertTeamManager(tx, ctx, args.teamId);
 
 				// Verify user is in the organization
 				const orgMembership = await tx.run(
@@ -608,7 +526,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can update roles
-				await assertManager(tx, ctx, args.teamId);
+				await assertTeamManager(tx, ctx, args.teamId);
 
 				const membership = await tx.run(
 					zql.teamMembershipsTable
@@ -640,7 +558,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can remove members
-				await assertManager(tx, ctx, args.teamId);
+				await assertTeamManager(tx, ctx, args.teamId);
 
 				const membership = await tx.run(
 					zql.teamMembershipsTable
@@ -674,7 +592,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can create statuses
-				await assertManager(tx, ctx, args.teamId);
+				await assertTeamManager(tx, ctx, args.teamId);
 
 				const statusId = createId();
 				const now = Date.now();

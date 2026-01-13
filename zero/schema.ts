@@ -94,6 +94,12 @@ const attachmentsTable = {
       optional: false,
       customType: null as unknown as string,
     },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
     matterId: {
       type: "string",
       optional: false,
@@ -106,11 +112,11 @@ const attachmentsTable = {
       customType: null as unknown as string,
       serverName: "uploader_id",
     },
-    storageId: {
+    storageKey: {
       type: "string",
       optional: false,
       customType: null as unknown as string,
-      serverName: "storage_id",
+      serverName: "storage_key",
     },
     fileName: {
       type: "string",
@@ -129,6 +135,11 @@ const attachmentsTable = {
       optional: false,
       customType: null as unknown as number,
       serverName: "file_size",
+    },
+    description: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
     },
     createdAt: {
       type: "number",
@@ -693,7 +704,7 @@ const membersTable = {
     },
     createdAt: {
       type: "number",
-      optional: false,
+      optional: true,
       customType: null as unknown as number,
       serverName: "created_at",
     },
@@ -726,7 +737,7 @@ const organizationsTable = {
     },
     createdAt: {
       type: "number",
-      optional: false,
+      optional: true,
       customType: null as unknown as number,
       serverName: "created_at",
     },
@@ -984,6 +995,37 @@ const statusesTable = {
   },
   primaryKey: ["id"],
   serverName: "statuses",
+} as const;
+const storageUsageCacheTable = {
+  name: "storageUsageCacheTable",
+  columns: {
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    totalBytes: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "total_bytes",
+    },
+    fileCount: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "file_count",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["orgId"],
+  serverName: "storage_usage_cache",
 } as const;
 const subscriptionsTable = {
   name: "subscriptionsTable",
@@ -1490,6 +1532,14 @@ const accountsTableRelationships = {
   ],
 } as const;
 const attachmentsTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
   matter: [
     {
       sourceField: ["matterId"],
@@ -1895,6 +1945,16 @@ const statusesTableRelationships = {
     },
   ],
 } as const;
+const storageUsageCacheTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
 const subscriptionsTableRelationships = {
   customer: [
     {
@@ -2159,6 +2219,7 @@ export const schema = {
     pushSubscriptionsTable: pushSubscriptionsTable,
     sessionsTable: sessionsTable,
     statusesTable: statusesTable,
+    storageUsageCacheTable: storageUsageCacheTable,
     subscriptionsTable: subscriptionsTable,
     teamMembershipsTable: teamMembershipsTable,
     teamsTable: teamsTable,
@@ -2184,6 +2245,7 @@ export const schema = {
     pushSubscriptionsTable: pushSubscriptionsTableRelationships,
     sessionsTable: sessionsTableRelationships,
     statusesTable: statusesTableRelationships,
+    storageUsageCacheTable: storageUsageCacheTableRelationships,
     subscriptionsTable: subscriptionsTableRelationships,
     teamMembershipsTable: teamMembershipsTableRelationships,
     teamsTable: teamsTableRelationships,
@@ -2311,6 +2373,13 @@ export type SessionsTable = Row["sessionsTable"];
  * @deprecated Use Row["statusesTable"] instead from "@rocicorp/zero".
  */
 export type StatusesTable = Row["statusesTable"];
+/**
+ * Represents a row from the "storageUsageCacheTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ *
+ * @deprecated Use Row["storageUsageCacheTable"] instead from "@rocicorp/zero".
+ */
+export type StorageUsageCacheTable = Row["storageUsageCacheTable"];
 /**
  * Represents a row from the "subscriptionsTable" table.
  * This type is auto-generated from your Drizzle schema definition.

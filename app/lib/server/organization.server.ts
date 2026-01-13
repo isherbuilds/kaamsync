@@ -102,9 +102,7 @@ export async function addMemberToOrganization(
 /**
  * Get organization member count (for billing purposes)
  */
-export async function getOrganizationMemberCount(
-	organizationId: string,
-): Promise<number> {
+export async function getOrganizationMemberCount(organizationId: string) {
 	const members = await db.query.membersTable.findMany({
 		where: eq(membersTable.organizationId, organizationId),
 	});
