@@ -82,7 +82,7 @@ export default function MarketingLayout() {
 						<Button
 							asChild
 							size="sm"
-							className="h-8 rounded-md bg-primary px-4 font-bold text-primary-foreground text-xs hover:bg-primary/90"
+							className="h-8 rounded-md bg-primary px-4 font-bold text-foreground text-xs hover:bg-primary/90"
 						>
 							<Link to="/signup">Sign Up</Link>
 						</Button>
