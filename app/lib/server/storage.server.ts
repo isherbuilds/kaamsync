@@ -6,18 +6,17 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, sql } from "drizzle-orm";
-import {
-	ABSOLUTE_MAX_FILE_SIZE,
-	ALLOWED_ATTACHMENT_TYPES_SET,
-} from "shared/attachment-constants";
 import { db } from "~/db";
 import {
 	attachmentsTable,
 	mattersTable,
 	storageUsageCacheTable,
 	teamMembershipsTable,
-	teamsTable,
 } from "~/db/schema";
+import {
+	ABSOLUTE_MAX_FILE_SIZE,
+	ALLOWED_ATTACHMENT_TYPES_SET,
+} from "~/lib/attachment-constants";
 import { dodoPayments, type ProductKey, planLimits } from "~/lib/billing";
 import { logger } from "~/lib/logger";
 import {
@@ -562,4 +561,4 @@ export async function reportStorageUsage(orgId: string): Promise<void> {
 export {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES_SET as ALLOWED_TYPES,
-} from "shared/attachment-constants";
+} from "~/lib/attachment-constants";

@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
 import {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES,
-} from "shared/attachment-constants";
+} from "~/lib/attachment-constants";
 
 export interface UploadResult {
 	id: string;

@@ -233,33 +233,35 @@ export async function upsertSubscription(
 		cancelledAt: payload.cancelled_at ? new Date(payload.cancelled_at) : null,
 	};
 
-	let existing = payload.subscription_id
-		? await db.query.subscriptionsTable.findFirst({
-				where: eq(
-					subscriptionsTable.dodoSubscriptionId,
-					payload.subscription_id,
+	await db.transaction(async (tx) => {
+		let existing = payload.subscription_id
+			? await tx.query.subscriptionsTable.findFirst({
+					where: eq(
+						subscriptionsTable.dodoSubscriptionId,
+						payload.subscription_id,
+					),
+				})
+			: null;
+
+		if (!existing) {
+			existing = await tx.query.subscriptionsTable.findFirst({
+				where: and(
+					eq(subscriptionsTable.organizationId, orgId),
+					eq(subscriptionsTable.productId, data.productId),
+					eq(subscriptionsTable.status, "active"),
 				),
-			})
-		: null;
+			});
+		}
 
-	if (!existing) {
-		existing = await db.query.subscriptionsTable.findFirst({
-			where: and(
-				eq(subscriptionsTable.organizationId, orgId),
-				eq(subscriptionsTable.productId, data.productId),
-				eq(subscriptionsTable.status, "active"),
-			),
-		});
-	}
-
-	if (existing) {
-		await db
-			.update(subscriptionsTable)
-			.set(data)
-			.where(eq(subscriptionsTable.id, existing.id));
-	} else {
-		await db.insert(subscriptionsTable).values({ id: createId(), ...data });
-	}
+		if (existing) {
+			await tx
+				.update(subscriptionsTable)
+				.set(data)
+				.where(eq(subscriptionsTable.id, existing.id));
+		} else {
+			await tx.insert(subscriptionsTable).values({ id: createId(), ...data });
+		}
+	});
 }
 
 export async function recordPayment(
@@ -267,7 +269,7 @@ export async function recordPayment(
 	orgId: string,
 	payload: WebhookPayload["data"],
 	status: string,
-): Promise<void> {
+) {
 	if (!payload.payment_id) return;
 
 	await db.transaction(async (tx) => {
@@ -303,7 +305,7 @@ export async function recordPayment(
 				customerId,
 				organizationId: resolvedOrgId,
 				subscriptionId,
-				dodoPaymentId: payload.payment_id!,
+				dodoPaymentId: payload.payment_id,
 				amount: payload.total_amount ?? 0,
 				currency: payload.currency ?? "USD",
 				status,
@@ -614,6 +616,12 @@ export async function handleBillingWebhook(
 
 		const mapped = STATUS_MAP[eventType];
 		if (mapped && customerId) {
+			if (!orgId) {
+				logger.warn(
+					`[Billing] Skipping ${eventType} for customer ${customerId}: missing orgId`,
+				);
+				return;
+			}
 			if (mapped.type === "subscription")
 				await upsertSubscription(customerId, orgId, data, mapped.status);
 			else await recordPayment(customerId, orgId, data, mapped.status);

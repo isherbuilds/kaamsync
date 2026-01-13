@@ -194,6 +194,9 @@ export const getYearlySavings = (
 	yearlyPrice: number,
 ): number => {
 	const yearlyFromMonthly = monthlyPrice * 12;
+	if (yearlyFromMonthly === 0) {
+		return 0;
+	}
 	return Math.round(
 		((yearlyFromMonthly - yearlyPrice) / yearlyFromMonthly) * 100,
 	);

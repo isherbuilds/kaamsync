@@ -704,7 +704,7 @@ const membersTable = {
     },
     createdAt: {
       type: "number",
-      optional: false,
+      optional: true,
       customType: null as unknown as number,
       serverName: "created_at",
     },
@@ -737,7 +737,7 @@ const organizationsTable = {
     },
     createdAt: {
       type: "number",
-      optional: false,
+      optional: true,
       customType: null as unknown as number,
       serverName: "created_at",
     },

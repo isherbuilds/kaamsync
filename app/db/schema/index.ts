@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+	bigint,
 	boolean,
 	index,
 	integer,
@@ -242,7 +243,7 @@ export const mattersTable = pgTable(
 		// Archive status
 		archived: boolean("archived"),
 		archivedAt: timestamp("archived_at", { withTimezone: true }),
-		archivedBy: text("archived_by"),
+		archivedBy: text("archived_by").references(() => usersTable.id),
 
 		...commonColumns,
 	},
@@ -417,7 +418,7 @@ export const storageUsageCacheTable = pgTable("storage_usage_cache", {
 	orgId: text("org_id")
 		.primaryKey()
 		.references(() => organizationsTable.id, { onDelete: "cascade" }),
-	totalBytes: integer("total_bytes").notNull().default(0),
+	totalBytes: bigint("total_bytes", { mode: "number" }).notNull().default(0),
 	fileCount: integer("file_count").notNull().default(0),
 	lastUpdatedAt: timestamp("last_updated_at", { withTimezone: true })
 		.defaultNow()

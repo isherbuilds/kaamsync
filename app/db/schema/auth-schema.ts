@@ -14,8 +14,10 @@ export const usersTable = pgTable("users_table", {
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").default(false).notNull(),
 	image: text("image"),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at")
+	createdAt: timestamp("created_at", { withTimezone: true })
+		.defaultNow()
+		.notNull(),
+	updatedAt: timestamp("updated_at", { withTimezone: true })
 		.defaultNow()
 		.$onUpdate(() => /* @__PURE__ */ new Date())
 		.notNull(),
@@ -25,10 +27,13 @@ export const sessionsTable = pgTable(
 	"sessions_table",
 	{
 		id: text("id").primaryKey(),
-		expiresAt: timestamp("expires_at").notNull(),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 		token: text("token").notNull().unique(),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-		updatedAt: timestamp("updated_at")
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 		ipAddress: text("ip_address"),
@@ -53,12 +58,19 @@ export const accountsTable = pgTable(
 		accessToken: text("access_token"),
 		refreshToken: text("refresh_token"),
 		idToken: text("id_token"),
-		accessTokenExpiresAt: timestamp("access_token_expires_at"),
-		refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+		accessTokenExpiresAt: timestamp("access_token_expires_at", {
+			withTimezone: true,
+		}),
+		refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
+			withTimezone: true,
+		}),
 		scope: text("scope"),
 		password: text("password"),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-		updatedAt: timestamp("updated_at")
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
 	},
@@ -71,9 +83,11 @@ export const verificationsTable = pgTable(
 		id: text("id").primaryKey(),
 		identifier: text("identifier").notNull(),
 		value: text("value").notNull(),
-		expiresAt: timestamp("expires_at").notNull(),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-		updatedAt: timestamp("updated_at")
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
 			.defaultNow()
 			.$onUpdate(() => /* @__PURE__ */ new Date())
 			.notNull(),
@@ -88,7 +102,9 @@ export const organizationsTable = pgTable(
 		name: text("name").notNull(),
 		slug: text("slug").notNull(),
 		logo: text("logo"),
-		createdAt: timestamp("created_at").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		metadata: text("metadata"),
 	},
 	(table) => [uniqueIndex("organizationsTable_slug_uidx").on(table.slug)],
@@ -105,11 +121,17 @@ export const membersTable = pgTable(
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
 		role: text("role").default("member").notNull(),
-		createdAt: timestamp("created_at").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("membersTable_organizationId_idx").on(table.organizationId),
 		index("membersTable_userId_idx").on(table.userId),
+		uniqueIndex("membersTable_org_user_uidx").on(
+			table.organizationId,
+			table.userId,
+		),
 	],
 );
 
@@ -123,8 +145,10 @@ export const invitationsTable = pgTable(
 		email: text("email").notNull(),
 		role: text("role"),
 		status: text("status").default("pending").notNull(),
-		expiresAt: timestamp("expires_at").notNull(),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 		inviterId: text("inviter_id")
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
