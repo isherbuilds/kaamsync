@@ -16,9 +16,9 @@ export async function reportSeatCount(organizationId: string) {
 	if (!dodoPayments) return;
 
 	try {
-		const memberCount = await getOrganizationMemberCount(organizationId);
-
 		invalidateUsageCache(organizationId);
+
+		const memberCount = await getOrganizationMemberCount(organizationId);
 
 		await dodoPayments.usageEvents.ingest({
 			events: [
@@ -50,6 +50,8 @@ export async function reportStorageUsage(organizationId: string) {
 	if (!dodoPayments) return;
 
 	try {
+		invalidateUsageCache(organizationId);
+
 		const usage = await getOrganizationStorageUsage(organizationId);
 
 		await dodoPayments.usageEvents.ingest({

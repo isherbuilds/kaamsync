@@ -166,24 +166,3 @@ export const getYearlySavings = (
 
 export const canCheckout = (plan: ProductKey): boolean =>
 	plan === "growth" || plan === "pro";
-
-export const getPlanByProductId = (productId: string): ProductKey | null => {
-	if (!productId) return null;
-	const {
-		DODO_PRODUCT_GROWTH_MONTHLY,
-		DODO_PRODUCT_GROWTH_YEARLY,
-		DODO_PRODUCT_PROFESSIONAL_MONTHLY,
-		DODO_PRODUCT_PROFESSIONAL_YEARLY,
-	} = process.env;
-	if (
-		productId === DODO_PRODUCT_GROWTH_MONTHLY ||
-		productId === DODO_PRODUCT_GROWTH_YEARLY
-	)
-		return "growth";
-	if (
-		productId === DODO_PRODUCT_PROFESSIONAL_MONTHLY ||
-		productId === DODO_PRODUCT_PROFESSIONAL_YEARLY
-	)
-		return "pro";
-	return null;
-};

@@ -1,4 +1,4 @@
-import { Clock, Globe, Mail, MapPin, MessageSquare } from "lucide-react";
+import { Mail, MessageSquare } from "lucide-react";
 
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";

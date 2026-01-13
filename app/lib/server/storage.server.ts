@@ -157,6 +157,11 @@ export async function updateStorageUsageCache(
 	bytesChange: number,
 	countChange: number,
 ) {
+	// Ensure cache row exists and is initialized before applying incremental updates.
+	// This avoids cases where a delete occurs before the cache is created, which
+	// would otherwise insert incorrect zeroed values from negative deltas.
+	await getOrganizationStorageUsage(orgId);
+
 	await db
 		.insert(storageUsageCacheTable)
 		.values({

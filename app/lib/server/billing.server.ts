@@ -15,12 +15,7 @@ import {
 	usersTable,
 	webhookEventsTable,
 } from "~/db/schema";
-import {
-	getPlanByProductId,
-	type ProductKey,
-	planLimits,
-	usagePricing,
-} from "~/lib/billing";
+import { type ProductKey, planLimits, usagePricing } from "~/lib/billing";
 import { logger } from "~/lib/logger";
 import { env } from "~/lib/server/env-validation.server";
 
@@ -83,11 +78,11 @@ export async function getOrganizationUsage(orgId: string): Promise<PlanUsage> {
 	return usage;
 }
 
-export function invalidateUsageCache(orgId: string): void {
+export function invalidateUsageCache(orgId: string) {
 	usageCache.delete(orgId);
 }
 
-export function invalidateAllOrganizationCaches(orgId: string): void {
+export function invalidateAllOrganizationCaches(orgId: string) {
 	invalidateUsageCache(orgId);
 }
 
@@ -673,3 +668,24 @@ export async function handleBillingWebhook(payload: WebhookPayload) {
 		throw error;
 	}
 }
+
+export const getPlanByProductId = (productId: string): ProductKey | null => {
+	if (!productId) return null;
+	const {
+		DODO_PRODUCT_GROWTH_MONTHLY,
+		DODO_PRODUCT_GROWTH_YEARLY,
+		DODO_PRODUCT_PROFESSIONAL_MONTHLY,
+		DODO_PRODUCT_PROFESSIONAL_YEARLY,
+	} = process.env;
+	if (
+		productId === DODO_PRODUCT_GROWTH_MONTHLY ||
+		productId === DODO_PRODUCT_GROWTH_YEARLY
+	)
+		return "growth";
+	if (
+		productId === DODO_PRODUCT_PROFESSIONAL_MONTHLY ||
+		productId === DODO_PRODUCT_PROFESSIONAL_YEARLY
+	)
+		return "pro";
+	return null;
+};
