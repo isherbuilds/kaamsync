@@ -39,11 +39,11 @@ export default function RequestsPage() {
 	const { orgSlug } = useOrgLoaderData();
 	const isMobile = useIsMobile();
 
-	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
+	const [requests = []] = useQuery(queries.getUserAuthoredMatters(), {
 		...CACHE_LONG,
 	});
 
-	const [members] = useQuery(queries.getOrganizationMembers(), {
+	const [members = []] = useQuery(queries.getOrganizationMembers(), {
 		...CACHE_LONG,
 	});
 

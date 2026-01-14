@@ -106,8 +106,8 @@ function Layout({
 	const z = useZero();
 
 	// Use optimized cache policies - org data changes less frequently
-	const [orgsData] = useQuery(queries.getOrganizationList(), CACHE_LONG);
-	const [teamsData] = useQuery(queries.getTeamsList(), CACHE_USER_DATA);
+	const [orgsData = []] = useQuery(queries.getOrganizationList(), CACHE_LONG);
+	const [teamsData = []] = useQuery(queries.getTeamsList(), CACHE_USER_DATA);
 
 	const activeOrgId = authSession.session.activeOrganizationId;
 

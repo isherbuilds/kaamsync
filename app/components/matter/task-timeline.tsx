@@ -25,8 +25,8 @@ export function TaskTimeline({
 	members,
 	statuses,
 }: TaskTimelineProps) {
-	const [timeline] = useQuery(
-		queries.getMatterTimelines({ matterId }),
+	const [timeline = []] = useQuery(
+		matterId && queries.getMatterTimelines({ matterId }),
 		CACHE_NAV,
 	);
 

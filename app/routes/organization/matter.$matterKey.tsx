@@ -69,14 +69,14 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		CACHE_NAV,
 	);
 
-	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
-	const [teamMemberships] = useQuery(
-		queries.getTeamMembers({ teamId: matter?.teamId || "" }),
-		{ enabled: !!matter?.teamId, ...CACHE_LONG },
+	const [members = []] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
+	const [teamMemberships = []] = useQuery(
+		matter?.teamId && queries.getTeamMembers({ teamId: matter.teamId }),
+		CACHE_LONG,
 	);
-	const [statuses] = useQuery(
-		queries.getTeamStatuses({ teamId: matter?.teamId || "" }),
-		{ enabled: !!matter?.teamId, ...CACHE_LONG },
+	const [statuses = []] = useQuery(
+		matter?.teamId && queries.getTeamStatuses({ teamId: matter.teamId }),
+		CACHE_LONG,
 	);
 
 	// 2. Permissions

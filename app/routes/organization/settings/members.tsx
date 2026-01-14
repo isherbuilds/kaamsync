@@ -59,8 +59,11 @@ export default function OrgMembersPage() {
 	const [inviteOpen, setInviteOpen] = useState(false);
 
 	// Data
-	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
-	const [invites] = useQuery(queries.getOrganizationInvitations(), CACHE_LONG);
+	const [members = []] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
+	const [invites = []] = useQuery(
+		queries.getOrganizationInvitations(),
+		CACHE_LONG,
+	);
 
 	const currentUser = authSession.user;
 	const currentMember = members?.find((m) => m.userId === currentUser.id);

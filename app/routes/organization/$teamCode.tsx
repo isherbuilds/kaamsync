@@ -67,15 +67,15 @@ export default function TeamIndex() {
 	);
 	const teamId = team?.id ?? "";
 
-	const [matters] = useQuery(queries.getTeamMatters({ teamId }), {
-		enabled: !!teamId,
-		...CACHE_NAV,
-	});
+	const [matters = []] = useQuery(
+		teamId && queries.getTeamMatters({ teamId }),
+		CACHE_NAV,
+	);
 
-	const [statuses] = useQuery(queries.getTeamStatuses({ teamId }), {
-		enabled: !!teamId,
-		...CACHE_NAV,
-	});
+	const [statuses = []] = useQuery(
+		teamId && queries.getTeamStatuses({ teamId }),
+		CACHE_NAV,
+	);
 
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =

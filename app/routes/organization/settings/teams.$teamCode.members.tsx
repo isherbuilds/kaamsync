@@ -44,10 +44,13 @@ export default function TeamMembersPage() {
 	const [open, setOpen] = useState(false);
 
 	const [team] = useQuery(
-		queries.getTeamByCode({ code: teamCode ?? "" }),
+		teamCode && queries.getTeamByCode({ code: teamCode }),
 		CACHE_LONG,
 	);
-	const [orgMembers] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
+	const [orgMembers = []] = useQuery(
+		queries.getOrganizationMembers(),
+		CACHE_LONG,
+	);
 
 	const memberships = useMemo(() => team?.memberships ?? [], [team]);
 	const isManager = useMemo(

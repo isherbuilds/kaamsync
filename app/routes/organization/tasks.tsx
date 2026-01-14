@@ -40,11 +40,11 @@ export default function TasksPage() {
 	const { orgSlug } = useOrgLoaderData();
 	const isMobile = useIsMobile();
 
-	const [tasks] = useQuery(queries.getUserAssignedMatters(), {
+	const [tasks = []] = useQuery(queries.getUserAssignedMatters(), {
 		...CACHE_LONG,
 	});
 
-	const [members] = useQuery(queries.getOrganizationMembers(), {
+	const [members = []] = useQuery(queries.getOrganizationMembers(), {
 		...CACHE_LONG,
 	});
 
