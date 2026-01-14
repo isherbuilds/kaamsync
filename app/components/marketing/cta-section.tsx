@@ -27,7 +27,7 @@ export function MarketingCTA({
 	return (
 		<section
 			className={cn(
-				"bg-foreground py-24 text-center text-background",
+				"border-t bg-foreground py-24 text-center text-background",
 				className,
 			)}
 		>

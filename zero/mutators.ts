@@ -40,6 +40,7 @@ export const mutators = defineMutators({
 				dueDate: z.number().optional(),
 				statusId: z.string(),
 				clientShortID: z.number().optional(),
+				id: z.string().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
 				assertLoggedIn(ctx);
@@ -65,7 +66,7 @@ export const mutators = defineMutators({
 					throw new Error("You do not have permission to create requests");
 				}
 
-				const id = createId();
+				const id = args.id || createId();
 				const now = Date.now();
 
 				const baseInsert = {

@@ -37,10 +37,10 @@ export const ALLOWED_ATTACHMENT_TYPES_SET: Set<string> = new Set(
 );
 
 /**
- * Absolute maximum file size (100MB) - enterprise limit
+ * Absolute maximum file size (1000MB) - enterprise limit
  * Actual limits per plan are enforced server-side
  */
-export const ABSOLUTE_MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+export const ABSOLUTE_MAX_FILE_SIZE = 1000 * 1024 * 1024; // 1000MB
 
 /**
  * Check if a MIME type is allowed

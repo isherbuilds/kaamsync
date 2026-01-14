@@ -69,6 +69,7 @@ export default [
 
 		// Storage / Attachments
 		route("attachments", "routes/api/attachments/index.ts"),
+		route("attachments/*", "routes/api/attachments/download.ts"),
 
 		// Push Notifications
 		route("notifications/subscribe", "routes/api/notifications/subscribe.tsx"),

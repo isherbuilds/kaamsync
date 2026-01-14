@@ -1,9 +1,11 @@
 import { useZero } from "@rocicorp/zero/react";
-import { useState } from "react";
+import { Paperclip } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
+import { useAttachments } from "~/hooks/use-attachments";
 
 interface CommentInputProps {
 	matterId: string;
@@ -14,9 +16,23 @@ export function CommentInput({ matterId }: CommentInputProps) {
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
+	const { uploadFile, uploading } = useAttachments({
+		onUploadComplete: () => toast.success("File uploaded"),
+		onError: (err) => toast.error(err),
+	});
+
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
 	// Sanitize comment: trim, collapse whitespace, enforce max length
 	const sanitizeComment = (text: string) => {
 		return text.trim().slice(0, 5000);
+	};
+
+	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const files = e.target.files;
+		if (!files || files.length === 0) return;
+		await uploadFile(files[0], matterId);
+		e.target.value = "";
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -46,24 +62,41 @@ export function CommentInput({ matterId }: CommentInputProps) {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="flex gap-2">
+		<form onSubmit={handleSubmit} className="relative">
 			<Textarea
 				value={content}
 				onChange={(e) => setContent(e.target.value)}
 				onKeyDown={handleKeyDown}
 				placeholder="Add a comment... (⌘+Enter to submit)"
-				rows={2}
-				className="min-h-15 resize-none text-sm"
+				rows={3}
+				className="min-h-[80px] resize-none pb-10 text-sm"
 				disabled={isSubmitting}
 			/>
-			<Button
-				type="submit"
-				size="sm"
-				className="shrink-0 self-end"
-				disabled={!content.trim() || isSubmitting}
-			>
-				{isSubmitting ? "..." : "Send"}
-			</Button>
+			<div className="absolute right-2 bottom-2 flex items-center gap-2">
+				<input
+					type="file"
+					ref={fileInputRef}
+					className="hidden"
+					onChange={handleFileSelect}
+				/>
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					className="size-8 text-muted-foreground hover:text-foreground"
+					onClick={() => fileInputRef.current?.click()}
+					disabled={uploading || isSubmitting}
+				>
+					<Paperclip className="size-4" />
+				</Button>
+				<Button
+					type="submit"
+					size="sm"
+					disabled={!content.trim() || isSubmitting}
+				>
+					{isSubmitting ? "..." : "Send"}
+				</Button>
+			</div>
 		</form>
 	);
 }

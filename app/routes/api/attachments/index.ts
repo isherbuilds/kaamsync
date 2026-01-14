@@ -27,7 +27,7 @@ const presignedUrlSchema = z.object({
 		.number()
 		.int()
 		.positive()
-		.max(100 * 1024 * 1024), // 100MB absolute max
+		.max(1000 * 1024 * 1024), // 1000MB absolute max
 	fileName: z.string().min(1).max(255),
 });
 

@@ -32,7 +32,7 @@ import { env } from "./env-validation.server";
 // CONFIGURATION
 // =============================================================================
 
-const BUCKET_NAME = env.S3_BUCKET_NAME || "kaamsync-attachments";
+const BUCKET_NAME = env.S3_BUCKET_NAME || "kaamsync";
 const S3_REGION = env.S3_REGION || "auto";
 const S3_ENDPOINT = env.S3_ENDPOINT; // For R2 or custom S3
 const S3_PUBLIC_URL = env.S3_PUBLIC_URL; // Public URL for downloads
@@ -530,7 +530,10 @@ export async function deleteAttachment(
 			}),
 		);
 	} catch (error) {
-		logger.error(`[Storage] Failed to delete S3 object ${attachment.storageKey}:`, error);
+		logger.error(
+			`[Storage] Failed to delete S3 object ${attachment.storageKey}:`,
+			error,
+		);
 		// Continue - DB record is deleted, S3 lifecycle will clean up
 	}
 

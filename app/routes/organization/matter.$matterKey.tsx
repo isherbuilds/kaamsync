@@ -14,6 +14,8 @@ import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import { AdminApproveSection } from "~/components/matter/admin-approve-section";
+import { AttachmentList } from "~/components/matter/attachment-list";
+import { AttachmentUpload } from "~/components/matter/attachment-upload";
 import { CommentInput } from "~/components/matter/comment-input";
 import {
 	MemberSelect,
@@ -321,6 +323,19 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 										No description
 									</span>
 								)}
+							</div>
+
+							<Separator />
+
+							<div className="space-y-4">
+								<h2 className="font-semibold text-sm">Attachments</h2>
+								<AttachmentList
+									attachments={matter.attachments}
+									canDelete={canEdit}
+								/>
+								<div className="mt-2">
+									<AttachmentUpload matterId={matter.id} />
+								</div>
 							</div>
 
 							<Separator />

@@ -1,11 +1,19 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
+import { createId } from "@paralleldrive/cuid2";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
-import { GitPullRequest, ListTodo, SquarePen } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import {
+	GitPullRequest,
+	ListTodo,
+	Paperclip,
+	SquarePen,
+	X,
+} from "lucide-react";
+import { memo, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
+import { useAttachments } from "~/hooks/use-attachments";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
 import { Priority, type PriorityValue } from "~/lib/matter-constants";
 import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
@@ -48,6 +56,9 @@ export const MatterDialog = memo(
 		const z = useZero();
 		const [open, setOpen] = useState(false);
 		const [isSubmitting, setIsSubmitting] = useState(false);
+		const [files, setFiles] = useState<File[]>([]);
+		const { uploadFile } = useAttachments();
+		const fileInputRef = useRef<HTMLInputElement>(null);
 
 		const isRequest = type === "request";
 		const Icon = isRequest ? GitPullRequest : ListTodo;
@@ -85,10 +96,12 @@ export const MatterDialog = memo(
 					submission.value;
 
 				const clientShortID = getAndIncrementNextShortId(teamId);
+				const matterId = createId();
 
 				setIsSubmitting(true);
 				z.mutate(
 					mutators.matter.create({
+						id: matterId,
 						teamId,
 						teamCode,
 						title,
@@ -109,7 +122,15 @@ export const MatterDialog = memo(
 						clientShortID,
 					}),
 				)
-					.server.then(() => {
+					.server.then(async () => {
+						// Upload files if any
+						if (files.length > 0) {
+							const uploadPromises = files.map((file) =>
+								uploadFile(file, matterId),
+							);
+							await Promise.allSettled(uploadPromises);
+						}
+
 						toast.success(
 							isRequest
 								? "Request submitted for approval"
@@ -117,6 +138,7 @@ export const MatterDialog = memo(
 						);
 						setOpen(false);
 						form.reset();
+						setFiles([]);
 
 						// Send push notification to assignee (fire and forget)
 						if (assigneeId) {
@@ -143,6 +165,18 @@ export const MatterDialog = memo(
 					.finally(() => setIsSubmitting(false));
 			},
 		});
+
+		const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+			if (e.target.files?.length) {
+				setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+				// Reset input so same file can be selected again if needed (though we just append)
+				e.target.value = "";
+			}
+		};
+
+		const removeFile = (index: number) => {
+			setFiles((prev) => prev.filter((_, i) => i !== index));
+		};
 
 		return (
 			<Dialog onOpenChange={setOpen} open={open}>
@@ -205,6 +239,36 @@ export const MatterDialog = memo(
 									{fields.description.errors}
 								</p>
 							)}
+
+							{/* Attachment Selection */}
+							<div>
+								<div className="flex flex-wrap gap-2">
+									{files.map((file, i) => (
+										<div
+											key={`${file.name}-${i}`}
+											className="flex items-center gap-1 rounded-md border bg-muted/50 px-2 py-1 text-xs"
+										>
+											<span className="max-w-[150px] truncate">
+												{file.name}
+											</span>
+											<button
+												type="button"
+												onClick={() => removeFile(i)}
+												className="text-muted-foreground hover:text-foreground"
+											>
+												<X className="size-3" />
+											</button>
+										</div>
+									))}
+								</div>
+								<input
+									type="file"
+									multiple
+									ref={fileInputRef}
+									className="hidden"
+									onChange={handleFileSelect}
+								/>
+							</div>
 						</div>
 
 						<div className="flex flex-col gap-3 border-t bg-muted/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -256,6 +320,17 @@ export const MatterDialog = memo(
 										className="h-7 rounded border bg-background px-2 text-muted-foreground text-xs outline-none hover:bg-muted focus:ring-1 focus:ring-ring"
 									/>
 								</div>
+
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon"
+									className="size-7 text-muted-foreground hover:text-foreground"
+									onClick={() => fileInputRef.current?.click()}
+									title="Attach files"
+								>
+									<Paperclip className="size-4" />
+								</Button>
 							</div>
 
 							<div className="flex items-center justify-end gap-3">
