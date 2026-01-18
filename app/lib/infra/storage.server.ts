@@ -14,19 +14,20 @@ import {
 	teamMembershipsTable,
 } from "~/db/schema";
 import {
-	ABSOLUTE_MAX_FILE_SIZE,
-	ALLOWED_ATTACHMENT_TYPES_SET,
-} from "~/lib/attachment-constants";
-import { type ProductKey, planLimits } from "~/lib/billing";
-import { logger } from "~/lib/logger";
-import {
 	canModifyAttachment,
 	PERMISSION_ERRORS,
 	type TeamRole,
-} from "~/lib/permissions";
-import { getOrganizationPlanKey } from "~/lib/server/billing.server";
-import { reportStorageUsage } from "./billing-tracking.server";
-import { env } from "./env-validation.server";
+} from "~/lib/auth/permissions";
+import { getOrganizationPlanKey } from "~/lib/billing/billing.server";
+import { type ProductKey, planLimits } from "~/lib/billing/plans";
+import { uploadCache } from "~/lib/cache/upload-cache.server";
+import {
+	ABSOLUTE_MAX_FILE_SIZE,
+	ALLOWED_ATTACHMENT_TYPES_SET,
+} from "~/lib/constants/attachment";
+import { logger } from "~/lib/logging/logger";
+import { reportStorageUsage } from "../billing/tracking.server";
+import { env } from "../config/env-validation.server";
 
 // =============================================================================
 // CONFIGURATION
@@ -96,25 +97,30 @@ const ALLOWED_TYPES = ALLOWED_ATTACHMENT_TYPES_SET;
 
 /**
  * Get total storage used by an organization (in bytes)
- * Now uses direct orgId on attachments - no joins needed!
+ * Uses in-memory cache for speed, falls back to DB cache table
  */
 export async function getOrganizationStorageUsage(
 	orgId: string,
 ): Promise<StorageUsage> {
-	// Try cache first for fast queries
+	const memCached = uploadCache.getStorageUsage(orgId);
+	if (memCached) {
+		return memCached;
+	}
+
 	const cached = await db.query.storageUsageCacheTable.findFirst({
 		where: eq(storageUsageCacheTable.orgId, orgId),
 	});
 
 	if (cached) {
-		return {
+		const result = {
 			totalBytes: cached.totalBytes,
 			totalGb: cached.totalBytes / (1024 * 1024 * 1024),
 			fileCount: cached.fileCount,
 		};
+		uploadCache.setStorageUsage(orgId, result);
+		return result;
 	}
 
-	// Fallback: compute from attachments (direct query, no joins)
 	const result = await db
 		.select({
 			totalBytes: sql<number>`COALESCE(SUM(${attachmentsTable.fileSize}), 0)::bigint`,
@@ -126,7 +132,6 @@ export async function getOrganizationStorageUsage(
 	const totalBytes = result[0]?.totalBytes ?? 0;
 	const fileCount = result[0]?.fileCount ?? 0;
 
-	// Initialize cache entry
 	await db
 		.insert(storageUsageCacheTable)
 		.values({
@@ -144,23 +149,23 @@ export async function getOrganizationStorageUsage(
 			},
 		});
 
-	return {
+	const usageResult = {
 		totalBytes,
 		totalGb: totalBytes / (1024 * 1024 * 1024),
 		fileCount,
 	};
+	uploadCache.setStorageUsage(orgId, usageResult);
+	return usageResult;
 }
 
 /**
- * Update the storage usage cache (call after upload/delete)
+ * Update storage usage cache (call after upload/delete)
  */
 export async function updateStorageUsageCache(
 	orgId: string,
 	bytesChange: number,
 	countChange: number,
 ) {
-	await getOrganizationStorageUsage(orgId);
-
 	await db
 		.insert(storageUsageCacheTable)
 		.values({
@@ -177,22 +182,33 @@ export async function updateStorageUsageCache(
 				updatedAt: new Date(),
 			},
 		});
+
+	uploadCache.invalidateOrg(orgId);
 }
 
 /**
  * Get all storage limits for organization based on plan
+ * Uses in-memory cache to avoid repeated plan lookups
  */
 export async function getOrganizationStorageLimits(
 	orgId: string,
 ): Promise<StorageLimits> {
+	const cached = uploadCache.getStorageLimits(orgId);
+	if (cached) {
+		return cached.limits;
+	}
+
 	const plan = await getOrganizationPlanKey(orgId);
 	const limits = planLimits[plan];
-	return {
+	const result = {
 		storageGb: limits.storageGb,
 		maxFileSizeMb: limits.maxFileSizeMb,
 		maxFiles: limits.maxFiles,
 		plan,
 	};
+
+	uploadCache.setStorageLimits(orgId, { limits, usage: null });
+	return result;
 }
 
 // =============================================================================
@@ -307,6 +323,17 @@ export function validateFileBasic(
 // UPLOAD (PRESIGNED URL)
 // =============================================================================
 
+export interface FileUploadRequest {
+	contentType: string;
+	fileSizeBytes: number;
+	fileName: string;
+}
+
+export interface BatchPresignedUploadResult {
+	files: Array<PresignedUploadResult & { originalRequest: FileUploadRequest }>;
+	totalSize: number;
+}
+
 /**
  * Generate presigned URL for direct upload to S3
  * Client uploads directly to S3, then saves attachment record
@@ -321,19 +348,26 @@ export async function createPresignedUpload(
 		throw new Error("Storage not configured");
 	}
 
-	// Validate file type (basic check)
+	const cached = uploadCache.getPresignedUrl(
+		orgId,
+		contentType,
+		fileSizeBytes,
+		fileName,
+	);
+	if (cached) {
+		return cached;
+	}
+
 	const typeCheck = validateFileType(contentType);
 	if (!typeCheck.valid) {
 		throw new Error(typeCheck.error);
 	}
 
-	// Check all storage limits (size, count, total storage)
 	const permission = await canUploadFile(orgId, fileSizeBytes);
 	if (!permission.allowed) {
 		throw new Error(permission.reason);
 	}
 
-	// Generate unique key: org/year/month/id-filename
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -341,7 +375,6 @@ export async function createPresignedUpload(
 	const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 100);
 	const fileKey = `${orgId}/${year}/${month}/${fileId}-${safeFileName}`;
 
-	// Create presigned PUT URL (1 hour expiry)
 	const command = new PutObjectCommand({
 		Bucket: BUCKET_NAME,
 		Key: fileKey,
@@ -354,7 +387,96 @@ export async function createPresignedUpload(
 		? `${S3_PUBLIC_URL}/${fileKey}`
 		: `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${fileKey}`;
 
-	return { uploadUrl, fileKey, publicUrl };
+	const result = { uploadUrl, fileKey, publicUrl };
+	uploadCache.setPresignedUrl(
+		orgId,
+		contentType,
+		fileSizeBytes,
+		fileName,
+		result,
+	);
+
+	return result;
+}
+
+/**
+ * Generate multiple presigned URLs in parallel for batch uploads
+ * Validates all files upfront and returns presigned URLs for all
+ */
+export async function createBatchPresignedUploads(
+	orgId: string,
+	requests: FileUploadRequest[],
+): Promise<BatchPresignedUploadResult> {
+	if (!s3) {
+		throw new Error("Storage not configured");
+	}
+
+	const totalSize = requests.reduce((sum, r) => sum + r.fileSizeBytes, 0);
+
+	const permission = await canUploadFile(orgId, totalSize);
+	if (!permission.allowed) {
+		throw new Error(permission.reason);
+	}
+
+	const now = new Date();
+	const year = now.getFullYear();
+	const month = String(now.getMonth() + 1).padStart(2, "0");
+
+	const results = await Promise.all(
+		requests.map(async (request) => {
+			const cached = uploadCache.getPresignedUrl(
+				orgId,
+				request.contentType,
+				request.fileSizeBytes,
+				request.fileName,
+			);
+
+			if (cached) {
+				return { ...cached, originalRequest: request };
+			}
+
+			const typeCheck = validateFileType(request.contentType);
+			if (!typeCheck.valid) {
+				throw new Error(typeCheck.error);
+			}
+
+			const fileId = createId();
+			const safeFileName = request.fileName
+				.replace(/[^a-zA-Z0-9.-]/g, "_")
+				.slice(0, 100);
+			const fileKey = `${orgId}/${year}/${month}/${fileId}-${safeFileName}`;
+
+			const command = new PutObjectCommand({
+				Bucket: BUCKET_NAME,
+				Key: fileKey,
+				ContentType: request.contentType,
+				ContentLength: request.fileSizeBytes,
+			});
+
+			const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+			const publicUrl = S3_PUBLIC_URL
+				? `${S3_PUBLIC_URL}/${fileKey}`
+				: `https://${BUCKET_NAME}.s3.${S3_REGION}.amazonaws.com/${fileKey}`;
+
+			const result = {
+				uploadUrl,
+				fileKey,
+				publicUrl,
+				originalRequest: request,
+			};
+			uploadCache.setPresignedUrl(
+				orgId,
+				request.contentType,
+				request.fileSizeBytes,
+				request.fileName,
+				result,
+			);
+
+			return result;
+		}),
+	);
+
+	return { files: results, totalSize };
 }
 
 // =============================================================================
@@ -494,6 +616,11 @@ export async function saveAttachment(params: {
 	// Update storage cache
 	await updateStorageUsageCache(params.orgId, params.fileSize, 1);
 
+	// Report storage increase to billing (fire and forget)
+	reportStorageUsage(params.orgId).catch((err) =>
+		logger.error("[Storage] Failed to report usage on save:", err),
+	);
+
 	return { id };
 }
 
@@ -537,16 +664,18 @@ export async function deleteAttachment(
 		// Continue - DB record is deleted, S3 lifecycle will clean up
 	}
 
-	logger.log(
+	logger.info(
 		`[Storage] Deleted attachment ${attachmentId} (${attachment.fileName}) by user ${userId}`,
 	);
 
-	// Report storage decrease to billing
-	await reportStorageUsage(orgId);
+	// Report storage decrease to billing (fire and forget)
+	reportStorageUsage(orgId).catch((err) =>
+		logger.error("[Storage] Failed to report usage on delete:", err),
+	);
 }
 
 // Re-export from shared constants for backwards compatibility
 export {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES_SET as ALLOWED_TYPES,
-} from "~/lib/attachment-constants";
+} from "~/lib/constants/attachment";

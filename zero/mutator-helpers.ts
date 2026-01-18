@@ -71,12 +71,14 @@ export async function allocateShortID(
 			);
 			return; // Success, exit function
 		} catch (err) {
-			const isUniqueConstraintError = /unique|duplicate|constraint/i.test(
-				err instanceof Error ? err.message : String(err),
-			);
+			const isUniqueConstraintError =
+				(err as { code?: string }).code === "23505" ||
+				/unique|duplicate|constraint/i.test(
+					err instanceof Error ? err.message : String(err),
+				);
 
 			if (isUniqueConstraintError && attempt < 2) {
-				continue; // Try again
+				continue;
 			}
 
 			throw new Error(

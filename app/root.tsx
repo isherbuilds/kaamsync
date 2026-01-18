@@ -94,11 +94,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		if (typeof window === "undefined" || import.meta.env.DEV) return;
 
+		let registration: ServiceWorkerRegistration | undefined;
+
 		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker.register("/service-worker.js").catch((error) => {
-				console.error("Service worker registration failed:", error);
-			});
+			navigator.serviceWorker
+				.register("/service-worker.js")
+				.then((reg) => {
+					registration = reg;
+					console.log("Service worker registered:", reg);
+				})
+				.catch((error) => {
+					console.error("Service worker registration failed:", error);
+				});
 		}
+
+		return () => {
+			if (registration) {
+				registration
+					.unregister()
+					.then((success) => {
+						if (success) {
+							console.log("Service worker unregistered");
+						}
+					})
+					.catch((error) => {
+						console.error("Service worker unregistration failed:", error);
+					});
+			}
+		};
 	}, []);
 
 	return (

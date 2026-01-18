@@ -44,7 +44,7 @@ import { Separator } from "~/components/ui/separator";
 import { parseMatterKey } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
-import { Priority, type PriorityValue } from "~/lib/matter-constants";
+import { Priority, type PriorityValue } from "~/lib/constants/matter";
 import type { Route } from "./+types/matter.$matterKey";
 
 export const meta: Route.MetaFunction = ({ params }) => [

@@ -3,17 +3,18 @@
  * Improves performance by pre-compiling SQL queries
  */
 
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "~/db";
 import {
-	customersTable,
 	mattersTable,
 	membersTable,
-	paymentsTable,
+	organizationsTable,
 	subscriptionsTable,
 	teamsTable,
 	usersTable,
 } from "~/db/schema";
+import { getOrgMatterCount } from "../billing/usage-check.server";
+import { getOrganizationStorageUsage } from "../infra/storage.server.js";
 
 // ============================================================================
 // ORGANIZATION & MEMBERSHIP QUERIES
@@ -72,7 +73,12 @@ export const getOrganizationOwnerUser = db
 export const getOrganizationMatterCount = db
 	.select({ count: count() })
 	.from(mattersTable)
-	.where(eq(mattersTable.orgId, sql.placeholder("orgId")))
+	.where(
+		and(
+			eq(mattersTable.orgId, sql.placeholder("orgId")),
+			isNull(mattersTable.deletedAt),
+		),
+	)
 	.prepare("getOrganizationMatterCount");
 
 // ============================================================================
@@ -135,6 +141,7 @@ export const getTeamMattersCount = db
 		and(
 			eq(mattersTable.teamId, sql.placeholder("teamId")),
 			eq(mattersTable.orgId, sql.placeholder("orgId")),
+			isNull(mattersTable.deletedAt),
 		),
 	)
 	.prepare("getTeamMattersCount");
@@ -150,40 +157,29 @@ export const getOrganizationSubscription = db
 	.select()
 	.from(subscriptionsTable)
 	.where(
-		eq(subscriptionsTable.organizationId, sql.placeholder("organizationId")),
+		and(
+			eq(subscriptionsTable.organizationId, sql.placeholder("organizationId")),
+			eq(
+				subscriptionsTable.billingCustomerId,
+				sql.placeholder("billingCustomerId"),
+			),
+			eq(subscriptionsTable.status, sql.placeholder("status")),
+		),
 	)
 	.orderBy(desc(subscriptionsTable.createdAt))
 	.limit(1)
 	.prepare("getOrganizationSubscription");
 
 /**
- * Get organization customer (prepared)
- */
-export const getOrganizationCustomer = db
-	.select()
-	.from(customersTable)
-	.where(eq(customersTable.organizationId, sql.placeholder("organizationId")))
-	.prepare("getOrganizationCustomer");
-
-/**
- * Get customer by Dodo ID (prepared)
- */
-export const getCustomerByDodoId = db
-	.select()
-	.from(customersTable)
-	.where(eq(customersTable.dodoCustomerId, sql.placeholder("dodoCustomerId")))
-	.prepare("getCustomerByDodoId");
-
-/**
  * Get organization payments (prepared)
  */
-export const getOrganizationPayments = db
-	.select()
-	.from(paymentsTable)
-	.where(eq(paymentsTable.organizationId, sql.placeholder("organizationId")))
-	.orderBy(desc(paymentsTable.createdAt))
-	.limit(sql.placeholder("limit"))
-	.prepare("getOrganizationPayments");
+// export const getOrganizationPayments = db
+// 	.select()
+// 	.from(paymentsTable)
+// 	.where(eq(paymentsTable.organizationId, sql.placeholder("organizationId")))
+// 	.orderBy(desc(paymentsTable.createdAt))
+// 	.limit(sql.placeholder("limit"))
+// 	.prepare("getOrganizationPayments");
 
 // ============================================================================
 // HELPER FUNCTIONS USING PREPARED STATEMENTS
@@ -193,16 +189,18 @@ export const getOrganizationPayments = db
  * Get organization usage using prepared statements (PERFORMANCE OPTIMIZED)
  */
 export async function getOrganizationUsagePrepared(organizationId: string) {
-	const [memberResult, teamResult, matterResult] = await Promise.all([
+	const [memberResult, teamResult, storageResult, matters] = await Promise.all([
 		getOrganizationMemberCount.execute({ organizationId }),
 		getOrganizationTeamCount.execute({ orgId: organizationId }),
-		getOrganizationMatterCount.execute({ orgId: organizationId }),
+		getOrganizationStorageUsage(organizationId),
+		getOrgMatterCount(organizationId),
 	]);
 
 	return {
 		members: memberResult[0]?.count ?? 0,
 		teams: teamResult[0]?.count ?? 0,
-		matters: matterResult[0]?.count ?? 0,
+		matters,
+		storageUsedBytes: storageResult,
 	};
 }
 
@@ -220,13 +218,13 @@ export async function getUserActiveOrganizationPrepared(userId: string) {
 export async function getOrganizationBillingInfoPrepared(
 	organizationId: string,
 ) {
-	const [subscription, customer] = await Promise.all([
+	const [subscription] = await Promise.all([
 		getOrganizationSubscription.execute({ organizationId }),
-		getOrganizationCustomer.execute({ organizationId }),
+		// getOrganizationCustomer.execute({ organizationId }),
 	]);
 
 	return {
 		subscription: subscription[0] ?? null,
-		customer: customer[0] ?? null,
+		customer: null,
 	};
 }

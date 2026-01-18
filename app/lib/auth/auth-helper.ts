@@ -11,12 +11,12 @@
  */
 
 import { data } from "react-router";
+import { getServerSession } from "~/lib/auth/auth.server";
 import {
 	auditLog,
 	getRequestIP,
 	getRequestUserAgent,
-} from "~/lib/audit-logger";
-import { getServerSession } from "~/lib/auth";
+} from "~/lib/logging/audit-logger";
 
 /**
  * Require an authenticated session on the server.

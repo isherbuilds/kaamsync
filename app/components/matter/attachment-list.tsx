@@ -1,5 +1,5 @@
 import { Download, FileIcon, Loader2, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { toast } from "sonner";
 import type { AttachmentsTable, UsersTable } from "zero/schema";
 import { useAttachments } from "~/hooks/use-attachments";
@@ -20,7 +20,48 @@ interface AttachmentListProps {
 	className?: string;
 }
 
-export function AttachmentList({
+function getFileIcon(type: string) {
+	if (type.startsWith("image/")) return <FileIcon className="size-5" />;
+	if (type.includes("pdf")) return <FileIcon className="size-5 text-red-500" />;
+	if (type.includes("sheet") || type.includes("csv"))
+		return <FileIcon className="size-5 text-green-500" />;
+	if (type.includes("zip") || type.includes("compressed"))
+		return <FileIcon className="size-5 text-yellow-500" />;
+	return <FileIcon className="size-5" />;
+}
+
+function formatBytes(bytes: number) {
+	if (bytes === 0) return "0 B";
+	const k = 1024;
+	const sizes = ["B", "KB", "MB", "GB", "TB"];
+	const i = Math.floor(Math.log(bytes) / Math.log(k));
+	return `${Number.parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
+}
+
+function formatTimeAgo(timestamp: number) {
+	const now = Date.now();
+	const diff = now - timestamp;
+	const seconds = Math.floor(diff / 1000);
+	const minutes = Math.floor(seconds / 60);
+	const hours = Math.floor(minutes / 60);
+	const days = Math.floor(hours / 24);
+
+	if (days > 7) {
+		return new Date(timestamp).toLocaleDateString();
+	}
+	if (days > 0) {
+		return `${days}d ago`;
+	}
+	if (hours > 0) {
+		return `${hours}h ago`;
+	}
+	if (minutes > 0) {
+		return `${minutes}m ago`;
+	}
+	return "Just now";
+}
+
+export const AttachmentList = memo(function AttachmentList({
 	attachments,
 	canDelete,
 	className,
@@ -28,24 +69,27 @@ export function AttachmentList({
 	const { deleteAttachment } = useAttachments();
 	const [deletingId, setDeletingId] = useState<string | null>(null);
 
-	const handleDelete = async (id: string, e: React.MouseEvent) => {
-		e.preventDefault();
-		if (!confirm("Are you sure you want to delete this file?")) return;
+	const handleDelete = useCallback(
+		async (id: string, e: React.MouseEvent) => {
+			e.preventDefault();
+			if (!confirm("Are you sure you want to delete this file?")) return;
 
-		setDeletingId(id);
-		try {
-			const success = await deleteAttachment(id);
-			if (success) {
-				toast.success("File deleted");
-			} else {
+			setDeletingId(id);
+			try {
+				const success = await deleteAttachment(id);
+				if (success) {
+					toast.success("File deleted");
+				} else {
+					toast.error("Failed to delete file");
+				}
+			} catch {
 				toast.error("Failed to delete file");
+			} finally {
+				setDeletingId(null);
 			}
-		} catch {
-			toast.error("Failed to delete file");
-		} finally {
-			setDeletingId(null);
-		}
-	};
+		},
+		[deleteAttachment],
+	);
 
 	if (attachments.length === 0) {
 		return null;
@@ -137,45 +181,4 @@ export function AttachmentList({
 			))}
 		</div>
 	);
-}
-
-function getFileIcon(type: string) {
-	if (type.startsWith("image/")) return <FileIcon className="size-5" />; // TODO: Image preview?
-	if (type.includes("pdf")) return <FileIcon className="size-5 text-red-500" />;
-	if (type.includes("sheet") || type.includes("csv"))
-		return <FileIcon className="size-5 text-green-500" />;
-	if (type.includes("zip") || type.includes("compressed"))
-		return <FileIcon className="size-5 text-yellow-500" />;
-	return <FileIcon className="size-5" />;
-}
-
-function formatBytes(bytes: number) {
-	if (bytes === 0) return "0 B";
-	const k = 1024;
-	const sizes = ["B", "KB", "MB", "GB", "TB"];
-	const i = Math.floor(Math.log(bytes) / Math.log(k));
-	return `${Number.parseFloat((bytes / k ** i).toFixed(1))} ${sizes[i]}`;
-}
-
-function formatTimeAgo(timestamp: number) {
-	const now = Date.now();
-	const diff = now - timestamp;
-	const seconds = Math.floor(diff / 1000);
-	const minutes = Math.floor(seconds / 60);
-	const hours = Math.floor(minutes / 60);
-	const days = Math.floor(hours / 24);
-
-	if (days > 7) {
-		return new Date(timestamp).toLocaleDateString();
-	}
-	if (days > 0) {
-		return `${days}d ago`;
-	}
-	if (hours > 0) {
-		return `${hours}h ago`;
-	}
-	if (minutes > 0) {
-		return `${minutes}m ago`;
-	}
-	return "Just now";
-}
+});

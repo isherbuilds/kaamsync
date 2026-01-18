@@ -16,9 +16,9 @@
 import { UseSend } from "usesend-js";
 import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { VerifyEmail } from "~/components/email/verify-email";
-import { normalizeError } from "~/lib/error-utils";
-import { reportSeatCount } from "~/lib/server/billing-tracking.server";
-import { env, isDevelopment } from "~/lib/server/env-validation.server";
+import { reportSeatCount } from "~/lib/billing/tracking.server";
+import { env, isDevelopment } from "~/lib/config/env-validation.server";
+import { normalizeError } from "~/lib/logging/error-utils";
 
 const usesend = new UseSend(env.USESEND_API_KEY, env.USESEND_SELF_HOSTED_URL);
 
@@ -128,10 +128,7 @@ export const AuthService = {
 
 	async handleMembershipChange(organizationId: string) {
 		// Use unified tracking function (handles cache invalidation + billing)
-		try {
-			await reportSeatCount(organizationId);
-		} catch (err) {
-			console.error("[Billing] Failed to track membership change:", err);
-		}
+		// Fire-and-forget pattern for non-blocking user experience
+		reportSeatCount(organizationId);
 	},
 };

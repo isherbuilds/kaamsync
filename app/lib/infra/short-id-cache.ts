@@ -5,14 +5,14 @@
  * and automatically clears on version mismatch.
  *
  * Key exports:
- * - seedNextShortId(teamId, next) - Initialize cache with server value
+ * - seedNextShortId(teamId, next, blockSize) - Initialize cache with server value
  * - peekNextShortId(teamId) - Get next ID without incrementing
  * - getAndIncrementNextShortId(teamId) - Get current and increment for next
  * - clearTeamCache(teamId) - Clear cache for specific team
  *
  * @example
- * // On load, seed with server value
- * seedNextShortId(teamId, serverNextId);
+ * // On load, seed with server value (block of 10)
+ * seedNextShortId(teamId, serverNextId, 10);
  * // Generate offline ID
  * const localId = getAndIncrementNextShortId(teamId);
  */
@@ -21,9 +21,10 @@
 // Provides a best-effort offline sequence; server remains authoritative.
 
 const KEY_PREFIX = "bt:nextShortId:";
-const VERSION_KEY = "bt:shortIdCache:version";
-const CURRENT_VERSION = "1";
-const MAX_TEAMS = 100; // Prevent localStorage bloat
+const VERSION_KEY = "bt:shortIdCache:v2";
+const CURRENT_VERSION = "2";
+const MAX_TEAMS = 100;
+const DEFAULT_BLOCK_SIZE = 10; // Prevent localStorage bloat
 
 function getKey(teamId: string) {
 	return `${KEY_PREFIX}${teamId}`;
@@ -47,7 +48,11 @@ function checkVersion() {
 	}
 }
 
-export function seedNextShortId(teamId: string, next: number) {
+export function seedNextShortId(
+	teamId: string,
+	next: number,
+	blockSize = DEFAULT_BLOCK_SIZE,
+) {
 	if (typeof localStorage === "undefined") return;
 	checkVersion();
 	if (!Number.isFinite(next) || next < 1) return;
@@ -55,6 +60,7 @@ export function seedNextShortId(teamId: string, next: number) {
 	const current = safeParseInt(localStorage.getItem(key));
 	if (!current || current < next) {
 		localStorage.setItem(key, String(next));
+		localStorage.setItem(`${key}:block`, String(blockSize));
 		enforceMaxTeams();
 	}
 }
@@ -66,23 +72,40 @@ export function peekNextShortId(teamId: string): number | undefined {
 	return safeParseInt(localStorage.getItem(key));
 }
 
+export function getRemainingInBlock(teamId: string): number {
+	if (typeof localStorage === "undefined") return 0;
+	const key = getKey(teamId);
+	const current = safeParseInt(localStorage.getItem(key)) ?? 1;
+	const blockSize =
+		safeParseInt(localStorage.getItem(`${key}:block`)) ?? DEFAULT_BLOCK_SIZE;
+	return Math.max(0, current + blockSize - current);
+}
+
 export function getAndIncrementNextShortId(teamId: string): number {
 	if (typeof localStorage === "undefined") return 0;
 	checkVersion();
 	const key = getKey(teamId);
+	const blockKey = `${key}:block`;
 	const current = safeParseInt(localStorage.getItem(key)) ?? 1;
-	// Store next value
-	localStorage.setItem(key, String(current + 1));
-	enforceMaxTeams();
+	const blockSize =
+		safeParseInt(localStorage.getItem(blockKey)) ?? DEFAULT_BLOCK_SIZE;
+	const nextValue = current + 1;
+
+	if (nextValue >= current + blockSize) {
+		localStorage.setItem(key, String(nextValue));
+		localStorage.setItem(blockKey, String(blockSize));
+		enforceMaxTeams();
+	} else {
+		localStorage.setItem(key, String(nextValue));
+	}
 	return current;
 }
 
-/**
- * Clear cache for a specific team
- */
 export function clearTeamCache(teamId: string) {
 	if (typeof localStorage === "undefined") return;
-	localStorage.removeItem(getKey(teamId));
+	const key = getKey(teamId);
+	localStorage.removeItem(key);
+	localStorage.removeItem(`${key}:block`);
 }
 
 /**

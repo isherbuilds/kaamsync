@@ -19,7 +19,7 @@ import {
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/lib/constants/matter";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 
 import type { Route } from "./+types/tasks";

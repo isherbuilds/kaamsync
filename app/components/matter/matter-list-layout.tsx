@@ -17,7 +17,7 @@ import {
 	getListPanelSize,
 	PANEL_MAX_SIZE,
 	PANEL_MIN_SIZE,
-} from "~/lib/layout-constants";
+} from "~/lib/constants/layout";
 import { cn } from "~/lib/utils";
 
 type MatterWithStatus = Row["mattersTable"] & {

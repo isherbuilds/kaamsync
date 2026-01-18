@@ -5,8 +5,8 @@ import { toast } from "sonner";
 import { InputField, LoadingButton } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
 import { useIsPending } from "~/hooks/use-is-pending";
-import { AppInfo } from "~/lib/app-config";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/auth.client";
+import { AppInfo } from "~/lib/config/app-config";
 import { forgetPasswordSchema } from "~/lib/validations/auth";
 import type { Route } from "./+types/forget-password";
 

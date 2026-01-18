@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { 
-	prioritySchema, 
-	statusSchema, 
+import { Priority } from "~/lib/constants/matter";
+import {
+	optionalDateSchema,
+	prioritySchema,
+	statusSchema,
 	userIdSchema,
-	optionalDateSchema 
 } from "./shared";
-import { Priority } from "~/lib/matter-constants";
 
 // Matter validation schemas with shared base schemas
 const MIN_TITLE_LENGTH = 3;
@@ -63,6 +63,9 @@ export const updateMatterStatusSchema = z.object({
 
 export const addMatterCommentSchema = z.object({
 	matterId: z.string().min(1, "Matter ID is required"),
-	content: z.string().min(1, "Comment cannot be empty").max(2000, "Comment too long"),
+	content: z
+		.string()
+		.min(1, "Comment cannot be empty")
+		.max(2000, "Comment too long"),
 	mentions: z.array(z.string()).optional(),
 });

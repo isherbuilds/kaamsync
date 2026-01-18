@@ -17,9 +17,9 @@ import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
 import { ZeroInit } from "~/components/zero-init";
-import type { AuthSession } from "~/lib/auth-client";
-import { authClient } from "~/lib/auth-client";
-import { getAuthSessionSWR } from "~/lib/offline-auth";
+import type { AuthSession } from "~/lib/auth/auth.client";
+import { authClient } from "~/lib/auth/auth.client";
+import { getAuthSessionSWR } from "~/lib/auth/offline-auth";
 import { requireAuth } from "~/middlewares/auth-guard";
 import type { Route } from "./+types/layout";
 

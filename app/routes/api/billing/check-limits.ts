@@ -1,6 +1,6 @@
 import { data, type LoaderFunctionArgs } from "react-router";
-import { getServerSession } from "~/lib/auth";
-import { getBillingStatus } from "~/lib/server/billing.server";
+import { getServerSession } from "~/lib/auth/auth.server";
+import { getBillingStatus } from "~/lib/billing/billing.server";
 
 /**
  * API endpoint to check billing limits and get current usage
@@ -30,6 +30,13 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		teamMessage: status.teams.message,
 		teamOverage: status.teams.requiresPayment,
 		teamPriceCents: status.teams.priceCents,
+
+		// Matter information
+		canCreateMatter: status.matters.allowed,
+		matterMessage: status.matters.message,
+		currentMatters: status.matters.current,
+		matterLimit: status.matters.limit,
+		matterRemaining: status.matters.remaining,
 
 		// Plan information
 		plan: status.plan,

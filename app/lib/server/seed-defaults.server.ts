@@ -9,7 +9,7 @@ import {
 	teamMembershipsTable,
 	teamsTable,
 } from "~/db/schema";
-import { DEFAULT_LABELS, DEFAULT_STATUSES } from "./default-team-data";
+import { DEFAULT_LABELS, DEFAULT_STATUSES } from "../constants/default-team";
 
 type SeedOptions = {
 	orgId: string;

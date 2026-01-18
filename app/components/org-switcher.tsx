@@ -1,12 +1,7 @@
 "use client";
 
-import {
-	BlocksIcon,
-	ChevronsUpDown,
-	CogIcon,
-	HomeIcon,
-	Users2Icon,
-} from "lucide-react";
+import { BlocksIcon, ChevronsUpDown, CogIcon, Users2Icon } from "lucide-react";
+import { useCallback } from "react";
 import { Link } from "react-router";
 import {
 	DropdownMenu,
@@ -23,7 +18,7 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "~/components/ui/sidebar";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/auth.client";
 import { Avatar, AvatarFallback, AvatarImage, CustomAvatar } from "./ui/avatar";
 
 export function OrgSwitcher({
@@ -42,6 +37,16 @@ export function OrgSwitcher({
 	};
 }) {
 	const { isMobile } = useSidebar();
+
+	const handleOrgSwitch = useCallback(
+		async (e: React.MouseEvent, orgSlug: string) => {
+			e.preventDefault();
+			await authClient.organization.setActive({
+				organizationSlug: orgSlug,
+			});
+		},
+		[],
+	);
 
 	// Find the current organization based on the slug from URL
 	const currentOrg = organizations?.find(
@@ -127,14 +132,7 @@ export function OrgSwitcher({
 							<DropdownMenuItem asChild className="p-2" key={org.name}>
 								<Link
 									to={`/${org.slug}`}
-									onClick={async (e) => {
-										// Only set active if switching to a different org
-										if (currentOrg.id !== org.id) {
-											await authClient.organization.setActive({
-												organizationSlug: org.slug,
-											});
-										}
-									}}
+									onClick={(e) => handleOrgSwitch(e, org.slug)}
 									className="cursor-pointer"
 								>
 									{/* <org.logo className="size-3.5 shrink-0" /> */}

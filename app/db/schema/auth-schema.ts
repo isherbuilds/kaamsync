@@ -1,7 +1,9 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	boolean,
 	index,
+	integer,
+	jsonb,
 	pgTable,
 	text,
 	timestamp,
@@ -105,9 +107,39 @@ export const organizationsTable = pgTable(
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),
-		metadata: text("metadata"),
+
+		// ⭐ ONLY stable, frequently-queried fields as columns
+		currentMemberCount: integer("current_member_count").default(0).notNull(),
+
+		// ⭐ Performance optimization: cached plan for instant lookups (no JOIN needed)
+		planKey: text("plan_key").default("starter"),
+		planValidUntil: timestamp("plan_valid_until", { withTimezone: true }),
+
+		// ⭐ ALL other usage metrics in JSONB (no migrations needed)
+		usage: jsonb("usage")
+			.$type<{
+				// aiCreditsUsed?: number;
+				// apiCallsThisMonth?: number;
+				// workflowsCreated?: number;
+				storageBytes?: number; // Or use storageUsageCacheTable
+				[key: string]: number | undefined; // Future metrics
+			}>()
+			.default({}),
+
+		// Reset tracking (for monthly quotas)
+		usageResetAt: timestamp("usage_reset_at", { withTimezone: true }),
+
+		// Other settings
+		settings: jsonb("settings").default({}),
+		metadata: jsonb("metadata").default({}),
 	},
-	(table) => [uniqueIndex("organizationsTable_slug_uidx").on(table.slug)],
+	(table) => [
+		uniqueIndex("organizationsTable_slug_uidx").on(table.slug),
+		// Billing optimization: expression index for fast usage JSONB lookups
+		index("organizations_usage_matters_idx").on(sql`(usage->>'matters')::int`),
+		// Performance optimization: index for cached plan lookups
+		index("organizations_plan_key_idx").on(table.planKey),
+	],
 );
 
 export const membersTable = pgTable(

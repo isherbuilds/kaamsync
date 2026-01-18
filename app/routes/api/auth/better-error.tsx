@@ -6,7 +6,7 @@ import {
 } from "react-router";
 import { Button } from "~/components/ui/button";
 
-import { auth } from "~/lib/auth";
+import { auth } from "~/lib/auth/auth.server";
 
 export const meta: MetaFunction = () => [{ title: "Authentication Error" }];
 

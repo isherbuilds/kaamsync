@@ -157,28 +157,39 @@ export async function createOrganization(
 
 		const teamId = createId();
 
-		// Create Team
-		const [team] = await db
-			.insert(teamsTable)
-			.values({
-				id: teamId,
-				orgId: org.id,
-				name: wsConfig.name,
-				slug: `${config.slug}-${wsConfig.name.toLowerCase().replace(/\s+/g, "-")}`,
-				code, // New short code
-				icon: wsConfig.icon,
-				description: wsConfig.description,
-				visibility: teamVisibility.private,
-				nextShortId: 1,
-				archived: false,
-				createdAt: randomDate(oneYearAgo, now),
-				updatedAt: now,
-			})
-			.onConflictDoUpdate({
-				target: [teamsTable.orgId, teamsTable.slug],
-				set: { name: sql`EXCLUDED.name` },
-			})
-			.returning();
+		// Create Team (safe upsert without relying on DB unique index)
+		const slug = `${config.slug}-${wsConfig.name.toLowerCase().replace(/\s+/g, "-")}`;
+		const existingTeam = await db.query.teamsTable.findFirst({
+			where: and(eq(teamsTable.orgId, org.id), eq(teamsTable.slug, slug)),
+		});
+		let team;
+		if (existingTeam) {
+			// Keep behavior similar to previous ON CONFLICT: update the name
+			await db
+				.update(teamsTable)
+				.set({ name: wsConfig.name })
+				.where(eq(teamsTable.id, existingTeam.id));
+			team = existingTeam;
+		} else {
+			const [inserted] = await db
+				.insert(teamsTable)
+				.values({
+					id: teamId,
+					orgId: org.id,
+					name: wsConfig.name,
+					slug,
+					code, // New short code
+					icon: wsConfig.icon,
+					description: wsConfig.description,
+					visibility: teamVisibility.private,
+					nextShortId: 1,
+					archived: false,
+					createdAt: randomDate(oneYearAgo, now),
+					updatedAt: now,
+				})
+				.returning();
+			team = inserted;
+		}
 
 		const actualTeamId = team.id;
 

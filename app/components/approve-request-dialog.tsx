@@ -1,5 +1,5 @@
 import { useZero } from "@rocicorp/zero/react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { Button } from "./ui/button";
@@ -17,7 +17,7 @@ interface ApproveRequestDialogProps {
 	onOpenChange: (open: boolean) => void;
 	requestId: string;
 	requestTitle: string;
-	canApprove: boolean; // Security: only show dialog if user has permission
+	canApprove: boolean;
 	onApprove?: (note?: string) => Promise<void>;
 	onReject?: (note?: string) => Promise<void>;
 }
@@ -36,7 +36,7 @@ export function ApproveRequestDialog({
 	const [error, setError] = useState<string | null>(null);
 	const [note, setNote] = useState("");
 
-	async function handleApprove() {
+	const handleApprove = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -59,9 +59,9 @@ export function ApproveRequestDialog({
 		} finally {
 			setLoading(false);
 		}
-	}
+	}, [z, requestId, note, onApprove, onOpenChange]);
 
-	async function handleReject() {
+	const handleReject = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -84,28 +84,27 @@ export function ApproveRequestDialog({
 		} finally {
 			setLoading(false);
 		}
-	}
+	}, [z, requestId, note, onReject, onOpenChange]);
 
-	// Security: Don't render if user doesn't have permission
 	if (!canApprove) {
 		return null;
 	}
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-sm mx-auto">
+			<DialogContent className="mx-auto max-w-sm">
 				<DialogHeader>
 					<DialogTitle>Review Request</DialogTitle>
 				</DialogHeader>
 				<div className="space-y-4">
 					<div>
-						<div className="text-sm font-medium text-muted-foreground mb-1">
+						<div className="mb-1 font-medium text-muted-foreground text-sm">
 							Request
 						</div>
-						<div className="text-base font-medium">{requestTitle}</div>
+						<div className="font-medium text-base">{requestTitle}</div>
 					</div>
 					<div className="flex flex-col gap-2">
-						<label htmlFor="note" className="text-sm font-medium">
+						<label htmlFor="note" className="font-medium text-sm">
 							Note (optional)
 						</label>
 						<Textarea
@@ -119,7 +118,7 @@ export function ApproveRequestDialog({
 					</div>
 					{error && <div className="text-red-500 text-sm">{error}</div>}
 				</div>
-				<DialogFooter className="flex flex-col sm:flex-row gap-2">
+				<DialogFooter className="flex flex-col gap-2 sm:flex-row">
 					<Button
 						onClick={handleApprove}
 						disabled={loading}

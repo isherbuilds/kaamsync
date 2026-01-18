@@ -11,9 +11,9 @@ import { toast } from "sonner";
 import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { AppInfo } from "~/lib/app-config";
-import { auth, getServerSession } from "~/lib/auth";
-import { getOrganization } from "~/lib/server/organization.server";
+import { auth, getServerSession } from "~/lib/auth/auth.server";
+import { AppInfo } from "~/lib/config/app-config";
+import { getOrganizationsByIds } from "~/lib/server/organization.server";
 import { seedTeamDefaults } from "~/lib/server/seed-defaults.server";
 import { sanitizeSlug } from "~/lib/utils";
 import { orgOnboardingSchema } from "~/lib/validations/organization";
@@ -45,11 +45,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 	// Collect unique orgIds
 	const orgIds = [...new Set(pendingInvites.map((inv) => inv.organizationId))];
 
-	// Fetch organizations if needed
+	// Fetch organizations in bulk (optimization: N+1 -> 1 query)
 	const organizations = orgIds.length
-		? (await Promise.all(orgIds.map((id) => getOrganization(id)))).filter(
-				(org) => org !== null,
-			)
+		? await getOrganizationsByIds(orgIds)
 		: [];
 
 	const orgInfoById = Object.fromEntries(

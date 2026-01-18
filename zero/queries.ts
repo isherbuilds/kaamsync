@@ -1,6 +1,7 @@
 import { defineQueries, defineQuery } from "@rocicorp/zero";
 import z from "zod";
 import { matterType, statusType } from "~/db/helpers";
+import { planLimits } from "~/lib/billing/plans";
 import type { Context } from "./auth";
 import { zql } from "./schema";
 
@@ -181,6 +182,13 @@ export const queries = defineQueries({
 			.related("team")
 			.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
 			.limit(BULK_SYNC_LIMIT),
+	),
+
+	getOrganizationMattersCount: defineQuery(({ ctx }) =>
+		zql.mattersTable
+			.where("orgId", ctx.activeOrganizationId ?? "")
+			.where("deletedAt", "IS", null)
+			.limit(planLimits.starter.matters),
 	),
 
 	getUserAssignedMatters: defineQuery(({ ctx }) =>

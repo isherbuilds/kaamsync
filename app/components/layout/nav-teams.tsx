@@ -1,7 +1,7 @@
 "use client";
 
 import { Cog, MoreHorizontal, Plus, Users2Icon } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "react-router";
 import { StableLink } from "~/components/stable-link";
 import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
@@ -39,6 +39,10 @@ export function NavTeams({
 	const params = useParams();
 	const activeCode = params.teamCode;
 
+	const handleMobileNavigation = useCallback(() => {
+		setTimeout(() => setOpenMobile(false), 100);
+	}, [setOpenMobile]);
+
 	return (
 		<>
 			<SidebarGroup>
@@ -60,11 +64,7 @@ export function NavTeams({
 								<StableLink
 									to={`/${orgSlug}/${team.code}`}
 									prefetch="intent"
-									onClick={
-										isMobile
-											? () => setTimeout(() => setOpenMobile(false), 100)
-											: undefined
-									}
+									onClick={isMobile ? handleMobileNavigation : undefined}
 									// viewTransition
 								>
 									{team.name}

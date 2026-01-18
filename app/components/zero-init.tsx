@@ -5,8 +5,8 @@ import { must } from "shared/must";
 import { mutators } from "zero/mutators";
 import { preloadAll } from "zero/preload";
 import { schema } from "zero/schema";
-import { authClient } from "~/lib/auth-client";
-import { getAuthSessionFromLocalStorage } from "~/lib/offline-auth";
+import { authClient } from "~/lib/auth/auth.client";
+import { getAuthSessionFromLocalStorage } from "~/lib/auth/offline-auth";
 
 const cacheURL = must(
 	import.meta.env.VITE_PUBLIC_ZERO_CACHE_URL,

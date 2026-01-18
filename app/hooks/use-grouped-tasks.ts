@@ -4,7 +4,7 @@ import {
 	COMPLETED_STATUS_TYPES,
 	STATUS_TYPE_ORDER,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/lib/constants/matter";
 
 type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
 type Status = Row["statusesTable"];

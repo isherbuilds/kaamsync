@@ -7,10 +7,10 @@ import {
 	type TeamRole,
 	teamRole,
 } from "~/db/helpers";
-import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
+import { canCreateRequests, canCreateTasks } from "~/lib/auth/permissions";
 import { reservedTeamSlugs } from "~/lib/validations/organization";
-import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
-import { assertCanCreateMatter, assertCanCreateTeam } from "./billing-limits";
+import { DEFAULT_STATUSES } from "../app/lib/constants/default-team";
+import { adjustOrgMatterUsage, assertCanCreateMatter } from "./billing-limits";
 import { allocateShortID } from "./mutator-helpers";
 import {
 	assertLoggedIn,
@@ -169,7 +169,11 @@ export const mutators = defineMutators({
 		delete: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				const { canModify, membership } = await canModifyMatter(
+					tx,
+					ctx,
+					args.id,
+				);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -179,13 +183,20 @@ export const mutators = defineMutators({
 					deletedAt: Date.now(),
 					updatedAt: Date.now(),
 				});
+
+				// Update matter count cache
+				await adjustOrgMatterUsage(tx, membership.orgId, -1);
 			},
 		),
 
 		restore: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyDeletedMatter(tx, ctx, args.id);
+				const { canModify, membership } = await canModifyDeletedMatter(
+					tx,
+					ctx,
+					args.id,
+				);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -195,6 +206,9 @@ export const mutators = defineMutators({
 					deletedAt: null,
 					updatedAt: Date.now(),
 				});
+
+				// Update matter count cache
+				await adjustOrgMatterUsage(tx, membership.orgId, 1);
 			},
 		),
 
@@ -374,9 +388,6 @@ export const mutators = defineMutators({
 				if (!orgMembership) {
 					throw new Error("Not a member of this organization");
 				}
-
-				// Check billing limits before creating team
-				await assertCanCreateTeam(tx, orgMembership.organizationId);
 
 				// Find unique code by checking existing teams
 				const existingTeams = await tx.run(

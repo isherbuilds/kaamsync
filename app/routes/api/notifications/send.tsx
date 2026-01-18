@@ -3,13 +3,13 @@ import { data } from "react-router";
 import { z } from "zod";
 import { db } from "~/db";
 import { membersTable } from "~/db/schema";
+import { requireSession } from "~/lib/auth/auth-helper";
 import {
 	auditLog,
 	getRequestIP,
 	getRequestUserAgent,
-} from "~/lib/audit-logger";
-import { sendPushNotificationToUser } from "~/lib/notifications.server";
-import { requireSession } from "~/lib/server/auth-helper";
+} from "~/lib/logging/audit-logger";
+import { sendPushNotificationToUser } from "~/lib/notifications/notifications.server";
 import type { Route } from "./+types/send";
 
 const sendNotificationSchema = z.object({

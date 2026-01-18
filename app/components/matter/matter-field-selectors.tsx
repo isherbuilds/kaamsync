@@ -31,7 +31,7 @@ import {
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/lib/constants/matter";
 import { cn } from "~/lib/utils";
 
 // This type covers both Org Members and Team Members query shapes

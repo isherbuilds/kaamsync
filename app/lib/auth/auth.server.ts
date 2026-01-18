@@ -8,17 +8,19 @@ import {
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
+import { and, eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
-import { AuthService } from "~/lib/server/auth-service";
+import { AuthService } from "~/lib/auth/auth-service";
 import {
 	billingConfig,
 	dodoPayments,
-	handleBillingWebhook,
-} from "~/lib/server/billing.server";
-import { env, isProduction } from "~/lib/server/env-validation.server";
+	getOrganizationSubscription,
+} from "~/lib/billing/billing.server";
+import { env, isProduction } from "~/lib/config/env-validation.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
+// import { logger } from "../logging/logger";
 
 export const auth = betterAuth({
 	experimental: {
@@ -130,21 +132,21 @@ export const auth = betterAuth({
 
 			sendInvitationEmail: AuthService.sendInvitationEmail,
 			organizationHooks: {
-				afterAcceptInvitation: async ({ member }) => {
-					if (member.organizationId) {
-						await AuthService.handleMembershipChange(member.organizationId);
-					}
-				},
-				afterAddMember: async ({ member }) => {
-					if (member.organizationId) {
-						await AuthService.handleMembershipChange(member.organizationId);
-					}
-				},
-				afterRemoveMember: async ({ member }) => {
-					if (member.organizationId) {
-						await AuthService.handleMembershipChange(member.organizationId);
-					}
-				},
+				// afterAcceptInvitation: async ({ member }) => {
+				// 	if (member.organizationId) {
+				// 		await AuthService.handleMembershipChange(member.organizationId);
+				// 	}
+				// },
+				// afterAddMember: async ({ member }) => {
+				// 	if (member.organizationId) {
+				// 		await AuthService.handleMembershipChange(member.organizationId);
+				// 	}
+				// },
+				// afterRemoveMember: async ({ member }) => {
+				// 	if (member.organizationId) {
+				// 		await AuthService.handleMembershipChange(member.organizationId);
+				// 	}
+				// },
 			},
 		}),
 		// Dodo Payments billing integration
@@ -196,8 +198,43 @@ export const auth = betterAuth({
 							usage(),
 							webhooks({
 								webhookKey: billingConfig.webhookSecret,
-								onPayload: async (payload: any) => {
-									await handleBillingWebhook(payload);
+								onPayload: async (payload) => {
+									// logger.info("Received Dodo Payments webhook payload", {
+									// 	payload,
+									// });
+									// console.log("Received Dodo Payments webhook:", payload);
+									// await handleBillingWebhook(payload);
+								},
+								onSubscriptionActive: async (payload) => {
+									console.log("Subscription active webhook:", payload);
+
+									const subscription = await db
+										.select()
+										.from(schema.subscriptionsTable)
+										.where(
+											and(
+												eq(
+													schema.subscriptionsTable.id,
+													payload.data.customer.customer_id,
+												),
+												eq(
+													schema.subscriptionsTable.organizationId,
+													payload.data.metadata?.organizationId,
+												),
+											),
+										);
+
+									if (subscription.length === 0) {
+										// No matching subscription found
+										console.log(
+											"No matching subscription found for payload:",
+											payload,
+										);
+										return;
+									}
+								},
+								onSubscriptionExpired: async (payload) => {
+									console.log("Subscription expired webhook:", payload);
 								},
 							}),
 						],

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { safeError, warn } from "~/lib/logger";
+import { safeError, warn } from "~/lib/logging/logger";
 
 export function usePushNotifications() {
 	const [isSupported, setIsSupported] = useState(false);

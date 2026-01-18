@@ -5,9 +5,10 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import { z } from "zod";
-import { getServerSession } from "~/lib/auth";
+import { getServerSession } from "~/lib/auth/auth.server";
 import {
 	canUploadFile,
+	createBatchPresignedUploads,
 	createPresignedUpload,
 	deleteAttachment,
 	getOrganizationStorageLimits,
@@ -15,7 +16,7 @@ import {
 	isStorageConfigured,
 	saveAttachment,
 	validateFileType,
-} from "~/lib/server/storage.server";
+} from "~/lib/infra/storage.server";
 
 // =============================================================================
 // VALIDATION SCHEMAS
@@ -41,6 +42,32 @@ const saveAttachmentSchema = z.object({
 
 const deleteAttachmentSchema = z.object({
 	attachmentId: z.string().min(1),
+});
+
+const batchPresignedUrlSchema = z.object({
+	files: z.array(
+		z.object({
+			contentType: z.string().min(1),
+			fileSize: z
+				.number()
+				.int()
+				.positive()
+				.max(1000 * 1024 * 1024),
+			fileName: z.string().min(1).max(255),
+		}),
+	),
+});
+
+const batchSaveSchema = z.object({
+	attachments: z.array(
+		z.object({
+			matterId: z.string().min(1),
+			storageKey: z.string().min(1),
+			fileName: z.string().min(1).max(500),
+			fileType: z.string().min(1).max(100),
+			fileSize: z.number().int().positive(),
+		}),
+	),
 });
 
 // =============================================================================
@@ -153,6 +180,42 @@ export async function action({ request }: ActionFunctionArgs) {
 			});
 		}
 
+		case "batch-presigned-url": {
+			const parsed = batchPresignedUrlSchema.safeParse(body);
+			if (!parsed.success) {
+				throw data(
+					{ error: "Invalid request", details: parsed.error },
+					{ status: 400 },
+				);
+			}
+
+			try {
+				const fileRequests = parsed.data.files.map((f) => ({
+					contentType: f.contentType,
+					fileSizeBytes: f.fileSize,
+					fileName: f.fileName,
+				}));
+
+				const result = await createBatchPresignedUploads(orgId, fileRequests);
+
+				return data({
+					files: result.files.map((f) => ({
+						uploadUrl: f.uploadUrl,
+						fileKey: f.fileKey,
+						publicUrl: f.publicUrl,
+						fileName: f.originalRequest.fileName,
+					})),
+					totalSize: result.totalSize,
+				});
+			} catch (error) {
+				const message =
+					error instanceof Error
+						? error.message
+						: "Failed to generate presigned URLs";
+				throw data({ error: message }, { status: 400 });
+			}
+		}
+
 		case "save": {
 			const parsed = saveAttachmentSchema.safeParse(body);
 			if (!parsed.success) {
@@ -194,6 +257,36 @@ export async function action({ request }: ActionFunctionArgs) {
 					error instanceof Error
 						? error.message
 						: "Failed to delete attachment";
+				throw data({ error: message }, { status: 403 });
+			}
+		}
+
+		case "batch-save": {
+			const parsed = batchSaveSchema.safeParse(body);
+			if (!parsed.success) {
+				throw data(
+					{ error: "Invalid request", details: parsed.error },
+					{ status: 400 },
+				);
+			}
+
+			try {
+				const results = await Promise.all(
+					parsed.data.attachments.map((a) =>
+						saveAttachment({
+							...a,
+							uploaderId: userId,
+							orgId,
+						}),
+					),
+				);
+
+				return data({
+					ids: results.map((r) => r.id),
+				});
+			} catch (error) {
+				const message =
+					error instanceof Error ? error.message : "Failed to save attachments";
 				throw data({ error: message }, { status: 403 });
 			}
 		}

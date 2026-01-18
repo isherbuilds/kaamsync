@@ -4,19 +4,21 @@ import { createId } from "@paralleldrive/cuid2";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import {
+	AlertCircle,
 	GitPullRequest,
 	ListTodo,
 	Paperclip,
 	SquarePen,
 	X,
 } from "lucide-react";
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { useAttachments } from "~/hooks/use-attachments";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
-import { Priority, type PriorityValue } from "~/lib/matter-constants";
-import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
+import { Priority, type PriorityValue } from "~/lib/constants/matter";
+import { getAndIncrementNextShortId } from "~/lib/infra/short-id-cache";
 import { cn } from "~/lib/utils";
 import { createMatterSchema } from "~/lib/validations/matter";
 import { matterType, teamRole } from "../../db/helpers";
@@ -39,6 +41,7 @@ interface MatterDialogProps {
 	type: "task" | "request";
 	teamId: string;
 	teamCode: string;
+	orgId: string;
 	statuses: readonly Row["statusesTable"][];
 	teamMembers: readonly MemberSelectorItem[];
 	triggerButton?: React.ReactNode;
@@ -49,6 +52,7 @@ export const MatterDialog = memo(
 		type,
 		teamId,
 		teamCode,
+		orgId,
 		statuses,
 		teamMembers,
 		triggerButton,
@@ -59,6 +63,13 @@ export const MatterDialog = memo(
 		const [files, setFiles] = useState<File[]>([]);
 		const { uploadFile } = useAttachments();
 		const fileInputRef = useRef<HTMLInputElement>(null);
+		const [limitStatus, setLimitStatus] = useState<{
+			canCreateMatter: boolean;
+			currentMatters: number;
+			matterLimit: number;
+			matterRemaining: number;
+			matterMessage: string | null;
+		} | null>(null);
 
 		const isRequest = type === "request";
 		const Icon = isRequest ? GitPullRequest : ListTodo;
@@ -66,6 +77,9 @@ export const MatterDialog = memo(
 		const accentColor = isRequest ? "text-brand-requests" : "text-brand-tasks";
 		const submitLabel = isRequest ? "Submit Request" : "Create Task";
 		const submittingLabel = isRequest ? "Submitting..." : "Creating...";
+
+		const canSubmit = limitStatus === null || limitStatus.canCreateMatter;
+		const showWarning = limitStatus !== null && !limitStatus.canCreateMatter;
 
 		// Memoize filtered members to prevent recalculation on every render
 		const filteredMembers = useMemo(
@@ -78,6 +92,32 @@ export const MatterDialog = memo(
 
 		// Pre-fetches a block of Short IDs from the server when dialog opens
 		useShortIdSeeder(teamId, open);
+
+		const fetchLimitStatus = useCallback(async () => {
+			try {
+				const response = await fetch("/api/billing/check-limits");
+				if (response.ok) {
+					const data = await response.json();
+					setLimitStatus({
+						canCreateMatter: data.canCreateMatter,
+						currentMatters: data.currentMatters,
+						matterLimit: data.matterLimit,
+						matterRemaining: data.matterRemaining,
+						matterMessage: data.matterMessage,
+					});
+				}
+			} catch (error) {
+				console.error("Failed to fetch matter limit status:", error);
+			}
+		}, []);
+
+		useEffect(() => {
+			if (open) {
+				fetchLimitStatus();
+			} else {
+				setLimitStatus(null);
+			}
+		}, [open, fetchLimitStatus]);
 
 		const [form, fields] = useForm({
 			id: `create-matter-${type}`,
@@ -201,6 +241,21 @@ export const MatterDialog = memo(
 					<DialogDescription className="sr-only">
 						{isRequest ? "Create a new approval request" : "Create a new task"}
 					</DialogDescription>
+
+					{showWarning && (
+						<div className="flex items-center gap-2 border-b bg-destructive/10 p-4 text-destructive text-sm">
+							<AlertCircle className="size-4 shrink-0" />
+							<div className="flex-1">
+								{limitStatus?.matterMessage ||
+									`Matter limit reached (${limitStatus?.currentMatters}/${limitStatus?.matterLimit}).`}
+							</div>
+							<Link to="/settings/billing">
+								<Button size="sm" variant="destructive">
+									Upgrade
+								</Button>
+							</Link>
+						</div>
+					)}
 
 					<form {...getFormProps(form)} className="flex flex-col bg-background">
 						<div className="space-y-4 p-6">
@@ -341,7 +396,7 @@ export const MatterDialog = memo(
 										"h-8 px-4 font-medium",
 										isRequest && "bg-brand-requests hover:bg-brand-requests/90",
 									)}
-									disabled={isSubmitting}
+									disabled={isSubmitting || !canSubmit}
 								>
 									{isSubmitting ? submittingLabel : submitLabel}
 								</Button>

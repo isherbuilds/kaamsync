@@ -14,12 +14,10 @@ import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
 	type BillingInterval,
 	canCheckout,
-	getMonthlyEquivalent,
 	getPrice,
-	getYearlySavings,
 	type ProductKey,
 	products,
-} from "~/lib/billing";
+} from "~/lib/billing/plans";
 import { cn } from "~/lib/utils";
 
 interface PlanCardProps {
@@ -66,14 +64,7 @@ export function PlanCard({
 
 	// Calculate display price
 	const displayPrice =
-		interval === "yearly" && yearlyPrice
-			? getMonthlyEquivalent(yearlyPrice)
-			: monthlyPrice;
-
-	const savings =
-		monthlyPrice && yearlyPrice
-			? getYearlySavings(monthlyPrice, yearlyPrice)
-			: 0;
+		interval === "yearly" && yearlyPrice ? yearlyPrice : monthlyPrice;
 
 	const handleClick = () => {
 		if (isEnterprise && onContactSales) {
@@ -133,7 +124,7 @@ export function PlanCard({
 				<div className="flex items-baseline gap-1">
 					{price === null ? (
 						<span className="font-bold text-3xl">Custom</span>
-					) : !displayPrice || displayPrice === 0 ? (
+					) : !displayPrice ? (
 						<span className="font-bold text-4xl">Free</span>
 					) : (
 						<>
@@ -144,9 +135,9 @@ export function PlanCard({
 				</div>
 
 				{/* Yearly savings badge */}
-				{interval === "yearly" && savings > 0 && plan !== "starter" && (
+				{interval === "yearly" && (
 					<Badge variant="secondary" className="text-xs">
-						Save {savings}% with yearly billing
+						2 months free
 					</Badge>
 				)}
 

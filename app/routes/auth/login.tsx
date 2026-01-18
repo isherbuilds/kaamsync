@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { InputField, LoadingButton, PasswordField } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
 import { Button } from "~/components/ui/button";
-import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/lib/app-config";
-import { type AuthSession, authClient } from "~/lib/auth-client";
-import { saveAuthSessionToLocalStorage } from "~/lib/offline-auth";
+import { type AuthSession, authClient } from "~/lib/auth/auth.client";
+import { saveAuthSessionToLocalStorage } from "~/lib/auth/offline-auth";
+import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/lib/config/app-config";
 import { signInSchema } from "~/lib/validations/auth";
 import type { Route } from "./+types/login";
 

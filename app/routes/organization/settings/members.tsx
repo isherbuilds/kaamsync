@@ -46,7 +46,7 @@ import {
 import { orgRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 // Auth & Hooks
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/auth.client";
 
 const inviteSchema = z.object({
 	email: z.email("Please enter a valid email"),

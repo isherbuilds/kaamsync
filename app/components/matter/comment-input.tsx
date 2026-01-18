@@ -1,6 +1,6 @@
 import { useZero } from "@rocicorp/zero/react";
 import { Paperclip } from "lucide-react";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { Button } from "~/components/ui/button";
@@ -23,43 +23,50 @@ export function CommentInput({ matterId }: CommentInputProps) {
 
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	// Sanitize comment: trim, collapse whitespace, enforce max length
-	const sanitizeComment = (text: string) => {
+	const sanitizeComment = useCallback((text: string) => {
 		return text.trim().slice(0, 5000);
-	};
+	}, []);
 
-	const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const files = e.target.files;
-		if (!files || files.length === 0) return;
-		await uploadFile(files[0], matterId);
-		e.target.value = "";
-	};
+	const handleFileSelect = useCallback(
+		async (e: React.ChangeEvent<HTMLInputElement>) => {
+			const files = e.target.files;
+			if (!files || files.length === 0) return;
+			await uploadFile(files[0], matterId);
+			e.target.value = "";
+		},
+		[uploadFile, matterId],
+	);
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		const sanitized = sanitizeComment(content);
-		if (!sanitized || isSubmitting) return;
-
-		setIsSubmitting(true);
-		z.mutate(mutators.timeline.addComment({ matterId, content: sanitized }))
-			.server.then(() => {
-				setContent("");
-				toast.success("Comment added");
-			})
-			.catch((err) => {
-				toast.error("Failed to add comment");
-				console.error("Comment mutation failed:", err);
-			})
-			.finally(() => setIsSubmitting(false));
-	};
-
-	// Support Cmd/Ctrl+Enter to submit
-	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-		if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+	const handleSubmit = useCallback(
+		(e: React.FormEvent) => {
 			e.preventDefault();
-			handleSubmit(e);
-		}
-	};
+			const sanitized = sanitizeComment(content);
+			if (!sanitized || isSubmitting) return;
+
+			setIsSubmitting(true);
+			z.mutate(mutators.timeline.addComment({ matterId, content: sanitized }))
+				.server.then(() => {
+					setContent("");
+					toast.success("Comment added");
+				})
+				.catch((err) => {
+					toast.error("Failed to add comment");
+					console.error("Comment mutation failed:", err);
+				})
+				.finally(() => setIsSubmitting(false));
+		},
+		[content, isSubmitting, matterId, sanitizeComment, z],
+	);
+
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+				e.preventDefault();
+				handleSubmit(e);
+			}
+		},
+		[handleSubmit],
+	);
 
 	return (
 		<form onSubmit={handleSubmit} className="relative">

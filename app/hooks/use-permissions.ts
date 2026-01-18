@@ -9,7 +9,7 @@ import {
 	canManageMembers,
 	canManageTeam,
 	type TeamRole,
-} from "~/lib/permissions";
+} from "~/lib/auth/permissions";
 import { useOrgLoaderData } from "./use-loader-data";
 
 export type UsePermissionsResult = {

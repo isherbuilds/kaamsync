@@ -10,7 +10,6 @@
  * - usagePricing - Overage pricing in cents (memberSeat, teamCreated, storageGb)
  * - products - Product definitions with features, pricing, and metadata
  * - getPrice() - Get price for plan/interval
- * - getMonthlyEquivalent() - Convert yearly to monthly equivalent
  * - canCheckout() - Check if plan allows checkout
  * - getPlanByProductId() - Map Dodo product ID to plan key
  * - getMemberPrice() - Get per-member price for plan
@@ -28,7 +27,7 @@ export const planLimits = {
 	starter: {
 		members: 3,
 		teams: 5,
-		matters: 250,
+		matters: 400,
 		storageGb: 0.5,
 		maxFileSizeMb: 10,
 		maxFiles: 50,
@@ -169,22 +168,6 @@ export const getPrice = (
 	interval === "yearly"
 		? products[plan].yearlyPrice
 		: products[plan].monthlyPrice;
-
-export const getMonthlyEquivalent = (yearlyPrice: number): number =>
-	Math.round(yearlyPrice / 12);
-
-export const getYearlySavings = (
-	monthlyPrice: number,
-	yearlyPrice: number,
-): number => {
-	const yearlyFromMonthly = monthlyPrice * 12;
-	if (yearlyFromMonthly === 0) {
-		return 0;
-	}
-	return Math.round(
-		((yearlyFromMonthly - yearlyPrice) / yearlyFromMonthly) * 100,
-	);
-};
 
 export const canCheckout = (plan: ProductKey): boolean =>
 	plan === "growth" || plan === "pro";

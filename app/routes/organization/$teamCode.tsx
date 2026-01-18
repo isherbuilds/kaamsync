@@ -32,7 +32,7 @@ import {
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/lib/constants/matter";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 import type { Route } from "./+types/$teamCode";
 
@@ -49,15 +49,18 @@ type ActionProps = {
 	canRequest: boolean;
 	teamId: string;
 	teamCode: string;
+	orgId: string;
 	taskStatuses: readonly Status[];
 	requestStatuses: readonly Status[];
 	members: readonly Row["teamMembershipsTable"][];
 };
 
 export default function TeamIndex() {
-	const { orgSlug } = useOrgLoaderData();
+	const { orgSlug, authSession } = useOrgLoaderData();
 	const { teamCode } = useParams();
 	const z = useZero();
+
+	const orgId = authSession.session.activeOrganizationId ?? "";
 
 	// 1. Data Fetching
 	const [teams] = useQuery(queries.getTeamsList(), CACHE_NAV);
@@ -130,21 +133,19 @@ export default function TeamIndex() {
 		[z, orgSlug],
 	);
 
-	// Filter statuses for task-only view (exclude request statuses)
-	const taskStatuses = useMemo(
-		() =>
-			statuses.filter(
-				(s) => s.type !== "pending_approval" && s.type !== "rejected",
-			),
-		[statuses],
-	);
-	const requestStatuses = useMemo(
-		() =>
-			statuses.filter(
-				(s) => s.type === "pending_approval" || s.type === "rejected",
-			),
-		[statuses],
-	);
+	// Filter statuses for task-only view (exclude request statuses) - single-pass optimization
+	const { taskStatuses, requestStatuses } = useMemo(() => {
+		const task: typeof statuses = [];
+		const request: typeof statuses = [];
+		for (const s of statuses) {
+			if (s.type === "pending_approval" || s.type === "rejected") {
+				request.push(s);
+			} else {
+				task.push(s);
+			}
+		}
+		return { taskStatuses: task, requestStatuses: request };
+	}, [statuses]);
 
 	if (!team) return null;
 
@@ -157,6 +158,7 @@ export default function TeamIndex() {
 				canRequest={canCreateRequests}
 				teamId={team.id}
 				teamCode={team.code}
+				orgId={orgId}
 				taskStatuses={taskStatuses}
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
@@ -171,6 +173,7 @@ export default function TeamIndex() {
 						canRequest={canCreateRequests}
 						teamId={team.id}
 						teamCode={team.code}
+						orgId={orgId}
 						taskStatuses={taskStatuses}
 						requestStatuses={
 							requestStatuses.length > 0 ? requestStatuses : taskStatuses
@@ -218,6 +221,7 @@ const Header = memo(
 		canRequest,
 		teamId,
 		teamCode,
+		orgId,
 		taskStatuses,
 		requestStatuses,
 		members,
@@ -239,6 +243,7 @@ const Header = memo(
 						type="task"
 						teamId={teamId}
 						teamCode={teamCode}
+						orgId={orgId || ""}
 						statuses={taskStatuses}
 						teamMembers={members}
 					/>
@@ -248,6 +253,7 @@ const Header = memo(
 						type="request"
 						teamId={teamId}
 						teamCode={teamCode}
+						orgId={orgId || ""}
 						statuses={requestStatuses}
 						teamMembers={members}
 					/>
@@ -418,6 +424,7 @@ const TeamEmptyState = memo(
 		canRequest,
 		teamId,
 		teamCode,
+		orgId,
 		taskStatuses,
 		requestStatuses,
 		members,
@@ -434,6 +441,7 @@ const TeamEmptyState = memo(
 							type="task"
 							teamId={teamId}
 							teamCode={teamCode}
+							orgId={orgId || ""}
 							statuses={taskStatuses}
 							teamMembers={members}
 						/>
@@ -443,6 +451,7 @@ const TeamEmptyState = memo(
 							type="request"
 							teamId={teamId}
 							teamCode={teamCode}
+							orgId={orgId || ""}
 							statuses={requestStatuses}
 							teamMembers={members}
 							triggerButton={

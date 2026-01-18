@@ -12,7 +12,7 @@ import {
 	planLimits,
 	products,
 	usagePricing,
-} from "~/lib/billing";
+} from "~/lib/billing/plans";
 import { cn } from "~/lib/utils";
 
 interface UsageData {
@@ -215,7 +215,7 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 				/>
 
 				<UsageItem
-					label="Tasks & Requests"
+					label="Matters"
 					current={usage.matters ?? 0}
 					limit={limits.matters ?? -1}
 					icon={Layers}
@@ -226,10 +226,9 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 					current={usage.storageGb ?? 0}
 					limit={limits.storageGb}
 					icon={HardDrive}
-					unit="GB"
 					overageRate={pricing?.storageGb}
 					formatValue={(val) =>
-						val < 1 ? `${Math.round(val * 1000)}MB` : `${val.toFixed(1)}GB`
+						val < 1 ? `${Math.round(val * 1000)} MB` : `${val.toFixed(1)} GB`
 					}
 				/>
 

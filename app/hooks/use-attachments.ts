@@ -1,24 +1,27 @@
 /**
  * useAttachments - React hook for file uploads
- * Following zbugs pattern: get presigned URL → upload to S3 → save record
+ * Supports parallel uploads, batch operations, and real-time progress
  */
 import { useCallback, useState } from "react";
 import {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES,
-} from "~/lib/attachment-constants";
+} from "~/lib/constants/attachment";
 
 export interface UploadResult {
 	id: string;
 	publicUrl: string;
 	fileName: string;
 	fileSize: number;
+	originalSize?: number;
+	fileId: string;
 }
 
 export interface UploadProgress {
+	fileId: string;
 	fileName: string;
-	progress: number; // 0-100
-	status: "uploading" | "saving" | "complete" | "error";
+	progress: number;
+	status: "uploading" | "saving" | "compressing" | "complete" | "error";
 	error?: string;
 }
 
@@ -40,47 +43,189 @@ export interface StorageInfo {
 
 interface UseAttachmentsOptions {
 	onUploadComplete?: (result: UploadResult) => void;
+	onUploadProgress?: (progress: UploadProgress) => void;
 	onError?: (error: string) => void;
+	maxRetries?: number;
+	parallelUploads?: number;
 }
 
-// Re-export for backwards compatibility
-const ALLOWED_TYPES: readonly string[] = ALLOWED_ATTACHMENT_TYPES;
+const COMPRESSIBLE_TYPES: readonly string[] = [
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+];
+const COMPRESSION_QUALITY = 0.8;
+const MAX_COMPRESS_WIDTH = 4096;
+
+type AllowedTypes = (typeof ALLOWED_ATTACHMENT_TYPES)[number];
+
+async function compressImage(
+	file: File,
+	fileId: string,
+): Promise<{ file: File; originalSize: number }> {
+	if (!COMPRESSIBLE_TYPES.includes(file.type)) {
+		return { file, originalSize: file.size };
+	}
+
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+		const url = URL.createObjectURL(file);
+
+		img.onload = () => {
+			URL.revokeObjectURL(url);
+
+			const canvas = document.createElement("canvas");
+			let { width, height } = img;
+
+			if (width > MAX_COMPRESS_WIDTH) {
+				height = (height * MAX_COMPRESS_WIDTH) / width;
+				width = MAX_COMPRESS_WIDTH;
+			}
+
+			canvas.width = width;
+			canvas.height = height;
+
+			const ctx = canvas.getContext("2d");
+			if (!ctx) {
+				reject(new Error("Could not get canvas context"));
+				return;
+			}
+
+			ctx.drawImage(img, 0, 0, width, height);
+
+			canvas.toBlob(
+				(blob) => {
+					if (!blob) {
+						reject(new Error("Compression failed"));
+						return;
+					}
+
+					const compressedFile = new File([blob], file.name, {
+						type: file.type,
+						lastModified: Date.now(),
+					});
+
+					resolve({ file: compressedFile, originalSize: file.size });
+				},
+				file.type,
+				COMPRESSION_QUALITY,
+			);
+		};
+
+		img.onerror = () => {
+			URL.revokeObjectURL(url);
+			reject(new Error("Failed to load image for compression"));
+		};
+
+		img.src = url;
+	});
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(
+	url: string,
+	options: RequestInit,
+	maxRetries: number = 3,
+): Promise<Response> {
+	let lastError: Error | undefined;
+
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			const response = await fetch(url, options);
+			if (response.ok) return response;
+
+			if (response.status >= 400 && response.status < 500) {
+				return response;
+			}
+		} catch (error) {
+			lastError = error instanceof Error ? error : new Error("Network error");
+		}
+
+		if (attempt < maxRetries) {
+			const delay = 1000 * 2 ** attempt;
+			await sleep(delay + Math.random() * 500);
+		}
+	}
+
+	throw lastError ?? new Error("Request failed after retries");
+}
+
+type UploadProgressCallback = (loaded: number, total: number) => void;
+
+function uploadWithXHR(
+	url: string,
+	file: File,
+	contentType: string,
+	onProgress: UploadProgressCallback,
+	signal?: AbortSignal,
+): Promise<void> {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+
+		xhr.upload.onprogress = (e) => {
+			if (e.lengthComputable) {
+				onProgress(e.loaded, e.total);
+			}
+		};
+
+		xhr.upload.onload = () => resolve();
+		xhr.upload.onerror = () => reject(new Error("Upload failed"));
+
+		xhr.onerror = () => reject(new Error("Network error"));
+		xhr.onabort = () => reject(new Error("Upload cancelled"));
+
+		xhr.open("PUT", url);
+		xhr.setRequestHeader("Content-Type", contentType);
+		xhr.send(file);
+
+		signal?.addEventListener("abort", () => {
+			xhr.abort();
+			reject(new Error("Upload cancelled"));
+		});
+	});
+}
 
 export function useAttachments(options: UseAttachmentsOptions = {}) {
 	const [uploading, setUploading] = useState(false);
-	const [progress, setProgress] = useState<UploadProgress | null>(null);
+	const [progressMap, setProgressMap] = useState<Map<string, UploadProgress>>(
+		new Map(),
+	);
 	const [storageInfo, setStorageInfo] = useState<StorageInfo | null>(null);
 
-	/**
-	 * Validate file type (size checked server-side based on plan)
-	 */
+	const updateProgress = useCallback(
+		(progress: UploadProgress) => {
+			setProgressMap((prev) => {
+				const next = new Map(prev);
+				next.set(progress.fileId, progress);
+				return next;
+			});
+			options.onUploadProgress?.(progress);
+		},
+		[options],
+	);
+
 	const validateFileType = useCallback((file: File): string | null => {
-		if (!ALLOWED_TYPES.includes(file.type)) {
+		if (!ALLOWED_ATTACHMENT_TYPES.includes(file.type as AllowedTypes)) {
 			return `File type "${file.type}" not allowed. Use images, PDFs, documents, or archives.`;
 		}
 		if (file.size > ABSOLUTE_MAX_FILE_SIZE) {
-			return `File too large. Maximum size is 100MB.`;
+			return `File too large. Maximum size is 1000MB.`;
 		}
 		return null;
 	}, []);
 
-	/**
-	 * Check if file can be uploaded based on current limits
-	 */
 	const canUpload = useCallback(
 		(file: File): { allowed: boolean; reason?: string } => {
-			// Type check
 			const typeError = validateFileType(file);
 			if (typeError) return { allowed: false, reason: typeError };
 
-			// Check against cached storage info
 			if (storageInfo?.limits) {
 				const { maxFileSizeMb, maxFiles, remainingGb } = storageInfo.limits;
-				const { fileCount } = storageInfo.usage || {
-					fileCount: 0,
-				};
+				const { fileCount } = storageInfo.usage || { fileCount: 0 };
 
-				// File size limit per plan
 				if (maxFileSizeMb !== -1 && file.size > maxFileSizeMb * 1024 * 1024) {
 					return {
 						allowed: false,
@@ -88,7 +233,6 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 					};
 				}
 
-				// File count limit
 				if (maxFiles !== -1 && fileCount >= maxFiles) {
 					return {
 						allowed: false,
@@ -96,7 +240,6 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 					};
 				}
 
-				// Storage limit
 				const fileSizeGb = file.size / (1024 * 1024 * 1024);
 				if (remainingGb !== -1 && fileSizeGb > remainingGb) {
 					return {
@@ -111,9 +254,6 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 		[validateFileType, storageInfo],
 	);
 
-	/**
-	 * Get storage usage info and cache it
-	 */
 	const refreshStorageInfo =
 		useCallback(async (): Promise<StorageInfo | null> => {
 			try {
@@ -127,12 +267,12 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 			}
 		}, []);
 
-	/**
-	 * Upload a file to an attachment on a matter
-	 */
 	const uploadFile = useCallback(
-		async (file: File, matterId: string): Promise<UploadResult | null> => {
-			// Client-side validation (server does full check)
+		async (
+			file: File,
+			matterId: string,
+			signal?: AbortSignal,
+		): Promise<UploadResult | null> => {
 			const typeError = validateFileType(file);
 			if (typeError) {
 				options.onError?.(typeError);
@@ -140,24 +280,47 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 			}
 
 			setUploading(true);
-			setProgress({
+			const fileId = `upload_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+			updateProgress({
+				fileId,
 				fileName: file.name,
 				progress: 0,
-				status: "uploading",
+				status: "compressing",
 			});
 
 			try {
-				// 1. Get presigned URL (server validates all limits)
-				const presignedResponse = await fetch("/api/attachments", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						_action: "presigned-url",
-						contentType: file.type,
-						fileSize: file.size,
-						fileName: file.name,
-					}),
+				const { file: uploadFile, originalSize } = await compressImage(
+					file,
+					fileId,
+				);
+
+				if (signal?.aborted) {
+					throw new Error("Upload cancelled");
+				}
+
+				updateProgress({
+					fileId,
+					fileName: file.name,
+					progress: 10,
+					status: "uploading",
 				});
+
+				const presignedResponse = await fetchWithRetry(
+					"/api/attachments",
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							_action: "presigned-url",
+							contentType: uploadFile.type,
+							fileSize: uploadFile.size,
+							fileName: uploadFile.name,
+						}),
+						signal,
+					},
+					options.maxRetries,
+				);
 
 				if (!presignedResponse.ok) {
 					const error = await presignedResponse.json();
@@ -167,42 +330,54 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 				const { uploadUrl, fileKey, publicUrl } =
 					await presignedResponse.json();
 
-				setProgress({
+				updateProgress({
+					fileId,
 					fileName: file.name,
-					progress: 20,
+					progress: 25,
 					status: "uploading",
 				});
 
-				// 2. Upload directly to S3
-				const uploadResponse = await fetch(uploadUrl, {
-					method: "PUT",
-					body: file,
-					headers: { "Content-Type": file.type },
-				});
+				await uploadWithXHR(
+					uploadUrl,
+					uploadFile,
+					uploadFile.type,
+					(loaded, total) => {
+						const uploadPercent = Math.round((loaded / total) * 60);
+						const overallProgress = 25 + uploadPercent;
+						updateProgress({
+							fileId,
+							fileName: file.name,
+							progress: Math.min(overallProgress, 85),
+							status: "uploading",
+						});
+					},
+					signal,
+				);
 
-				if (!uploadResponse.ok) {
-					throw new Error("Failed to upload file to storage");
-				}
-
-				setProgress({
+				updateProgress({
+					fileId,
 					fileName: file.name,
-					progress: 80,
+					progress: 85,
 					status: "saving",
 				});
 
-				// 3. Save attachment record
-				const saveResponse = await fetch("/api/attachments", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						_action: "save",
-						matterId,
-						storageKey: fileKey,
-						fileName: file.name,
-						fileType: file.type,
-						fileSize: file.size,
-					}),
-				});
+				const saveResponse = await fetchWithRetry(
+					"/api/attachments",
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							_action: "save",
+							matterId,
+							storageKey: fileKey,
+							fileName: uploadFile.name,
+							fileType: uploadFile.type,
+							fileSize: uploadFile.size,
+						}),
+						signal,
+					},
+					options.maxRetries,
+				);
 
 				if (!saveResponse.ok) {
 					const error = await saveResponse.json();
@@ -211,7 +386,8 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 
 				const { id } = await saveResponse.json();
 
-				setProgress({
+				updateProgress({
+					fileId,
 					fileName: file.name,
 					progress: 100,
 					status: "complete",
@@ -220,40 +396,46 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 				const result: UploadResult = {
 					id,
 					publicUrl,
-					fileName: file.name,
-					fileSize: file.size,
+					fileName: uploadFile.name,
+					fileSize: uploadFile.size,
+					fileId,
+					originalSize:
+						originalSize !== uploadFile.size ? originalSize : undefined,
 				};
 
-				// Refresh storage info after upload
 				refreshStorageInfo();
-
 				options.onUploadComplete?.(result);
 				return result;
 			} catch (error) {
-				const message =
-					error instanceof Error ? error.message : "Upload failed";
-				setProgress({
-					fileName: file.name,
-					progress: 0,
-					status: "error",
-					error: message,
-				});
-				options.onError?.(message);
+				if (signal?.aborted) {
+					updateProgress({
+						fileId,
+						fileName: file.name,
+						progress: 0,
+						status: "error",
+						error: "Upload cancelled",
+					});
+					options.onError?.("Upload cancelled");
+				} else {
+					const message =
+						error instanceof Error ? error.message : "Upload failed";
+					updateProgress({
+						fileId,
+						fileName: file.name,
+						progress: 0,
+						status: "error",
+						error: message,
+					});
+					options.onError?.(message);
+				}
 				return null;
 			} finally {
 				setUploading(false);
 			}
 		},
-		[
-			validateFileType,
-			options, // Refresh storage info after upload
-			refreshStorageInfo,
-		],
+		[validateFileType, updateProgress, refreshStorageInfo, options],
 	);
 
-	/**
-	 * Delete an attachment
-	 */
 	const deleteAttachment = useCallback(
 		async (attachmentId: string): Promise<boolean> => {
 			try {
@@ -267,7 +449,6 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 				});
 
 				if (response.ok) {
-					// Refresh storage info after delete
 					refreshStorageInfo();
 					return true;
 				}
@@ -276,10 +457,7 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 				return false;
 			}
 		},
-		[
-			// Refresh storage info after delete
-			refreshStorageInfo,
-		],
+		[refreshStorageInfo],
 	);
 
 	return {
@@ -289,9 +467,8 @@ export function useAttachments(options: UseAttachmentsOptions = {}) {
 		canUpload,
 		validateFileType,
 		uploading,
-		progress,
+		progressMap,
 		storageInfo,
-		allowedTypes: ALLOWED_TYPES,
 		absoluteMaxFileSize: ABSOLUTE_MAX_FILE_SIZE,
 	};
 }

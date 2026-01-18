@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { getServerSession } from "~/lib/auth";
+import { getServerSession } from "~/lib/auth/auth.server";
 import { getOrganization } from "~/lib/server/organization.server";
 
 /**

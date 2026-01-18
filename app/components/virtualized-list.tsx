@@ -4,7 +4,7 @@ import {
 	useVirtualizer,
 } from "@tanstack/react-virtual";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { itemSizeCache } from "~/lib/lru-cache";
+import { itemSizeCache } from "~/lib/infra/lru-cache";
 
 interface VirtualizedListProps<T> {
 	items: readonly T[];

@@ -4,6 +4,7 @@ import {
 	boolean,
 	index,
 	integer,
+	jsonb,
 	pgTable,
 	primaryKey,
 	smallint,
@@ -22,15 +23,6 @@ import {
 	usersTable,
 	verificationsTable,
 } from "./auth-schema";
-import {
-	customersTable,
-	customersTableRelations,
-	paymentsTable,
-	paymentsTableRelations,
-	subscriptionsTable,
-	subscriptionsTableRelations,
-	webhookEventsTable,
-} from "./billing-schema";
 
 // --------------------------------------------------------
 // 1. RE-EXPORT AUTH TABLES
@@ -46,21 +38,75 @@ export {
 };
 
 // --------------------------------------------------------
-// 1.1. RE-EXPORT BILLING TABLES
-// --------------------------------------------------------
-export {
-	customersTable,
-	customersTableRelations,
-	subscriptionsTable,
-	subscriptionsTableRelations,
-	paymentsTable,
-	paymentsTableRelations,
-	webhookEventsTable,
-};
-
-// --------------------------------------------------------
 // 2. DEFINE APP TABLES (Before defining relations)
 // --------------------------------------------------------
+
+export const subscriptionsTable = pgTable(
+	"subscriptions",
+	{
+		id: text("id").primaryKey(),
+		billingCustomerId: text("billing_customer_id").notNull(),
+		organizationId: text("organization_id")
+			.notNull()
+			.references(() => organizationsTable.id, { onDelete: "cascade" }),
+
+		billingSubscriptionId: text("billing_subscription_id").unique(),
+		productId: text("product_id").notNull(),
+		planKey: text("plan_key"), // ← This is your source of truth
+
+		status: text("status").notNull(), // "active", "cancelled", 'on_hold", "expired"
+		billingInterval: text("billing_interval"),
+		amount: integer("amount"),
+		currency: text("currency").default("USD"),
+
+		currentPeriodStart: timestamp("current_period_start", {
+			withTimezone: true,
+		}),
+		currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+		cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+
+		// ⭐ KEY FIELD: All dynamic limits, features, and add-ons go here
+		// NO MIGRATIONS needed when adding new limits/features
+		metadata: jsonb("metadata")
+			.$type<{
+				limits?: {
+					maxMembers?: number;
+					maxStorageGb?: number;
+					// aiCreditsPerMonth?: number;
+					// maxIntegrations?: number;
+					// maxApiCalls?: number;
+					[key: string]: number | undefined; // Future-proof
+				};
+				features?: {
+					ai?: boolean;
+					webhooks?: boolean;
+					sso?: boolean;
+					// 	github?: boolean;
+					// 	discord?: boolean;
+					// 	slack?: boolean;
+					[key: string]: boolean | undefined; // Future-proof
+				};
+				addons?: Array<{
+					id: string; // 'extra_storage_10gb'
+					quantity: number;
+					pricePerUnit?: number;
+				}>;
+			}>()
+			.default({}),
+
+		...commonColumns,
+	},
+	(t) => [
+		index("subscriptions_customer_idx").on(t.billingCustomerId),
+		index("subscriptions_org_idx").on(t.organizationId),
+		index("subscriptions_status_idx").on(t.status),
+		uniqueIndex("subscriptions_dodo_idx").on(t.billingSubscriptionId),
+		// Add composite index for active subscription queries (performance optimization)
+		index("subscriptions_org_status_idx").on(t.organizationId, t.status),
+		// Add index for billing period queries
+		index("subscriptions_period_end_idx").on(t.currentPeriodEnd),
+	],
+);
 
 export const teamsTable = pgTable(
 	"teams",
@@ -130,6 +176,11 @@ export const teamMembershipsTable = pgTable(
 		index("team_memberships_team_idx").on(table.teamId),
 		index("team_memberships_user_idx").on(table.userId),
 		index("team_memberships_org_user_idx").on(table.orgId, table.userId),
+		index("team_memberships_team_user_deleted_idx").on(
+			table.teamId,
+			table.userId,
+			table.deletedAt,
+		),
 		uniqueIndex("team_memberships_team_user_unique").on(
 			table.teamId,
 			table.userId,
@@ -163,6 +214,7 @@ export const statusesTable = pgTable(
 	},
 	(table) => [
 		index("statuses_team_position_idx").on(table.teamId, table.position),
+		index("statuses_team_deleted_idx").on(table.teamId, table.deletedAt),
 	],
 );
 
@@ -314,6 +366,8 @@ export const mattersTable = pgTable(
 			table.statusId,
 			table.assigneeId,
 		),
+		// Billing optimization: index for fast matter count queries (only non-deleted matters)
+		index("matters_org_deleted_idx").on(table.orgId, table.deletedAt),
 	],
 );
 
@@ -536,6 +590,16 @@ export const pushSubscriptionsTable = pgTable(
 // --------------------------------------------------------
 // 3. DEFINE MERGED RELATIONS (Auth + App)
 // --------------------------------------------------------
+
+export const subscriptionsTableRelations = relations(
+	subscriptionsTable,
+	({ one }) => ({
+		organization: one(organizationsTable, {
+			fields: [subscriptionsTable.organizationId],
+			references: [organizationsTable.id],
+		}),
+	}),
+);
 
 export const usersTableRelations = relations(usersTable, ({ many }) => ({
 	sessionsTables: many(sessionsTable),

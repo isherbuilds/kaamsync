@@ -11,7 +11,11 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { type BillingInterval, type ProductKey, products } from "~/lib/billing";
+import {
+	type BillingInterval,
+	type ProductKey,
+	products,
+} from "~/lib/billing/plans";
 import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [
@@ -113,7 +117,7 @@ export default function PricingPage() {
 											variant="secondary"
 											className="rounded bg-primary/10 text-primary"
 										>
-											Discount
+											2 months free
 										</Badge>
 									</TabsTrigger>
 								</TabsList>
@@ -259,12 +263,8 @@ export default function PricingPage() {
 						>
 							Support & FAQ
 						</Badge>
-						<MarketingHeading
-							className="text-5xl md:text-6xl"
-							italic="questions?"
-						>
-							Got <br />
-							We've got answers.
+						<MarketingHeading italic="We've got answers.">
+							Got Questions <br />
 						</MarketingHeading>
 					</div>
 					<FAQ items={faqs} />

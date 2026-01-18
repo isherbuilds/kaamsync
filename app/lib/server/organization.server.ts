@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "~/db";
 import {
 	invitationsTable,
@@ -7,7 +7,7 @@ import {
 	organizationsTable,
 	usersTable,
 } from "~/db/schema";
-import type { OrgRole } from "~/lib/permissions";
+import type { OrgRole } from "~/lib/auth/permissions";
 
 /**
  * Add a member to an organization
@@ -103,11 +103,12 @@ export async function addMemberToOrganization(
  * Get organization member count (for billing purposes)
  */
 export async function getOrganizationMemberCount(organizationId: string) {
-	const members = await db.query.membersTable.findMany({
-		where: eq(membersTable.organizationId, organizationId),
-	});
+	const result = await db
+		.select({ count: sql<number>`COUNT(*)` })
+		.from(membersTable)
+		.where(eq(membersTable.organizationId, organizationId));
 
-	return members.length;
+	return Number(result[0]?.count ?? 0);
 }
 
 /**
@@ -154,17 +155,20 @@ export async function getOrganizationMemberRole(
 	}
 }
 
-export async function getOrganization(organizationId: string): Promise<{
-	id: string;
-	name: string;
-	slug: string;
-	logo: string | null;
-	createdAt: Date;
-	metadata: string | null;
-} | null> {
+export async function getOrganization(organizationId: string) {
 	const organization = await db.query.organizationsTable.findFirst({
 		where: eq(organizationsTable.id, organizationId),
 	});
 
 	return organization ?? null;
+}
+
+export async function getOrganizationsByIds(organizationIds: string[]) {
+	if (!organizationIds.length) return [];
+
+	const organizations = await db.query.organizationsTable.findMany({
+		where: sql`${organizationsTable.id} IN ${organizationIds}`,
+	});
+
+	return organizations;
 }

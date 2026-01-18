@@ -1,297 +1,95 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
+import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { toast } from "sonner";
-import {
-	PaymentHistory,
-	PricingComparison,
-	PricingGrid,
-	SubscriptionStatus,
-	UsageDisplay,
-} from "~/components/billing";
+import { PricingComparison, UsageDisplay } from "~/components/billing";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { getServerSession } from "~/lib/auth";
-import { authClient } from "~/lib/auth-client";
-import {
-	type BillingInterval,
-	canCheckout,
-	getCheckoutSlug,
-	type ProductKey,
-	products,
-} from "~/lib/billing";
-import {
-	canManageBilling,
-	canViewBilling,
-	type OrgRole,
-} from "~/lib/permissions";
+import { requireSession } from "~/lib/auth/auth-helper";
+import { canManageBilling, canViewBilling } from "~/lib/auth/permissions";
 import {
 	billingConfig,
-	getOrganizationPayments,
 	getOrganizationSubscription,
 	getOrganizationUsage,
 	getPlanByProductId,
-} from "~/lib/server/billing.server";
+} from "~/lib/billing/billing.server";
+import { logger } from "~/lib/logging/logger";
 import { getOrganizationMemberRole } from "~/lib/server/organization.server";
+import type { Route } from "./+types/billing.ts";
 
-export async function loader({ request }: LoaderFunctionArgs) {
-	const session = await getServerSession(request);
-	if (!session?.session?.activeOrganizationId) {
-		return {
-			subscription: null,
-			payments: [],
-			usage: { members: 0, teams: 0 },
-			billingEnabled: billingConfig.enabled,
-			organizationId: null,
-			userRole: null as OrgRole | null,
-			currentPlan: null as ProductKey | null,
-		};
-	}
+export async function loader({ request }: Route.LoaderArgs) {
+	const { session, user } = await requireSession(request);
 
-	const orgId = session.session.activeOrganizationId;
-	const userId = session.user.id;
+	const organizationId = session.activeOrganizationId;
+	const userId = user.id;
+
+	if (!organizationId)
+		throw new Response("Organization not found", { status: 404 });
 
 	// Fetch role, billing data, and usage in parallel
-	const [subscription, payments, userRole, usage] = await Promise.all([
-		getOrganizationSubscription(orgId),
-		getOrganizationPayments(orgId),
-		getOrganizationMemberRole(orgId, userId),
-		getOrganizationUsage(orgId),
+	const [subscription, userRole, usage] = await Promise.all([
+		getOrganizationSubscription(organizationId, userId),
+		getOrganizationMemberRole(organizationId, userId),
+		getOrganizationUsage(organizationId),
 	]);
 
+	logger.info("[Billing Loader] Fetched billing data", {
+		subscription,
+		usage,
+	});
+
+	if (!userRole || userRole !== "owner") {
+		// Only owners can access billing settings
+		throw new Response("Forbidden", { status: 403 });
+	}
+
 	// Determine current plan - use stored planKey if available, fallback to productId lookup
-	const currentPlan: ProductKey | null =
-		(subscription?.planKey as ProductKey | null) ??
-		(subscription?.productId
-			? getPlanByProductId(subscription.productId)
-			: null);
+	const currentPlan = subscription?.productId
+		? getPlanByProductId(subscription.productId)
+		: "starter";
 
 	return {
 		subscription,
-		payments,
 		usage,
 		billingEnabled: billingConfig.enabled,
-		organizationId: orgId,
+		organizationId,
 		userRole,
 		currentPlan,
 	};
 }
 
-interface SelectedPlan {
-	plan: ProductKey;
-	interval: BillingInterval;
-}
-
-export default function BillingSettings() {
-	const loaderData = useLoaderData<typeof loader>();
+export default function BillingSettings({ loaderData }: Route.ComponentProps) {
 	const {
 		subscription,
-		payments,
 		usage,
 		billingEnabled,
 		organizationId,
 		userRole,
 		currentPlan,
 	} = loaderData;
+
 	const [searchParams] = useSearchParams();
-	const revalidator = useRevalidator();
 	const [loading, setLoading] = useState(false);
 	const [showPricing, setShowPricing] = useState(false);
 	const [showComparison, setShowComparison] = useState(false);
-	const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null);
 
 	// Permission checks
 	const canManage = canManageBilling(userRole);
 	const canView = canViewBilling(userRole);
 
-	// Rate limiting for checkout attempts (5 per minute)
-	const checkoutAttempts = useRef<number[]>([]);
-	const MAX_CHECKOUT_ATTEMPTS = 5;
-	const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-
 	// Show success/error toasts based on URL params
 	const success = searchParams.get("success");
 	const cancelled = searchParams.get("cancelled");
 
-	useEffect(() => {
-		if (success === "true") {
-			toast.success("Subscription updated successfully!");
-			// Revalidate to get fresh data
-			revalidator.revalidate();
-		} else if (cancelled === "true") {
-			toast.info("Checkout cancelled");
-		}
-	}, [success, cancelled, revalidator]);
-
-	const handleCheckout = useCallback(
-		async (plan: ProductKey, interval: BillingInterval) => {
-			// Permission check - only owner/admin can manage billing
-			if (!canManage) {
-				toast.error(
-					"You don't have permission to manage billing. Contact your organization admin.",
-				);
-				return;
-			}
-
-			if (plan === "starter") {
-				toast.info("You're on the Free plan. Upgrade to unlock more features.");
-				return;
-			}
-
-			if (plan === "enterprise") {
-				window.location.href =
-					"mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry";
-				return;
-			}
-
-			// Rate limiting check
-			const now = Date.now();
-			checkoutAttempts.current = checkoutAttempts.current.filter(
-				(ts) => now - ts < RATE_LIMIT_WINDOW_MS,
-			);
-
-			if (checkoutAttempts.current.length >= MAX_CHECKOUT_ATTEMPTS) {
-				const oldestAttempt = checkoutAttempts.current[0];
-				const retryAfterSeconds = Math.ceil(
-					(RATE_LIMIT_WINDOW_MS - (now - oldestAttempt)) / 1000,
-				);
-				toast.error(
-					`Too many checkout attempts. Please try again in ${retryAfterSeconds} seconds.`,
-				);
-				return;
-			}
-
-			checkoutAttempts.current.push(now);
-
-			if (!canCheckout(plan)) {
-				toast.error("This plan is not available for checkout");
-				return;
-			}
-
-			const slug = getCheckoutSlug(plan, interval);
-
-			if (!slug) {
-				toast.error(
-					`Product not configured for ${plan} (${interval}). Please contact support.`,
-				);
-				return;
-			}
-
-			setLoading(true);
-			try {
-				const { data, error } = await authClient.dodopayments.checkoutSession({
-					slug,
-					metadata: organizationId ? { organizationId } : undefined,
-				});
-
-				if (error) {
-					throw new Error(error.message || "Checkout failed");
-				}
-
-				if (data?.url) {
-					// Log checkout URL for debugging SSL issues in test mode
-					console.log("[Checkout] Redirecting to:", data.url);
-
-					// If you encounter SSL errors with test.checkout.dodopayments.com,
-					// you can copy this URL and open it in a different browser
-					window.location.href = data.url;
-				} else {
-					toast.error("Checkout URL not received. Please try again.");
-				}
-			} catch (err) {
-				console.error("Checkout error:", err);
-				toast.error(err instanceof Error ? err.message : "Checkout failed");
-			} finally {
-				setLoading(false);
-			}
-		},
-		[organizationId, canManage],
-	);
-
-	const handleManageSubscription = useCallback(async () => {
-		// Permission check
-		if (!canManage) {
-			toast.error(
-				"You don't have permission to manage billing. Contact your organization admin.",
-			);
-			return;
-		}
-
-		setLoading(true);
-		try {
-			const { data, error } = await authClient.dodopayments.customer.portal();
-
-			if (error) {
-				throw new Error(error.message || "Failed to open portal");
-			}
-
-			if (data?.url) {
-				window.location.href = data.url;
-			}
-		} catch (err) {
-			console.error("Portal error:", err);
-			toast.error(err instanceof Error ? err.message : "Failed to open portal");
-		} finally {
-			setLoading(false);
-		}
-	}, [canManage]);
-
-	const handlePlanSelect = useCallback(
-		(plan: ProductKey, interval: BillingInterval) => {
-			// Permission check
-			if (!canManage) {
-				toast.error(
-					"You don't have permission to change plans. Contact your organization admin.",
-				);
-				return;
-			}
-
-			if (plan === "starter") {
-				if (subscription && subscription.status === "active") {
-					// Redirect to portal for downgrade
-					toast.info("Please downgrade your plan in the customer portal.");
-					handleManageSubscription();
-					return;
-				}
-				toast.info("You are already on the Free plan.");
-				return;
-			}
-			if (plan === "enterprise") {
-				window.location.href =
-					"mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry";
-				return;
-			}
-
-			// If user has an active subscription, redirect to portal for ANY plan change
-			if (subscription && subscription.status === "active") {
-				handleManageSubscription();
-				toast.info(
-					"Please manage your subscription details in the customer portal.",
-				);
-			} else {
-				// New subscription
-				setSelectedPlan({ plan, interval });
-			}
-		},
-		[canManage, subscription, handleManageSubscription],
-	);
-
-	const confirmPlanChange = useCallback(async () => {
-		if (!selectedPlan) return;
-		await handleCheckout(selectedPlan.plan, selectedPlan.interval);
-		setSelectedPlan(null);
-	}, [selectedPlan, handleCheckout]);
+	if (success) {
+		searchParams.delete("success");
+		// Clean up URL
+		toast.success("Subscription updated successfully.");
+	} else if (cancelled) {
+		searchParams.delete("cancelled");
+		// Clean up URL
+		toast.error("Subscription update was cancelled.");
+	}
 
 	if (!billingEnabled) {
 		return (
@@ -327,14 +125,6 @@ export default function BillingSettings() {
 				</Alert>
 			)}
 
-			{/* Subscription Status */}
-			<SubscriptionStatus
-				subscription={subscription ?? null}
-				currentPlan={currentPlan}
-				onManage={handleManageSubscription}
-				onUpgrade={() => setShowPricing(true)}
-				loading={loading}
-			/>
 			{/* Usage Display - Shows current usage vs plan limits */}
 			<UsageDisplay usage={usage} currentPlan={currentPlan} />
 
@@ -353,13 +143,7 @@ export default function BillingSettings() {
 							</button>
 						)}
 					</div>
-					<PricingGrid
-						currentPlan={currentPlan}
-						onSelectPlan={handlePlanSelect}
-						loading={loading}
-					/>
 
-					{/* Feature Comparison (toggleable) */}
 					<div className="space-y-2">
 						<Button
 							variant="ghost"
@@ -373,40 +157,6 @@ export default function BillingSettings() {
 					</div>
 				</div>
 			)}
-
-			{/* Payment History */}
-			{payments.length > 0 && (
-				<div className="space-y-4">
-					<h4 className="font-medium text-md">Payment History</h4>
-					<PaymentHistory payments={payments} />
-				</div>
-			)}
-
-			{/* Confirmation Dialog for New Subscriptions */}
-			<AlertDialog
-				open={!!selectedPlan}
-				onOpenChange={(open) => !open && setSelectedPlan(null)}
-			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>Confirm Plan Change</AlertDialogTitle>
-						<AlertDialogDescription>
-							You're about to upgrade to the{" "}
-							<strong>
-								{selectedPlan && products[selectedPlan.plan].name}
-							</strong>{" "}
-							plan ({selectedPlan?.interval} billing). You'll be redirected to
-							complete payment.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel className="mr-auto">Cancel</AlertDialogCancel>
-						<AlertDialogAction onClick={confirmPlanChange} disabled={loading}>
-							{loading ? "Processing..." : "Continue to Checkout"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
 		</div>
 	);
 }

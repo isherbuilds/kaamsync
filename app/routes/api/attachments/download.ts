@@ -2,7 +2,7 @@ import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { env } from "~/lib/server/env-validation.server";
+import { env } from "~/lib/config/env-validation.server";
 
 // Re-initialize S3 (should be shared but importing for isolation)
 const BUCKET_NAME = env.S3_BUCKET_NAME || "kaamsync-attachments";

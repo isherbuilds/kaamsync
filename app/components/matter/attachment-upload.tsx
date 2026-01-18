@@ -1,4 +1,4 @@
-import { CloudUpload, Loader2 } from "lucide-react";
+import { CloudUpload, FileArchive, Loader2, Save } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useAttachments } from "~/hooks/use-attachments";
@@ -11,14 +11,46 @@ interface AttachmentUploadProps {
 	onUploadComplete?: () => void;
 }
 
+function getStatusIcon(status: string) {
+	switch (status) {
+		case "compressing":
+			return <FileArchive className="size-4 animate-pulse" />;
+		case "saving":
+			return <Save className="size-4" />;
+		case "uploading":
+			return <Loader2 className="size-4 animate-spin" />;
+		case "complete":
+			return <CloudUpload className="size-4" />;
+		default:
+			return <Loader2 className="size-4 animate-spin" />;
+	}
+}
+
+function getStatusMessage(status: string) {
+	switch (status) {
+		case "compressing":
+			return "Compressing image...";
+		case "saving":
+			return "Finalizing...";
+		case "uploading":
+			return "Uploading to storage...";
+		case "complete":
+			return "Complete!";
+		case "error":
+			return "Upload failed";
+		default:
+			return "Processing...";
+	}
+}
+
 export function AttachmentUpload({
 	matterId,
 	className,
 	onUploadComplete,
 }: AttachmentUploadProps) {
-	const { uploadFile, uploading, progress, absoluteMaxFileSize } =
+	const { uploadFile, uploading, progressMap, absoluteMaxFileSize } =
 		useAttachments({
-			onUploadComplete: () => {
+			onUploadComplete: (result) => {
 				toast.success("File uploaded successfully");
 				onUploadComplete?.();
 			},
@@ -26,6 +58,7 @@ export function AttachmentUpload({
 		});
 
 	const [isDragging, setIsDragging] = useState(false);
+	const [activeFileId, setActiveFileId] = useState<string | null>(null);
 
 	const handleDragOver = useCallback((e: React.DragEvent) => {
 		e.preventDefault();
@@ -45,7 +78,6 @@ export function AttachmentUpload({
 			const files = Array.from(e.dataTransfer.files);
 			if (files.length === 0) return;
 
-			// Handle one file for now (could extend to multiple)
 			const file = files[0];
 			await uploadFile(file, matterId);
 		},
@@ -60,7 +92,6 @@ export function AttachmentUpload({
 			const file = files[0];
 			await uploadFile(file, matterId);
 
-			// Reset input
 			e.target.value = "";
 		},
 		[uploadFile, matterId],
@@ -71,7 +102,6 @@ export function AttachmentUpload({
 			className={cn(
 				"relative rounded-lg border-2 border-muted-foreground/25 border-dashed transition-colors",
 				isDragging && "border-primary bg-primary/5",
-				uploading && "pointer-events-none opacity-60",
 				className,
 			)}
 			onDragOver={handleDragOver}
@@ -79,20 +109,32 @@ export function AttachmentUpload({
 			onDrop={handleDrop}
 		>
 			<div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-				{uploading ? (
+				{uploading && activeFileId ? (
 					<div className="flex w-full max-w-xs flex-col gap-2 p-4">
 						<div className="flex items-center justify-between text-sm">
-							<span className="truncate font-medium">{progress?.fileName}</span>
+							<span className="truncate font-medium">
+								{progressMap.get(activeFileId)?.fileName}
+							</span>
 							<span className="text-muted-foreground">
-								{Math.round(progress?.progress ?? 0)}%
+								{Math.round(progressMap.get(activeFileId)?.progress ?? 0)}%
 							</span>
 						</div>
-						<Progress value={progress?.progress} className="h-2" />
-						<p className="text-muted-foreground text-xs">
-							{progress?.status === "saving"
-								? "Finalizing..."
-								: "Uploading to storage..."}
-						</p>
+						<Progress
+							value={progressMap.get(activeFileId)?.progress}
+							className="h-2"
+						/>
+						<div className="flex items-center justify-center gap-1.5 text-muted-foreground text-xs">
+							{getStatusIcon(progressMap.get(activeFileId)?.status ?? "")}
+							<span>
+								{getStatusMessage(progressMap.get(activeFileId)?.status ?? "")}
+							</span>
+						</div>
+						{progressMap.get(activeFileId)?.status === "error" &&
+							progressMap.get(activeFileId)?.error && (
+								<p className="text-destructive text-xs">
+									{progressMap.get(activeFileId)?.error}
+								</p>
+							)}
 					</div>
 				) : (
 					<>
@@ -118,8 +160,6 @@ export function AttachmentUpload({
 							type="file"
 							className="hidden"
 							onChange={handleFileSelect}
-							// accept={allowedTypes.join(",")}
-							// Browser check is strict, better to validate in JS for better error messages
 						/>
 					</>
 				)}
