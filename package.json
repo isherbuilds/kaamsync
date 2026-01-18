@@ -78,6 +78,7 @@
 		"vite-plugin-babel": "1.4.1",
 		"vite-plugin-pwa": "^1.2.0",
 		"vite-tsconfig-paths": "^6.0.4",
+		"vitest": "^4.0.17",
 		"wait-on": "^9.0.3"
 	}
 }

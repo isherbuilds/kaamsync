@@ -10,7 +10,12 @@ import {
 import { canCreateRequests, canCreateTasks } from "~/lib/auth/permissions";
 import { reservedTeamSlugs } from "~/lib/validations/organization";
 import { DEFAULT_STATUSES } from "../app/lib/constants/default-team";
-import { adjustOrgMatterUsage, assertCanCreateMatter } from "./billing-limits";
+import {
+	assertCanCreateMatter,
+	assertCanCreateTeam,
+	decrementUsage,
+	incrementUsage,
+} from "./billing-enforcement";
 import { allocateShortID } from "./mutator-helpers";
 import {
 	assertLoggedIn,
@@ -102,6 +107,9 @@ export const mutators = defineMutators({
 
 				// Allocate short ID (handles both client and server logic)
 				await allocateShortID(tx, args.teamId, baseInsert, args.clientShortID);
+
+				// Increment usage atomically (server only)
+				await incrementUsage(tx, membership.orgId, "matter", 1);
 			},
 		),
 
@@ -185,7 +193,7 @@ export const mutators = defineMutators({
 				});
 
 				// Update matter count cache
-				await adjustOrgMatterUsage(tx, membership.orgId, -1);
+				await decrementUsage(tx, membership.orgId, "matter", 1);
 			},
 		),
 
@@ -208,7 +216,7 @@ export const mutators = defineMutators({
 				});
 
 				// Update matter count cache
-				await adjustOrgMatterUsage(tx, membership.orgId, 1);
+				await incrementUsage(tx, membership.orgId, "matter", 1);
 			},
 		),
 
@@ -389,6 +397,9 @@ export const mutators = defineMutators({
 					throw new Error("Not a member of this organization");
 				}
 
+				// Check billing limits
+				await assertCanCreateTeam(tx, orgMembership.organizationId);
+
 				// Find unique code by checking existing teams
 				const existingTeams = await tx.run(
 					zql.teamsTable.where("orgId", orgMembership.organizationId),
@@ -461,8 +472,8 @@ export const mutators = defineMutators({
 					...statusRows.map((row) => tx.mutate.statusesTable.insert(row)),
 				]);
 
-				// PERFORMANCE: Invalidate organization cache after team creation
-				ctx.invalidateUsageCache?.(orgMembership.organizationId);
+				// Increment team count usage atomically
+				await incrementUsage(tx, orgMembership.organizationId, "team", 1);
 			},
 		),
 
@@ -476,7 +487,7 @@ export const mutators = defineMutators({
 				// Permission: Only managers can add members
 				await assertTeamManager(tx, ctx, args.teamId);
 
-				// Verify user is in the organization
+				// Verify user is in organization
 				const orgMembership = await tx.run(
 					zql.membersTable
 						.where("organizationId", ctx.activeOrganizationId ?? "")
@@ -486,6 +497,23 @@ export const mutators = defineMutators({
 
 				if (!orgMembership) {
 					throw new Error("User is not a member of this organization");
+				}
+
+				// Check billing: user already in team? (if yes, skip limit check)
+				const existingTeamMembership = await tx.run(
+					zql.teamMembershipsTable
+						.where("teamId", args.teamId)
+						.where("userId", args.userId)
+						.where("deletedAt", "IS", null)
+						.one(),
+				);
+
+				// Only check member limit if this is a NEW team membership
+				if (!existingTeamMembership) {
+					// TODO: Implement team membership limit checking if needed
+					// For now, team memberships don't count toward org member limit
+					// To implement: add "teamMemberships" to organizationsTable.usage
+					// and check against planLimits[].teamMemberships (if added)
 				}
 
 				// Check if already a member (including deleted)

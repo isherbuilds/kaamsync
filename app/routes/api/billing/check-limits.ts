@@ -1,44 +1,23 @@
-import { data, type LoaderFunctionArgs } from "react-router";
-import { getServerSession } from "~/lib/auth/auth.server";
-import { getBillingStatus } from "~/lib/billing/billing.server";
+import type { LoaderFunctionArgs } from "react-router";
+import { data } from "react-router";
+import { requireSession } from "~/lib/auth/auth-helper";
+import { checkPlanLimits } from "~/lib/billing/billing.server";
 
-/**
- * API endpoint to check billing limits and get current usage
- * GET /api/billing/check-limits
- */
 export async function loader({ request }: LoaderFunctionArgs) {
-	const session = await getServerSession(request);
+	const { session } = await requireSession(request);
+	const organizationId = session.activeOrganizationId;
 
-	if (!session?.session?.activeOrganizationId) {
-		return data({ error: "No active organization" }, { status: 401 });
+	if (!organizationId) {
+		return data({ error: "No active organization" }, { status: 400 });
 	}
 
-	const orgId = session.session.activeOrganizationId;
-	const status = await getBillingStatus(orgId);
+	const limitCheck = await checkPlanLimits(organizationId);
 
 	return data({
-		// Member information
-		canAddMember: status.members.allowed,
-		memberMessage: status.members.message,
-		memberRequiresPayment: status.members.requiresPayment,
-		currentMembers: status.members.current,
-		memberLimit: status.members.limit,
-		memberPriceCents: status.members.priceCents,
-
-		// Team information
-		canCreateTeam: status.teams.allowed,
-		teamMessage: status.teams.message,
-		teamOverage: status.teams.requiresPayment,
-		teamPriceCents: status.teams.priceCents,
-
-		// Matter information
-		canCreateMatter: status.matters.allowed,
-		matterMessage: status.matters.message,
-		currentMatters: status.matters.current,
-		matterLimit: status.matters.limit,
-		matterRemaining: status.matters.remaining,
-
-		// Plan information
-		plan: status.plan,
+		withinLimits: limitCheck.withinLimits,
+		usage: limitCheck.usage,
+		effectivePlan: limitCheck.effectivePlan,
+		limits: limitCheck.limits,
+		violations: limitCheck.violations,
 	});
 }

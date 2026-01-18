@@ -1,11 +1,6 @@
 import { z } from "zod";
 import { Priority } from "~/lib/constants/matter";
-import {
-	optionalDateSchema,
-	prioritySchema,
-	statusSchema,
-	userIdSchema,
-} from "./shared";
+import { statusSchema, userIdSchema } from "./shared";
 
 // Matter validation schemas with shared base schemas
 const MIN_TITLE_LENGTH = 3;

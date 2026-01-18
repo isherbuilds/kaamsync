@@ -29,11 +29,9 @@ type LogLevel = "log" | "warn" | "error" | "info" | "debug";
 
 class Logger {
 	private enabled: boolean;
-	private level: LogLevel;
 
 	constructor() {
 		this.enabled = isDevelopment || isTest;
-		this.level = "log";
 	}
 
 	private shouldLog(level: LogLevel): boolean {

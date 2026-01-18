@@ -24,6 +24,8 @@ import {
 	verificationsTable,
 } from "./auth-schema";
 
+export * from "./billing-schema";
+
 // --------------------------------------------------------
 // 1. RE-EXPORT AUTH TABLES
 // --------------------------------------------------------

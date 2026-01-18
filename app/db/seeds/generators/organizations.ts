@@ -162,7 +162,7 @@ export async function createOrganization(
 		const existingTeam = await db.query.teamsTable.findFirst({
 			where: and(eq(teamsTable.orgId, org.id), eq(teamsTable.slug, slug)),
 		});
-		let team;
+		let team: typeof teamsTable.$inferSelect;
 		if (existingTeam) {
 			// Keep behavior similar to previous ON CONFLICT: update the name
 			await db

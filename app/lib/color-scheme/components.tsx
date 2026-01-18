@@ -95,7 +95,7 @@ export function useSetColorScheme() {
 			}).catch(() => {
 				// Ignore network errors (offline support)
 			});
-		} catch (e) {
+		} catch (_e) {
 			// Ignore construction errors
 		}
 	};

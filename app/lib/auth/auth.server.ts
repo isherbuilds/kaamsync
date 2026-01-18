@@ -7,17 +7,14 @@ import {
 } from "@dodopayments/better-auth";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { organization } from "better-auth/plugins";
+import { admin, organization } from "better-auth/plugins";
 import { and, eq } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
 import { AuthService } from "~/lib/auth/auth-service";
-import {
-	billingConfig,
-	dodoPayments,
-	getOrganizationSubscription,
-} from "~/lib/billing/billing.server";
+import { ac, roles } from "~/lib/auth/permissions";
+import { billingConfig, dodoPayments } from "~/lib/billing/billing.server";
 import { env, isProduction } from "~/lib/config/env-validation.server";
 import { getActiveOrganization } from "~/lib/server/organization.server";
 // import { logger } from "../logging/logger";
@@ -117,6 +114,10 @@ export const auth = betterAuth({
 		},
 	},
 	plugins: [
+		admin({
+			ac,
+			roles,
+		}),
 		organization({
 			schema: {
 				organization: {
@@ -150,7 +151,7 @@ export const auth = betterAuth({
 			},
 		}),
 		// Dodo Payments billing integration
-		...(dodoPayments && billingConfig.webhookSecret
+		...(dodoPayments && billingConfig.getBillingConfig().webhookSecret
 			? [
 					dodopayments({
 						client: dodoPayments,
@@ -191,14 +192,14 @@ export const auth = betterAuth({
 											]
 										: []),
 								],
-								successUrl: billingConfig.successUrl,
+								successUrl: billingConfig.getBillingConfig().successUrl,
 								authenticatedUsersOnly: true,
 							}),
 							portal(),
 							usage(),
 							webhooks({
-								webhookKey: billingConfig.webhookSecret,
-								onPayload: async (payload) => {
+								webhookKey: billingConfig.getBillingConfig().webhookSecret!,
+								onPayload: async (_payload) => {
 									// logger.info("Received Dodo Payments webhook payload", {
 									// 	payload,
 									// });

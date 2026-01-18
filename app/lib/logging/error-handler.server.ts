@@ -8,23 +8,23 @@ export enum ErrorCode {
 	UNAUTHORIZED = "UNAUTHORIZED",
 	FORBIDDEN = "FORBIDDEN",
 	INVALID_SESSION = "INVALID_SESSION",
-	
+
 	// Validation
 	VALIDATION_ERROR = "VALIDATION_ERROR",
 	INVALID_INPUT = "INVALID_INPUT",
 	MISSING_REQUIRED_FIELD = "MISSING_REQUIRED_FIELD",
-	
+
 	// Business Logic
 	RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND",
 	RESOURCE_ALREADY_EXISTS = "RESOURCE_ALREADY_EXISTS",
 	OPERATION_NOT_ALLOWED = "OPERATION_NOT_ALLOWED",
 	LIMIT_EXCEEDED = "LIMIT_EXCEEDED",
-	
+
 	// Billing
 	BILLING_ERROR = "BILLING_ERROR",
 	SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED",
 	PAYMENT_FAILED = "PAYMENT_FAILED",
-	
+
 	// System
 	INTERNAL_ERROR = "INTERNAL_ERROR",
 	DATABASE_ERROR = "DATABASE_ERROR",
@@ -50,7 +50,7 @@ export class AppError extends Error {
 		message: string,
 		statusCode: number = 500,
 		details?: Record<string, unknown>,
-		isOperational: boolean = true
+		isOperational: boolean = true,
 	) {
 		super(message);
 		this.name = "AppError";
@@ -78,19 +78,16 @@ export const ErrorFactory = {
 		new AppError(
 			ErrorCode.RESOURCE_NOT_FOUND,
 			`${resource} not found${id ? ` (ID: ${id})` : ""}`,
-			404
+			404,
 		),
 
 	validation: (message: string, details?: Record<string, unknown>) =>
 		new AppError(ErrorCode.VALIDATION_ERROR, message, 400, details),
 
 	rateLimitExceeded: (retryAfter?: number) =>
-		new AppError(
-			ErrorCode.RATE_LIMIT_EXCEEDED,
-			"Rate limit exceeded",
-			429,
-			{ retryAfter }
-		),
+		new AppError(ErrorCode.RATE_LIMIT_EXCEEDED, "Rate limit exceeded", 429, {
+			retryAfter,
+		}),
 
 	billingError: (message: string, details?: Record<string, unknown>) =>
 		new AppError(ErrorCode.BILLING_ERROR, message, 402, details),
@@ -99,11 +96,13 @@ export const ErrorFactory = {
 		new AppError(
 			ErrorCode.SUBSCRIPTION_REQUIRED,
 			`Active subscription required${feature ? ` for ${feature}` : ""}`,
-			402
+			402,
 		),
 
-	internal: (message = "Internal server error", details?: Record<string, unknown>) =>
-		new AppError(ErrorCode.INTERNAL_ERROR, message, 500, details, false),
+	internal: (
+		message = "Internal server error",
+		details?: Record<string, unknown>,
+	) => new AppError(ErrorCode.INTERNAL_ERROR, message, 500, details, false),
 };
 
 /**
@@ -122,7 +121,10 @@ export function errorToResponse(error: unknown): Response {
 
 		// Log operational errors as warnings, non-operational as errors
 		if (error.isOperational) {
-			console.warn(`[API Error] ${error.code}: ${error.message}`, error.details);
+			console.warn(
+				`[API Error] ${error.code}: ${error.message}`,
+				error.details,
+			);
 		} else {
 			console.error(`[System Error] ${error.code}: ${error.message}`, {
 				details: error.details,
@@ -169,7 +171,7 @@ export function errorToResponse(error: unknown): Response {
  * Async error handler wrapper for route handlers
  */
 export function withErrorHandler<T extends unknown[], R>(
-	handler: (...args: T) => Promise<R>
+	handler: (...args: T) => Promise<R>,
 ) {
 	return async (...args: T): Promise<R | Response> => {
 		try {
@@ -185,7 +187,7 @@ export function withErrorHandler<T extends unknown[], R>(
  */
 export function validateRequired<T>(
 	value: T | null | undefined,
-	fieldName: string
+	fieldName: string,
 ): T {
 	if (value === null || value === undefined) {
 		throw ErrorFactory.validation(`${fieldName} is required`);
@@ -198,7 +200,7 @@ export function validateRequired<T>(
  */
 export function assertAuthenticated(
 	user: unknown,
-	message = "Authentication required"
+	message = "Authentication required",
 ): asserts user {
 	if (!user) {
 		throw ErrorFactory.unauthorized(message);
@@ -210,7 +212,7 @@ export function assertAuthenticated(
  */
 export function assertAuthorized(
 	condition: boolean,
-	message = "Access denied"
+	message = "Access denied",
 ): asserts condition {
 	if (!condition) {
 		throw ErrorFactory.forbidden(message);
@@ -222,7 +224,7 @@ export function assertAuthorized(
  */
 export function handleDatabaseError(error: unknown): never {
 	console.error("[Database Error]", error);
-	
+
 	// Check for common database errors
 	if (error instanceof Error) {
 		if (error.message.includes("unique constraint")) {

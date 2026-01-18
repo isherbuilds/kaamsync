@@ -50,7 +50,7 @@ export function AttachmentUpload({
 }: AttachmentUploadProps) {
 	const { uploadFile, uploading, progressMap, absoluteMaxFileSize } =
 		useAttachments({
-			onUploadComplete: (result) => {
+			onUploadComplete: (_result) => {
 				toast.success("File uploaded successfully");
 				onUploadComplete?.();
 			},
@@ -58,7 +58,7 @@ export function AttachmentUpload({
 		});
 
 	const [isDragging, setIsDragging] = useState(false);
-	const [activeFileId, setActiveFileId] = useState<string | null>(null);
+	const [activeFileId, _setActiveFileId] = useState<string | null>(null);
 
 	const handleDragOver = useCallback((e: React.DragEvent) => {
 		e.preventDefault();

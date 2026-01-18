@@ -59,7 +59,7 @@ const H = new Set(),
 	m = {
 		updateDetails: (a) => {
 			j((e) => {
-				typeof a[e] == "string" && (f[e] = a[e]);
+				typeof a[e] === "string" && (f[e] = a[e]);
 			});
 		},
 		getGoogleAnalyticsName: (a) => a || b(f.googleAnalytics),
@@ -114,7 +114,7 @@ function K(a, e) {
 	const t = e();
 	return a.waitUntil(t), t;
 }
-async function V(a, e) {
+async function V(a, _e) {
 	let t = null;
 	if ((a.url && (t = new URL(a.url).origin), t !== self.location.origin))
 		throw new l("cross-origin-copy-response", { origin: t });
@@ -136,7 +136,7 @@ try {
 const z = "__WB_REVISION__";
 function J(a) {
 	if (!a) throw new l("add-to-cache-list-unexpected-type", { entry: a });
-	if (typeof a == "string") {
+	if (typeof a === "string") {
 		const r = new URL(a, location.href);
 		return { cacheKey: r.href, url: r.href };
 	}
@@ -189,7 +189,7 @@ try {
 	self["workbox:strategies:7.3.0"] && _();
 } catch {}
 function R(a) {
-	return typeof a == "string" ? new Request(a) : a;
+	return typeof a === "string" ? new Request(a) : a;
 }
 class Z {
 	constructor(e, t) {
@@ -320,7 +320,7 @@ class Z {
 	}
 	*iterateCallbacks(e) {
 		for (const t of this._strategy.plugins)
-			if (typeof t[e] == "function") {
+			if (typeof t[e] === "function") {
 				const s = this._pluginStateMap.get(t);
 				yield (r) => {
 					const c = Object.assign(Object.assign({}, r), { state: s });
@@ -373,7 +373,7 @@ class k {
 	handleAll(e) {
 		e instanceof FetchEvent && (e = { event: e, request: e.request });
 		const t = e.event,
-			s = typeof e.request == "string" ? new Request(e.request) : e.request,
+			s = typeof e.request === "string" ? new Request(e.request) : e.request,
 			n = "params" in e ? e.params : void 0,
 			r = new Z(this, { event: t, request: s, params: n }),
 			c = this._getResponse(r, s, t),
@@ -522,17 +522,17 @@ class ee {
 	addToCacheList(e) {
 		const t = [];
 		for (const s of e) {
-			typeof s == "string"
+			typeof s === "string"
 				? t.push(s)
 				: s && s.revision === void 0 && t.push(s.url);
 			const { cacheKey: n, url: r } = J(s),
-				c = typeof s != "string" && s.revision ? "reload" : "default";
+				c = typeof s !== "string" && s.revision ? "reload" : "default";
 			if (this._urlsToCacheKeys.has(r) && this._urlsToCacheKeys.get(r) !== n)
 				throw new l("add-to-cache-list-conflicting-entries", {
 					firstEntry: this._urlsToCacheKeys.get(r),
 					secondEntry: n,
 				});
-			if (typeof s != "string" && s.integrity) {
+			if (typeof s !== "string" && s.integrity) {
 				if (
 					this._cacheKeysToIntegrities.has(n) &&
 					this._cacheKeysToIntegrities.get(n) !== s.integrity
@@ -619,7 +619,7 @@ try {
 	self["workbox:routing:7.3.0"] && _();
 } catch {}
 const x = "GET",
-	C = (a) => (a && typeof a == "object" ? a : { handle: a });
+	C = (a) => (a && typeof a === "object" ? a : { handle: a });
 class y {
 	constructor(e, t, s = x) {
 		(this.handler = C(t)), (this.match = e), (this.method = s);
@@ -658,13 +658,13 @@ class se {
 				const { payload: t } = e.data,
 					s = Promise.all(
 						t.urlsToCache.map((n) => {
-							typeof n == "string" && (n = [n]);
+							typeof n === "string" && (n = [n]);
 							const r = new Request(...n);
 							return this.handleRequest({ request: r, event: e });
 						}),
 					);
 				e.waitUntil(s),
-					e.ports && e.ports[0] && s.then(() => e.ports[0].postMessage(!0));
+					e.ports?.[0] && s.then(() => e.ports[0].postMessage(!0));
 			}
 		});
 	}
@@ -678,7 +678,7 @@ class se {
 				sameOrigin: n,
 				url: s,
 			});
-		let i = c && c.handler;
+		let i = c?.handler;
 		const o = e.method;
 		if (
 			(!i &&
@@ -693,7 +693,7 @@ class se {
 		} catch (u) {
 			h = Promise.reject(u);
 		}
-		const p = c && c.catchHandler;
+		const p = c?.catchHandler;
 		return (
 			h instanceof Promise &&
 				(this._catchHandler || p) &&
@@ -726,7 +726,7 @@ class se {
 					(i = o),
 					((Array.isArray(i) && i.length === 0) ||
 						(o.constructor === Object && Object.keys(o).length === 0) ||
-						typeof o == "boolean") &&
+						typeof o === "boolean") &&
 						(i = void 0),
 					{ route: c, params: i }
 				);
@@ -759,12 +759,12 @@ const E = () => (
 );
 function P(a, e, t) {
 	let s;
-	if (typeof a == "string") {
+	if (typeof a === "string") {
 		const r = new URL(a, location.href),
 			c = ({ url: i }) => i.href === r.href;
 		s = new y(c, e, t);
 	} else if (a instanceof RegExp) s = new te(a, e, t);
-	else if (typeof a == "function") s = new y(a, e, t);
+	else if (typeof a === "function") s = new y(a, e, t);
 	else if (a instanceof y) s = a;
 	else
 		throw new l("unsupported-route-type", {
@@ -834,7 +834,7 @@ const ie = "-precache-",
 function le() {
 	self.addEventListener("activate", (a) => {
 		const e = m.getPrecacheName();
-		a.waitUntil(oe(e).then((t) => {}));
+		a.waitUntil(oe(e).then((_t) => {}));
 	});
 }
 function he(a) {

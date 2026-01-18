@@ -149,7 +149,6 @@ export async function getOrganizationMemberRole(
 			return "owner";
 		case "admin":
 			return "admin";
-		case "member":
 		default:
 			return "member";
 	}

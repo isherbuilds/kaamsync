@@ -1,86 +1,73 @@
-/**
- * Billing Tracking - Server-side usage metering
- * Tracks seat counts, storage, and other usage metrics for billing
- */
-import {
-	dodoPayments,
-	getOrganizationCustomer,
-	getOrganizationPlanKey,
-} from "~/lib/billing/billing.server";
 import { getOrganizationStorageUsage } from "~/lib/infra/storage.server";
 import { getOrganizationMemberCount } from "~/lib/server/organization.server";
 import { logger } from "../logging/logger";
+import {
+	dodoPayments,
+	getOrganizationCustomer,
+	getOrgPlanKey,
+} from "./billing.server";
 
-/**
- * Report current seat count to DodoPayments usage metering
- * Fire-and-forget pattern for non-blocking user experience
- */
-export function reportSeatCount(organizationId: string): void {
-	if (!dodoPayments) return;
-
-	(async () => {
-		try {
-			const [memberCount, _customer] = await Promise.all([
-				getOrganizationMemberCount(organizationId),
-				getOrganizationCustomer(organizationId),
-			]);
-
-			const dodoCustomerId = "";
-
-			if (!dodoCustomerId) {
-				const plan = await getOrganizationPlanKey(organizationId);
-				if (plan === "starter") return;
-
-				logger.warn(
-					`[Billing] Skipping Dodo usage ingest: no Dodo customer found for organization ${organizationId} on ${plan} plan`,
-				);
-				return;
-			}
-
-			await dodoPayments.usageEvents.ingest({
-				events: [
-					{
-						event_id: `seat_count_${organizationId}_${Date.now()}`,
-						customer_id: dodoCustomerId,
-						event_name: "seat_count",
-						metadata: {
-							organization_id: organizationId,
-							seat_count: String(memberCount),
-						},
-						timestamp: new Date().toISOString(),
-					},
-				],
-			});
-
-			logger.info(
-				`[Billing] Reported seat count: ${memberCount} for org ${organizationId} to Dodo`,
-			);
-		} catch (error) {
-			logger.error("[Billing] Failed to report seat count:", error);
-		}
-	})();
-}
-
-/**
- * Report storage usage to DodoPayments for billing
- */
-export async function reportStorageUsage(orgId: string) {
+export async function reportSeatCount(organizationId: string): Promise<void> {
 	if (!dodoPayments) return;
 
 	try {
-		const [usage, _customer] = await Promise.all([
+		const [memberCount, customer] = await Promise.all([
+			getOrganizationMemberCount(organizationId),
+			getOrganizationCustomer(organizationId),
+		]);
+
+		const dodoCustomerId = customer ?? "";
+
+		if (!dodoCustomerId) {
+			const plan = await getOrgPlanKey(organizationId);
+			if (plan === "starter") return;
+
+			logger.warn(
+				`[Billing] Skipping Dodo usage ingest: no Dodo customer found for organization ${organizationId} on ${plan} plan`,
+			);
+			return;
+		}
+
+		await dodoPayments.usageEvents.ingest({
+			events: [
+				{
+					event_id: `seat_count_${organizationId}_${Date.now()}`,
+					customer_id: dodoCustomerId,
+					event_name: "seat_count",
+					metadata: {
+						organization_id: organizationId,
+						seat_count: String(memberCount),
+					},
+					timestamp: new Date().toISOString(),
+				},
+			],
+		});
+
+		logger.info(
+			`[Billing] Reported seat count: ${memberCount} for org ${organizationId} to Dodo`,
+		);
+	} catch (error) {
+		logger.error("[Billing] Failed to report seat count:", error);
+	}
+}
+
+export async function reportStorageUsage(orgId: string): Promise<void> {
+	if (!dodoPayments) return;
+
+	try {
+		const [usage, customer] = await Promise.all([
 			getOrganizationStorageUsage(orgId),
 			getOrganizationCustomer(orgId),
 		]);
 
-		const dodoCustomerId = "";
+		const dodoCustomerId = customer ?? "";
 
 		if (!dodoCustomerId) {
-			const plan = await getOrganizationPlanKey(orgId);
+			const plan = await getOrgPlanKey(orgId);
 			if (plan === "starter") return;
 
 			logger.warn(
-				`[Storage] Skipping Dodo usage ingest: no Dodo customer found for organization ${orgId} on ${plan} plan`,
+				`[Storage] Skipping Dodo usage ingest: no Dodo customer found for org ${orgId} on ${plan} plan`,
 			);
 			return;
 		}

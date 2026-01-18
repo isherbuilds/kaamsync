@@ -5,8 +5,8 @@ const MIN_NAME_LENGTH = 4;
 const MAX_NAME_LENGTH = 64;
 const MIN_SLUG_LENGTH = 2;
 const MAX_SLUG_LENGTH = 64;
-const MIN_CODE_LENGTH = 2;
-const MAX_CODE_LENGTH = 6;
+const _MIN_CODE_LENGTH = 2;
+const _MAX_CODE_LENGTH = 6;
 
 export const reservedSlugs = [
 	// Authentication & Account

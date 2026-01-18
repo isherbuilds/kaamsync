@@ -245,3 +245,32 @@ export function canManageBilling(role?: OrgRole | null): boolean {
 export function canViewBilling(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin" || role === "member";
 }
+
+// ============================================================================
+// BETTER AUTH ACCESS CONTROL (Application Level)
+// ============================================================================
+import { createAccessControl } from "better-auth/plugins/access";
+
+const statement = {
+	user: ["create", "read", "update", "delete", "list", "ban"],
+	billing: ["view", "manage"],
+	admin: ["access_dashboard", "manage_users", "manage_system"],
+} as const;
+
+export const ac = createAccessControl(statement);
+
+export const adminRole = ac.newRole({
+	user: ["create", "read", "update", "delete", "list", "ban"],
+	billing: ["view", "manage"],
+	admin: ["access_dashboard", "manage_users", "manage_system"],
+});
+
+export const userRole = ac.newRole({
+	user: ["read", "update"], // Can read/update own profile (logic handled in resolvers if needed)
+	billing: ["view"], // Can view billing
+});
+
+export const roles = {
+	admin: adminRole,
+	user: userRole,
+};

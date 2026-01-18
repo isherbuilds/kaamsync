@@ -279,6 +279,7 @@ CREATE TABLE "users_table" (
 	"email" text NOT NULL,
 	"email_verified" boolean DEFAULT false NOT NULL,
 	"image" text,
+	"role" text DEFAULT 'user' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_table_email_unique" UNIQUE("email")
@@ -291,6 +292,33 @@ CREATE TABLE "verifications_table" (
 	"expires_at" timestamp with time zone NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "org_limits" (
+	"org_id" text NOT NULL,
+	"metric" text NOT NULL,
+	"value" integer NOT NULL,
+	"source" text DEFAULT 'manual' NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "org_limits_org_id_metric_pk" PRIMARY KEY("org_id","metric")
+);
+--> statement-breakpoint
+CREATE TABLE "usage_cache" (
+	"org_id" text NOT NULL,
+	"metric" text NOT NULL,
+	"count" integer DEFAULT 0 NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "usage_cache_org_id_metric_pk" PRIMARY KEY("org_id","metric")
+);
+--> statement-breakpoint
+CREATE TABLE "usage_ledger" (
+	"id" text PRIMARY KEY NOT NULL,
+	"org_id" text NOT NULL,
+	"metric" text NOT NULL,
+	"delta" integer NOT NULL,
+	"reason" text NOT NULL,
+	"timestamp" timestamp with time zone DEFAULT now() NOT NULL,
+	"metadata" text
 );
 --> statement-breakpoint
 ALTER TABLE "accounts_table" ADD CONSTRAINT "accounts_table_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -331,6 +359,9 @@ ALTER TABLE "team_memberships" ADD CONSTRAINT "team_memberships_org_id_organizat
 ALTER TABLE "teams" ADD CONSTRAINT "teams_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "timelines" ADD CONSTRAINT "timelines_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "timelines" ADD CONSTRAINT "timelines_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "org_limits" ADD CONSTRAINT "org_limits_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "usage_cache" ADD CONSTRAINT "usage_cache_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "usage_ledger" ADD CONSTRAINT "usage_ledger_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "accountsTable_userId_idx" ON "accounts_table" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "attachments_matter_idx" ON "attachments" USING btree ("matter_id");--> statement-breakpoint
 CREATE INDEX "attachments_org_idx" ON "attachments" USING btree ("org_id");--> statement-breakpoint
@@ -394,4 +425,7 @@ CREATE INDEX "teams_org_archived_idx" ON "teams" USING btree ("org_id","archived
 CREATE INDEX "teams_org_code_idx" ON "teams" USING btree ("org_id","code");--> statement-breakpoint
 CREATE INDEX "timelines_matter_created_idx" ON "timelines" USING btree ("matter_id","created_at");--> statement-breakpoint
 CREATE INDEX "timelines_user_idx" ON "timelines" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "verificationsTable_identifier_idx" ON "verifications_table" USING btree ("identifier");
+CREATE INDEX "verificationsTable_identifier_idx" ON "verifications_table" USING btree ("identifier");--> statement-breakpoint
+CREATE INDEX "usage_cache_org_idx" ON "usage_cache" USING btree ("org_id");--> statement-breakpoint
+CREATE INDEX "usage_ledger_org_metric_idx" ON "usage_ledger" USING btree ("org_id","metric");--> statement-breakpoint
+CREATE INDEX "usage_ledger_timestamp_idx" ON "usage_ledger" USING btree ("timestamp");

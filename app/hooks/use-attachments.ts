@@ -61,7 +61,7 @@ type AllowedTypes = (typeof ALLOWED_ATTACHMENT_TYPES)[number];
 
 async function compressImage(
 	file: File,
-	fileId: string,
+	_fileId: string,
 ): Promise<{ file: File; originalSize: number }> {
 	if (!COMPRESSIBLE_TYPES.includes(file.type)) {
 		return { file, originalSize: file.size };

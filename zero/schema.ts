@@ -668,6 +668,40 @@ const membersTable = {
   primaryKey: ["id"],
   serverName: "members_table",
 } as const;
+const orgLimitsTable = {
+  name: "orgLimitsTable",
+  columns: {
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    metric: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    value: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+    source: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["orgId", "metric"],
+  serverName: "org_limits",
+} as const;
 const organizationsTable = {
   name: "organizationsTable",
   columns: {
@@ -1352,6 +1386,78 @@ const timelinesTable = {
   primaryKey: ["id"],
   serverName: "timelines",
 } as const;
+const usageCacheTable = {
+  name: "usageCacheTable",
+  columns: {
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    metric: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    count: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["orgId", "metric"],
+  serverName: "usage_cache",
+} as const;
+const usageLedgerTable = {
+  name: "usageLedgerTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    metric: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    delta: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+    reason: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    timestamp: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+    },
+    metadata: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "usage_ledger",
+} as const;
 const usersTable = {
   name: "usersTable",
   columns: {
@@ -1377,6 +1483,11 @@ const usersTable = {
       serverName: "email_verified",
     },
     image: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    role: {
       type: "string",
       optional: true,
       customType: null as unknown as string,
@@ -1713,6 +1824,16 @@ const membersTableRelationships = {
     },
   ],
 } as const;
+const orgLimitsTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
 const organizationsTableRelationships = {
   membersTables: [
     {
@@ -1907,6 +2028,26 @@ const timelinesTableRelationships = {
     },
   ],
 } as const;
+const usageCacheTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
+const usageLedgerTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
 const usersTableRelationships = {
   sessionsTables: [
     {
@@ -2061,6 +2202,7 @@ export const schema = {
     matterWatchersTable: matterWatchersTable,
     mattersTable: mattersTable,
     membersTable: membersTable,
+    orgLimitsTable: orgLimitsTable,
     organizationsTable: organizationsTable,
     pushSubscriptionsTable: pushSubscriptionsTable,
     sessionsTable: sessionsTable,
@@ -2070,6 +2212,8 @@ export const schema = {
     teamMembershipsTable: teamMembershipsTable,
     teamsTable: teamsTable,
     timelinesTable: timelinesTable,
+    usageCacheTable: usageCacheTable,
+    usageLedgerTable: usageLedgerTable,
     usersTable: usersTable,
     verificationsTable: verificationsTable,
   },
@@ -2084,6 +2228,7 @@ export const schema = {
     matterWatchersTable: matterWatchersTableRelationships,
     mattersTable: mattersTableRelationships,
     membersTable: membersTableRelationships,
+    orgLimitsTable: orgLimitsTableRelationships,
     organizationsTable: organizationsTableRelationships,
     pushSubscriptionsTable: pushSubscriptionsTableRelationships,
     sessionsTable: sessionsTableRelationships,
@@ -2093,6 +2238,8 @@ export const schema = {
     teamMembershipsTable: teamMembershipsTableRelationships,
     teamsTable: teamsTableRelationships,
     timelinesTable: timelinesTableRelationships,
+    usageCacheTable: usageCacheTableRelationships,
+    usageLedgerTable: usageLedgerTableRelationships,
     usersTable: usersTableRelationships,
   },
   enableLegacyQueries: false,
@@ -2167,6 +2314,11 @@ export type MattersTable = Row<(typeof schema)["tables"]["mattersTable"]>;
  */
 export type MembersTable = Row<(typeof schema)["tables"]["membersTable"]>;
 /**
+ * Represents a row from the "orgLimitsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type OrgLimitsTable = Row<(typeof schema)["tables"]["orgLimitsTable"]>;
+/**
  * Represents a row from the "organizationsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
@@ -2221,6 +2373,18 @@ export type TeamsTable = Row<(typeof schema)["tables"]["teamsTable"]>;
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type TimelinesTable = Row<(typeof schema)["tables"]["timelinesTable"]>;
+/**
+ * Represents a row from the "usageCacheTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type UsageCacheTable = Row<(typeof schema)["tables"]["usageCacheTable"]>;
+/**
+ * Represents a row from the "usageLedgerTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type UsageLedgerTable = Row<
+  (typeof schema)["tables"]["usageLedgerTable"]
+>;
 /**
  * Represents a row from the "usersTable" table.
  * This type is auto-generated from your Drizzle schema definition.
