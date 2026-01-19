@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
-import { renderPriorityIcon } from "~/components/icons";
+import { renderPriorityIcon } from "~/components/shared/icons";
 import { MatterListLayout } from "~/components/matter/matter-list-layout";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Item, ItemContent, ItemTitle } from "~/components/ui/item";
@@ -19,7 +19,7 @@ import {
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/config/matter";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 
 import type { Route } from "./+types/tasks";

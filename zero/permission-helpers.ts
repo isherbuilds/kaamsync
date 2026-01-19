@@ -3,7 +3,7 @@
  * Uses shared permission logic and error messages from app/lib/permissions.ts
  */
 
-import { PERMISSION_ERRORS } from "~/lib/permissions";
+import { PERMISSION_ERRORS } from "~/lib/auth/permissions";
 import type { Context } from "./auth";
 import type { MutatorTx } from "./mutator-helpers";
 import { zql } from "./schema";

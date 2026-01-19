@@ -7,9 +7,9 @@ import {
 	type TeamRole,
 	teamRole,
 } from "~/db/helpers";
-import { canCreateRequests, canCreateTasks } from "~/lib/permissions";
-import { reservedTeamSlugs } from "~/lib/validations/organization";
-import { DEFAULT_STATUSES } from "../app/lib/server/default-team-data";
+import { canCreateRequests, canCreateTasks } from "~/lib/auth/permissions";
+import { DEFAULT_STATUSES } from "~/lib/organization/defaults";
+import { reservedTeamSlugs } from "~/lib/organization/validations";
 import { assertCanCreateMatter, assertCanCreateTeam } from "./billing-limits";
 import { allocateShortID } from "./mutator-helpers";
 import {
@@ -415,19 +415,21 @@ export const mutators = defineMutators({
 				});
 
 				// Prepare defaults - note: isRequestStatus is not in Zero schema, only in Drizzle
-				const statusRows = DEFAULT_STATUSES.map((status, i) => ({
-					id: createId(),
-					teamId,
-					name: status.name,
-					color: status.color,
-					type: status.type,
-					position: i,
-					isDefault: status.isDefault,
-					archived: false,
-					creatorId: ctx.userId,
-					createdAt: now,
-					updatedAt: now,
-				}));
+				const statusRows = DEFAULT_STATUSES.map(
+					(status: (typeof DEFAULT_STATUSES)[number], i: number) => ({
+						id: createId(),
+						teamId,
+						name: status.name,
+						color: status.color,
+						type: status.type,
+						position: i,
+						isDefault: status.isDefault,
+						archived: false,
+						creatorId: ctx.userId,
+						createdAt: now,
+						updatedAt: now,
+					}),
+				);
 
 				// Insert membership + statuses in parallel
 				await Promise.all([
@@ -446,7 +448,7 @@ export const mutators = defineMutators({
 						createdAt: now,
 						updatedAt: now,
 					}),
-					...statusRows.map((row) => tx.mutate.statusesTable.insert(row)),
+					...statusRows.map((row: any) => tx.mutate.statusesTable.insert(row)),
 				]);
 
 				// PERFORMANCE: Invalidate organization cache after team creation

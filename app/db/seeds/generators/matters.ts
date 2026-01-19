@@ -9,7 +9,7 @@ import {
 	teamsTable,
 	timelinesTable,
 } from "~/db/schema";
-import { Priority } from "~/lib/matter-constants";
+import { Priority } from "~/config/matter";
 import {
 	batchInsert,
 	randomDate,

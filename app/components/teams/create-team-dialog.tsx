@@ -4,7 +4,7 @@ import { useZero } from "@rocicorp/zero/react";
 import { memo, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
-import { InputField } from "~/components/forms";
+import { InputField } from "~/components/shared/forms";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import {
@@ -14,7 +14,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "~/components/ui/dialog";
-import { createTeamSchema } from "~/lib/validations/organization";
+import { createTeamSchema } from "~/lib/organization/validations";
 
 // Simple derivation logic
 const deriveCode = (name: string) =>

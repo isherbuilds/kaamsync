@@ -11,7 +11,7 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { type BillingInterval, type ProductKey, products } from "~/lib/billing";
+import { type BillingInterval, type ProductKey, products } from "~/config/billing";
 import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [

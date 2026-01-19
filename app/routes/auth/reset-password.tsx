@@ -2,12 +2,12 @@ import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { data, Form, Link, redirect } from "react-router";
 import { toast } from "sonner";
-import { LoadingButton, PasswordField } from "~/components/forms";
+import { LoadingButton, PasswordField } from "~/components/shared/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
 import { useIsPending } from "~/hooks/use-is-pending";
-import { AppInfo } from "~/lib/app-config";
-import { authClient } from "~/lib/auth-client";
-import { resetPasswordSchema } from "~/lib/validations/auth";
+import { AppInfo } from "~/config/app";
+import { authClient } from "~/lib/auth/client";
+import { resetPasswordSchema } from "~/lib/auth/validations";
 import type { Route } from "./+types/reset-password";
 
 export const meta: Route.MetaFunction = () => {

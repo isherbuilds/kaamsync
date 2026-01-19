@@ -5,7 +5,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 
 import { Separator } from "~/components/ui/separator";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 
 export default function SettingsSecurityPage() {
 	const { data: session } = authClient.useSession();

@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
-import { InputField, SelectField } from "~/components/forms";
+import { InputField, SelectField } from "~/components/shared/forms";
 
 // UI Components
 import { CustomAvatar } from "~/components/ui/avatar";
@@ -46,7 +46,7 @@ import {
 import { orgRole } from "~/db/helpers";
 import { useOrgLoaderData } from "~/hooks/use-loader-data";
 // Auth & Hooks
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 
 const inviteSchema = z.object({
 	email: z.email("Please enter a valid email"),

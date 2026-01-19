@@ -19,7 +19,7 @@ import {
 	getPriorityBadge,
 	getPriorityLabel,
 	Priority,
-} from "~/lib/matter-constants";
+} from "~/config/matter";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/requests";
 

@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
-	PaymentHistory,
 	PricingComparison,
 	PricingGrid,
 	SubscriptionStatus,
@@ -22,28 +21,27 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { getServerSession } from "~/lib/auth";
-import { authClient } from "~/lib/auth-client";
 import {
 	type BillingInterval,
 	canCheckout,
 	getCheckoutSlug,
 	type ProductKey,
 	products,
-} from "~/lib/billing";
+} from "~/config/billing";
+import { authClient } from "~/lib/auth/client";
 import {
 	canManageBilling,
 	canViewBilling,
 	type OrgRole,
-} from "~/lib/permissions";
+} from "~/lib/auth/permissions";
+import { getServerSession } from "~/lib/auth/server";
 import {
 	billingConfig,
-	getOrganizationPayments,
 	getOrganizationSubscription,
 	getOrganizationUsage,
 	getPlanByProductId,
-} from "~/lib/server/billing.server";
-import { getOrganizationMemberRole } from "~/lib/server/organization.server";
+} from "~/lib/billing/service";
+import { getOrganizationMemberRole } from "~/lib/organization/service";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const session = await getServerSession(request);
@@ -63,9 +61,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = session.user.id;
 
 	// Fetch role, billing data, and usage in parallel
-	const [subscription, payments, userRole, usage] = await Promise.all([
+	const [subscription, userRole, usage] = await Promise.all([
 		getOrganizationSubscription(orgId),
-		getOrganizationPayments(orgId),
 		getOrganizationMemberRole(orgId, userId),
 		getOrganizationUsage(orgId),
 	]);
@@ -79,7 +76,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	return {
 		subscription,
-		payments,
 		usage,
 		billingEnabled: billingConfig.enabled,
 		organizationId: orgId,
@@ -97,7 +93,6 @@ export default function BillingSettings() {
 	const loaderData = useLoaderData<typeof loader>();
 	const {
 		subscription,
-		payments,
 		usage,
 		billingEnabled,
 		organizationId,
@@ -371,14 +366,6 @@ export default function BillingSettings() {
 						</Button>
 						{showComparison && <PricingComparison />}
 					</div>
-				</div>
-			)}
-
-			{/* Payment History */}
-			{payments.length > 0 && (
-				<div className="space-y-4">
-					<h4 className="font-medium text-md">Payment History</h4>
-					<PaymentHistory payments={payments} />
 				</div>
 			)}
 

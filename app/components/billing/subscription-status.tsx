@@ -9,7 +9,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
-import { type ProductKey, products } from "~/lib/billing";
+import { type ProductKey, products } from "~/config/billing";
 
 interface Subscription {
 	id: string;

@@ -4,7 +4,7 @@
  * with access to tx.dbTransaction
  */
 
-import { planLimits } from "~/lib/billing";
+import { planLimits } from "~/config/billing";
 import type { MutatorTx } from "./mutator-helpers";
 
 // Map plan limits from canonical source for Zero mutators

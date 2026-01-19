@@ -13,7 +13,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { getToast } from "remix-toast";
 import { Toaster } from "sonner";
-import { GeneralErrorBoundary } from "./components/error-boundary";
+import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,

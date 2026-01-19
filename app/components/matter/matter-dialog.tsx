@@ -7,10 +7,10 @@ import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { useShortIdSeeder } from "~/hooks/use-short-id";
-import { Priority, type PriorityValue } from "~/lib/matter-constants";
-import { getAndIncrementNextShortId } from "~/lib/short-id-cache";
+import { Priority, type PriorityValue } from "~/config/matter";
+import { getAndIncrementNextShortId } from "~/lib/cache/short-id";
 import { cn } from "~/lib/utils";
-import { createMatterSchema } from "~/lib/validations/matter";
+import { createMatterSchema } from "~/lib/matter/validations";
 import { matterType, teamRole } from "../../db/helpers";
 import { Button } from "../ui/button";
 import {

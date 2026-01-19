@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { useCallback } from "react";
 import { useLocation } from "react-router";
-import { StableLink } from "~/components/stable-link";
+import { StableLink } from "~/components/shared/stable-link";
 import {
 	SidebarGroup,
 	SidebarMenu,

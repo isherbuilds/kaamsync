@@ -8,9 +8,9 @@ import {
 	auditLog,
 	getRequestIP,
 	getRequestUserAgent,
-} from "~/lib/audit-logger";
-import { getVapidPublicKey } from "~/lib/notifications.server";
-import { requireSession } from "~/lib/server/auth-helper";
+} from "~/lib/infra/audit";
+import { getVapidPublicKey } from "~/lib/notifications/service";
+import { requireSession } from "~/lib/auth/guard";
 import type { Route } from "./+types/subscribe";
 
 const subscriptionSchema = z.object({

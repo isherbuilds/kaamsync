@@ -12,12 +12,12 @@ import {
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
-import { StableLink } from "~/components/stable-link";
+import { StableLink } from "~/components/shared/stable-link";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { EmptyStateCard } from "~/components/ui/empty-state";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { VirtualizedList } from "~/components/virtualized-list";
+import { VirtualizedList } from "~/components/shared/virtualized-list";
 import {
 	type HeaderItem,
 	type ListItem,
@@ -32,7 +32,7 @@ import {
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/config/matter";
 import { cn, formatCompactRelativeDate } from "~/lib/utils";
 import type { Route } from "./+types/$teamCode";
 

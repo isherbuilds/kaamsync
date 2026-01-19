@@ -12,7 +12,7 @@ import {
 	planLimits,
 	products,
 	usagePricing,
-} from "~/lib/billing";
+} from "~/config/billing";
 import { cn } from "~/lib/utils";
 
 interface UsageData {

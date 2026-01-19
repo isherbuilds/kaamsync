@@ -8,15 +8,19 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useState } from "react";
 import { data, Form, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
-import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
+import {
+	InputField,
+	InputGroupField,
+	LoadingButton,
+} from "~/components/shared/forms";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { AppInfo } from "~/lib/app-config";
-import { auth, getServerSession } from "~/lib/auth";
-import { getOrganization } from "~/lib/server/organization.server";
-import { seedTeamDefaults } from "~/lib/server/seed-defaults.server";
+import { AppInfo } from "~/config/app";
+import { auth, getServerSession } from "~/lib/auth/server";
+import { seedTeamDefaults } from "~/lib/infra/seed";
+import { getOrganization } from "~/lib/organization/service";
+import { orgOnboardingSchema } from "~/lib/organization/validations";
 import { sanitizeSlug } from "~/lib/utils";
-import { orgOnboardingSchema } from "~/lib/validations/organization";
 import type { Route } from "./+types/join";
 
 export const meta: Route.MetaFunction = () => [

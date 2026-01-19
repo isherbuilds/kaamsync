@@ -1,7 +1,7 @@
 import { useZero } from "@rocicorp/zero/react";
 import { useEffect, useRef } from "react";
 import { zql } from "zero/schema";
-import { peekNextShortId, seedNextShortId } from "~/lib/short-id-cache";
+import { peekNextShortId, seedNextShortId } from "~/lib/cache/short-id";
 
 /**
  * Hook to seed the short ID cache for a team.

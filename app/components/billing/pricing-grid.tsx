@@ -19,7 +19,7 @@ import {
 	getYearlySavings,
 	type ProductKey,
 	products,
-} from "~/lib/billing";
+} from "~/config/billing";
 import { cn } from "~/lib/utils";
 
 interface PlanCardProps {

@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { getServerSession } from "~/lib/auth";
-import { getOrganization } from "~/lib/server/organization.server";
+import { getServerSession } from "~/lib/auth/server";
+import { getOrganization } from "~/lib/organization/service";
 
 /**
  * Billing redirect handler

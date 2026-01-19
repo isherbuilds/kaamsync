@@ -1,6 +1,6 @@
 import { concurrently } from "concurrently";
-import { must } from "shared/must";
-import "shared/env";
+import { must } from "~/lib/utils/must";
+import "./lib/env";
 
 const devPgAddress = must(
 	process.env.DEV_PG_ADDRESS,

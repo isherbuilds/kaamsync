@@ -1,6 +1,6 @@
 import { data, type LoaderFunctionArgs } from "react-router";
-import { getServerSession } from "~/lib/auth";
-import { getBillingStatus } from "~/lib/server/billing.server";
+import { getServerSession } from "~/lib/auth/server";
+import { getBillingStatus } from "~/lib/billing/service";
 
 /**
  * API endpoint to check billing limits and get current usage

@@ -7,9 +7,9 @@ import {
 	auditLog,
 	getRequestIP,
 	getRequestUserAgent,
-} from "~/lib/audit-logger";
-import { sendPushNotificationToUser } from "~/lib/notifications.server";
-import { requireSession } from "~/lib/server/auth-helper";
+} from "~/lib/infra/audit";
+import { sendPushNotificationToUser } from "~/lib/notifications/service";
+import { requireSession } from "~/lib/auth/guard";
 import type { Route } from "./+types/send";
 
 const sendNotificationSchema = z.object({

@@ -8,7 +8,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import { renderPriorityIcon } from "~/components/icons";
+import { renderPriorityIcon } from "~/components/shared/icons";
 import { CustomAvatar } from "~/components/ui/avatar";
 import {
 	Command,
@@ -31,7 +31,7 @@ import {
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
+} from "~/config/matter";
 import { cn } from "~/lib/utils";
 
 // This type covers both Org Members and Team Members query shapes

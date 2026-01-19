@@ -5,7 +5,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { data } from "react-router";
 import { z } from "zod";
-import { getServerSession } from "~/lib/auth";
+import { getServerSession } from "~/lib/auth/server";
 import {
 	canUploadFile,
 	createPresignedUpload,
@@ -15,7 +15,7 @@ import {
 	isStorageConfigured,
 	saveAttachment,
 	validateFileType,
-} from "~/lib/server/storage.server";
+} from "~/lib/storage/service";
 
 // =============================================================================
 // VALIDATION SCHEMAS

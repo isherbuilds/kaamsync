@@ -1,6 +1,6 @@
-import { must } from "shared/must";
-import "shared/env";
-import { exec } from "shared/exec";
+import { must } from "~/lib/utils/must";
+import "./lib/env";
+import { exec } from "./lib/exec";
 
 const devPgPassword = must(
 	process.env.DEV_PG_PASSWORD,

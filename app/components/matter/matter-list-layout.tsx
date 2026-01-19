@@ -9,7 +9,7 @@ import {
 	ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { VirtualizedList } from "~/components/virtualized-list";
+import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { useBreakpoints } from "~/hooks/use-mobile";
 import {
 	DETAIL_PANEL_MIN_SIZE,
@@ -17,7 +17,7 @@ import {
 	getListPanelSize,
 	PANEL_MAX_SIZE,
 	PANEL_MIN_SIZE,
-} from "~/lib/layout-constants";
+} from "~/config/layout";
 import { cn } from "~/lib/utils";
 
 type MatterWithStatus = Row["mattersTable"] & {

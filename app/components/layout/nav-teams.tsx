@@ -3,7 +3,7 @@
 import { Cog, MoreHorizontal, Plus, Users2Icon } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
-import { StableLink } from "~/components/stable-link";
+import { StableLink } from "~/components/shared/stable-link";
 import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
 import {
 	DropdownMenu,
