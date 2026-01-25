@@ -3,13 +3,9 @@ import { data } from "react-router";
 import { z } from "zod";
 import { db } from "~/db";
 import { membersTable } from "~/db/schema";
-import {
-	auditLog,
-	getRequestIP,
-	getRequestUserAgent,
-} from "~/lib/infra/audit";
-import { sendPushNotificationToUser } from "~/lib/notifications/service";
 import { requireSession } from "~/lib/auth/guard";
+import { auditLog, getRequestIP, getRequestUserAgent } from "~/lib/infra/audit";
+import { sendPushNotificationToUser } from "~/lib/notifications/service";
 import type { Route } from "./+types/send";
 
 const sendNotificationSchema = z.object({

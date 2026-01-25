@@ -61,10 +61,6 @@ export default [
 		route("zero/query", "routes/api/zero/query.ts"),
 		route("zero/mutate", "routes/api/zero/mutate.ts"),
 		route("billing/redirect", "routes/api/billing/redirect.ts"),
-		// Webhook handled by Better Auth at /api/auth/dodopayments/webhooks
-		// route("billing/debug", "routes/api/billing/debug.ts"),
-		route("billing/check-limits", "routes/api/billing/check-limits.ts"),
-		// route("billing/change-plan", "routes/api/billing/change-plan.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 
 		// Storage / Attachments
@@ -82,4 +78,10 @@ export default [
 		route("forget-password", "routes/auth/forget-password.tsx"),
 		route("reset-password", "routes/auth/reset-password.tsx"),
 	]),
+
+	// Chrome DevTools App Specific Configuration
+	route(
+		"/.well-known/appspecific/com.chrome.devtools.json",
+		"routes/[com.chrome.devtools.json].tsx",
+	),
 ] satisfies RouteConfig;

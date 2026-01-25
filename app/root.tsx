@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+
 import {
 	data,
 	Links,
@@ -91,15 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const colorScheme = useColorScheme();
 	const nonce = useNonce();
 
-	useEffect(() => {
-		if (typeof window === "undefined" || import.meta.env.DEV) return;
 
-		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker.register("/service-worker.js").catch((error) => {
-				console.error("Service worker registration failed:", error);
-			});
-		}
-	}, []);
 
 	return (
 		<html

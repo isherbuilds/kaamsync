@@ -1,7 +1,7 @@
-import { createId } from "@paralleldrive/cuid2";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { v7 as uuid } from "uuid";
+import { db } from "~/db";
 import { membershipStatus, teamRole } from "~/db/helpers";
-import { db } from "~/db/index";
 import {
 	labelsTable,
 	membersTable,
@@ -40,12 +40,10 @@ export async function seedTeamDefaults({
 	teamName = "General",
 }: SeedOptions) {
 	// Pre-generate all IDs upfront
-	const teamId = createId();
-	const labelIds = Array.from({ length: DEFAULT_LABELS.length }, () =>
-		createId(),
-	);
+	const teamId = uuid();
+	const labelIds = Array.from({ length: DEFAULT_LABELS.length }, () => uuid());
 	const statusIds = Array.from({ length: DEFAULT_STATUSES.length }, () =>
-		createId(),
+		uuid(),
 	);
 
 	// Prepare candidates (used for BOTH slug and code)
@@ -155,7 +153,7 @@ export async function seedTeamDefaults({
 	if (ownerMember?.userId) {
 		finalInserts.push(
 			db.insert(teamMembershipsTable).values({
-				id: createId(),
+				id: uuid(),
 				teamId,
 				userId: ownerMember.userId,
 				orgId,

@@ -166,12 +166,14 @@ export async function getOrganizationUsagePrepared(organizationId: string) {
 		getOrganizationMemberCount.execute({ organizationId }),
 		getOrganizationTeamCount.execute({ orgId: organizationId }),
 		getOrganizationMatterCount.execute({ orgId: organizationId }),
+		// getOrganizationStorageUsage(organizationId),
 	]);
 
 	return {
 		members: memberResult[0]?.count ?? 0,
 		teams: teamResult[0]?.count ?? 0,
 		matters: matterResult[0]?.count ?? 0,
+		// storage,
 	};
 }
 

@@ -8,10 +8,10 @@ import {
 	TooltipTrigger,
 } from "~/components/ui/tooltip";
 import {
+	addonPricing,
 	type ProductKey,
 	planLimits,
 	products,
-	usagePricing,
 } from "~/config/billing";
 import { cn } from "~/lib/utils";
 
@@ -122,38 +122,31 @@ function UsageItem({
 	);
 }
 
-function OveragePricingInfo({ planKey }: { planKey: ProductKey }) {
-	// Only show for plans that have usage pricing
+function AddonPricingInfo({ planKey }: { planKey: ProductKey }) {
 	if (planKey === "starter" || planKey === "enterprise") {
 		return null;
 	}
 
-	const pricing = usagePricing[planKey as keyof typeof usagePricing];
+	const pricing = addonPricing[planKey as keyof typeof addonPricing];
 	if (!pricing) return null;
 
 	return (
 		<div className="rounded-lg border border-dashed bg-muted/30 p-3">
 			<p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-				Overage Rates
+				Add-on Pricing
 			</p>
-			<div className="grid grid-cols-3 gap-2 text-sm">
+			<div className="grid grid-cols-2 gap-2 text-sm">
 				<div className="text-center">
 					<p className="font-semibold">
-						${(pricing.memberSeat / 100).toFixed(0)}
+						${(pricing.seatCents / 100).toFixed(0)}
 					</p>
-					<p className="text-muted-foreground text-xs">per member</p>
+					<p className="text-muted-foreground text-xs">per extra member</p>
 				</div>
 				<div className="text-center">
 					<p className="font-semibold">
-						${(pricing.teamCreated / 100).toFixed(0)}
+						${(pricing.storageGbCents / 100).toFixed(0)}
 					</p>
-					<p className="text-muted-foreground text-xs">per team</p>
-				</div>
-				<div className="text-center">
-					<p className="font-semibold">
-						${(pricing.storageGb / 100).toFixed(0)}
-					</p>
-					<p className="text-muted-foreground text-xs">per GB</p>
+					<p className="text-muted-foreground text-xs">per GB storage</p>
 				</div>
 			</div>
 		</div>
@@ -165,10 +158,10 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 	const limits = planLimits[planKey];
 	const product = products[planKey];
 
-	// Get overage rates if applicable
+	// Get addon pricing if applicable
 	const pricing =
 		planKey !== "starter" && planKey !== "enterprise"
-			? usagePricing[planKey as keyof typeof usagePricing]
+			? addonPricing[planKey as keyof typeof addonPricing]
 			: null;
 
 	const isFrozen = usage.members > limits.members && limits.members !== -1;
@@ -203,7 +196,7 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 					current={usage.members}
 					limit={limits.members}
 					icon={Users}
-					overageRate={pricing?.memberSeat}
+					overageRate={pricing?.seatCents}
 				/>
 
 				<UsageItem
@@ -211,7 +204,6 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 					current={usage.teams}
 					limit={limits.teams}
 					icon={Layers}
-					overageRate={pricing?.teamCreated}
 				/>
 
 				<UsageItem
@@ -227,14 +219,14 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 					limit={limits.storageGb}
 					icon={HardDrive}
 					unit="GB"
-					overageRate={pricing?.storageGb}
+					overageRate={pricing?.storageGbCents}
 					formatValue={(val) =>
 						val < 1 ? `${Math.round(val * 1000)}MB` : `${val.toFixed(1)}GB`
 					}
 				/>
 
-				{/* Show overage pricing info for usage-based plans */}
-				{product.usageBased && <OveragePricingInfo planKey={planKey} />}
+				{/* Show addon pricing info for plans with add-ons */}
+				{product.hasAddons && <AddonPricingInfo planKey={planKey} />}
 			</CardContent>
 		</Card>
 	);

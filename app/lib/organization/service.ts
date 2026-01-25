@@ -1,10 +1,11 @@
-import { createId } from "@paralleldrive/cuid2";
 import { and, eq } from "drizzle-orm";
+import { v7 as uuid } from "uuid";
 import { db } from "~/db";
 import {
 	invitationsTable,
 	membersTable,
 	organizationsTable,
+	subscriptionsTable,
 	usersTable,
 } from "~/db/schema";
 import type { OrgRole } from "~/lib/auth/permissions";
@@ -44,7 +45,7 @@ export async function addMemberToOrganization(
 
 	// If user exists, add them directly as a member
 	if (existingUser) {
-		const memberId = createId();
+		const memberId = uuid();
 		const memberData = {
 			id: memberId,
 			organizationId,
@@ -77,7 +78,7 @@ export async function addMemberToOrganization(
 		resolvedInviterId = adminMember?.userId || "system";
 	}
 
-	const invitationId = createId();
+	const invitationId = uuid();
 	const invitationData = {
 		id: invitationId,
 		organizationId,
@@ -113,15 +114,17 @@ export async function getOrganizationMemberCount(organizationId: string) {
 /**
  * Get active organization for a user (for session management)
  */
-export async function getActiveOrganization(
-	userId: string,
-): Promise<string | null> {
+export async function getActiveOrganization(userId: string) {
 	const membership = await db.query.membersTable.findFirst({
 		where: eq(membersTable.userId, userId),
 		orderBy: (m, { desc }) => desc(m.createdAt),
 	});
 
-	return membership?.organizationId || null;
+	if (!membership) {
+		throw new Error("User does not belong to any organization");
+	}
+
+	return membership.organizationId;
 }
 
 /**
@@ -167,4 +170,21 @@ export async function getOrganization(organizationId: string): Promise<{
 	});
 
 	return organization ?? null;
+}
+
+export async function getExistingOrganizationSubscriptionId(
+	customerId: string,
+	organizationId: string,
+) {
+	const existingSubscription = await db.query.subscriptionsTable.findFirst({
+		where: and(
+			eq(subscriptionsTable.organizationId, organizationId),
+			eq(subscriptionsTable.billingCustomerId, customerId),
+		),
+		columns: {
+			id: true,
+		},
+	});
+
+	return existingSubscription?.id;
 }

@@ -16,9 +16,8 @@
 import { UseSend } from "usesend-js";
 import { OrgInvitationEmail } from "~/components/email/org-invitation";
 import { VerifyEmail } from "~/components/email/verify-email";
-import { normalizeError } from "~/lib/utils/error";
-import { reportSeatCount } from "~/lib/billing/tracking";
 import { env, isDevelopment } from "~/lib/infra/env";
+import { normalizeError } from "~/lib/utils/error";
 
 const usesend = new UseSend(env.USESEND_API_KEY, env.USESEND_SELF_HOSTED_URL);
 
@@ -39,20 +38,16 @@ export const AuthService = {
 			return;
 		}
 
-		try {
-			await usesend.emails.send({
+		await usesend.emails
+			.send({
 				from: "support@mail.kaamsync.com",
 				to: user.email,
 				subject: "KaamSync: Reset your password",
 				html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
+			})
+			.catch((err) => {
+				throw normalizeError(err);
 			});
-		} catch (err) {
-			console.error("[AuthService] Failed to send reset password email", {
-				email: user.email,
-				hasUrl: !!url,
-			});
-			throw normalizeError(err);
-		}
 	},
 
 	async sendVerificationEmail({
@@ -67,21 +62,16 @@ export const AuthService = {
 			return;
 		}
 
-		try {
-			await usesend.emails.send({
+		await usesend.emails
+			.send({
 				from: "welcome@mail.kaamsync.com",
 				to: user.email,
 				subject: "KaamSync: Verify your email address",
 				react: <VerifyEmail verifyUrl={url} />,
+			})
+			.catch((err) => {
+				throw normalizeError(err);
 			});
-		} catch (err) {
-			const redactedUrl = `${url.split("?")[0]}...`;
-			console.error("[AuthService] Failed to send verification email", {
-				email: user.email,
-				url: redactedUrl,
-			});
-			throw normalizeError(err);
-		}
 	},
 
 	async sendInvitationEmail({
@@ -102,8 +92,8 @@ export const AuthService = {
 			return;
 		}
 
-		try {
-			await usesend.emails.send({
+		await usesend.emails
+			.send({
 				from: "KaamSync@mail.kaamsync.com",
 				to: email,
 				subject: `You're invited to join ${organization.name} on KaamSync`,
@@ -115,23 +105,9 @@ export const AuthService = {
 						inviteLink={inviteLink}
 					/>
 				),
+			})
+			.catch((err) => {
+				throw normalizeError(err);
 			});
-		} catch (err) {
-			console.error("[AuthService] Failed to send invitation email", {
-				email,
-				organization: organization.name,
-				inviter: inviter.user.email,
-			});
-			throw normalizeError(err);
-		}
-	},
-
-	async handleMembershipChange(organizationId: string) {
-		// Use unified tracking function (handles cache invalidation + billing)
-		try {
-			await reportSeatCount(organizationId);
-		} catch (err) {
-			console.error("[Billing] Failed to track membership change:", err);
-		}
 	},
 };

@@ -24,10 +24,10 @@ concurrently([
 		name: "z0",
 		prefixColor: "#ff11cc",
 	},
-	{
-		command:
-			"chokidar 'db/schema.ts' 'auth/schema.ts' -c 'npm run generate-zero-schema'",
-		name: "gz",
-		prefixColor: "#11ffcc",
-	},
+	// {
+	// 	command:
+	// 		"chokidar 'db/schema.ts' 'auth/schema.ts' -c 'npm run generate-zero-schema'",
+	// 	name: "gz",
+	// 	prefixColor: "#11ffcc",
+	// },
 ]);

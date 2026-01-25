@@ -4,20 +4,16 @@
  * functions for pricing calculations. Works with DodoPayments for payment processing.
  *
  * Key exports:
- * - dodoPayments - DodoPayments client instance
- * - billingConfig - Webhook configuration and settings
  * - planLimits - Feature limits per plan (starter, growth, pro, enterprise)
- * - usagePricing - Overage pricing in cents (memberSeat, teamCreated, storageGb)
+ * - addonPricing - Add-on pricing in cents (seatCents, storageGbCents)
  * - products - Product definitions with features, pricing, and metadata
  * - getPrice() - Get price for plan/interval
  * - getMonthlyEquivalent() - Convert yearly to monthly equivalent
  * - canCheckout() - Check if plan allows checkout
- * - getPlanByProductId() - Map Dodo product ID to plan key
- * - getMemberPrice() - Get per-member price for plan
+ * - getEffectiveMemberLimit() - Calculate limit including purchased add-ons
+ * - canPurchaseAddons() - Check if add-on purchase is allowed
  *
- * @see app/lib/server/billing.server.ts for server-side billing operations
- * @see app/lib/server/billing-tracking.server.ts for billing event tracking
- * @see zero/billing-limits.ts for usage limit validation
+ * @see app/lib/billing/service.ts for server-side billing operations
  */
 
 // =============================================================================
@@ -62,11 +58,96 @@ export const planLimits = {
 export type ProductKey = keyof typeof planLimits;
 export type BillingInterval = "monthly" | "yearly";
 
-// Overage pricing (cents)
-export const usagePricing = {
-	growth: { memberSeat: 500, teamCreated: 300, storageGb: 200 },
-	pro: { memberSeat: 400, teamCreated: 200, storageGb: 100 },
+// =============================================================================
+// ADD-ON PRICING & CONFIGURATION
+// =============================================================================
+
+export const addonPricing = {
+	growth: { seatCents: 500, storageGbCents: 200 },
+	pro: { seatCents: 400, storageGbCents: 100 },
 } as const;
+
+export const ADDON_PURCHASE_CUTOFF_DAYS = 5;
+export const MIN_STORAGE_ADDON_GB = 5;
+
+export type AddonType = "seat" | "storage";
+
+export interface AddonConfig {
+	seatAddonId: string | undefined;
+	storageAddonId: string | undefined;
+	seatPriceCents: number;
+	storageGbPriceCents: number;
+}
+
+export const getAddonConfig = (plan: ProductKey): AddonConfig | null => {
+	if (plan === "starter" || plan === "enterprise") return null;
+	const pricing = addonPricing[plan];
+	return {
+		seatAddonId:
+			plan === "growth"
+				? process.env.DODO_ADDON_SEAT_GROWTH
+				: process.env.DODO_ADDON_SEAT_PRO,
+		storageAddonId:
+			plan === "growth"
+				? process.env.DODO_ADDON_STORAGE_GROWTH
+				: process.env.DODO_ADDON_STORAGE_PRO,
+		seatPriceCents: pricing.seatCents,
+		storageGbPriceCents: pricing.storageGbCents,
+	};
+};
+
+export const getEffectiveMemberLimit = (
+	plan: ProductKey,
+	purchasedSeats: number,
+): number => {
+	const baseLimit = planLimits[plan].members;
+	if (baseLimit === -1) return -1;
+	return baseLimit + purchasedSeats;
+};
+
+export const getEffectiveStorageLimit = (
+	plan: ProductKey,
+	purchasedStorageGB: number,
+): number => {
+	const baseLimit = planLimits[plan].storageGb;
+	if (baseLimit === -1) return -1;
+	return baseLimit + purchasedStorageGB;
+};
+
+export const canPurchaseAddons = (
+	plan: ProductKey,
+	nextBillingDate: Date | null,
+): { allowed: boolean; reason?: string; daysUntilBilling?: number } => {
+	if (plan === "starter") {
+		return {
+			allowed: false,
+			reason: "Upgrade to Growth or Pro to purchase add-ons",
+		};
+	}
+	if (plan === "enterprise") {
+		return {
+			allowed: false,
+			reason: "Contact sales for Enterprise adjustments",
+		};
+	}
+	if (!nextBillingDate) {
+		return { allowed: true };
+	}
+
+	const now = new Date();
+	const msUntilBilling = nextBillingDate.getTime() - now.getTime();
+	const daysUntilBilling = Math.ceil(msUntilBilling / (1000 * 60 * 60 * 24));
+
+	if (daysUntilBilling <= ADDON_PURCHASE_CUTOFF_DAYS) {
+		return {
+			allowed: false,
+			reason: `Add-on purchases are disabled ${ADDON_PURCHASE_CUTOFF_DAYS} days before billing. Your next billing is in ${daysUntilBilling} day(s).`,
+			daysUntilBilling,
+		};
+	}
+
+	return { allowed: true, daysUntilBilling };
+};
 
 // =============================================================================
 // PRODUCTS
@@ -79,15 +160,7 @@ export const products = {
 		monthlyPrice: 0,
 		yearlyPrice: 0,
 		limits: planLimits.starter,
-		popular: false,
-		usageBased: false,
-		features: [
-			"Up to 3 team members",
-			"5 individual teams",
-			"Basic matter tracking",
-			"Standard support",
-		],
-		cta: "Get Started",
+		hasAddons: false,
 	},
 	growth: {
 		name: "Growth",
@@ -95,18 +168,8 @@ export const products = {
 		monthlyPrice: 2900,
 		yearlyPrice: 29000,
 		limits: planLimits.growth,
-		popular: true,
-		usageBased: true,
-		usagePricing: usagePricing.growth,
-		features: [
-			"Up to 10 members included",
-			"Unlimited teams",
-			"Audit Logs",
-			"Priority support",
-			"$5/month per extra member",
-		],
-		addonsDescription: ["+$5/member", "+$2/GB storage"],
-		cta: "Start Growing",
+		hasAddons: true,
+		addonPricing: addonPricing.growth,
 	},
 	pro: {
 		name: "Professional",
@@ -114,18 +177,8 @@ export const products = {
 		monthlyPrice: 7900,
 		yearlyPrice: 79000,
 		limits: planLimits.pro,
-		popular: false,
-		usageBased: true,
-		usagePricing: usagePricing.pro,
-		features: [
-			"Up to 25 members included",
-			"Unlimited teams",
-			"Audit logs",
-			"Priority support",
-			"$4/month per extra member",
-		],
-		addonsDescription: ["+$4/member", "+$1/GB storage"],
-		cta: "Go Pro",
+		hasAddons: true,
+		addonPricing: addonPricing.pro,
 	},
 	enterprise: {
 		name: "Enterprise",
@@ -133,16 +186,7 @@ export const products = {
 		monthlyPrice: null,
 		yearlyPrice: null,
 		limits: planLimits.enterprise,
-		popular: false,
-		usageBased: false,
-		features: [
-			"Unlimited members",
-			"Unlimited teams",
-			"Dedicated account manager",
-			"Custom integrations",
-			"24/7 support",
-		],
-		cta: "Contact Sales",
+		hasAddons: false,
 		contactSales: true,
 	},
 } as const;

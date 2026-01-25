@@ -11,7 +11,9 @@ import { type TeamRole, teamRole } from "~/db/helpers";
 
 export const PERMISSION_ERRORS = {
 	NOT_LOGGED_IN: "User must be logged in",
+	NOT_ORG_MEMBER: "Not a member of this organization",
 	NOT_TEAM_MEMBER: "Not a member of this team",
+	NO_APPROPRIATE_ROLE: "User does not have the appropriate role",
 	MANAGER_REQUIRED: "Only team managers can perform this action",
 	CANNOT_MODIFY_MATTER: "Cannot modify this matter",
 	MATTER_NOT_FOUND: "Matter not found",

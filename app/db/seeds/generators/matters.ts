@@ -1,15 +1,15 @@
 import { faker } from "@faker-js/faker";
-import { createId } from "@paralleldrive/cuid2";
 import { eq, max } from "drizzle-orm";
+import { v7 as uuid } from "uuid";
+import { Priority } from "~/config/matter";
+import { db } from "~/db";
 import { matterType, timelineEventType } from "~/db/helpers";
-import { db } from "~/db/index";
 import {
 	matterLabelsTable,
 	mattersTable,
 	teamsTable,
 	timelinesTable,
 } from "~/db/schema";
-import { Priority } from "~/config/matter";
 import {
 	batchInsert,
 	randomDate,
@@ -110,7 +110,7 @@ export async function createMatters(team: TeamData, count: number) {
 			}
 		}
 
-		const matterId = createId();
+		const matterId = uuid();
 		const description = faker.lorem.paragraph(); // Longer description
 
 		mattersBatch.push({
@@ -167,7 +167,7 @@ export async function createMatters(team: TeamData, count: number) {
 
 		// Add Creation Timeline
 		timelinesBatch.push({
-			id: createId(),
+			id: uuid(),
 			matterId,
 			userId: author,
 			type: timelineEventType.created,

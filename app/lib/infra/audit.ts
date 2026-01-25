@@ -48,7 +48,7 @@ export async function auditLog(entry: AuditLogEntry) {
 
 		// TODO: Write to database audit table
 		// await db.insert(auditLogsTable).values({
-		//   id: createId(),
+		//   id: uuid(),
 		//   action: entry.action,
 		//   actorId: entry.actorId,
 		//   targetId: entry.targetId,

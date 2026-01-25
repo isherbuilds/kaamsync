@@ -2,48 +2,19 @@
  * Billing Server Module - Consolidated
  * Simplified: ~320 lines vs original 1,142 lines (across 5 files)
  */
-import { createId } from "@paralleldrive/cuid2";
+
 import DodoPayments from "dodopayments";
-import { and, eq } from "drizzle-orm";
 import { type ProductKey, planLimits, usagePricing } from "~/config/billing";
-import { db } from "~/db";
-import { subscriptionsTable } from "~/db/schema";
 import {
 	getOrganizationMatterCount,
 	getOrganizationUsagePrepared,
 	getOrganizationSubscription as getOrgSubscriptionPrepared,
 } from "~/lib/infra/db-prepared";
 import { env } from "~/lib/infra/env";
-import { logger } from "~/lib/utils/logger";
 
 // =============================================================================
 // TYPES
 // =============================================================================
-
-export interface WebhookPayload {
-	business_id: string;
-	type?: string;
-	event_type?: string;
-	timestamp: string | Date;
-	data: {
-		payload_type?: string;
-		subscription_id?: string | null;
-		payment_id?: string | null;
-		customer_id?: string | null;
-		customer?: { customer_id: string; email: string; name?: string } | null;
-		metadata?: { organizationId?: string; [key: string]: unknown } | null;
-		product_id?: string | null;
-		status?: string | null;
-		recurring_pre_tax_amount?: number | null;
-		currency?: string | null;
-		payment_frequency_interval?: string | null;
-		created_at?: string | null;
-		next_billing_date?: string | null;
-		cancelled_at?: string | null;
-		total_amount?: number | null;
-		[key: string]: unknown;
-	};
-}
 
 export interface PlanUsage {
 	members: number;
@@ -106,65 +77,6 @@ export async function getOrganizationSubscription(orgId: string) {
 	return result[0] ?? null;
 }
 
-export async function upsertSubscription(
-	customerId: string,
-	orgId: string,
-	payload: WebhookPayload["data"],
-	status: string,
-) {
-	const planKey = payload.product_id
-		? getPlanByProductId(payload.product_id)
-		: null;
-
-	const data = {
-		billingCustomerId: customerId,
-		organizationId: orgId,
-		dodoSubscriptionId: payload.subscription_id,
-		productId: payload.product_id ?? "",
-		planKey,
-		status,
-		billingInterval: payload.payment_frequency_interval?.toLowerCase(),
-		amount: payload.recurring_pre_tax_amount,
-		currency: payload.currency,
-		currentPeriodEnd: payload.next_billing_date
-			? new Date(payload.next_billing_date)
-			: null,
-		cancelledAt: payload.cancelled_at ? new Date(payload.cancelled_at) : null,
-	};
-
-	await db.transaction(async (tx) => {
-		let existing = payload.subscription_id
-			? await tx.query.subscriptionsTable.findFirst({
-					where: eq(
-						subscriptionsTable.dodoSubscriptionId,
-						payload.subscription_id,
-					),
-				})
-			: null;
-
-		if (!existing) {
-			existing = await tx.query.subscriptionsTable.findFirst({
-				where: and(
-					eq(subscriptionsTable.organizationId, orgId),
-					eq(subscriptionsTable.billingCustomerId, customerId),
-					eq(subscriptionsTable.productId, data.productId),
-					eq(subscriptionsTable.status, "active"),
-				),
-				orderBy: (s, { desc }) => desc(s.createdAt),
-			});
-		}
-
-		if (existing) {
-			await tx
-				.update(subscriptionsTable)
-				.set(data)
-				.where(eq(subscriptionsTable.id, existing.id));
-		} else {
-			await tx.insert(subscriptionsTable).values({ id: createId(), ...data });
-		}
-	});
-}
-
 // =============================================================================
 // LIMITS
 // =============================================================================
@@ -195,7 +107,7 @@ export async function getOrganizationPlanKey(
 ): Promise<ProductKey> {
 	const sub = await getOrganizationSubscription(orgId);
 	if (!sub || hasSubscriptionEnded(sub)) return "starter";
-	if (sub.planKey) return sub.planKey as ProductKey;
+	if (sub.plan) return sub.plan as ProductKey;
 	if (sub.productId) return getPlanByProductId(sub.productId) ?? "starter";
 	return "starter";
 }
@@ -210,7 +122,7 @@ export async function checkPlanLimits(
 	if (!overridePlan && sub) {
 		effectivePlan = hasSubscriptionEnded(sub)
 			? "starter"
-			: ((sub.planKey as ProductKey) ?? "starter");
+			: ((sub.plan as ProductKey) ?? "starter");
 	}
 
 	const usage = { ...(await getOrganizationUsage(orgId)) };
@@ -387,54 +299,6 @@ export async function getBillingStatus(orgId: string) {
 // =============================================================================
 // WEBHOOK HANDLER
 // =============================================================================
-
-const STATUS_MAP: Record<
-	string,
-	{ type: "subscription" | "payment"; status: string }
-> = {
-	"subscription.active": { type: "subscription", status: "active" },
-	"subscription.renewed": { type: "subscription", status: "active" },
-	"subscription.updated": { type: "subscription", status: "active" },
-	"subscription.plan_changed": { type: "subscription", status: "active" },
-	"subscription.on_hold": { type: "subscription", status: "on_hold" },
-	"subscription.cancelled": { type: "subscription", status: "cancelled" },
-	"subscription.failed": { type: "subscription", status: "failed" },
-	"subscription.expired": { type: "subscription", status: "expired" },
-	"payment.succeeded": { type: "payment", status: "succeeded" },
-	"payment.failed": { type: "payment", status: "failed" },
-	"payment.processing": { type: "payment", status: "processing" },
-	"payment.cancelled": { type: "payment", status: "cancelled" },
-};
-
-export async function handleBillingWebhook(payload: WebhookPayload) {
-	const eventType = payload.type || payload.event_type || "";
-
-	try {
-		const data = payload.data;
-
-		let customerId: string | undefined;
-		const orgId =
-			(typeof data?.metadata?.organizationId === "string"
-				? data.metadata.organizationId
-				: "") || "";
-
-		const mapped = STATUS_MAP[eventType];
-
-		if (mapped && customerId) {
-			if (!orgId) {
-				throw new Error(
-					`[Billing] Cannot process ${eventType} for customer ${customerId}: missing orgId`,
-				);
-			}
-
-			if (mapped.type === "subscription")
-				await upsertSubscription(customerId, orgId, data, mapped.status);
-		}
-	} catch (error) {
-		logger.error("[Billing] Webhook error:", error);
-		throw error;
-	}
-}
 
 export const getPlanByProductId = (productId: string): ProductKey | null => {
 	if (!productId) return null;

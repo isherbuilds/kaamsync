@@ -8,17 +8,27 @@ import {
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import { cache } from "react";
+import { v7 as uuid } from "uuid";
 import { db } from "~/db";
 import * as schema from "~/db/schema";
 import { AuthService } from "~/lib/auth/service";
 import {
 	billingConfig,
 	dodoPayments,
-	handleBillingWebhook,
+	getPlanByProductId,
+	parseAddonQuantities,
 } from "~/lib/billing/service";
 import { env, isProduction } from "~/lib/infra/env";
-import { getActiveOrganization } from "~/lib/organization/service";
+import {
+	getActiveOrganization,
+	getExistingOrganizationSubscriptionId,
+} from "~/lib/organization/service";
+
+// =============================================================================
+// SHARED WEBHOOK HELPER
+// =============================================================================
 
 export const auth = betterAuth({
 	experimental: {
@@ -83,8 +93,8 @@ export const auth = betterAuth({
 		updateAge: 60 * 60 * 24, // 1 day - refresh session daily
 		cookieCache: {
 			enabled: true,
-			maxAge: 24 * 60 * 60, // 1 day cache duration (reduced from 7 days for security)
-			strategy: "jwe", // can be "jwt" or "compact"
+			maxAge: 24 * 60 * 60, // 1 day cache duration
+			strategy: "compact",
 			refreshCache: true, // Enable stateless refresh
 		},
 	},
@@ -94,8 +104,8 @@ export const auth = betterAuth({
 			enabled: true,
 			trustedProviders: ["google"],
 		},
-		storeStateStrategy: "cookie",
-		storeAccountCookie: true, // Store account data after OAuth flow in a cookie (useful for database-less flows)
+		storeStateStrategy: "database",
+		skipStateCookieCheck: true,
 	},
 	databaseHooks: {
 		session: {
@@ -129,23 +139,6 @@ export const auth = betterAuth({
 			},
 
 			sendInvitationEmail: AuthService.sendInvitationEmail,
-			organizationHooks: {
-				afterAcceptInvitation: async ({ member }) => {
-					if (member.organizationId) {
-						await AuthService.handleMembershipChange(member.organizationId);
-					}
-				},
-				afterAddMember: async ({ member }) => {
-					if (member.organizationId) {
-						await AuthService.handleMembershipChange(member.organizationId);
-					}
-				},
-				afterRemoveMember: async ({ member }) => {
-					if (member.organizationId) {
-						await AuthService.handleMembershipChange(member.organizationId);
-					}
-				},
-			},
 		}),
 		// Dodo Payments billing integration
 		...(dodoPayments && billingConfig.webhookSecret
@@ -196,8 +189,164 @@ export const auth = betterAuth({
 							usage(),
 							webhooks({
 								webhookKey: billingConfig.webhookSecret,
-								onPayload: async (payload: any) => {
-									await handleBillingWebhook(payload);
+
+								onSubscriptionActive: async (payload) => {
+									const data = payload.data;
+
+									const orgId = data.metadata?.organizationId;
+									if (!orgId) return;
+
+									const existingId =
+										await getExistingOrganizationSubscriptionId(
+											orgId,
+											data.customer.customer_id,
+										);
+
+									const plan = getPlanByProductId(data.product_id);
+									if (!plan) return;
+
+									const { purchasedSeats, purchasedStorageGB } =
+										parseAddonQuantities(data.addons ?? []);
+
+									const subscriptionData = {
+										plan,
+										productId: data.product_id,
+										billingSubscriptionId: data.subscription_id,
+										status: data.status,
+										purchasedSeats,
+										purchasedStorageGB,
+										preTaxAmount: data.recurring_pre_tax_amount,
+										previousBillingDate: data.previous_billing_date
+											? new Date(data.previous_billing_date)
+											: null,
+										nextBillingDate: data.next_billing_date
+											? new Date(data.next_billing_date)
+											: null,
+										paymentFrequencyInterval: data.payment_frequency_interval,
+										onDemand: data.on_demand,
+										updatedAt: new Date(),
+									};
+
+									if (!existingId) {
+										await db.insert(schema.subscriptionsTable).values({
+											id: uuid(),
+											...subscriptionData,
+
+											billingCustomerId: data.customer.customer_id,
+											organizationId: orgId,
+
+											createdAt: new Date(),
+										});
+									} else {
+										await db
+											.update(schema.subscriptionsTable)
+											.set(subscriptionData)
+											.where(eq(schema.subscriptionsTable.id, existingId));
+									}
+								},
+
+								onSubscriptionExpired: async (payload) => {
+									if (!payload.data.metadata?.organizationId) return;
+									const existingId =
+										await getExistingOrganizationSubscriptionId(
+											payload.data.metadata.organizationId,
+											payload.data.customer.customer_id,
+										);
+									if (!existingId) return;
+									await db
+										.update(schema.subscriptionsTable)
+										.set({ status: payload.data.status, updatedAt: new Date() })
+										.where(eq(schema.subscriptionsTable.id, existingId));
+								},
+
+								onSubscriptionPlanChanged: async (payload) => {
+									const data = payload.data;
+
+									const orgId = data.metadata?.organizationId;
+									if (!orgId) return;
+
+									const existingId =
+										await getExistingOrganizationSubscriptionId(
+											orgId,
+											data.customer.customer_id,
+										);
+
+									const plan = getPlanByProductId(data.product_id);
+									if (!plan || !existingId) return;
+
+									const { purchasedSeats, purchasedStorageGB } =
+										parseAddonQuantities(data.addons ?? []);
+
+									const subscriptionData = {
+										plan,
+										productId: data.product_id,
+										billingSubscriptionId: data.subscription_id,
+										status: data.status,
+										purchasedSeats,
+										purchasedStorageGB,
+										preTaxAmount: data.recurring_pre_tax_amount,
+										previousBillingDate: data.previous_billing_date
+											? new Date(data.previous_billing_date)
+											: null,
+										nextBillingDate: data.next_billing_date
+											? new Date(data.next_billing_date)
+											: null,
+										paymentFrequencyInterval: data.payment_frequency_interval,
+										onDemand: data.on_demand,
+										updatedAt: new Date(),
+									};
+
+									await db
+										.update(schema.subscriptionsTable)
+										.set(subscriptionData)
+										.where(eq(schema.subscriptionsTable.id, existingId));
+
+									// Optional overage check for plan changes
+									// const usage = await getOrganizationUsage(orgId);
+
+									// const effectiveLimit = getEffectiveMemberLimit(
+									// 	plan as ProductKey,
+									// 	purchasedSeats,
+									// );
+
+									// if (effectiveLimit !== -1 && usage.members > effectiveLimit) {
+									// 	console.warn(
+									// 		`[Billing] Org ${orgId} now over member limit: ${usage.members}/${effectiveLimit}. ` +
+									// 			`Plan: ${plan}, purchasedSeats: ${purchasedSeats}. Org is frozen for new member additions.`,
+									// 	);
+									// }
+								},
+
+								onSubscriptionCancelled: async (payload) => {
+									const orgId = payload.data.metadata?.organizationId;
+
+									if (!orgId) return;
+
+									const existingId =
+										await getExistingOrganizationSubscriptionId(
+											orgId,
+											payload.data.customer.customer_id,
+										);
+
+									if (!existingId) return;
+
+									await db
+										.update(schema.subscriptionsTable)
+										.set({
+											status: payload.data.status,
+											purchasedSeats: 0,
+											purchasedStorageGB: 0,
+											updatedAt: new Date(),
+										})
+										.where(eq(schema.subscriptionsTable.id, existingId));
+
+									// const usage = await getOrganizationUsage(orgId);
+									// if (usage.members > planLimits.starter.members) {
+									// 	console.warn(
+									// 		`[Billing] Org ${orgId} subscription cancelled. ` +
+									// 			`Members: ${usage.members}/${planLimits.starter.members}. Org frozen for new additions.`,
+									// 	);
+									// }
 								},
 							}),
 						],

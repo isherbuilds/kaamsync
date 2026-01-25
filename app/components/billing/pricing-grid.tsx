@@ -58,7 +58,7 @@ export function PlanCard({
 		currentPlan === plan || (plan === "starter" && !currentPlan);
 	const isPopular = product.popular;
 	const isEnterprise = plan === "enterprise";
-	const hasAddons = "usageBased" in product && product.usageBased;
+	const hasAddons = "hasAddons" in product && product.hasAddons;
 
 	const price = getPrice(plan, interval);
 	const monthlyPrice = product.monthlyPrice;

@@ -31,6 +31,12 @@ const envSchema = z.object({
 	DODO_PRODUCT_PROFESSIONAL_MONTHLY: z.string().optional(),
 	DODO_PRODUCT_PROFESSIONAL_YEARLY: z.string().optional(),
 
+	// Addon IDs (optional)
+	DODO_ADDON_SEAT_GROWTH: z.string().optional(),
+	DODO_ADDON_SEAT_PRO: z.string().optional(),
+	DODO_ADDON_STORAGE_GROWTH: z.string().optional(),
+	DODO_ADDON_STORAGE_PRO: z.string().optional(),
+
 	// Email (optional)
 	USESEND_API_KEY: z.string().optional(),
 	USESEND_SELF_HOSTED_URL: z.string().optional(),

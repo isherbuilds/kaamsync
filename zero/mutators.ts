@@ -1,5 +1,5 @@
-import { createId } from "@paralleldrive/cuid2";
 import { defineMutator, defineMutators } from "@rocicorp/zero";
+import { v7 as uuid } from "uuid";
 import { z } from "zod";
 import {
 	matterType,
@@ -65,7 +65,7 @@ export const mutators = defineMutators({
 					throw new Error("You do not have permission to create requests");
 				}
 
-				const id = createId();
+				const id = uuid();
 				const now = Date.now();
 
 				const baseInsert = {
@@ -331,7 +331,7 @@ export const mutators = defineMutators({
 				// Permission: Ensure user can access the matter
 				await canModifyMatter(tx, ctx, args.matterId);
 
-				const id = createId();
+				const id = uuid();
 				const now = Date.now();
 				await tx.mutate.timelinesTable.insert({
 					id,
@@ -395,7 +395,7 @@ export const mutators = defineMutators({
 					if (i > 10) throw new Error("Could not generate unique code");
 				}
 
-				const teamId = createId();
+				const teamId = uuid();
 				const now = Date.now();
 
 				// Create team
@@ -417,7 +417,7 @@ export const mutators = defineMutators({
 				// Prepare defaults - note: isRequestStatus is not in Zero schema, only in Drizzle
 				const statusRows = DEFAULT_STATUSES.map(
 					(status: (typeof DEFAULT_STATUSES)[number], i: number) => ({
-						id: createId(),
+						id: uuid(),
 						teamId,
 						name: status.name,
 						color: status.color,
@@ -434,7 +434,7 @@ export const mutators = defineMutators({
 				// Insert membership + statuses in parallel
 				await Promise.all([
 					tx.mutate.teamMembershipsTable.insert({
-						id: createId(),
+						id: uuid(),
 						teamId,
 						userId: ctx.userId,
 						orgId: orgMembership.organizationId,
@@ -502,7 +502,7 @@ export const mutators = defineMutators({
 					// Create new membership
 					const now = Date.now();
 					await tx.mutate.teamMembershipsTable.insert({
-						id: createId(),
+						id: uuid(),
 						teamId: args.teamId,
 						userId: args.userId,
 						orgId: orgMembership.organizationId,
@@ -596,7 +596,7 @@ export const mutators = defineMutators({
 				// Permission: Only managers can create statuses
 				await assertTeamManager(tx, ctx, args.teamId);
 
-				const statusId = createId();
+				const statusId = uuid();
 				const now = Date.now();
 				await tx.mutate.statusesTable.insert({
 					id: statusId,

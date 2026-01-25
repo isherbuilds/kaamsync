@@ -1,26 +1,27 @@
 import type { Zero, ZeroOptions } from "@rocicorp/zero";
 import { ZeroProvider } from "@rocicorp/zero/react";
 import { useCallback, useMemo, useState } from "react";
-import { must } from "~/lib/utils/must";
 import { mutators } from "zero/mutators";
 import { preloadAll } from "zero/preload";
 import { schema } from "zero/schema";
-import { authClient } from "~/lib/auth/client";
+import type { AuthSession } from "~/lib/auth/client";
 import { getAuthSessionFromLocalStorage } from "~/lib/auth/offline";
+import { must } from "~/lib/utils/must";
 
 const cacheURL = must(
 	import.meta.env.VITE_PUBLIC_ZERO_CACHE_URL,
 	"VITE_PUBLIC_ZERO_CACHE_URL is required",
 );
 
-export function ZeroInit({ children }: { children: React.ReactNode }) {
-	const { data: authSession } = authClient.useSession();
-	const [storedSession] = useState(() =>
-		typeof window !== "undefined" ? getAuthSessionFromLocalStorage() : null,
-	);
-
-	// Use network session, fallback to cached for offline
-	const session = authSession ?? storedSession;
+export function ZeroInit({
+	children,
+	authSession,
+}: {
+	children: React.ReactNode;
+	authSession?: AuthSession | null;
+}) {
+	// Use passed session, fallback to cached for offline
+	const session = authSession ?? getAuthSessionFromLocalStorage();
 	const userID = session?.user.id ?? "anon";
 	const activeOrganizationId = session?.session.activeOrganizationId ?? null;
 

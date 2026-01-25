@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
 	PricingComparison,
@@ -69,7 +69,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	// Determine current plan - use stored planKey if available, fallback to productId lookup
 	const currentPlan: ProductKey | null =
-		(subscription?.planKey as ProductKey | null) ??
+		(subscription?.plan as ProductKey | null) ??
 		(subscription?.productId
 			? getPlanByProductId(subscription.productId)
 			: null);
@@ -100,7 +100,6 @@ export default function BillingSettings() {
 		currentPlan,
 	} = loaderData;
 	const [searchParams] = useSearchParams();
-	const revalidator = useRevalidator();
 	const [loading, setLoading] = useState(false);
 	const [showPricing, setShowPricing] = useState(false);
 	const [showComparison, setShowComparison] = useState(false);
@@ -119,15 +118,14 @@ export default function BillingSettings() {
 	const success = searchParams.get("success");
 	const cancelled = searchParams.get("cancelled");
 
-	useEffect(() => {
-		if (success === "true") {
-			toast.success("Subscription updated successfully!");
-			// Revalidate to get fresh data
-			revalidator.revalidate();
-		} else if (cancelled === "true") {
-			toast.info("Checkout cancelled");
-		}
-	}, [success, cancelled, revalidator]);
+	if (success === "true") {
+		// Clean URL by removing query params
+		searchParams.delete("success");
+		toast.success("Subscription updated successfully!");
+	} else if (cancelled === "true") {
+		searchParams.delete("cancelled");
+		toast.info("Checkout cancelled");
+	}
 
 	const handleCheckout = useCallback(
 		async (plan: ProductKey, interval: BillingInterval) => {

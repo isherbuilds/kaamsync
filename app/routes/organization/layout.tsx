@@ -1,6 +1,7 @@
-import { useQuery, useZero } from "@rocicorp/zero/react";
+import { useQuery } from "@rocicorp/zero/react";
 import { AlertCircle } from "lucide-react";
 import { useEffect, useMemo } from "react";
+import { useServiceWorker } from "~/hooks/use-service-worker";
 import {
 	createContext,
 	isRouteErrorResponse,
@@ -13,19 +14,42 @@ import { preloadAllTeams } from "zero/preload";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_USER_DATA } from "zero/query-cache-policy";
 import { AppSidebar } from "~/components/layout/app-sidebar";
+import { ZeroInit } from "~/components/providers/zero-init";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
-import { ZeroInit } from "~/components/providers/zero-init";
 import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
 import { getAuthSessionSWR } from "~/lib/auth/offline";
+import { getServerSession } from "~/lib/auth/server.js";
+import {
+	getOrganizationSubscription,
+	type Subscription,
+} from "~/lib/billing/service";
 import { requireAuth } from "~/middlewares/auth-guard";
 import type { Route } from "./+types/layout";
 
 export const clientAuthContext = createContext<AuthSession>();
 
 export const middleware = [requireAuth];
+
+export async function loader({ params, request }: Route.LoaderArgs) {
+	const authSession = await getServerSession(request);
+
+	if (!authSession) {
+		throw redirect("/login");
+	}
+
+	const orgId = authSession?.session.activeOrganizationId;
+
+	const subscription = await getOrganizationSubscription(orgId);
+
+	return {
+		subscription,
+		orgSlug: params.orgSlug,
+		authSession,
+	};
+}
 
 // Track org state to avoid redundant server calls
 let lastOrgSlug: string | undefined;
@@ -77,12 +101,15 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 export async function clientLoader({
 	params,
 	context,
+	serverLoader,
 }: Route.ClientLoaderArgs) {
+	const serverData = await serverLoader();
 	const authSession = context.get(clientAuthContext);
 
 	return {
-		authSession,
+		authSession: authSession ?? serverData.authSession,
 		orgSlug: params.orgSlug,
+		subscription: serverData.subscription,
 	};
 }
 
@@ -90,7 +117,7 @@ export default function ParentLayout({ loaderData }: Route.ComponentProps) {
 	const { authSession, orgSlug } = loaderData;
 
 	return (
-		<ZeroInit>
+		<ZeroInit authSession={authSession}>
 			<Layout authSession={authSession} orgSlug={orgSlug} />
 		</ZeroInit>
 	);
@@ -103,53 +130,53 @@ function Layout({
 	authSession: AuthSession;
 	orgSlug: string;
 }) {
-	const z = useZero();
+	useServiceWorker();
 
 	// Use optimized cache policies - org data changes less frequently
 	const [orgsData] = useQuery(queries.getOrganizationList(), CACHE_LONG);
 	const [teamsData] = useQuery(queries.getTeamsList(), CACHE_USER_DATA);
 
-	const activeOrgId = authSession.session.activeOrganizationId;
+	// const activeOrgId = authSession.session.activeOrganizationId;
 
 	// Memoize team IDs to prevent unnecessary preloading re-runs
-	const teamIds = useMemo(() => teamsData.map((t) => t.id), [teamsData]);
+	// const teamIds = useMemo(() => teamsData.map((t) => t.id), [teamsData]);
 
 	// Optimize preloading and guard requestIdleCallback for Safari
-	useEffect(() => {
-		if (teamIds.length > 0 && activeOrgId) {
-			const preloadFn = () => {
-				preloadAllTeams(z, teamIds, activeOrgId);
-			};
+	// useEffect(() => {
+	// 	if (teamIds.length > 0 && activeOrgId) {
+	// 		const preloadFn = () => {
+	// 			preloadAllTeams(z, teamIds, activeOrgId);
+	// 		};
 
-			// Feature-detect requestIdleCallback; fallback to setTimeout if unavailable
-			if (typeof window !== "undefined") {
-				const w = window as unknown as {
-					requestIdleCallback?: (
-						cb: () => void,
-						opts?: { timeout?: number },
-					) => number;
-					cancelIdleCallback?: (id: number) => void;
-				};
+	// 		// Feature-detect requestIdleCallback; fallback to setTimeout if unavailable
+	// 		if (typeof window !== "undefined") {
+	// 			const w = window as unknown as {
+	// 				requestIdleCallback?: (
+	// 					cb: () => void,
+	// 					opts?: { timeout?: number },
+	// 				) => number;
+	// 				cancelIdleCallback?: (id: number) => void;
+	// 			};
 
-				if (typeof w.requestIdleCallback === "function") {
-					const idleId = w.requestIdleCallback(() => {
-						preloadFn();
-					});
+	// 			if (typeof w.requestIdleCallback === "function") {
+	// 				const idleId = w.requestIdleCallback(() => {
+	// 					preloadFn();
+	// 				});
 
-					return () => {
-						w.cancelIdleCallback?.(idleId);
-					};
-				}
+	// 				return () => {
+	// 					w.cancelIdleCallback?.(idleId);
+	// 				};
+	// 			}
 
-				const timeoutId = setTimeout(() => {
-					preloadFn();
-				}, 0);
-				return () => {
-					clearTimeout(timeoutId);
-				};
-			}
-		}
-	}, [z, activeOrgId, teamIds]);
+	// 			const timeoutId = setTimeout(() => {
+	// 				preloadFn();
+	// 			}, 0);
+	// 			return () => {
+	// 				clearTimeout(timeoutId);
+	// 			};
+	// 		}
+	// 	}
+	// }, [z, activeOrgId, teamIds]);
 
 	// Memoize org lookup to prevent unnecessary re-renders
 	const selectedOrg = useMemo(

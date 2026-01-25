@@ -4,8 +4,8 @@ import {
 	S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { createId } from "@paralleldrive/cuid2";
 import { and, eq, sql } from "drizzle-orm";
+import { v7 as uuid } from "uuid";
 import {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES_SET,
@@ -24,7 +24,6 @@ import {
 	type TeamRole,
 } from "~/lib/auth/permissions";
 import { getOrganizationPlanKey } from "~/lib/billing/service";
-import { reportStorageUsage } from "~/lib/billing/tracking";
 import { env } from "~/lib/infra/env";
 import { logger } from "~/lib/utils/logger";
 
@@ -77,7 +76,7 @@ export interface UploadPermission {
 	limitGb: number;
 	remainingGb: number;
 	maxFileSizeBytes: number;
-	fileCount: number;
+	// fileCount: number;
 	maxFiles: number;
 }
 
@@ -98,9 +97,7 @@ const ALLOWED_TYPES = ALLOWED_ATTACHMENT_TYPES_SET;
  * Get total storage used by an organization (in bytes)
  * Now uses direct orgId on attachments - no joins needed!
  */
-export async function getOrganizationStorageUsage(
-	orgId: string,
-): Promise<StorageUsage> {
+export async function getOrganizationStorageUsage(orgId: string) {
 	// Try cache first for fast queries
 	const cached = await db.query.storageUsageCacheTable.findFirst({
 		where: eq(storageUsageCacheTable.orgId, orgId),
@@ -110,7 +107,7 @@ export async function getOrganizationStorageUsage(
 		return {
 			totalBytes: cached.totalBytes,
 			totalGb: cached.totalBytes / (1024 * 1024 * 1024),
-			fileCount: cached.fileCount,
+			// fileCount: cached.fileCount,
 		};
 	}
 
@@ -118,13 +115,13 @@ export async function getOrganizationStorageUsage(
 	const result = await db
 		.select({
 			totalBytes: sql<number>`COALESCE(SUM(${attachmentsTable.fileSize}), 0)::bigint`,
-			fileCount: sql<number>`COUNT(*)::int`,
+			// fileCount: sql<number>`COUNT(*)::int`,
 		})
 		.from(attachmentsTable)
 		.where(eq(attachmentsTable.orgId, orgId));
 
 	const totalBytes = result[0]?.totalBytes ?? 0;
-	const fileCount = result[0]?.fileCount ?? 0;
+	// const fileCount = result[0]?.fileCount ?? 0;
 
 	// Initialize cache entry
 	await db
@@ -132,14 +129,14 @@ export async function getOrganizationStorageUsage(
 		.values({
 			orgId,
 			totalBytes,
-			fileCount,
+			// fileCount,
 			updatedAt: new Date(),
 		})
 		.onConflictDoUpdate({
 			target: storageUsageCacheTable.orgId,
 			set: {
 				totalBytes,
-				fileCount,
+				// fileCount,
 				updatedAt: new Date(),
 			},
 		});
@@ -147,7 +144,7 @@ export async function getOrganizationStorageUsage(
 	return {
 		totalBytes,
 		totalGb: totalBytes / (1024 * 1024 * 1024),
-		fileCount,
+		// fileCount,
 	};
 }
 
@@ -216,7 +213,7 @@ export async function canUploadFile(
 		currentUsageGb: usage.totalGb,
 		limitGb: limits.storageGb,
 		maxFileSizeBytes,
-		fileCount: usage.fileCount,
+		// fileCount: usage.fileCount,
 		maxFiles: limits.maxFiles,
 	};
 
@@ -231,14 +228,14 @@ export async function canUploadFile(
 	}
 
 	// Check file count limit (if not unlimited)
-	if (limits.maxFiles !== -1 && usage.fileCount >= limits.maxFiles) {
-		return {
-			...basePermission,
-			allowed: false,
-			reason: `File limit (${limits.maxFiles} files) reached. Upgrade your plan or delete files.`,
-			remainingGb: Math.max(0, limits.storageGb - usage.totalGb),
-		};
-	}
+	// if (limits.maxFiles !== -1 && usage.fileCount >= limits.maxFiles) {
+	// 	return {
+	// 		...basePermission,
+	// 		allowed: false,
+	// 		reason: `File limit (${limits.maxFiles} files) reached. Upgrade your plan or delete files.`,
+	// 		remainingGb: Math.max(0, limits.storageGb - usage.totalGb),
+	// 	};
+	// }
 
 	// Unlimited storage (-1)
 	if (limits.storageGb === -1) {
@@ -337,7 +334,7 @@ export async function createPresignedUpload(
 	const now = new Date();
 	const year = now.getFullYear();
 	const month = String(now.getMonth() + 1).padStart(2, "0");
-	const fileId = createId();
+	const fileId = uuid();
 	const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_").slice(0, 100);
 	const fileKey = `${orgId}/${year}/${month}/${fileId}-${safeFileName}`;
 
@@ -476,7 +473,7 @@ export async function saveAttachment(params: {
 		throw new Error(permission.reason || "Storage limit exceeded");
 	}
 
-	const id = createId();
+	const id = uuid();
 	const now = new Date();
 	await db.insert(attachmentsTable).values({
 		id,
@@ -540,9 +537,6 @@ export async function deleteAttachment(
 	logger.log(
 		`[Storage] Deleted attachment ${attachmentId} (${attachment.fileName}) by user ${userId}`,
 	);
-
-	// Report storage decrease to billing
-	await reportStorageUsage(orgId);
 }
 
 // Re-export from shared constants for backwards compatibility
