@@ -5,11 +5,11 @@
  *
  * Key exports:
  * - cn() - Merges Tailwind classes with clsx and twMerge
- * - sanitizeSlug() - Converts strings to URL-safe slugs (max 30 chars)
- * - getInitials() - Extracts initials from names (e.g., "John Doe" → "JD")
- * - formatDate() - Formats Date → MM/DD/YYYY
- * - formatCompactRelativeDate() - Formats due dates (Today, Tomorrow, Overdue, Xhrs, Xdays)
- * - formatTimelineDate() - Formats for activity timeline (Just Now, Xm ago, Yesterday at X)
+ * - toUrlSlug() - Converts strings to URL-safe slugs (max 30 chars)
+ * - extractNameInitials() - Extracts initials from names (e.g., "John Doe" → "JD")
+ * - formatAbsoluteDate() - Formats Date → MM/DD/YYYY
+ * - formatDueDateLabel() - Formats due dates (Today, Tomorrow, Overdue, Xhrs, Xdays)
+ * - formatActivityTimestamp() - Formats for activity timeline (Just Now, Xm ago, Yesterday at X)
  *
  * @see app/lib/validations/shared.ts for slug validation schemas
  */
@@ -18,7 +18,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 // ============================================================================
-// Core
+// CORE UTILITIES
 // ============================================================================
 
 export function cn(...inputs: ClassValue[]) {
@@ -26,12 +26,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // ============================================================================
-// String Utilities
+// STRING UTILITIES
 // ============================================================================
 
 export const MAX_SLUG_LENGTH = 30;
 
-export function sanitizeSlug(value: string) {
+/**
+ * Convert a string to a URL-safe slug.
+ * Lowercases, replaces spaces with hyphens, removes invalid characters.
+ */
+export function toUrlSlug(value: string) {
 	return value
 		.toLowerCase()
 		.replace(/\s+/g, "-")
@@ -41,9 +45,9 @@ export function sanitizeSlug(value: string) {
 }
 
 /**
- * Get initials from a name (e.g., "John Doe" -> "JD")
+ * Extract initials from a name (e.g., "John Doe" -> "JD")
  */
-export function getInitials(name: string): string {
+export function extractNameInitials(name: string): string {
 	return name
 		.split(" ")
 		.filter((n) => n.length > 0)
@@ -54,7 +58,7 @@ export function getInitials(name: string): string {
 }
 
 // ============================================================================
-// Date Utilities (Intl-based)
+// DATE UTILITIES
 // ============================================================================
 
 const MS_MINUTE = 60 * 1000;
@@ -94,10 +98,10 @@ function isThisYear(date: Date, now = new Date()): boolean {
 }
 
 /**
- * Format a date for due date display (compact relative format).
+ * Format a due date with a compact relative label.
  * Shows: Today, Tomorrow, Overdue, Xhrs, Xdays, Xweeks
  */
-export function formatCompactRelativeDate(
+export function formatDueDateLabel(
 	date: Date | number | string,
 	nowDate?: Date,
 ): string {
@@ -114,7 +118,6 @@ export function formatCompactRelativeDate(
 
 	const diffMs = timestamp - now.getTime();
 
-	// Past dates (including yesterday) are overdue
 	if (diffMs < 0) return "Overdue";
 
 	const diffHours = Math.floor(diffMs / MS_HOUR);
@@ -128,10 +131,10 @@ export function formatCompactRelativeDate(
 }
 
 /**
- * Format a timestamp for timeline/activity display.
+ * Format a timestamp for activity timeline display.
  * Shows: just now, Xm ago, Xh ago, Xd ago, or "Mon DD" for older dates.
  */
-export function formatTimelineDate(timestamp: number): string {
+export function formatActivityTimestamp(timestamp: number): string {
 	if (!Number.isFinite(timestamp) || Number.isNaN(timestamp) || timestamp < 0) {
 		return "";
 	}
@@ -141,7 +144,6 @@ export function formatTimelineDate(timestamp: number): string {
 	const diffMs = now.getTime() - d.getTime();
 	const diffHours = diffMs / MS_HOUR;
 
-	// Future dates - show absolute date
 	if (diffMs < 0) {
 		return new Intl.DateTimeFormat("en-US", {
 			month: "short",
@@ -181,8 +183,9 @@ export function formatTimelineDate(timestamp: number): string {
 
 /**
  * Format an absolute date (e.g., for created/updated timestamps).
+ * Returns MM/DD/YYYY format.
  */
-export function formatDate(ms: number): string {
+export function formatAbsoluteDate(ms: number): string {
 	if (!Number.isFinite(ms) || Number.isNaN(ms)) return "";
 	return new Date(ms).toLocaleDateString("en-US", {
 		month: "numeric",

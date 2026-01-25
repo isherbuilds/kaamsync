@@ -15,22 +15,27 @@ import {
 } from "~/components/ui/dialog";
 import { createTeamSchema } from "~/lib/organization/validations";
 
-const deriveCode = (name: string) =>
+// --- Utilities ---
+
+const deriveCodeFromName = (name: string): string =>
 	name
 		.replace(/[^a-zA-Z]/g, "")
 		.substring(0, 3)
 		.toUpperCase();
 
+// --- Types ---
+
+interface CreateTeamDialogProps {
+	open: boolean;
+	onOpenChange: (isOpen: boolean) => void;
+}
+
+// --- Component ---
+
 export const CreateTeamDialog = memo(
-	({
-		open,
-		onOpenChange,
-	}: {
-		open: boolean;
-		onOpenChange: (o: boolean) => void;
-	}) => {
-		const zr = useZero();
-		const isManual = useRef(false);
+	({ open, onOpenChange }: CreateTeamDialogProps) => {
+		const zero = useZero();
+		const isCodeManuallyEdited = useRef(false);
 		const [isSubmitting, setIsSubmitting] = useState(false);
 
 		const [form, fields] = useForm({
@@ -38,35 +43,50 @@ export const CreateTeamDialog = memo(
 			constraint: getZodConstraint(createTeamSchema),
 			onValidate: ({ formData }) =>
 				parseWithZod(formData, { schema: createTeamSchema }),
-			onSubmit: async (e, { submission }) => {
-				e.preventDefault();
+			onSubmit: async (event, { submission }) => {
+				event.preventDefault();
 				if (submission?.status !== "success") return;
 
 				setIsSubmitting(true);
-				zr.mutate(mutators.team.create(submission.value))
+				zero
+					.mutate(mutators.team.create(submission.value))
 					.server.then(() => {
 						toast.success("Team created");
-						close();
+						handleClose();
 					})
-					.catch((e) => {
-						console.error("Failed to create team:", e);
+					.catch((error) => {
+						console.error("Failed to create team:", error);
 						toast.error(
-							e instanceof Error ? e.message : "Failed to create team",
+							error instanceof Error ? error.message : "Failed to create team",
 						);
 					})
 					.finally(() => setIsSubmitting(false));
 			},
 		});
 
-		const close = () => {
+		const handleClose = () => {
 			onOpenChange(false);
-			isManual.current = false;
-			// Reset the form when closing to clear validation state and values
+			isCodeManuallyEdited.current = false;
 			form.reset();
 		};
 
+		const handleNameInput = (event: React.FormEvent<HTMLInputElement>) => {
+			const name = event.currentTarget.value;
+			if (!isCodeManuallyEdited.current) {
+				form.update({
+					name: fields.code.name,
+					value: deriveCodeFromName(name),
+				});
+			}
+			if (!name) isCodeManuallyEdited.current = false;
+		};
+
+		const handleCodeInput = () => {
+			isCodeManuallyEdited.current = true;
+		};
+
 		return (
-			<Dialog open={open} onOpenChange={(o) => !o && close()}>
+			<Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
 				<DialogContent className="max-w-90 p-4">
 					<DialogHeader className="gap-2">
 						<DialogTitle>New Team</DialogTitle>
@@ -76,35 +96,26 @@ export const CreateTeamDialog = memo(
 					</DialogHeader>
 
 					<form {...getFormProps(form)} className="space-y-4">
+						{/* Team Name Field */}
 						<InputField
 							inputProps={{
 								...getInputProps(fields.name, { type: "text" }),
 								autoFocus: true,
 								placeholder: "Secondary Space",
-								onInput: (e) => {
-									const name = e.currentTarget.value;
-									if (!isManual.current) {
-										form.update({
-											name: fields.code.name,
-											value: deriveCode(name),
-										});
-									}
-									if (!name) isManual.current = false;
-								},
+								onInput: handleNameInput,
 							}}
 							labelProps={{ children: "Name" }}
 							errors={fields.name.errors}
 						/>
 
+						{/* Team Code Field with Preview */}
 						<div className="grid grid-cols-2 gap-4">
 							<InputField
 								inputProps={{
 									...getInputProps(fields.code, { type: "text" }),
 									placeholder: "SEC",
 									className: "font-mono uppercase",
-									onInput: () => {
-										isManual.current = true;
-									},
+									onInput: handleCodeInput,
 								}}
 								labelProps={{ children: "Code" }}
 								errors={fields.code.errors}
@@ -114,8 +125,9 @@ export const CreateTeamDialog = memo(
 							</div>
 						</div>
 
+						{/* Actions */}
 						<div className="flex justify-end gap-2 pt-2">
-							<Button type="button" variant="ghost" onClick={close}>
+							<Button type="button" variant="ghost" onClick={handleClose}>
 								Cancel
 							</Button>
 							<Button type="submit" disabled={isSubmitting}>

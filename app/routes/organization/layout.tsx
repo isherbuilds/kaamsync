@@ -1,7 +1,6 @@
 import { useQuery } from "@rocicorp/zero/react";
 import { AlertCircle } from "lucide-react";
-import { useEffect, useMemo } from "react";
-import { useServiceWorker } from "~/hooks/use-service-worker";
+import { useMemo } from "react";
 import {
 	createContext,
 	isRouteErrorResponse,
@@ -10,7 +9,7 @@ import {
 	useRouteError,
 } from "react-router";
 import { ClientOnly } from "remix-utils/client-only";
-import { preloadAllTeams } from "zero/preload";
+// import { preloadAllTeams } from "zero/preload";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_USER_DATA } from "zero/query-cache-policy";
 import { AppSidebar } from "~/components/layout/app-sidebar";
@@ -18,14 +17,12 @@ import { ZeroInit } from "~/components/providers/zero-init";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
 import { Spinner } from "~/components/ui/spinner";
+import { useServiceWorker } from "~/hooks/use-service-worker";
 import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
 import { getAuthSessionSWR } from "~/lib/auth/offline";
 import { getServerSession } from "~/lib/auth/server.js";
-import {
-	getOrganizationSubscription,
-	type Subscription,
-} from "~/lib/billing/service";
+import { fetchOrgSubscription } from "~/lib/billing/service";
 import { requireAuth } from "~/middlewares/auth-guard";
 import type { Route } from "./+types/layout";
 
@@ -42,7 +39,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 	const orgId = authSession?.session.activeOrganizationId;
 
-	const subscription = await getOrganizationSubscription(orgId);
+	const subscription = await fetchOrgSubscription(orgId);
 
 	return {
 		subscription,

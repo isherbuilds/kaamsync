@@ -12,33 +12,45 @@ import {
 } from "~/components/ui/dialog";
 import { Textarea } from "~/components/ui/textarea";
 
-interface ApproveRequestDialogProps {
+// -----------------------------------------------------------------------------
+// Types
+// -----------------------------------------------------------------------------
+
+interface ReviewRequestDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	requestId: string;
 	requestTitle: string;
-	canApprove: boolean; // Security: only show dialog if user has permission
-	onApprove?: (note?: string) => Promise<void>;
-	onReject?: (note?: string) => Promise<void>;
+	hasApprovalPermission: boolean;
+	onApproveSuccess?: (note?: string) => Promise<void>;
+	onRejectSuccess?: (note?: string) => Promise<void>;
 }
 
-export function ApproveRequestDialog({
+// -----------------------------------------------------------------------------
+// Component
+// -----------------------------------------------------------------------------
+
+export function ReviewRequestDialog({
 	open,
 	onOpenChange,
 	requestId,
 	requestTitle,
-	canApprove,
-	onApprove,
-	onReject,
-}: ApproveRequestDialogProps) {
+	hasApprovalPermission,
+	onApproveSuccess,
+	onRejectSuccess,
+}: ReviewRequestDialogProps) {
 	const z = useZero();
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 	const [note, setNote] = useState("");
 
-	async function handleApprove() {
-		setLoading(true);
-		setError(null);
+	// ---------------------------------------------------------------------------
+	// Handlers
+	// ---------------------------------------------------------------------------
+
+	const handleApprove = async () => {
+		setIsSubmitting(true);
+		setErrorMessage(null);
 		try {
 			await z.mutate(
 				mutators.matter.approve({
@@ -48,22 +60,22 @@ export function ApproveRequestDialog({
 			);
 
 			toast.success("Request approved successfully");
-			onApprove?.(note || undefined);
+			onApproveSuccess?.(note || undefined);
 			setNote("");
 			onOpenChange(false);
 		} catch (e: unknown) {
-			const errorMessage =
+			const message =
 				e instanceof Error ? e.message : "Failed to approve request";
-			setError(errorMessage);
-			toast.error(errorMessage);
+			setErrorMessage(message);
+			toast.error(message);
 		} finally {
-			setLoading(false);
+			setIsSubmitting(false);
 		}
-	}
+	};
 
-	async function handleReject() {
-		setLoading(true);
-		setError(null);
+	const handleReject = async () => {
+		setIsSubmitting(true);
+		setErrorMessage(null);
 		try {
 			await z.mutate(
 				mutators.matter.reject({
@@ -73,21 +85,28 @@ export function ApproveRequestDialog({
 			);
 
 			toast.success("Request rejected");
-			onReject?.(note || undefined);
+			onRejectSuccess?.(note || undefined);
 			setNote("");
 			onOpenChange(false);
 		} catch (e: unknown) {
-			const errorMessage =
+			const message =
 				e instanceof Error ? e.message : "Failed to reject request";
-			setError(errorMessage);
-			toast.error(errorMessage);
+			setErrorMessage(message);
+			toast.error(message);
 		} finally {
-			setLoading(false);
+			setIsSubmitting(false);
 		}
-	}
+	};
 
-	// Security: Don't render if user doesn't have permission
-	if (!canApprove) {
+	const handleNoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setNote(e.target.value);
+	};
+
+	// ---------------------------------------------------------------------------
+	// Render
+	// ---------------------------------------------------------------------------
+
+	if (!hasApprovalPermission) {
 		return null;
 	}
 
@@ -112,31 +131,31 @@ export function ApproveRequestDialog({
 							id="note"
 							placeholder="Add a note for this decision..."
 							value={note}
-							onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-								setNote(e.target.value)
-							}
-							disabled={loading}
+							onChange={handleNoteChange}
+							disabled={isSubmitting}
 							rows={3}
 						/>
 					</div>
-					{error && <div className="text-red-500 text-sm">{error}</div>}
+					{errorMessage && (
+						<div className="text-red-500 text-sm">{errorMessage}</div>
+					)}
 				</div>
 				<DialogFooter className="flex flex-col gap-2 sm:flex-row">
 					<Button
 						onClick={handleApprove}
-						disabled={loading}
+						disabled={isSubmitting}
 						className="w-full"
 						variant="default"
 					>
-						{loading ? "Approving..." : "Approve"}
+						{isSubmitting ? "Approving..." : "Approve"}
 					</Button>
 					<Button
 						onClick={handleReject}
-						disabled={loading}
+						disabled={isSubmitting}
 						className="w-full"
 						variant="destructive"
 					>
-						{loading ? "Rejecting..." : "Reject"}
+						{isSubmitting ? "Rejecting..." : "Reject"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

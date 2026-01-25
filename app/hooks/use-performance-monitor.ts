@@ -1,50 +1,70 @@
 import { useEffect, useRef, useState } from "react";
 
+/** Performance metrics collected by the monitor */
 interface PerformanceMetrics {
+	/** Current frames per second */
 	fps: number;
-	memoryUsage: number;
-	renderTime: number;
+	/** JavaScript heap memory usage in megabytes */
+	memoryUsageMB: number;
+	/** Last measured component render time in milliseconds */
+	renderTimeMs: number;
 }
 
 /**
- * Simple performance monitoring hook for development
+ * Hook for monitoring application performance metrics in development.
+ *
+ * Tracks FPS, memory usage, and component render times. Automatically
+ * logs warnings for slow renders (>16ms, which would drop below 60fps).
+ *
+ * @param enabled - Whether to enable monitoring (defaults to DEV mode only)
+ * @returns Object containing current metrics and a render time measurement function
+ *
+ * @example
+ * ```tsx
+ * const { metrics, measureRenderTime } = usePerformanceMonitor();
+ *
+ * useEffect(() => {
+ *   const endMeasure = measureRenderTime('MyComponent');
+ *   return endMeasure;
+ * }, []);
+ * ```
  */
 export function usePerformanceMonitor(enabled: boolean = import.meta.env.DEV) {
 	const [metrics, setMetrics] = useState<PerformanceMetrics>({
 		fps: 0,
-		memoryUsage: 0,
-		renderTime: 0,
+		memoryUsageMB: 0,
+		renderTimeMs: 0,
 	});
 
-	const frameCountRef = useRef(0);
-	const lastTimeRef = useRef(performance.now());
+	const frameCount = useRef(0);
+	const lastFrameTime = useRef(performance.now());
 
 	useEffect(() => {
 		if (!enabled) return;
 
-		let rafId: number;
+		let animationFrameId: number;
 
-		const updateFPS = () => {
-			frameCountRef.current++;
-			const now = performance.now();
-			const delta = now - lastTimeRef.current;
+		const calculateFPS = () => {
+			frameCount.current++;
+			const currentTime = performance.now();
+			const elapsedMs = currentTime - lastFrameTime.current;
 
-			if (delta >= 1000) {
-				const fps = Math.round((frameCountRef.current * 1000) / delta);
-				frameCountRef.current = 0;
-				lastTimeRef.current = now;
+			if (elapsedMs >= 1000) {
+				const fps = Math.round((frameCount.current * 1000) / elapsedMs);
+				frameCount.current = 0;
+				lastFrameTime.current = currentTime;
 
 				setMetrics((prev) => ({ ...prev, fps }));
 			}
 
-			rafId = requestAnimationFrame(updateFPS);
+			animationFrameId = requestAnimationFrame(calculateFPS);
 		};
 
-		rafId = requestAnimationFrame(updateFPS);
+		animationFrameId = requestAnimationFrame(calculateFPS);
 
 		return () => {
-			if (rafId) {
-				cancelAnimationFrame(rafId);
+			if (animationFrameId) {
+				cancelAnimationFrame(animationFrameId);
 			}
 		};
 	}, [enabled]);
@@ -52,31 +72,30 @@ export function usePerformanceMonitor(enabled: boolean = import.meta.env.DEV) {
 	useEffect(() => {
 		if (!enabled) return;
 
-		const updateMemory = () => {
+		const updateMemoryUsage = () => {
 			if ("memory" in performance) {
-				const memory = (performance as any).memory;
-				const memoryUsageMB = memory.usedJSHeapSize / 1024 / 1024;
-				setMetrics((prev) => ({ ...prev, memoryUsage: memoryUsageMB }));
+				const memoryInfo = (performance as { memory: { usedJSHeapSize: number } }).memory;
+				const usageMB = memoryInfo.usedJSHeapSize / 1024 / 1024;
+				setMetrics((prev) => ({ ...prev, memoryUsageMB: usageMB }));
 			}
 		};
 
-		const interval = setInterval(updateMemory, 2000);
-		return () => clearInterval(interval);
+		const intervalId = setInterval(updateMemoryUsage, 2000);
+		return () => clearInterval(intervalId);
 	}, [enabled]);
 
-	const measureRenderTime = (componentName: string) => {
+	const measureRenderTime = (componentName: string): (() => void) => {
 		if (!enabled) return () => {};
 
 		const startTime = performance.now();
 
 		return () => {
-			const renderTime = performance.now() - startTime;
-			setMetrics((prev) => ({ ...prev, renderTime }));
+			const renderTimeMs = performance.now() - startTime;
+			setMetrics((prev) => ({ ...prev, renderTimeMs }));
 
-			if (import.meta.env.DEV && renderTime > 16) {
-				// Log slow renders
+			if (import.meta.env.DEV && renderTimeMs > 16) {
 				console.warn(
-					`[Performance] ${componentName} slow render: ${renderTime.toFixed(2)}ms`,
+					`[Performance] ${componentName} slow render: ${renderTimeMs.toFixed(2)}ms`,
 				);
 			}
 		};

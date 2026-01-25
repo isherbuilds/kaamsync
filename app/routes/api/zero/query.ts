@@ -9,7 +9,7 @@ import {
 	ErrorFactory,
 	withErrorHandler,
 } from "~/lib/infra/errors";
-import { getActiveOrganization } from "~/lib/organization/service";
+import { getActiveOrganizationId } from "~/lib/organization/service";
 
 export const action = withErrorHandler(
 	async ({ request }: { request: Request }) => {
@@ -25,13 +25,17 @@ export const action = withErrorHandler(
 
 		// Get active organization if not in session
 		if (!authSession.session.activeOrganizationId) {
-			activeOrgId = await getActiveOrganization(authSession.user.id);
+			activeOrgId = await getActiveOrganizationId(authSession.user.id);
+		}
+
+		if (!activeOrgId) {
+			throw new Error("No active organization found for user");
 		}
 
 		// Build context from session - this is passed to queries automatically
 		const ctx = {
 			userId: authSession.user.id,
-			activeOrganizationId: activeOrgId ?? null,
+			activeOrganizationId: activeOrgId,
 		};
 
 		try {

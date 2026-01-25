@@ -1,13 +1,10 @@
-/**
- * useAttachments - React hook for file uploads
- * Following zbugs pattern: get presigned URL → upload to S3 → save record
- */
 import { useCallback, useState } from "react";
 import {
 	ABSOLUTE_MAX_FILE_SIZE,
 	ALLOWED_ATTACHMENT_TYPES,
 } from "~/config/attachments";
 
+/** Result of a successful file upload */
 export interface UploadResult {
 	id: string;
 	publicUrl: string;
@@ -15,13 +12,16 @@ export interface UploadResult {
 	fileSize: number;
 }
 
+/** Progress state during file upload */
 export interface UploadProgress {
 	fileName: string;
-	progress: number; // 0-100
+	/** Upload progress percentage (0-100) */
+	progress: number;
 	status: "uploading" | "saving" | "complete" | "error";
 	error?: string;
 }
 
+/** Storage usage and limits information */
 export interface StorageInfo {
 	configured: boolean;
 	plan?: string;
@@ -38,14 +38,34 @@ export interface StorageInfo {
 	};
 }
 
+/** Options for the useAttachments hook */
 interface UseAttachmentsOptions {
 	onUploadComplete?: (result: UploadResult) => void;
 	onError?: (error: string) => void;
 }
 
-// Re-export for backwards compatibility
 const ALLOWED_TYPES: readonly string[] = ALLOWED_ATTACHMENT_TYPES;
 
+/**
+ * Hook for managing file attachments with S3 uploads.
+ *
+ * Follows the pattern: get presigned URL → upload to S3 → save record.
+ *
+ * @param options - Optional callbacks for upload completion and errors
+ * @returns Upload functions, progress state, and storage information
+ *
+ * @example
+ * ```tsx
+ * const { uploadFile, uploading, progress } = useAttachments({
+ *   onUploadComplete: (result) => console.log('Uploaded:', result.publicUrl),
+ *   onError: (error) => console.error(error),
+ * });
+ *
+ * const handleUpload = async (file: File, matterId: string) => {
+ *   const result = await uploadFile(file, matterId);
+ * };
+ * ```
+ */
 export function useAttachments(options: UseAttachmentsOptions = {}) {
 	const [uploading, setUploading] = useState(false);
 	const [progress, setProgress] = useState<UploadProgress | null>(null);

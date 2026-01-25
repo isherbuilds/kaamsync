@@ -27,7 +27,7 @@ export const PERMISSION_ERRORS = {
 } as const;
 
 // ============================================================================
-// TEAM ROLES & PERMISSIONS
+// TEAM ROLE TYPES
 // ============================================================================
 
 export type { TeamRole };
@@ -43,11 +43,15 @@ export type TeamRolePermissions = {
 	canManageTeam: boolean;
 };
 
+// ============================================================================
+// TEAM PERMISSION COMPUTATION
+// ============================================================================
+
 /**
  * Get default permissions for a team role.
  * This is the canonical source of truth for role permissions.
  */
-export function getRolePermissions(role: string): TeamRolePermissions {
+export function getTeamRolePermissions(role: string): TeamRolePermissions {
 	switch (role) {
 		case teamRole.manager:
 			return {
@@ -93,13 +97,13 @@ export type TeamPermissions = {
 } & TeamRolePermissions;
 
 /**
- * Compute permissions from team role.
+ * Build permissions from team role.
  */
-export function computeTeamPermissions(
+export function buildTeamPermissions(
 	teamId: string,
 	role: TeamRole,
 ): TeamPermissions {
-	const perms = getRolePermissions(role);
+	const perms = getTeamRolePermissions(role);
 
 	return {
 		teamId,
@@ -109,48 +113,48 @@ export function computeTeamPermissions(
 }
 
 // ============================================================================
-// TEAM PERMISSION CHECKS (role-based, pure functions)
+// TEAM PERMISSION CHECKS
 // ============================================================================
 
 /**
  * Check if role can approve requests
  */
-export function canApproveRequests(role?: TeamRole | null): boolean {
+export function hasRequestApprovalPermission(role?: TeamRole | null): boolean {
 	return role === teamRole.manager;
 }
 
 /**
  * Check if role can create tasks directly (without approval)
  */
-export function canCreateTasks(role?: TeamRole | null): boolean {
+export function hasTaskCreationPermission(role?: TeamRole | null): boolean {
 	return role === teamRole.manager;
 }
 
 /**
  * Check if role can create requests (needs approval)
  */
-export function canCreateRequests(role?: TeamRole | null): boolean {
+export function hasRequestCreationPermission(role?: TeamRole | null): boolean {
 	return role === teamRole.manager || role === teamRole.member;
 }
 
 /**
  * Check if role can manage team members
  */
-export function canManageMembers(role?: TeamRole | null): boolean {
+export function hasMemberManagementPermission(role?: TeamRole | null): boolean {
 	return role === teamRole.manager;
 }
 
 /**
  * Check if role can manage team settings
  */
-export function canManageTeam(role?: TeamRole | null): boolean {
+export function hasTeamManagementPermission(role?: TeamRole | null): boolean {
 	return role === teamRole.manager;
 }
 
 /**
  * Check if role can view team
  */
-export function canViewTeam(role?: TeamRole | null): boolean {
+export function hasTeamViewPermission(role?: TeamRole | null): boolean {
 	return (
 		role === teamRole.manager ||
 		role === teamRole.member ||
@@ -161,12 +165,11 @@ export function canViewTeam(role?: TeamRole | null): boolean {
 /**
  * Check if role can edit matters
  */
-export function canEditMatter(
+export function hasMatterEditPermission(
 	role?: TeamRole | null,
 	isAuthor?: boolean,
 	isAssignee?: boolean,
 ): boolean {
-	// Managers can edit all, members can edit their own
 	return (
 		role === teamRole.manager ||
 		(role === teamRole.member && (isAuthor === true || isAssignee === true))
@@ -176,29 +179,27 @@ export function canEditMatter(
 /**
  * Check if role can delete matters
  */
-export function canDeleteMatter(role?: TeamRole | null): boolean {
+export function hasMatterDeletePermission(role?: TeamRole | null): boolean {
 	return role === teamRole.manager;
 }
 
 /**
  * Check if user can modify/delete an attachment.
  * Uploader can always modify their own uploads.
- * Otherwise uses same logic as canEditMatter (author, assignee, or manager).
+ * Otherwise uses same logic as hasMatterEditPermission (author, assignee, or manager).
  */
-export function canModifyAttachment(
+export function hasAttachmentModifyPermission(
 	role?: TeamRole | null,
 	isUploader?: boolean,
 	isAuthor?: boolean,
 	isAssignee?: boolean,
 ): boolean {
-	// Uploader can always delete their own uploads
 	if (isUploader === true) return true;
-	// Otherwise, same as matter edit permissions
-	return canEditMatter(role, isAuthor, isAssignee);
+	return hasMatterEditPermission(role, isAuthor, isAssignee);
 }
 
 // ============================================================================
-// ORGANIZATION ROLES & PERMISSIONS
+// ORGANIZATION PERMISSION CHECKS
 // ============================================================================
 
 /**
@@ -209,41 +210,41 @@ export type OrgRole = "owner" | "admin" | "member";
 /**
  * Check if org role can create teams
  */
-export function canCreateTeams(role?: OrgRole | null): boolean {
+export function hasTeamCreationPermission(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin";
 }
 
 /**
  * Check if org role can invite members
  */
-export function canInviteMembers(role?: OrgRole | null): boolean {
+export function hasMemberInvitePermission(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin";
 }
 
 /**
  * Check if org role can change org settings
  */
-export function canChangeOrgSettings(role?: OrgRole | null): boolean {
+export function hasOrgSettingsPermission(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin";
 }
 
 /**
  * Check if org role can delete org
  */
-export function canDeleteOrg(role?: OrgRole | null): boolean {
+export function hasOrgDeletePermission(role?: OrgRole | null): boolean {
 	return role === "owner";
 }
 
 /**
  * Check if org role can manage billing
  */
-export function canManageBilling(role?: OrgRole | null): boolean {
+export function hasBillingManagePermission(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin";
 }
 
 /**
  * Check if org role can view billing
  */
-export function canViewBilling(role?: OrgRole | null): boolean {
+export function hasBillingViewPermission(role?: OrgRole | null): boolean {
 	return role === "owner" || role === "admin" || role === "member";
 }

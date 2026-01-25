@@ -10,21 +10,22 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 
-export function NavMain({
-	items,
-	orgSlug,
-}: {
-	items: {
+interface NavItem {
+	title: string;
+	url: string;
+	icon?: LucideIcon;
+	items?: {
 		title: string;
 		url: string;
-		icon?: LucideIcon;
-		items?: {
-			title: string;
-			url: string;
-		}[];
 	}[];
+}
+
+interface NavMainProps {
+	items: NavItem[];
 	orgSlug: string;
-}) {
+}
+
+export function NavMain({ items, orgSlug }: NavMainProps) {
 	const location = useLocation();
 	const { setOpenMobile } = useSidebar();
 

@@ -22,18 +22,27 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 
-export function NavTeams({
-	teams,
-	orgSlug,
-}: {
-	teams: {
-		id: string;
-		name: string;
-		code: string;
-		slug: string;
-	}[];
+// ============================================================================
+// Types
+// ============================================================================
+
+interface TeamInfo {
+	id: string;
+	name: string;
+	code: string;
+	slug: string;
+}
+
+interface NavTeamsProps {
+	teams: TeamInfo[];
 	orgSlug: string;
-}) {
+}
+
+// ============================================================================
+// Component
+// ============================================================================
+
+export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 	const { isMobile, setOpenMobile } = useSidebar();
 	const [createTeamOpen, setCreateTeamOpen] = useState(false);
 	const params = useParams();

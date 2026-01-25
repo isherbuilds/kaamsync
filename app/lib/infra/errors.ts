@@ -1,30 +1,34 @@
 /**
- * Standardized error handling system for consistent API responses
- * Provides security-conscious error messages and proper logging
+ * Standardized error handling system for consistent API responses.
+ * Provides security-conscious error messages and proper logging.
  */
+
+// ============================================================================
+// Error Codes
+// ============================================================================
 
 export enum ErrorCode {
 	// Authentication & Authorization
 	UNAUTHORIZED = "UNAUTHORIZED",
 	FORBIDDEN = "FORBIDDEN",
 	INVALID_SESSION = "INVALID_SESSION",
-	
+
 	// Validation
 	VALIDATION_ERROR = "VALIDATION_ERROR",
 	INVALID_INPUT = "INVALID_INPUT",
 	MISSING_REQUIRED_FIELD = "MISSING_REQUIRED_FIELD",
-	
+
 	// Business Logic
 	RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND",
 	RESOURCE_ALREADY_EXISTS = "RESOURCE_ALREADY_EXISTS",
 	OPERATION_NOT_ALLOWED = "OPERATION_NOT_ALLOWED",
 	LIMIT_EXCEEDED = "LIMIT_EXCEEDED",
-	
+
 	// Billing
 	BILLING_ERROR = "BILLING_ERROR",
 	SUBSCRIPTION_REQUIRED = "SUBSCRIPTION_REQUIRED",
 	PAYMENT_FAILED = "PAYMENT_FAILED",
-	
+
 	// System
 	INTERNAL_ERROR = "INTERNAL_ERROR",
 	DATABASE_ERROR = "DATABASE_ERROR",
@@ -32,12 +36,20 @@ export enum ErrorCode {
 	RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED",
 }
 
-export interface ApiError {
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface ApiErrorResponse {
 	code: ErrorCode;
 	message: string;
 	details?: Record<string, unknown>;
 	statusCode: number;
 }
+
+// ============================================================================
+// AppError Class
+// ============================================================================
 
 export class AppError extends Error {
 	public readonly code: ErrorCode;
@@ -48,9 +60,9 @@ export class AppError extends Error {
 	constructor(
 		code: ErrorCode,
 		message: string,
-		statusCode: number = 500,
+		statusCode = 500,
 		details?: Record<string, unknown>,
-		isOperational: boolean = true
+		isOperational = true
 	) {
 		super(message);
 		this.name = "AppError";
@@ -58,59 +70,71 @@ export class AppError extends Error {
 		this.statusCode = statusCode;
 		this.details = details;
 		this.isOperational = isOperational;
-
-		// Maintain proper stack trace
 		Error.captureStackTrace(this, AppError);
 	}
 }
 
-/**
- * Pre-defined error factories for common scenarios
- */
+// ============================================================================
+// Error Factories
+// ============================================================================
+
+export const createUnauthorizedError = (message = "Authentication required") =>
+	new AppError(ErrorCode.UNAUTHORIZED, message, 401);
+
+export const createForbiddenError = (message = "Access denied") =>
+	new AppError(ErrorCode.FORBIDDEN, message, 403);
+
+export const createNotFoundError = (resource = "Resource", id?: string) =>
+	new AppError(
+		ErrorCode.RESOURCE_NOT_FOUND,
+		`${resource} not found${id ? ` (ID: ${id})` : ""}`,
+		404
+	);
+
+export const createValidationError = (
+	message: string,
+	details?: Record<string, unknown>
+) => new AppError(ErrorCode.VALIDATION_ERROR, message, 400, details);
+
+export const createRateLimitError = (retryAfter?: number) =>
+	new AppError(ErrorCode.RATE_LIMIT_EXCEEDED, "Rate limit exceeded", 429, {
+		retryAfter,
+	});
+
+export const createBillingError = (
+	message: string,
+	details?: Record<string, unknown>
+) => new AppError(ErrorCode.BILLING_ERROR, message, 402, details);
+
+export const createSubscriptionRequiredError = (feature?: string) =>
+	new AppError(
+		ErrorCode.SUBSCRIPTION_REQUIRED,
+		`Active subscription required${feature ? ` for ${feature}` : ""}`,
+		402
+	);
+
+export const createInternalError = (
+	message = "Internal server error",
+	details?: Record<string, unknown>
+) => new AppError(ErrorCode.INTERNAL_ERROR, message, 500, details, false);
+
 export const ErrorFactory = {
-	unauthorized: (message = "Authentication required") =>
-		new AppError(ErrorCode.UNAUTHORIZED, message, 401),
-
-	forbidden: (message = "Access denied") =>
-		new AppError(ErrorCode.FORBIDDEN, message, 403),
-
-	notFound: (resource = "Resource", id?: string) =>
-		new AppError(
-			ErrorCode.RESOURCE_NOT_FOUND,
-			`${resource} not found${id ? ` (ID: ${id})` : ""}`,
-			404
-		),
-
-	validation: (message: string, details?: Record<string, unknown>) =>
-		new AppError(ErrorCode.VALIDATION_ERROR, message, 400, details),
-
-	rateLimitExceeded: (retryAfter?: number) =>
-		new AppError(
-			ErrorCode.RATE_LIMIT_EXCEEDED,
-			"Rate limit exceeded",
-			429,
-			{ retryAfter }
-		),
-
-	billingError: (message: string, details?: Record<string, unknown>) =>
-		new AppError(ErrorCode.BILLING_ERROR, message, 402, details),
-
-	subscriptionRequired: (feature?: string) =>
-		new AppError(
-			ErrorCode.SUBSCRIPTION_REQUIRED,
-			`Active subscription required${feature ? ` for ${feature}` : ""}`,
-			402
-		),
-
-	internal: (message = "Internal server error", details?: Record<string, unknown>) =>
-		new AppError(ErrorCode.INTERNAL_ERROR, message, 500, details, false),
+	unauthorized: createUnauthorizedError,
+	forbidden: createForbiddenError,
+	notFound: createNotFoundError,
+	validation: createValidationError,
+	rateLimitExceeded: createRateLimitError,
+	billingError: createBillingError,
+	subscriptionRequired: createSubscriptionRequiredError,
+	internal: createInternalError,
 };
 
-/**
- * Convert error to API response format
- */
+// ============================================================================
+// Response Conversion
+// ============================================================================
+
 export function errorToResponse(error: unknown): Response {
-	let apiError: ApiError;
+	let apiError: ApiErrorResponse;
 
 	if (error instanceof AppError) {
 		apiError = {
@@ -120,9 +144,11 @@ export function errorToResponse(error: unknown): Response {
 			statusCode: error.statusCode,
 		};
 
-		// Log operational errors as warnings, non-operational as errors
 		if (error.isOperational) {
-			console.warn(`[API Error] ${error.code}: ${error.message}`, error.details);
+			console.warn(
+				`[API Error] ${error.code}: ${error.message}`,
+				error.details
+			);
 		} else {
 			console.error(`[System Error] ${error.code}: ${error.message}`, {
 				details: error.details,
@@ -130,7 +156,6 @@ export function errorToResponse(error: unknown): Response {
 			});
 		}
 	} else if (error instanceof Error) {
-		// Unknown error - log full details but return generic message
 		console.error("[Unexpected Error]", {
 			message: error.message,
 			stack: error.stack,
@@ -142,7 +167,6 @@ export function errorToResponse(error: unknown): Response {
 			statusCode: 500,
 		};
 	} else {
-		// Non-Error object
 		console.error("[Unknown Error]", error);
 
 		apiError = {
@@ -152,22 +176,20 @@ export function errorToResponse(error: unknown): Response {
 		};
 	}
 
-	// Remove sensitive details in production
 	if (process.env.NODE_ENV === "production" && apiError.statusCode >= 500) {
 		delete apiError.details;
 	}
 
 	return new Response(JSON.stringify(apiError), {
 		status: apiError.statusCode,
-		headers: {
-			"Content-Type": "application/json",
-		},
+		headers: { "Content-Type": "application/json" },
 	});
 }
 
-/**
- * Async error handler wrapper for route handlers
- */
+// ============================================================================
+// Handler Wrapper
+// ============================================================================
+
 export function withErrorHandler<T extends unknown[], R>(
 	handler: (...args: T) => Promise<R>
 ) {
@@ -180,61 +202,60 @@ export function withErrorHandler<T extends unknown[], R>(
 	};
 }
 
-/**
- * Validation helper that throws standardized errors
- */
+// ============================================================================
+// Validation Helpers
+// ============================================================================
+
 export function validateRequired<T>(
 	value: T | null | undefined,
 	fieldName: string
 ): T {
 	if (value === null || value === undefined) {
-		throw ErrorFactory.validation(`${fieldName} is required`);
+		throw createValidationError(`${fieldName} is required`);
 	}
 	return value;
 }
 
-/**
- * Assert user authentication
- */
+// ============================================================================
+// Assertion Helpers
+// ============================================================================
+
 export function assertAuthenticated(
 	user: unknown,
 	message = "Authentication required"
 ): asserts user {
 	if (!user) {
-		throw ErrorFactory.unauthorized(message);
+		throw createUnauthorizedError(message);
 	}
 }
 
-/**
- * Assert user authorization
- */
 export function assertAuthorized(
 	condition: boolean,
 	message = "Access denied"
 ): asserts condition {
 	if (!condition) {
-		throw ErrorFactory.forbidden(message);
+		throw createForbiddenError(message);
 	}
 }
 
-/**
- * Database error handler
- */
+// ============================================================================
+// Database Error Handler
+// ============================================================================
+
 export function handleDatabaseError(error: unknown): never {
 	console.error("[Database Error]", error);
-	
-	// Check for common database errors
+
 	if (error instanceof Error) {
 		if (error.message.includes("unique constraint")) {
-			throw ErrorFactory.validation("Resource already exists");
+			throw createValidationError("Resource already exists");
 		}
 		if (error.message.includes("foreign key constraint")) {
-			throw ErrorFactory.validation("Invalid reference");
+			throw createValidationError("Invalid reference");
 		}
 		if (error.message.includes("not null constraint")) {
-			throw ErrorFactory.validation("Required field missing");
+			throw createValidationError("Required field missing");
 		}
 	}
 
-	throw ErrorFactory.internal("Database operation failed");
+	throw createInternalError("Database operation failed");
 }

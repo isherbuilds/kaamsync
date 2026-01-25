@@ -5,23 +5,27 @@ import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
-import { MatterListLayout } from "~/components/matter/matter-list-layout";
+import { MatterListWithDetailPanel } from "~/components/matter/matter-list-layout";
 import {
 	Item,
 	ItemContent,
 	ItemDescription,
 	ItemTitle,
 } from "~/components/ui/item";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
 import {
-	compareStatuses,
-	getPriorityBadge,
-	getPriorityLabel,
+	getPriorityBadgeClass,
+	getPriorityDisplayLabel,
 	Priority,
+	sortStatusComparator,
 } from "~/config/matter";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/requests";
+
+// --------------------------------------------------------------------------
+// Meta
+// --------------------------------------------------------------------------
 
 export const meta: Route.MetaFunction = ({ params }) => [
 	{
@@ -33,11 +37,23 @@ export const meta: Route.MetaFunction = ({ params }) => [
 	},
 ];
 
+// --------------------------------------------------------------------------
+// Types
+// --------------------------------------------------------------------------
+
 type RequestMatter = Row["mattersTable"] & { status?: Row["statusesTable"] };
 
-export default function RequestsPage() {
-	const { orgSlug } = useOrgLoaderData();
+// --------------------------------------------------------------------------
+// Component
+// --------------------------------------------------------------------------
+
+export default function OrganizationRequestsPage() {
+	const { orgSlug } = useOrganizationLoaderData();
 	const isMobile = useIsMobile();
+
+	// --------------------------------------------------------------------------
+	// Data Fetching
+	// --------------------------------------------------------------------------
 
 	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
 		...CACHE_LONG,
@@ -47,14 +63,18 @@ export default function RequestsPage() {
 		...CACHE_LONG,
 	});
 
-	const sortedRequests = useMemo(() => {
+	// --------------------------------------------------------------------------
+	// Memoized Values
+	// --------------------------------------------------------------------------
+
+	const sortedRequestsByStatus = useMemo(() => {
 		if (!requests) return [];
 		return [...requests].sort((a, b) =>
-			compareStatuses(a.status || {}, b.status || {}),
+			sortStatusComparator(a.status || {}, b.status || {}),
 		);
 	}, [requests]);
 
-	const membersMap = useMemo(() => {
+	const membersByUserId = useMemo(() => {
 		const map = new Map();
 		if (!members) return map;
 		for (const m of members) {
@@ -63,9 +83,13 @@ export default function RequestsPage() {
 		return map;
 	}, [members]);
 
-	const renderRequestItem = useCallback(
+	// --------------------------------------------------------------------------
+	// Callbacks
+	// --------------------------------------------------------------------------
+
+	const handleRenderRequestItem = useCallback(
 		(matter: RequestMatter) => {
-			const assignee = membersMap.get(matter.assigneeId);
+			const assignee = membersByUserId.get(matter.assigneeId);
 			const createdDate = matter.createdAt
 				? new Date(matter.createdAt).toLocaleDateString("en-IN", {
 						month: "short",
@@ -101,10 +125,10 @@ export default function RequestsPage() {
 										<span
 											className={cn(
 												"inline-flex items-center rounded px-1.5 py-0.5 font-semibold text-[10px] uppercase tracking-wider transition-colors",
-												getPriorityBadge(matter.priority),
+												getPriorityBadgeClass(matter.priority),
 											)}
 										>
-											{getPriorityLabel(matter.priority)}
+											{getPriorityDisplayLabel(matter.priority)}
 										</span>
 									)}
 								{matter.status && (
@@ -151,22 +175,26 @@ export default function RequestsPage() {
 				</NavLink>
 			);
 		},
-		[orgSlug, isMobile, membersMap],
+		[orgSlug, isMobile, membersByUserId],
 	);
 
+	// --------------------------------------------------------------------------
+	// Render
+	// --------------------------------------------------------------------------
+
 	return (
-		<MatterListLayout
+		<MatterListWithDetailPanel
 			title="Requests"
 			icon={Send}
 			accentColor="amber"
-			items={sortedRequests}
+			items={sortedRequestsByStatus}
 			isLoading={!requests}
 			emptyState={{
 				title: "No requests created",
 				description: "Requests you create will appear here",
 			}}
 			estimateSize={100}
-			renderItem={renderRequestItem}
+			renderItem={handleRenderRequestItem}
 		/>
 	);
 }

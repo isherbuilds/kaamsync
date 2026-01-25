@@ -6,31 +6,41 @@
 import { z } from "zod";
 
 // ============================================================================
-// BASE ENTITY SCHEMAS
+// Entity Schemas
 // ============================================================================
+
+export const entityNameSchema = z
+	.string()
+	.min(1, "Name is required")
+	.max(255, "Name too long");
+
+export const entityDescriptionSchema = z
+	.string()
+	.max(1000, "Description too long")
+	.optional();
 
 export const baseEntitySchema = z.object({
-	name: z.string().min(1, "Name is required").max(255, "Name too long"),
-	description: z.string().max(1000, "Description too long").optional(),
+	name: entityNameSchema,
+	description: entityDescriptionSchema,
 });
 
-export const baseSlugSchema = z.object({
-	slug: z
-		.string()
-		.min(2, "Slug must be at least 2 characters")
-		.max(50, "Slug too long")
-		.regex(
-			/^[a-z0-9-]+$/,
-			"Slug can only contain lowercase letters, numbers, and hyphens",
-		)
-		.refine(
-			(s) => !s.startsWith("-") && !s.endsWith("-"),
-			"Slug cannot start or end with hyphen",
-		),
-});
+export const slugSchema = z
+	.string()
+	.min(2, "Slug must be at least 2 characters")
+	.max(50, "Slug too long")
+	.regex(
+		/^[a-z0-9-]+$/,
+		"Slug can only contain lowercase letters, numbers, and hyphens"
+	)
+	.refine(
+		(s) => !s.startsWith("-") && !s.endsWith("-"),
+		"Slug cannot start or end with hyphen"
+	);
+
+export const baseSlugSchema = z.object({ slug: slugSchema });
 
 // ============================================================================
-// COMMON FIELD SCHEMAS
+// Common Field Schemas
 // ============================================================================
 
 export const prioritySchema = z.coerce.number().min(0).max(4);
@@ -39,7 +49,7 @@ export const teamIdSchema = z.string().min(1, "Team is required");
 export const userIdSchema = z.string().min(1, "User is required");
 
 // ============================================================================
-// EMAIL & CONTACT SCHEMAS
+// Auth Schemas
 // ============================================================================
 
 export const emailSchema = z
@@ -54,17 +64,17 @@ export const passwordSchema = z
 	.max(128, "Password too long");
 
 // ============================================================================
-// DATE & TIME SCHEMAS
+// Date Schemas
 // ============================================================================
 
 export const dateSchema = z.coerce.date();
 export const optionalDateSchema = z.coerce.date().optional();
 
 // ============================================================================
-// UTILITY SCHEMAS
+// Utility Schemas
 // ============================================================================
 
-export const colorSchema = z
+export const hexColorSchema = z
 	.string()
 	.regex(/^#[0-9A-Fa-f]{6}$/, "Color must be a valid hex color (e.g., #FF0000)")
 	.optional();
@@ -72,14 +82,11 @@ export const colorSchema = z
 export const urlSchema = z.string().url("Invalid URL").optional();
 
 // ============================================================================
-// VALIDATION HELPERS
+// Schema Factories
 // ============================================================================
 
-/**
- * Create a schema for confirming passwords match
- */
-export const createPasswordConfirmationSchema = (passwordField = "password") =>
-	z
+export function createPasswordConfirmationSchema(passwordField = "password") {
+	return z
 		.object({
 			[passwordField]: passwordSchema,
 			confirmPassword: z.string(),
@@ -90,16 +97,15 @@ export const createPasswordConfirmationSchema = (passwordField = "password") =>
 			{
 				message: "Passwords do not match",
 				path: ["confirmPassword"],
-			},
+			}
 		);
+}
 
-/**
- * Create a schema for unique slug validation (client-side only)
- */
-export const createUniqueSlugSchema = (reservedSlugs: string[] = []) =>
-	baseSlugSchema.extend({
-		slug: baseSlugSchema.shape.slug.refine(
+export function createUniqueSlugSchema(reservedSlugs: string[] = []) {
+	return baseSlugSchema.extend({
+		slug: slugSchema.refine(
 			(slug) => !reservedSlugs.includes(slug),
-			"This slug is reserved and cannot be used",
+			"This slug is reserved and cannot be used"
 		),
 	});
+}

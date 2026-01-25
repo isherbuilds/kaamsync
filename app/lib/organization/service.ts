@@ -10,20 +10,39 @@ import {
 } from "~/db/schema";
 import type { OrgRole } from "~/lib/auth/permissions";
 
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export type AddMemberResult = {
+	id: string;
+	email: string;
+	role: string;
+	status: "active" | "pending";
+};
+
+export type OrganizationInfo = {
+	id: string;
+	name: string;
+	slug: string;
+	logo: string | null;
+	createdAt: Date;
+	metadata: string | null;
+};
+
+// =============================================================================
+// MEMBER OPERATIONS
+// =============================================================================
+
 /**
- * Add a member to an organization
- * This handles both direct addition and invitation acceptance
+ * Add a member to an organization.
+ * If user exists, adds them directly. Otherwise creates an invitation.
  */
 export async function addMemberToOrganization(
 	email: string,
 	organizationId: string,
 	inviterId?: string,
-): Promise<{
-	id: string;
-	email: string;
-	role: string;
-	status: string;
-}> {
+): Promise<AddMemberResult> {
 	// Check if user already exists
 	const existingUser = await db.query.usersTable.findFirst({
 		where: eq(usersTable.email, email),
@@ -101,9 +120,9 @@ export async function addMemberToOrganization(
 }
 
 /**
- * Get organization member count (for billing purposes)
+ * Get organization member count (for billing purposes).
  */
-export async function getOrganizationMemberCount(organizationId: string) {
+export async function getMemberCount(organizationId: string): Promise<number> {
 	const members = await db.query.membersTable.findMany({
 		where: eq(membersTable.organizationId, organizationId),
 	});
@@ -112,25 +131,30 @@ export async function getOrganizationMemberCount(organizationId: string) {
 }
 
 /**
- * Get active organization for a user (for session management)
+ * Get active organization for a user (for session management).
  */
-export async function getActiveOrganization(userId: string) {
+export async function getActiveOrganizationId(
+	userId: string,
+): Promise<string | undefined> {
 	const membership = await db.query.membersTable.findFirst({
 		where: eq(membersTable.userId, userId),
+		columns: {
+			id: true,
+		},
 		orderBy: (m, { desc }) => desc(m.createdAt),
 	});
 
-	if (!membership) {
-		throw new Error("User does not belong to any organization");
-	}
+	// if (!membership) {
+	// 	throw new Error("User does not belong to any organization");
+	// }
 
-	return membership.organizationId;
+	return membership?.id;
 }
 
 /**
- * Get a user's role in an organization
+ * Get a user's role in an organization.
  */
-export async function getOrganizationMemberRole(
+export async function getMemberRole(
 	organizationId: string,
 	userId: string,
 ): Promise<OrgRole | null> {
@@ -157,14 +181,13 @@ export async function getOrganizationMemberRole(
 	}
 }
 
-export async function getOrganization(organizationId: string): Promise<{
-	id: string;
-	name: string;
-	slug: string;
-	logo: string | null;
-	createdAt: Date;
-	metadata: string | null;
-} | null> {
+// =============================================================================
+// ORGANIZATION QUERIES
+// =============================================================================
+
+export async function getOrganizationById(
+	organizationId: string,
+): Promise<OrganizationInfo | null> {
 	const organization = await db.query.organizationsTable.findFirst({
 		where: eq(organizationsTable.id, organizationId),
 	});
@@ -172,10 +195,14 @@ export async function getOrganization(organizationId: string): Promise<{
 	return organization ?? null;
 }
 
-export async function getExistingOrganizationSubscriptionId(
-	customerId: string,
+// =============================================================================
+// SUBSCRIPTION QUERIES
+// =============================================================================
+
+export async function findSubscriptionId(
 	organizationId: string,
-) {
+	customerId: string,
+): Promise<string | undefined> {
 	const existingSubscription = await db.query.subscriptionsTable.findFirst({
 		where: and(
 			eq(subscriptionsTable.organizationId, organizationId),

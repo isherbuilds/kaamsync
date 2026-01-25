@@ -2,19 +2,17 @@ import { mustGetMutator } from "@rocicorp/zero";
 import { handleMutateRequest } from "@rocicorp/zero/server";
 import { zeroPostgresJS } from "@rocicorp/zero/server/adapters/postgresjs";
 import postgres from "postgres";
-import { data } from "react-router";
 import { mutators } from "zero/mutators";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth/server";
-import { invalidateUsageCache } from "~/lib/billing/service";
 import {
-	assertAuthenticated,
-	ErrorFactory,
-	handleDatabaseError,
-	withErrorHandler,
-} from "~/lib/infra/errors";
-import { getActiveOrganization } from "~/lib/organization/service";
+	clearUsageCache,
+	fetchOrgSubscription,
+	fetchOrgUsage,
+} from "~/lib/billing/service";
+import { getActiveOrganizationId } from "~/lib/organization/service";
 import { must } from "~/lib/utils/must";
+import type { Route } from "./+types/mutate.ts";
 
 // Create database provider with Postgres adapter
 const pgURL = must(
@@ -23,51 +21,46 @@ const pgURL = must(
 );
 const dbProvider = zeroPostgresJS(schema, postgres(pgURL));
 
-export const action = withErrorHandler(
-	async ({ request }: { request: Request }) => {
-		// Get session from Better Auth
-		const authSession = await getServerSession(request);
+export async function action({ request }: Route.ActionArgs) {
+	// Get session from Better Auth
+	const authSession = await getServerSession(request);
 
-		// Use standardized authentication check
-		assertAuthenticated(
-			authSession?.user,
-			"Authentication required for Zero mutations",
-		);
+	if (!authSession?.user) {
+		throw new Error("Authentication required for Zero mutations");
+	}
 
-		let activeOrgId = authSession.session.activeOrganizationId;
+	let activeOrgId = authSession.session.activeOrganizationId;
 
-		if (!authSession.session.activeOrganizationId) {
-			activeOrgId = await getActiveOrganization(authSession.user.id);
-		}
+	if (!authSession.session.activeOrganizationId) {
+		activeOrgId = await getActiveOrganizationId(authSession.user.id);
+	}
 
-		// Build context from session - this is passed to mutators automatically
-		const ctx = {
-			userId: authSession.user.id,
-			activeOrganizationId: activeOrgId ?? null,
-			invalidateUsageCache,
-		};
+	if (!activeOrgId) {
+		throw new Error("No active organization found for user");
+	}
 
-		try {
-			return data(
-				await handleMutateRequest(
-					dbProvider,
-					(transact) =>
-						transact(async (tx: any, name: string, args: any) => {
-							const mutator = mustGetMutator(mutators, name);
-							await mutator.fn({ tx, ctx, args });
-						}),
-					request,
-				),
-			);
-		} catch (error) {
-			console.error("[Zero:mutate] Mutation execution failed:", error);
+	// Fetch subscription and usage details
+	const [subscription, usage] = await Promise.all([
+		fetchOrgSubscription(activeOrgId),
+		fetchOrgUsage(activeOrgId),
+	]);
 
-			// Handle database-specific errors
-			if (error instanceof Error && error.message.includes("constraint")) {
-				handleDatabaseError(error);
-			}
+	// Build context from session - this is passed to mutators automatically
+	const ctx = {
+		userId: authSession.user.id,
+		activeOrganizationId: activeOrgId ?? null,
+		subscription,
+		usage,
+		clearUsageCache,
+	};
 
-			throw ErrorFactory.internal("Mutation execution failed");
-		}
-	},
-);
+	return await handleMutateRequest(
+		dbProvider,
+		(transact) =>
+			transact(async (tx: any, name: string, args: any) => {
+				const mutator = mustGetMutator(mutators, name);
+				await mutator.fn({ tx, ctx, args });
+			}),
+		request,
+	);
+}

@@ -24,8 +24,42 @@ import {
 import { ColorSchemeToggle } from "./color-scheme-toggle";
 import { NavTeams } from "./nav-teams";
 
-// Main navigation items
-const navMain = [
+// ============================================================================
+// Types
+// ============================================================================
+
+interface OrganizationInfo {
+	id: string;
+	name: string;
+	slug: string;
+}
+
+interface AuthUserInfo {
+	id: string;
+	name: string;
+	email: string;
+	avatar?: string;
+}
+
+interface TeamInfo {
+	id: string;
+	name: string;
+	code: string;
+	slug: string;
+}
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+	organizations: OrganizationInfo[];
+	selectedOrg: OrganizationInfo;
+	authUser: AuthUserInfo;
+	teams: TeamInfo[];
+}
+
+// ============================================================================
+// Navigation Configuration
+// ============================================================================
+
+const NAV_MAIN_ITEMS = [
 	{
 		title: "Tasks",
 		url: "/tasks",
@@ -38,8 +72,7 @@ const navMain = [
 	},
 ];
 
-// Note: URLs with "/settings" are relative to org - they get /:orgSlug prefix
-const navSettings = [
+const NAV_SETTINGS_ITEMS = [
 	{
 		title: "Back Home",
 		url: "/tasks",
@@ -57,7 +90,7 @@ const navSettings = [
 	},
 	{
 		title: "Billing",
-		url: "/settings/billing", // Organization billing (/:orgSlug/settings/billing)
+		url: "/settings/billing",
 		icon: CreditCard,
 	},
 	{
@@ -67,37 +100,17 @@ const navSettings = [
 	},
 ];
 
+// ============================================================================
+// Component
+// ============================================================================
+
 export function AppSidebar({
 	organizations,
-	// membership,
 	selectedOrg,
 	authUser,
 	teams,
 	...props
-}: {
-	organizations: {
-		id: string;
-		name: string;
-		slug: string;
-	}[];
-	selectedOrg: {
-		id: string;
-		name: string;
-		slug: string;
-	};
-	authUser: {
-		id: string;
-		name: string;
-		email: string;
-		avatar?: string;
-	};
-	teams: {
-		id: string;
-		name: string;
-		code: string;
-		slug: string;
-	}[];
-} & React.ComponentProps<typeof Sidebar>) {
+}: AppSidebarProps) {
 	const matches = useMatches();
 	const isSettings = matches.find(
 		(match) => match.id === "routes/organization/settings/layout",
@@ -106,11 +119,11 @@ export function AppSidebar({
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
 			<SidebarHeader>
-				<OrgSwitcher organizations={organizations} selectedOrg={selectedOrg} />
+				<OrgSwitcher organizations={organizations} activeOrganization={selectedOrg} />
 			</SidebarHeader>
 			<SidebarContent>
 				<NavMain
-					items={isSettings ? navSettings : navMain}
+					items={isSettings ? NAV_SETTINGS_ITEMS : NAV_MAIN_ITEMS}
 					orgSlug={selectedOrg.slug}
 				/>
 				{!isSettings && <NavTeams teams={teams} orgSlug={selectedOrg.slug} />}

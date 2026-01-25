@@ -3,7 +3,36 @@
  * Shared between server-side seeding and client-side mutators.
  */
 
-export const DEFAULT_LABELS = [
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export type DefaultLabel = {
+	name: string;
+	color: string;
+	description: string;
+};
+
+export type DefaultStatus = {
+	name: string;
+	color: string;
+	type:
+		| "backlog"
+		| "not_started"
+		| "started"
+		| "completed"
+		| "canceled"
+		| "pending_approval"
+		| "rejected";
+	position: number;
+	isDefault: boolean;
+};
+
+// =============================================================================
+// LABELS
+// =============================================================================
+
+export const TEAM_DEFAULT_LABELS = [
 	{
 		name: "Task",
 		color: "#3b82f6",
@@ -31,7 +60,11 @@ export const DEFAULT_LABELS = [
 	},
 ] as const;
 
-export const DEFAULT_STATUSES = [
+// =============================================================================
+// STATUSES
+// =============================================================================
+
+export const TEAM_DEFAULT_STATUSES = [
 	{
 		name: "Backlog",
 		color: "#94a3b8",

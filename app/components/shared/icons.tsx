@@ -10,9 +10,11 @@ type GoogleIconProps = {
 	theme?: "light" | "dark";
 };
 
-// Shared SVG base props for better performance
-// Note: No fixed height/width to allow CSS sizing (size="16" is the default via className)
-const baseSvgProps = {
+// ============================================================================
+// SVG BASE CONFIGURATION
+// ============================================================================
+
+const BASE_SVG_PROPS = {
 	fill: "currentColor",
 	focusable: false,
 	role: "img" as const,
@@ -20,9 +22,13 @@ const baseSvgProps = {
 	xmlns: "http://www.w3.org/2000/svg",
 } as const;
 
+// ============================================================================
+// PRIORITY ICONS
+// ============================================================================
+
 export const NoPriorityIcon = ({ className, color, ...props }: IconProps) => (
 	<svg
-		{...baseSvgProps}
+		{...BASE_SVG_PROPS}
 		aria-label="No Priority"
 		className={cn("size-3.5", className)}
 		style={color ? { color } : undefined}
@@ -41,7 +47,7 @@ export const UrgentPriorityIcon = ({
 	...props
 }: IconProps) => (
 	<svg
-		{...baseSvgProps}
+		{...BASE_SVG_PROPS}
 		aria-label="Urgent Priority"
 		className={cn("size-3.5", className)}
 		style={color ? { color } : undefined}
@@ -54,7 +60,7 @@ export const UrgentPriorityIcon = ({
 
 export const HighPriorityIcon = ({ className, color, ...props }: IconProps) => (
 	<svg
-		{...baseSvgProps}
+		{...BASE_SVG_PROPS}
 		aria-label="High Priority"
 		className={cn("size-3.5", className)}
 		style={color ? { color } : undefined}
@@ -73,7 +79,7 @@ export const MediumPriorityIcon = ({
 	...props
 }: IconProps) => (
 	<svg
-		{...baseSvgProps}
+		{...BASE_SVG_PROPS}
 		aria-label="Medium Priority"
 		className={cn("size-3.5", className)}
 		style={color ? { color } : undefined}
@@ -88,7 +94,7 @@ export const MediumPriorityIcon = ({
 
 export const LowPriorityIcon = ({ className, color, ...props }: IconProps) => (
 	<svg
-		{...baseSvgProps}
+		{...BASE_SVG_PROPS}
 		aria-label="Low Priority"
 		className={cn("size-3.5", className)}
 		style={color ? { color } : undefined}
@@ -100,6 +106,10 @@ export const LowPriorityIcon = ({ className, color, ...props }: IconProps) => (
 		<rect fillOpacity="0.4" height="12" rx="1" width="3" x="11.5" y="2" />
 	</svg>
 );
+
+// ============================================================================
+// STATUS ICONS
+// ============================================================================
 
 export const BacklogStatusIcon = ({
 	className,
@@ -353,37 +363,9 @@ export const CanceledStatusIcon = ({
 	</svg>
 );
 
-// Type-safe priority mapping using numeric values
-// 0 = urgent, 1 = high, 2 = medium, 3 = low, 4 = none
-export const PRIORITY_ICON_MAP = {
-	0: UrgentPriorityIcon,
-	1: HighPriorityIcon,
-	2: MediumPriorityIcon,
-	3: LowPriorityIcon,
-	4: NoPriorityIcon,
-} as const;
-
-export type PriorityValue = keyof typeof PRIORITY_ICON_MAP;
-
-// Get priority icon component by numeric value
-export function getPriorityIcon(priority?: number | null) {
-	if (priority == null) {
-		return PRIORITY_ICON_MAP[4]; // Default to none
-	}
-	return PRIORITY_ICON_MAP[priority as PriorityValue] ?? PRIORITY_ICON_MAP[4];
-}
-
-// Render a priority icon with optional custom className
-export function renderPriorityIcon(
-	priority?: number | null,
-	color?: string,
-): React.ReactNode {
-	const Icon = getPriorityIcon(priority);
-	if (!Icon) {
-		return null;
-	}
-	return <Icon color={color} />;
-}
+// ============================================================================
+// BRAND ICONS
+// ============================================================================
 
 export function GoogleIcon({ className }: GoogleIconProps) {
 	return (
@@ -414,4 +396,36 @@ export function GoogleIcon({ className }: GoogleIconProps) {
 			/>
 		</svg>
 	);
+}
+
+// ============================================================================
+// PRIORITY ICON HELPERS
+// ============================================================================
+
+export const PRIORITY_ICON_MAP = {
+	0: UrgentPriorityIcon,
+	1: HighPriorityIcon,
+	2: MediumPriorityIcon,
+	3: LowPriorityIcon,
+	4: NoPriorityIcon,
+} as const;
+
+export type PriorityValue = keyof typeof PRIORITY_ICON_MAP;
+
+export function getPriorityIconComponent(priority?: number | null) {
+	if (priority == null) {
+		return PRIORITY_ICON_MAP[4];
+	}
+	return PRIORITY_ICON_MAP[priority as PriorityValue] ?? PRIORITY_ICON_MAP[4];
+}
+
+export function renderPriorityIcon(
+	priority?: number | null,
+	color?: string,
+): React.ReactNode {
+	const Icon = getPriorityIconComponent(priority);
+	if (!Icon) {
+		return null;
+	}
+	return <Icon color={color} />;
 }

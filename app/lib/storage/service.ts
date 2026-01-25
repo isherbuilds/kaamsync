@@ -19,11 +19,11 @@ import {
 	teamMembershipsTable,
 } from "~/db/schema";
 import {
-	canModifyAttachment,
+	hasAttachmentModifyPermission,
 	PERMISSION_ERRORS,
 	type TeamRole,
 } from "~/lib/auth/permissions";
-import { getOrganizationPlanKey } from "~/lib/billing/service";
+import { resolveOrgPlan } from "~/lib/billing/service";
 import { env } from "~/lib/infra/env";
 import { logger } from "~/lib/utils/logger";
 
@@ -182,7 +182,7 @@ export async function updateStorageUsageCache(
 export async function getOrganizationStorageLimits(
 	orgId: string,
 ): Promise<StorageLimits> {
-	const plan = await getOrganizationPlanKey(orgId);
+	const plan = await resolveOrgPlan(orgId);
 	const limits = planLimits[plan];
 	return {
 		storageGb: limits.storageGb,
@@ -429,7 +429,7 @@ async function assertUserCanDeleteAttachment(
 	}
 
 	// Use shared permission logic: uploader, author, assignee, or manager
-	const canDelete = canModifyAttachment(
+	const canDelete = hasAttachmentModifyPermission(
 		membership.role as TeamRole,
 		attachment.uploaderId === userId,
 		attachment.matter.authorId === userId,

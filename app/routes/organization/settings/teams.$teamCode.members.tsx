@@ -30,7 +30,7 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { type TeamRole, teamRole } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 
 const addMemberSchema = z.object({
 	userId: z.string().min(1, "Select a user"),
@@ -38,7 +38,7 @@ const addMemberSchema = z.object({
 });
 
 export default function TeamMembersPage() {
-	const { authSession } = useOrgLoaderData();
+	const { authSession } = useOrganizationLoaderData();
 	const { teamCode } = useParams();
 	const zr = useZero();
 	const [open, setOpen] = useState(false);

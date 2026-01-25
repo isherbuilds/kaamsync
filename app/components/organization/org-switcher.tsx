@@ -4,7 +4,6 @@ import {
 	BlocksIcon,
 	ChevronsUpDown,
 	CogIcon,
-	HomeIcon,
 	Users2Icon,
 } from "lucide-react";
 import { Link } from "react-router";
@@ -26,29 +25,50 @@ import {
 import { authClient } from "~/lib/auth/client";
 import { Avatar, AvatarFallback, AvatarImage, CustomAvatar } from "~/components/ui/avatar";
 
+/* ---------------------------------- Types --------------------------------- */
+
+interface Organization {
+	id: string;
+	name: string;
+	slug: string;
+}
+
+interface OrganizationSwitcherProps {
+	organizations: Organization[];
+	activeOrganization: Organization;
+}
+
+/* ------------------------------ Avatar Helper ----------------------------- */
+
+function getAvatarUrl(name: string): string {
+	return `https://api.dicebear.com/9.x/glass/svg?seed=${name}`;
+}
+
+/* -------------------------------- Component ------------------------------- */
+
 export function OrgSwitcher({
 	organizations,
-	selectedOrg,
-}: {
-	organizations: {
-		id: string;
-		name: string;
-		slug: string;
-	}[];
-	selectedOrg: {
-		id: string;
-		name: string;
-		slug: string;
-	};
-}) {
+	activeOrganization,
+}: OrganizationSwitcherProps) {
 	const { isMobile } = useSidebar();
 
-	// Find the current organization based on the slug from URL
 	const currentOrg = organizations?.find(
-		(org) => org.slug === selectedOrg.slug,
+		(org) => org.slug === activeOrganization.slug,
 	) ?? {
-		...selectedOrg,
+		...activeOrganization,
 	};
+
+	/* -------------------------------- Handlers -------------------------------- */
+
+	const handleOrganizationSelect = async (org: Organization) => {
+		if (currentOrg.id !== org.id) {
+			await authClient.organization.setActive({
+				organizationSlug: org.slug,
+			});
+		}
+	};
+
+	/* --------------------------------- Render --------------------------------- */
 
 	return (
 		<SidebarMenu>
@@ -63,7 +83,7 @@ export function OrgSwitcher({
 								<Avatar className="size-4 rounded-lg">
 									<AvatarImage
 										alt={currentOrg.name}
-										src={`https://api.dicebear.com/9.x/glass/svg?seed=${currentOrg.name}`}
+										src={getAvatarUrl(currentOrg.name)}
 									/>
 									<AvatarFallback className="rounded-lg">
 										{currentOrg.name.charAt(0)}
@@ -72,7 +92,6 @@ export function OrgSwitcher({
 							</div>
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{currentOrg.name}</span>
-								{/* <span className="truncate text-xs">{currentTeam.plan}</span> */}
 							</div>
 							<ChevronsUpDown className="ml-auto" />
 						</SidebarMenuButton>
@@ -83,13 +102,7 @@ export function OrgSwitcher({
 						side={isMobile ? "bottom" : "right"}
 						sideOffset={6}
 					>
-						{/* <DropdownMenuItem asChild className="p-2">
-							<Link className="cursor-pointer" to={`/${currentOrg.slug}`}>
-								<HomeIcon className="size-4" />
-								<div>Home</div>
-							</Link>
-						</DropdownMenuItem> */}
-
+						{/* Organization Actions */}
 						<DropdownMenuItem asChild className="p-2">
 							<Link
 								className="cursor-pointer"
@@ -119,28 +132,21 @@ export function OrgSwitcher({
 
 						<DropdownMenuSeparator />
 
+						{/* Organization List */}
 						<DropdownMenuLabel className="text-muted-foreground text-xs">
 							Organizations
 						</DropdownMenuLabel>
 
 						{organizations?.map((org) => (
-							<DropdownMenuItem asChild className="p-2" key={org.name}>
+							<DropdownMenuItem asChild className="p-2" key={org.id}>
 								<Link
 									to={`/${org.slug}`}
-									onClick={async (e) => {
-										// Only set active if switching to a different org
-										if (currentOrg.id !== org.id) {
-											await authClient.organization.setActive({
-												organizationSlug: org.slug,
-											});
-										}
-									}}
+									onClick={() => handleOrganizationSelect(org)}
 									className="cursor-pointer"
 								>
-									{/* <org.logo className="size-3.5 shrink-0" /> */}
 									<CustomAvatar
 										key={org.id}
-										avatar={`https://api.dicebear.com/9.x/glass/svg?seed=${org.name}`}
+										avatar={getAvatarUrl(org.name)}
 										name={org.name}
 										className="size-5"
 									/>

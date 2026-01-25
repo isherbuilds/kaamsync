@@ -39,8 +39,8 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Separator } from "~/components/ui/separator";
-import { parseMatterKey } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { parseMatterKeyString } from "~/db/helpers";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
 import { Priority, type PriorityValue } from "~/config/matter";
 import type { Route } from "./+types/matter.$matterKey";
@@ -52,13 +52,13 @@ export const meta: Route.MetaFunction = ({ params }) => [
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 	const matterKey = params.matterKey;
 	if (!matterKey) throw new Response("Not Found", { status: 404 });
-	const parsed = parseMatterKey(matterKey);
+	const parsed = parseMatterKeyString(matterKey);
 	if (!parsed) throw new Response("Invalid matter key format", { status: 400 });
 	return { matterKey, parsed };
 }
 
 export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
-	const { orgSlug } = useOrgLoaderData();
+	const { orgSlug } = useOrganizationLoaderData();
 	const { parsed } = loaderData;
 	const navigate = useNavigate();
 	const z = useZero();

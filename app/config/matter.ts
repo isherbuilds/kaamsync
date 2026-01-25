@@ -9,6 +9,10 @@ import {
 	StartedStatusIcon,
 } from "~/components/shared/icons";
 
+// =============================================================================
+// PRIORITY CONFIGURATION
+// =============================================================================
+
 // Priority Types - Numeric values for database storage and server-side sorting
 // 0 = urgent (highest), 4 = none (lowest)
 export const Priority = {
@@ -52,26 +56,31 @@ export const PRIORITY_BADGE: Record<PriorityValue, string> = {
 		"bg-priority-none/10 text-priority-none border-priority-none/20",
 };
 
-// Helper to get priority color
-export function getPriorityColor(priority: number): string {
+// =============================================================================
+// PRIORITY HELPERS
+// =============================================================================
+
+export function getPriorityColorClass(priority: number): string {
 	return (
 		PRIORITY_COLORS[priority as PriorityValue] ?? PRIORITY_COLORS[Priority.NONE]
 	);
 }
 
-// Helper to get priority label
-export function getPriorityLabel(priority: number): string {
+export function getPriorityDisplayLabel(priority: number): string {
 	return (
 		PRIORITY_LABELS[priority as PriorityValue] ?? PRIORITY_LABELS[Priority.NONE]
 	);
 }
 
-// Helper to get priority badge
-export function getPriorityBadge(priority: number): string {
+export function getPriorityBadgeClass(priority: number): string {
 	return (
 		PRIORITY_BADGE[priority as PriorityValue] ?? PRIORITY_BADGE[Priority.NONE]
 	);
 }
+
+// =============================================================================
+// STATUS CONFIGURATION
+// =============================================================================
 
 // Status Types - These are the main categories (hardcoded)
 export const STATUS_TYPES = {
@@ -154,29 +163,32 @@ export const COMPLETED_STATUS_TYPES: StatusType[] = [
 	"rejected",
 ];
 
-// Helper to get status icon
-export function getStatusIcon(statusType?: string): MatterIcon | null {
+// =============================================================================
+// STATUS HELPERS
+// =============================================================================
+
+export function getStatusIconComponent(statusType?: string): MatterIcon | null {
 	if (!statusType) return null;
 	return STATUS_TYPE_ICONS[statusType as StatusType] ?? null;
 }
 
-// Helper to get status label
-export function getStatusLabel(statusType?: string): string {
+export function getStatusDisplayLabel(statusType?: string): string {
 	if (!statusType) return "Unknown";
 	return STATUS_TYPE_LABELS[statusType as StatusType] ?? statusType;
 }
 
-// Helper to check if status is completed
-export function isCompletedStatus(statusType?: string): boolean {
+export function isStatusCompleted(statusType?: string): boolean {
 	if (!statusType) return false;
 	return COMPLETED_STATUS_TYPES.includes(statusType as StatusType);
 }
 
-// Helper to compare two values with fallback
+// =============================================================================
+// SORTING COMPARATORS
+// =============================================================================
+
 const cmp = (a: number, b: number) => (a !== b ? a - b : 0);
 
-// Compare statuses by type → position → name
-export function compareStatuses(
+export function sortStatusComparator(
 	a: { type?: string | null; position?: number | null; name?: string | null },
 	b: { type?: string | null; position?: number | null; name?: string | null },
 ): number {
@@ -193,19 +205,17 @@ export function compareStatuses(
 	);
 }
 
-// Sort statuses
-export function sortStatuses<
+export function sortStatusesByType<
 	T extends {
 		type?: string | null;
 		position?: number | null;
 		name?: string | null;
 	},
 >(statuses: T[]): T[] {
-	return statuses.slice().sort(compareStatuses);
+	return statuses.slice().sort(sortStatusComparator);
 }
 
-// Compare tasks by priority → due date → createdAt → name
-export function compareTasks(
+export function sortTaskComparator(
 	a: {
 		priority?: number | null;
 		dueDate?: string | number | null;

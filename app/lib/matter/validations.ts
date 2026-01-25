@@ -1,18 +1,25 @@
 import { z } from "zod";
-import { 
-	prioritySchema, 
-	statusSchema, 
+import {
+	prioritySchema,
+	statusSchema,
 	userIdSchema,
-	optionalDateSchema 
+	optionalDateSchema,
 } from "~/lib/infra/shared-validations";
 import { Priority } from "~/config/matter";
 
-// Matter validation schemas with shared base schemas
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
 const MIN_TITLE_LENGTH = 3;
 const MAX_TITLE_LENGTH = 255;
 const MAX_DESCRIPTION_LENGTH = 800;
 
-export const matterTitleSchema = z
+// ============================================================================
+// FIELD SCHEMAS
+// ============================================================================
+
+export const matterTitleFieldSchema = z
 	.string({ message: "Title is required." })
 	.min(
 		MIN_TITLE_LENGTH,
@@ -24,7 +31,7 @@ export const matterTitleSchema = z
 	)
 	.trim();
 
-export const matterDescriptionSchema = z
+export const matterDescriptionFieldSchema = z
 	.string()
 	.max(
 		MAX_DESCRIPTION_LENGTH,
@@ -32,36 +39,39 @@ export const matterDescriptionSchema = z
 	)
 	.optional();
 
-export const createMatterSchema = z.object({
-	title: matterTitleSchema,
-	description: matterDescriptionSchema,
+// ============================================================================
+// FORM SCHEMAS
+// ============================================================================
+
+export const matterCreateFormSchema = z.object({
+	title: matterTitleFieldSchema,
+	description: matterDescriptionFieldSchema,
 	statusId: statusSchema.optional(),
 	assigneeId: userIdSchema.nullable(),
 	priority: z.number().int().min(0).max(4).default(Priority.NONE),
 	dueDate: z.string().optional(),
 });
 
-export const approveRequestSchema = z.object({
+export const requestApprovalFormSchema = z.object({
 	requestId: z.string().min(1, "Request ID is required."),
 	action: z.enum(["approve", "reject"]),
 });
 
-// Additional consolidated schemas for better reusability
-export const updateMatterSchema = createMatterSchema.partial().extend({
+export const matterUpdateFormSchema = matterCreateFormSchema.partial().extend({
 	id: z.string().min(1, "Matter ID is required"),
 });
 
-export const assignMatterSchema = z.object({
+export const matterAssignFormSchema = z.object({
 	id: z.string().min(1, "Matter ID is required"),
 	assigneeId: userIdSchema.nullable(),
 });
 
-export const updateMatterStatusSchema = z.object({
+export const matterStatusUpdateFormSchema = z.object({
 	id: z.string().min(1, "Matter ID is required"),
 	statusId: statusSchema,
 });
 
-export const addMatterCommentSchema = z.object({
+export const matterCommentFormSchema = z.object({
 	matterId: z.string().min(1, "Matter ID is required"),
 	content: z.string().min(1, "Comment cannot be empty").max(2000, "Comment too long"),
 	mentions: z.array(z.string()).optional(),

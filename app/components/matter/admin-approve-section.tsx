@@ -4,33 +4,43 @@ import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { Button } from "~/components/ui/button";
 
-interface AdminApproveSectionProps {
+// --- Types ---
+
+interface MatterApprovalSectionProps {
 	isVisible: boolean;
 	isAdmin: boolean;
 	matterId: string;
 	statusType?: string | null;
 }
 
+// --- Component ---
+
 export function AdminApproveSection({
 	isVisible,
 	isAdmin,
 	matterId,
 	statusType,
-}: AdminApproveSectionProps) {
+}: MatterApprovalSectionProps) {
 	const z = useZero();
+
+	// --- Early Return ---
 	if (!isVisible || !isAdmin) return null;
 
-	const handleApprove = () => {
+	// --- Handlers ---
+
+	const handleApproveRequest = () => {
 		z.mutate(mutators.matter.approve({ id: matterId }))
 			.server.then(() => toast.success("Request approved"))
 			.catch(() => toast.error("Failed to approve request"));
 	};
 
-	const handleReject = () => {
+	const handleRejectRequest = () => {
 		z.mutate(mutators.matter.reject({ id: matterId }))
 			.server.then(() => toast.success("Request rejected"))
 			.catch(() => toast.error("Failed to reject request"));
 	};
+
+	// --- Rejected State ---
 
 	if (statusType === "rejected") {
 		return (
@@ -45,7 +55,7 @@ export function AdminApproveSection({
 						</p>
 					</div>
 					<Button
-						onClick={handleApprove}
+						onClick={handleApproveRequest}
 						size="sm"
 						className="w-full bg-status-approved text-white hover:bg-status-approved/90 sm:w-auto"
 					>
@@ -55,6 +65,8 @@ export function AdminApproveSection({
 			</div>
 		);
 	}
+
+	// --- Pending State ---
 
 	return (
 		<div className="rounded-lg border border-status-pending/20 bg-status-pending/10 p-4">
@@ -69,7 +81,7 @@ export function AdminApproveSection({
 				</div>
 				<div className="flex w-full gap-2 sm:w-auto">
 					<Button
-						onClick={handleReject}
+						onClick={handleRejectRequest}
 						size="sm"
 						variant="outline"
 						className="flex-1 border-status-rejected/30 text-status-rejected hover:bg-status-rejected/5 sm:flex-none"
@@ -77,7 +89,7 @@ export function AdminApproveSection({
 						Reject
 					</Button>
 					<Button
-						onClick={handleApprove}
+						onClick={handleApproveRequest}
 						size="sm"
 						className="flex-1 bg-status-approved text-white hover:bg-status-approved/90 sm:flex-none"
 					>

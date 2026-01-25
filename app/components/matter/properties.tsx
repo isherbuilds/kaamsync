@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
 
-export function PropertyPill({
-	label,
-	children,
-}: {
+interface PropertyProps {
 	label: string;
 	children: ReactNode;
-}) {
+}
+
+export function PropertyPill({ label, children }: PropertyProps) {
 	return (
 		<div className="flex shrink-0 items-center gap-2 rounded-full border bg-muted/50 px-3 py-1">
 			<span className="font-bold text-[10px] text-muted-foreground uppercase tracking-tight">
@@ -17,13 +16,7 @@ export function PropertyPill({
 	);
 }
 
-export function PropertyRow({
-	label,
-	children,
-}: {
-	label: string;
-	children: ReactNode;
-}) {
+export function PropertyRow({ label, children }: PropertyProps) {
 	return (
 		<div className="space-y-1">
 			<span className="ml-1 font-medium text-[11px] text-muted-foreground">

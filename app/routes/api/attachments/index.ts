@@ -73,7 +73,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		usage: {
 			totalBytes: usage.totalBytes,
 			totalGb: Math.round(usage.totalGb * 100) / 100,
-			fileCount: usage.fileCount,
 		},
 		limits: {
 			storageGb: limits.storageGb,

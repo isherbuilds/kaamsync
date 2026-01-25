@@ -30,18 +30,18 @@ import {
 } from "~/config/billing";
 import { authClient } from "~/lib/auth/client";
 import {
-	canManageBilling,
-	canViewBilling,
+	hasBillingManagePermission,
+	hasBillingViewPermission,
 	type OrgRole,
 } from "~/lib/auth/permissions";
 import { getServerSession } from "~/lib/auth/server";
 import {
 	billingConfig,
-	getOrganizationSubscription,
-	getOrganizationUsage,
-	getPlanByProductId,
+	fetchOrgSubscription,
+	fetchOrgUsage,
+	resolveProductPlan,
 } from "~/lib/billing/service";
-import { getOrganizationMemberRole } from "~/lib/organization/service";
+import { getMemberRole } from "~/lib/organization/service";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const session = await getServerSession(request);
@@ -62,16 +62,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 	// Fetch role, billing data, and usage in parallel
 	const [subscription, userRole, usage] = await Promise.all([
-		getOrganizationSubscription(orgId),
-		getOrganizationMemberRole(orgId, userId),
-		getOrganizationUsage(orgId),
+		fetchOrgSubscription(orgId),
+		getMemberRole(orgId, userId),
+		fetchOrgUsage(orgId),
 	]);
 
 	// Determine current plan - use stored planKey if available, fallback to productId lookup
 	const currentPlan: ProductKey | null =
 		(subscription?.plan as ProductKey | null) ??
 		(subscription?.productId
-			? getPlanByProductId(subscription.productId)
+			? resolveProductPlan(subscription.productId)
 			: null);
 
 	return {
@@ -106,8 +106,8 @@ export default function BillingSettings() {
 	const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null);
 
 	// Permission checks
-	const canManage = canManageBilling(userRole);
-	const canView = canViewBilling(userRole);
+	const canManage = hasBillingManagePermission(userRole);
+	const canView = hasBillingViewPermission(userRole);
 
 	// Rate limiting for checkout attempts (5 per minute)
 	const checkoutAttempts = useRef<number[]>([]);

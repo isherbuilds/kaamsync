@@ -1,6 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
 import { safeError, warn } from "~/lib/utils/logger";
 
+/**
+ * Hook for managing Web Push notification subscriptions.
+ *
+ * Handles checking browser support, requesting permissions, subscribing
+ * to push notifications via VAPID, and managing the subscription lifecycle.
+ *
+ * @returns Object containing subscription state and control functions
+ *
+ * @example
+ * ```tsx
+ * const { isSupported, isSubscribed, subscribe, unsubscribe } = usePushNotifications();
+ *
+ * if (!isSupported) return <p>Push notifications not supported</p>;
+ *
+ * return (
+ *   <Button onClick={isSubscribed ? unsubscribe : subscribe}>
+ *     {isSubscribed ? 'Disable' : 'Enable'} Notifications
+ *   </Button>
+ * );
+ * ```
+ */
 export function usePushNotifications() {
 	const [isSupported, setIsSupported] = useState(false);
 	const [isSubscribed, setIsSubscribed] = useState(false);
@@ -8,34 +29,31 @@ export function usePushNotifications() {
 	const [permission, setPermission] =
 		useState<NotificationPermission>("default");
 
-	// Check support and current subscription status on mount
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 
-		const checkSupport = async () => {
-			const supported =
+		const checkBrowserSupport = async () => {
+			const hasRequiredAPIs =
 				"serviceWorker" in navigator &&
 				"PushManager" in window &&
 				"Notification" in window;
 
-			setIsSupported(supported);
-			if (supported) {
+			setIsSupported(hasRequiredAPIs);
+
+			if (hasRequiredAPIs) {
 				setPermission(Notification.permission);
 			}
 
-			if (!supported) {
-				return;
-			}
-
-			if (!supported) {
+			if (!hasRequiredAPIs) {
 				setIsLoading(false);
 				return;
 			}
 
 			try {
-				const registration = await navigator.serviceWorker.ready;
-				const subscription = await registration.pushManager.getSubscription();
-				setIsSubscribed(!!subscription);
+				const swRegistration = await navigator.serviceWorker.ready;
+				const existingSubscription =
+					await swRegistration.pushManager.getSubscription();
+				setIsSubscribed(!!existingSubscription);
 			} catch (error) {
 				safeError(error, "Error checking push subscription");
 			} finally {
@@ -43,7 +61,7 @@ export function usePushNotifications() {
 			}
 		};
 
-		checkSupport();
+		checkBrowserSupport();
 	}, []);
 
 	const subscribe = useCallback(async (): Promise<boolean> => {

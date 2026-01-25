@@ -9,7 +9,7 @@ import {
 type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
 type Status = Row["statusesTable"];
 
-export type HeaderItem = {
+export type StatusGroupHeader = {
 	type: "header";
 	id: string;
 	status: Status;
@@ -17,32 +17,32 @@ export type HeaderItem = {
 	isExpanded: boolean;
 };
 
-export type TaskItem = {
+export type TaskListItem = {
 	type: "task";
 	id: string;
 	task: Matter;
 	isCompleted: boolean;
 };
 
-export type ListItem = HeaderItem | TaskItem;
+export type StatusGroupListItem = StatusGroupHeader | TaskListItem;
 
-const COLLAPSED_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
+const DEFAULT_COLLAPSED_STATUS_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
 /**
  * Hook to group and flatten tasks by status for virtualized lists.
  * Always rebuilds groups from matters for correctness; the operation is O(n).
  */
-export type UseGroupedTasksResult = {
-	flatItems: ListItem[];
+export type UseTasksByStatusGroupResult = {
+	flatItems: StatusGroupListItem[];
 	activeCount: number;
 	stickyIndices: number[];
 	toggleGroup: (id: string) => void;
 };
 
-export function useGroupedTasks(
+export function useTasksByStatusGroup(
 	matters: readonly Matter[],
 	statuses: readonly Status[],
-): UseGroupedTasksResult {
+): UseTasksByStatusGroupResult {
 	// Tracks statuses that have been manually toggled
 	const [toggledStatuses, setToggledStatuses] = useState<Set<string>>(
 		new Set(),
@@ -91,7 +91,7 @@ export function useGroupedTasks(
 			}
 			group.tasks.push(matter);
 
-			if (!COLLAPSED_TYPES.has(status.type as string)) {
+			if (!DEFAULT_COLLAPSED_STATUS_TYPES.has(status.type as string)) {
 				activeCount++;
 			}
 		}
@@ -101,12 +101,12 @@ export function useGroupedTasks(
 			(a, b) => a.order - b.order,
 		);
 
-		const flatItems: ListItem[] = [];
+		const flatItems: StatusGroupListItem[] = [];
 		const stickyIndices: number[] = [];
 
 		// Second pass: flatten into list items
 		for (const group of sortedGroups) {
-			const isCompletedType = COLLAPSED_TYPES.has(group.status.type as string);
+			const isCompletedType = DEFAULT_COLLAPSED_STATUS_TYPES.has(group.status.type as string);
 			const isExpanded = toggledStatuses.has(group.status.id)
 				? isCompletedType // Toggle from default
 				: !isCompletedType; // Default expanded for active, collapsed for completed

@@ -16,14 +16,15 @@ import * as schema from "~/db/schema";
 import { AuthService } from "~/lib/auth/service";
 import {
 	billingConfig,
-	dodoPayments,
-	getPlanByProductId,
-	parseAddonQuantities,
+	clearSubscriptionCache,
+	dodoPayments as dodo,
+	parseWebhookAddons,
+	resolveProductPlan,
 } from "~/lib/billing/service";
 import { env, isProduction } from "~/lib/infra/env";
 import {
-	getActiveOrganization,
-	getExistingOrganizationSubscriptionId,
+	findSubscriptionId,
+	getActiveOrganizationId,
 } from "~/lib/organization/service";
 
 // =============================================================================
@@ -111,7 +112,7 @@ export const auth = betterAuth({
 		session: {
 			create: {
 				before: async (session) => {
-					const activeOrganizationId = await getActiveOrganization(
+					const activeOrganizationId = await getActiveOrganizationId(
 						session.userId,
 					);
 					return {
@@ -141,10 +142,10 @@ export const auth = betterAuth({
 			sendInvitationEmail: AuthService.sendInvitationEmail,
 		}),
 		// Dodo Payments billing integration
-		...(dodoPayments && billingConfig.webhookSecret
+		...(dodo && billingConfig.webhookSecret
 			? [
 					dodopayments({
-						client: dodoPayments,
+						client: dodo,
 						createCustomerOnSignUp: true,
 						use: [
 							checkout({
@@ -196,17 +197,16 @@ export const auth = betterAuth({
 									const orgId = data.metadata?.organizationId;
 									if (!orgId) return;
 
-									const existingId =
-										await getExistingOrganizationSubscriptionId(
-											orgId,
-											data.customer.customer_id,
-										);
+									const existingId = await findSubscriptionId(
+										orgId,
+										data.customer.customer_id,
+									);
 
-									const plan = getPlanByProductId(data.product_id);
+									const plan = resolveProductPlan(data.product_id);
 									if (!plan) return;
 
 									const { purchasedSeats, purchasedStorageGB } =
-										parseAddonQuantities(data.addons ?? []);
+										parseWebhookAddons(data.addons ?? []);
 
 									const subscriptionData = {
 										plan,
@@ -243,20 +243,23 @@ export const auth = betterAuth({
 											.set(subscriptionData)
 											.where(eq(schema.subscriptionsTable.id, existingId));
 									}
+
+									clearSubscriptionCache(orgId);
 								},
 
 								onSubscriptionExpired: async (payload) => {
 									if (!payload.data.metadata?.organizationId) return;
-									const existingId =
-										await getExistingOrganizationSubscriptionId(
-											payload.data.metadata.organizationId,
-											payload.data.customer.customer_id,
-										);
+									const existingId = await findSubscriptionId(
+										payload.data.metadata.organizationId,
+										payload.data.customer.customer_id,
+									);
 									if (!existingId) return;
 									await db
 										.update(schema.subscriptionsTable)
 										.set({ status: payload.data.status, updatedAt: new Date() })
 										.where(eq(schema.subscriptionsTable.id, existingId));
+
+									clearSubscriptionCache(payload.data.metadata.organizationId);
 								},
 
 								onSubscriptionPlanChanged: async (payload) => {
@@ -265,17 +268,16 @@ export const auth = betterAuth({
 									const orgId = data.metadata?.organizationId;
 									if (!orgId) return;
 
-									const existingId =
-										await getExistingOrganizationSubscriptionId(
-											orgId,
-											data.customer.customer_id,
-										);
+									const existingId = await findSubscriptionId(
+										orgId,
+										data.customer.customer_id,
+									);
 
-									const plan = getPlanByProductId(data.product_id);
+									const plan = resolveProductPlan(data.product_id);
 									if (!plan || !existingId) return;
 
 									const { purchasedSeats, purchasedStorageGB } =
-										parseAddonQuantities(data.addons ?? []);
+										parseWebhookAddons(data.addons ?? []);
 
 									const subscriptionData = {
 										plan,
@@ -301,8 +303,10 @@ export const auth = betterAuth({
 										.set(subscriptionData)
 										.where(eq(schema.subscriptionsTable.id, existingId));
 
+									clearSubscriptionCache(orgId);
+
 									// Optional overage check for plan changes
-									// const usage = await getOrganizationUsage(orgId);
+									// const usage = await fetchOrgUsage(orgId);
 
 									// const effectiveLimit = getEffectiveMemberLimit(
 									// 	plan as ProductKey,
@@ -322,11 +326,10 @@ export const auth = betterAuth({
 
 									if (!orgId) return;
 
-									const existingId =
-										await getExistingOrganizationSubscriptionId(
-											orgId,
-											payload.data.customer.customer_id,
-										);
+									const existingId = await findSubscriptionId(
+										orgId,
+										payload.data.customer.customer_id,
+									);
 
 									if (!existingId) return;
 
@@ -340,7 +343,9 @@ export const auth = betterAuth({
 										})
 										.where(eq(schema.subscriptionsTable.id, existingId));
 
-									// const usage = await getOrganizationUsage(orgId);
+									clearSubscriptionCache(orgId);
+
+									// const usage = await fetchOrgUsage(orgId);
 									// if (usage.members > planLimits.starter.members) {
 									// 	console.warn(
 									// 		`[Billing] Org ${orgId} subscription cancelled. ` +

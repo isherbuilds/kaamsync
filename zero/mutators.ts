@@ -1,25 +1,21 @@
 import { defineMutator, defineMutators } from "@rocicorp/zero";
 import { v7 as uuid } from "uuid";
 import { z } from "zod";
+import { matterType, membershipStatus, teamRole } from "~/db/helpers";
+import { TEAM_DEFAULT_STATUSES } from "~/lib/organization/defaults";
+import { RESERVED_TEAM_SLUGS } from "~/lib/organization/validations";
+import { assignMatterShortId } from "./helpers/mutator";
 import {
-	matterType,
-	membershipStatus,
-	type TeamRole,
-	teamRole,
-} from "~/db/helpers";
-import { canCreateRequests, canCreateTasks } from "~/lib/auth/permissions";
-import { DEFAULT_STATUSES } from "~/lib/organization/defaults";
-import { reservedTeamSlugs } from "~/lib/organization/validations";
-import { assertCanCreateMatter, assertCanCreateTeam } from "./billing-limits";
-import { allocateShortID } from "./mutator-helpers";
-import {
-	assertLoggedIn,
-	assertTeamManager,
-	canModifyDeletedMatter,
-	canModifyMatter,
-	getTeamMembership,
+	enforceMatterCreationPermission,
+	enforceTeamCreationPermission,
+	requireAuthentication,
+	requireTeamRole,
+	checkMatterModifyAccess,
+	findOrganizationMembership,
+	findTeamMembership,
+	clearOrganizationUsageCache,
 	PERMISSION_ERRORS,
-} from "./permission-helpers";
+} from "./helpers/permission";
 import { zql } from "./schema";
 
 // ============================================================================
@@ -42,28 +38,14 @@ export const mutators = defineMutators({
 				clientShortID: z.number().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
-				assertLoggedIn(ctx);
-				const membership = await getTeamMembership(tx, ctx, args.teamId);
+				const membership = await findTeamMembership(tx, ctx, args.teamId);
+
 				if (!membership) {
 					throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
 				}
 
 				// Check billing limits
-				await assertCanCreateMatter(tx, membership.orgId);
-
-				// Permission checks using unified permission system
-				if (
-					args.type === matterType.task &&
-					!canCreateTasks(membership.role as TeamRole)
-				) {
-					throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
-				}
-				if (
-					args.type === matterType.request &&
-					!canCreateRequests(membership.role as TeamRole)
-				) {
-					throw new Error("You do not have permission to create requests");
-				}
+				enforceMatterCreationPermission(ctx, membership.role, args.type);
 
 				const id = uuid();
 				const now = Date.now();
@@ -100,7 +82,10 @@ export const mutators = defineMutators({
 				}
 
 				// Allocate short ID (handles both client and server logic)
-				await allocateShortID(tx, args.teamId, baseInsert, args.clientShortID);
+				await assignMatterShortId(tx, args.teamId, baseInsert, args.clientShortID);
+
+				// Invalidate usage cache after matter creation
+				clearOrganizationUsageCache(ctx, membership.orgId);
 			},
 		),
 
@@ -113,7 +98,7 @@ export const mutators = defineMutators({
 				dueDate: z.number().nullable().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -128,10 +113,13 @@ export const mutators = defineMutators({
 		updateStatus: defineMutator(
 			z.object({ id: z.string(), statusId: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { matter, membership } = await canModifyMatter(tx, ctx, args.id);
+				const { matter, membership } = await checkMatterModifyAccess(tx, ctx, args.id);
 
 				// Permission: Only assignee or manager can change status
-				if (matter.assigneeId !== ctx.userId && membership.role !== "manager") {
+				if (
+					matter.assigneeId !== ctx.userId &&
+					membership.role !== teamRole.manager
+				) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
 
@@ -146,10 +134,10 @@ export const mutators = defineMutators({
 		assign: defineMutator(
 			z.object({ id: z.string(), assigneeId: z.string().nullable() }),
 			async ({ tx, ctx, args }) => {
-				const { matter, membership } = await canModifyMatter(tx, ctx, args.id);
+				const { matter, membership } = await checkMatterModifyAccess(tx, ctx, args.id);
 
 				// Permission: Managers can assign, or users can (un)assign themselves
-				const isManager = membership.role === "manager";
+				const isManager = membership.role === teamRole.manager;
 				const isSelfAssignment =
 					args.assigneeId === ctx.userId || matter.assigneeId === ctx.userId;
 
@@ -168,7 +156,7 @@ export const mutators = defineMutators({
 		delete: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -184,7 +172,9 @@ export const mutators = defineMutators({
 		restore: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyDeletedMatter(tx, ctx, args.id);
+				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id, {
+					deleted: true,
+				});
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -200,7 +190,7 @@ export const mutators = defineMutators({
 		archive: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -218,7 +208,7 @@ export const mutators = defineMutators({
 		unarchive: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { canModify } = await canModifyMatter(tx, ctx, args.id);
+				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -236,7 +226,7 @@ export const mutators = defineMutators({
 		approve: defineMutator(
 			z.object({ id: z.string(), note: z.string().optional() }),
 			async ({ tx, ctx, args }) => {
-				assertLoggedIn(ctx);
+				requireAuthentication(ctx);
 				const matter = await tx.run(
 					zql.mattersTable
 						.where("id", args.id)
@@ -254,7 +244,7 @@ export const mutators = defineMutators({
 				}
 
 				// Permission: Only managers can approve
-				await assertTeamManager(tx, ctx, matter.teamId);
+				await requireTeamRole(tx, ctx, matter.teamId, teamRole.manager);
 
 				// Find a default task status (not request status) to assign
 				const taskStatuses = await tx.run(
@@ -288,7 +278,7 @@ export const mutators = defineMutators({
 		reject: defineMutator(
 			z.object({ id: z.string(), note: z.string().optional() }),
 			async ({ tx, ctx, args }) => {
-				assertLoggedIn(ctx);
+				requireAuthentication(ctx);
 				const matter = await tx.run(
 					zql.mattersTable
 						.where("id", args.id)
@@ -302,7 +292,7 @@ export const mutators = defineMutators({
 				}
 
 				// Permission: Only managers can reject
-				await assertTeamManager(tx, ctx, matter.teamId);
+				await requireTeamRole(tx, ctx, matter.teamId, teamRole.manager);
 
 				// Find rejected status
 				const rejectedStatus = await tx.run(
@@ -329,7 +319,7 @@ export const mutators = defineMutators({
 			z.object({ matterId: z.string(), content: z.string() }),
 			async ({ tx, ctx, args }) => {
 				// Permission: Ensure user can access the matter
-				await canModifyMatter(tx, ctx, args.matterId);
+				await checkMatterModifyAccess(tx, ctx, args.matterId);
 
 				const id = uuid();
 				const now = Date.now();
@@ -356,26 +346,20 @@ export const mutators = defineMutators({
 				icon: z.string().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
-				assertLoggedIn(ctx);
+				if (!ctx.activeOrganizationId) return;
 
-				if (reservedTeamSlugs.includes(args.code)) {
+				if ((RESERVED_TEAM_SLUGS as readonly string[]).includes(args.code)) {
 					throw new Error("This URL is reserved.");
 				}
 
-				// Verify user is org member
-				const orgMembership = await tx.run(
-					zql.membersTable
-						.where("organizationId", ctx.activeOrganizationId ?? "")
-						.where("userId", ctx.userId)
-						.one(),
+				const orgMembership = await findOrganizationMembership(
+					tx,
+					ctx,
+					ctx.activeOrganizationId,
 				);
 
-				if (!orgMembership) {
-					throw new Error("Not a member of this organization");
-				}
-
 				// Check billing limits before creating team
-				await assertCanCreateTeam(tx, orgMembership.organizationId);
+				enforceTeamCreationPermission(ctx, orgMembership.role ?? teamRole.member);
 
 				// Find unique code by checking existing teams
 				const existingTeams = await tx.run(
@@ -415,8 +399,8 @@ export const mutators = defineMutators({
 				});
 
 				// Prepare defaults - note: isRequestStatus is not in Zero schema, only in Drizzle
-				const statusRows = DEFAULT_STATUSES.map(
-					(status: (typeof DEFAULT_STATUSES)[number], i: number) => ({
+				const statusRows = TEAM_DEFAULT_STATUSES.map(
+					(status: (typeof TEAM_DEFAULT_STATUSES)[number], i: number) => ({
 						id: uuid(),
 						teamId,
 						name: status.name,
@@ -452,7 +436,7 @@ export const mutators = defineMutators({
 				]);
 
 				// PERFORMANCE: Invalidate organization cache after team creation
-				ctx.invalidateUsageCache?.(orgMembership.organizationId);
+				ctx.clearUsageCache?.(orgMembership.organizationId);
 			},
 		),
 
@@ -464,7 +448,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can add members
-				await assertTeamManager(tx, ctx, args.teamId);
+				await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
 
 				// Verify user is in the organization
 				const orgMembership = await tx.run(
@@ -510,9 +494,9 @@ export const mutators = defineMutators({
 						status: membershipStatus.active,
 						canCreateTasks: true,
 						canCreateRequests: true,
-						canApproveRequests: args.role === "manager",
-						canManageMembers: args.role === "manager",
-						canManageTeam: args.role === "manager",
+						canApproveRequests: args.role === teamRole.manager,
+						canManageMembers: args.role === teamRole.manager,
+						canManageTeam: args.role === teamRole.manager,
 						createdAt: now,
 						updatedAt: now,
 					});
@@ -528,7 +512,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can update roles
-				await assertTeamManager(tx, ctx, args.teamId);
+				await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
 
 				const membership = await tx.run(
 					zql.teamMembershipsTable
@@ -545,9 +529,9 @@ export const mutators = defineMutators({
 				await tx.mutate.teamMembershipsTable.update({
 					id: membership.id,
 					role: args.role,
-					canApproveRequests: args.role === "manager",
-					canManageMembers: args.role === "manager",
-					canManageTeam: args.role === "manager",
+					canApproveRequests: args.role === teamRole.manager,
+					canManageMembers: args.role === teamRole.manager,
+					canManageTeam: args.role === teamRole.manager,
 					updatedAt: Date.now(),
 				});
 			},
@@ -560,7 +544,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can remove members
-				await assertTeamManager(tx, ctx, args.teamId);
+				await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
 
 				const membership = await tx.run(
 					zql.teamMembershipsTable
@@ -594,7 +578,7 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				// Permission: Only managers can create statuses
-				await assertTeamManager(tx, ctx, args.teamId);
+				await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
 
 				const statusId = uuid();
 				const now = Date.now();

@@ -27,14 +27,14 @@ const matterCursorSchema = z.object({
 // biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 type Q = { where: (f: string, opOrVal: unknown, v?: unknown) => any };
 
-const withOrg = <T extends Q>(q: T, ctx: Context): T =>
+const filterByOrganization = <T extends Q>(q: T, ctx: Context): T =>
 	q
 		.where("orgId", ctx.activeOrganizationId ?? "")
 		.where("deletedAt", "IS", null);
 
-const notDeleted = <T extends Q>(q: T): T => q.where("deletedAt", "IS", null);
+const excludeDeleted = <T extends Q>(q: T): T => q.where("deletedAt", "IS", null);
 
-const withTeamAccess = <T>(q: T, ctx: Context, teamId: string): T =>
+const filterByTeamWithMembershipCheck = <T>(q: T, ctx: Context, teamId: string): T =>
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 	(q as any)
 		.where("teamId", teamId)
@@ -48,7 +48,7 @@ const withTeamAccess = <T>(q: T, ctx: Context, teamId: string): T =>
 				),
 		);
 
-const withMatterRelations = <T>(q: T): T =>
+const includeMatterRelations = <T>(q: T): T =>
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 	(q as any)
 		.related("author")
@@ -62,7 +62,7 @@ const withMatterRelations = <T>(q: T): T =>
  * compatibility but is ignored here — callers should reverse results if they
  * need the opposite presentation (e.g., to show oldest-first).
  */
-const withPagination = <T>(
+const applyKeysetPagination = <T>(
 	q: T,
 	cursor: { id: string; createdAt: number } | null,
 	_direction: "forward" | "backward",
@@ -79,11 +79,11 @@ const withPagination = <T>(
 export const queries = defineQueries({
 	// TEAM QUERIES
 	getTeamsList: defineQuery(({ ctx }) =>
-		withOrg(zql.teamsTable, ctx)
+		filterByOrganization(zql.teamsTable, ctx)
 			.whereExists("memberships", (q) =>
 				q.where("userId", ctx.userId).where("deletedAt", "IS", null),
 			)
-			.related("memberships", (q) => notDeleted(q).related("user"))
+			.related("memberships", (q) => excludeDeleted(q).related("user"))
 			.orderBy("createdAt", "desc")
 			.limit(DEFAULT_LIMIT),
 	),
@@ -91,16 +91,16 @@ export const queries = defineQueries({
 	getTeamByCode: defineQuery(
 		z.object({ code: z.string() }),
 		({ ctx, args: { code } }) =>
-			withOrg(zql.teamsTable, ctx)
+			filterByOrganization(zql.teamsTable, ctx)
 				.where("code", code)
-				.related("memberships", (q) => notDeleted(q).related("user"))
+				.related("memberships", (q) => excludeDeleted(q).related("user"))
 				.one(),
 	),
 
 	getUserTeams: defineQuery(({ ctx }) =>
-		withOrg(zql.teamMembershipsTable, ctx)
+		filterByOrganization(zql.teamMembershipsTable, ctx)
 			.where("userId", ctx.userId)
-			.related("team", (q) => notDeleted(q))
+			.related("team", (q) => excludeDeleted(q))
 			.related("user")
 			.limit(DEFAULT_LIMIT),
 	),
@@ -109,7 +109,7 @@ export const queries = defineQueries({
 	getMatter: defineQuery(
 		z.object({ id: z.string() }),
 		({ ctx, args: { id } }) =>
-			withOrg(zql.mattersTable, ctx)
+			filterByOrganization(zql.mattersTable, ctx)
 				.where("id", id)
 				.related("author")
 				.related("assignee")
@@ -118,13 +118,13 @@ export const queries = defineQueries({
 				.related("organization")
 				.related("labels", (q) => q.related("label"))
 				.related("timelines", (q) =>
-					notDeleted(q)
+					excludeDeleted(q)
 						.related("user")
 						.orderBy("createdAt", "asc")
 						.limit(TIMELINE_LIMIT),
 				)
 				.related("attachments", (q) =>
-					notDeleted(q).related("uploader").limit(ATTACHMENTS_LIMIT),
+					excludeDeleted(q).related("uploader").limit(ATTACHMENTS_LIMIT),
 				)
 				.one(),
 	),
@@ -132,7 +132,7 @@ export const queries = defineQueries({
 	getMatterByKey: defineQuery(
 		z.object({ code: z.string(), shortID: z.number() }),
 		({ ctx, args: { code, shortID } }) =>
-			withOrg(zql.mattersTable, ctx)
+			filterByOrganization(zql.mattersTable, ctx)
 				.where("teamCode", code)
 				.where("shortID", shortID)
 				.related("team")
@@ -142,13 +142,13 @@ export const queries = defineQueries({
 				.related("organization")
 				.related("labels", (q) => q.related("label"))
 				.related("timelines", (q) =>
-					notDeleted(q)
+					excludeDeleted(q)
 						.related("user")
 						.orderBy("createdAt", "asc")
 						.limit(TIMELINE_LIMIT),
 				)
 				.related("attachments", (q) =>
-					notDeleted(q).related("uploader").limit(ATTACHMENTS_LIMIT),
+					excludeDeleted(q).related("uploader").limit(ATTACHMENTS_LIMIT),
 				)
 				.one(),
 	),
@@ -156,7 +156,7 @@ export const queries = defineQueries({
 	getTeamMatters: defineQuery(
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
-			withTeamAccess(zql.mattersTable, ctx, teamId)
+			filterByTeamWithMembershipCheck(zql.mattersTable, ctx, teamId)
 				.where("type", matterType.task)
 				.related("status")
 				.orderBy("priority", "asc") // 0=urgent first, 4=none last
@@ -168,7 +168,7 @@ export const queries = defineQueries({
 	// Pre-sync all matters across ALL teams user has access to
 	// This enables instant team switching (no teamId filter)
 	getAllMatters: defineQuery(z.tuple([]), ({ ctx }) =>
-		withOrg(zql.mattersTable, ctx)
+		filterByOrganization(zql.mattersTable, ctx)
 			.where("type", matterType.task)
 			// Only sync matters from teams user is a member of
 			// flip: true because user is member of few teams (small subset)
@@ -184,7 +184,7 @@ export const queries = defineQueries({
 	),
 
 	getUserAssignedMatters: defineQuery(({ ctx }) =>
-		withOrg(zql.mattersTable, ctx)
+		filterByOrganization(zql.mattersTable, ctx)
 			.where("assigneeId", ctx.userId)
 			.where("type", matterType.task)
 			.whereExists("status", (w) =>
@@ -199,7 +199,7 @@ export const queries = defineQueries({
 	),
 
 	getUserAuthoredMatters: defineQuery(({ ctx }) =>
-		withOrg(zql.mattersTable, ctx)
+		filterByOrganization(zql.mattersTable, ctx)
 			.where("authorId", ctx.userId)
 			.where("type", matterType.request)
 			// Show all requests regardless of status
@@ -215,7 +215,7 @@ export const queries = defineQueries({
 	getPendingRequests: defineQuery(
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
-			withTeamAccess(zql.mattersTable, ctx, teamId)
+			filterByTeamWithMembershipCheck(zql.mattersTable, ctx, teamId)
 				.where("type", matterType.request)
 				.whereExists("status", (w) =>
 					w.where("type", statusType.pendingApproval),
@@ -230,7 +230,7 @@ export const queries = defineQueries({
 	getWatchedMatters: defineQuery(
 		z.object({ teamId: z.string().nullable() }),
 		({ ctx, args: { teamId } }) => {
-			let q = withOrg(zql.mattersTable, ctx)
+			let q = filterByOrganization(zql.mattersTable, ctx)
 				.whereExists("watchers", (w) => w.where("userId", ctx.userId))
 				.related("author")
 				.related("assignee")
@@ -244,7 +244,7 @@ export const queries = defineQueries({
 	getMatterWatchers: defineQuery(
 		z.object({ matterId: z.string() }),
 		({ ctx, args: { matterId } }) =>
-			notDeleted(zql.matterWatchersTable)
+			excludeDeleted(zql.matterWatchersTable)
 				.where("matterId", matterId)
 				.related("matter", (q) =>
 					q.where("orgId", ctx.activeOrganizationId ?? ""),
@@ -283,7 +283,7 @@ export const queries = defineQueries({
 	getTeamMembers: defineQuery(
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
-			withTeamAccess(zql.teamMembershipsTable, ctx, teamId)
+			filterByTeamWithMembershipCheck(zql.teamMembershipsTable, ctx, teamId)
 				.related("user")
 				.related("team")
 				.orderBy("createdAt", "asc")
@@ -292,13 +292,13 @@ export const queries = defineQueries({
 
 	// LABEL & STATUS QUERIES
 	getOrganizationLabels: defineQuery(({ ctx }) =>
-		withOrg(zql.labelsTable, ctx).orderBy("name", "asc").limit(DEFAULT_LIMIT),
+		filterByOrganization(zql.labelsTable, ctx).orderBy("name", "asc").limit(DEFAULT_LIMIT),
 	),
 
 	getTeamStatuses: defineQuery(
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
-			withTeamAccess(notDeleted(zql.statusesTable), ctx, teamId)
+			filterByTeamWithMembershipCheck(excludeDeleted(zql.statusesTable), ctx, teamId)
 				.orderBy("position", "asc")
 				.limit(DEFAULT_LIMIT),
 	),
@@ -306,7 +306,7 @@ export const queries = defineQueries({
 	// Pre-sync statuses from ALL teams for instant switching
 	getAllTeamStatuses: defineQuery(
 		({ ctx }) =>
-			notDeleted(zql.statusesTable)
+			excludeDeleted(zql.statusesTable)
 				// Filter to teams in current org that user is a member of
 				// flip: true because user is member of few teams (small subset)
 				.whereExists("team", (w) =>
@@ -326,7 +326,7 @@ export const queries = defineQueries({
 	getMatterTimelines: defineQuery(
 		z.object({ matterId: z.string() }),
 		({ ctx, args: { matterId } }) =>
-			notDeleted(zql.timelinesTable)
+			excludeDeleted(zql.timelinesTable)
 				.where("matterId", matterId)
 				.related("user")
 				.related("matter", (q) =>
@@ -364,8 +364,8 @@ export const queries = defineQueries({
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
 		({ ctx, args: { teamId, limit, cursor, direction } }) => {
-			const q = withTeamAccess(zql.mattersTable, ctx, teamId);
-			return withPagination(withMatterRelations(q), cursor, direction, limit);
+			const q = filterByTeamWithMembershipCheck(zql.mattersTable, ctx, teamId);
+			return applyKeysetPagination(includeMatterRelations(q), cursor, direction, limit);
 		},
 	),
 
@@ -379,14 +379,14 @@ export const queries = defineQueries({
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
 		({ ctx, args: { limit, cursor, direction } }) => {
-			const q = withOrg(zql.mattersTable, ctx)
+			const q = filterByOrganization(zql.mattersTable, ctx)
 				.where("assigneeId", ctx.userId)
 				.where("type", matterType.task)
 				.whereExists("status", (w) =>
 					w.where("type", "IN", [statusType.notStarted, statusType.started]),
 				);
 
-			return withPagination(withMatterRelations(q), cursor, direction, limit);
+			return applyKeysetPagination(includeMatterRelations(q), cursor, direction, limit);
 		},
 	),
 
@@ -400,14 +400,14 @@ export const queries = defineQueries({
 			direction: z.enum(["forward", "backward"]), // direction
 		}),
 		({ ctx, args: { limit, cursor, direction } }) => {
-			const q = withOrg(zql.mattersTable, ctx)
+			const q = filterByOrganization(zql.mattersTable, ctx)
 				.where("authorId", ctx.userId)
 				.where("type", matterType.request)
 				.whereExists("status", (w) =>
 					w.where("type", "IN", [statusType.pendingApproval]),
 				);
 
-			return withPagination(withMatterRelations(q), cursor, direction, limit);
+			return applyKeysetPagination(includeMatterRelations(q), cursor, direction, limit);
 		},
 	),
 });

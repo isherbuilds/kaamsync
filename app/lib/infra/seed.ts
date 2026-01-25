@@ -1,3 +1,7 @@
+/**
+ * Database seeding utilities for organization and team initialization.
+ */
+
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { v7 as uuid } from "uuid";
 import { db } from "~/db";
@@ -9,57 +13,73 @@ import {
 	teamMembershipsTable,
 	teamsTable,
 } from "~/db/schema";
-import { DEFAULT_LABELS, DEFAULT_STATUSES } from "~/lib/organization/defaults";
+import {
+	TEAM_DEFAULT_LABELS,
+	TEAM_DEFAULT_STATUSES,
+} from "~/lib/organization/defaults";
 
-type SeedOptions = {
+// ============================================================================
+// Types
+// ============================================================================
+
+export interface TeamSeedOptions {
 	orgId: string;
-	teamName?: string; // defaults to "General"
-};
+	teamName?: string;
+}
 
-function makeTeamIdentifierCandidates(name: string, attempts = 10): string[] {
-	// 1. Sanitize: remove non-alphanumeric, uppercase
+export interface TeamSeedResult {
+	teamId: string;
+	labelIds: string[];
+	statusIds: string[];
+}
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+function generateTeamIdentifierCandidates(
+	name: string,
+	maxAttempts = 10
+): string[] {
 	const cleaned = name.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-	// 2. Take first 3 chars, default to "WRK" if empty
 	let base = cleaned.slice(0, 3) || "WRK";
-	// 3. Ensure minimum 3 chars by padding with 'X' if needed (though user example implies we just want the first 3)
-	// If the user explicitly wants "minimum of 3 chars", padding is safer for very short names like "A".
+
 	if (base.length < 3) {
 		base = base.padEnd(3, "X");
 	}
 
 	const candidates: string[] = [];
-	for (let i = 0; i < attempts; i++) {
-		// e.g. GEN, GEN1, GEN2...
+	for (let i = 0; i < maxAttempts; i++) {
 		candidates.push(i === 0 ? base : `${base}${i}`);
 	}
 	return candidates;
 }
 
+// ============================================================================
+// Seed Functions
+// ============================================================================
+
 export async function seedTeamDefaults({
 	orgId,
 	teamName = "General",
-}: SeedOptions) {
-	// Pre-generate all IDs upfront
+}: TeamSeedOptions): Promise<TeamSeedResult> {
 	const teamId = uuid();
-	const labelIds = Array.from({ length: DEFAULT_LABELS.length }, () => uuid());
-	const statusIds = Array.from({ length: DEFAULT_STATUSES.length }, () =>
-		uuid(),
+	const labelIds = Array.from({ length: TEAM_DEFAULT_LABELS.length }, () =>
+		uuid()
+	);
+	const statusIds = Array.from({ length: TEAM_DEFAULT_STATUSES.length }, () =>
+		uuid()
 	);
 
-	// Prepare candidates (used for BOTH slug and code)
-	const candidates = makeTeamIdentifierCandidates(teamName, 10);
+	const candidates = generateTeamIdentifierCandidates(teamName, 10);
 
-	// Fetch org owner (or any member) in parallel with uniqueness probes
 	const [ownerMember, existingTeams] = await Promise.all([
-		// Get owner first, fallback to any member using ORDER BY (single query optimization)
 		db
 			.select({ userId: membersTable.userId })
 			.from(membersTable)
 			.where(eq(membersTable.organizationId, orgId))
 			.orderBy(
-				// Prioritize owners (role = 'owner' comes first)
-				// Using sql to create a CASE expression for conditional ordering
-				sql`CASE WHEN ${membersTable.role} = 'owner' THEN 0 ELSE 1 END`,
+				sql`CASE WHEN ${membersTable.role} = 'owner' THEN 0 ELSE 1 END`
 			)
 			.limit(1)
 			.then((rows) => rows[0])
@@ -72,35 +92,34 @@ export async function seedTeamDefaults({
 					eq(teamsTable.orgId, orgId),
 					or(
 						inArray(teamsTable.slug, candidates),
-						inArray(teamsTable.code, candidates),
-					),
-				),
+						inArray(teamsTable.code, candidates)
+					)
+				)
 			),
 	]);
 
-	// Find a candidate that is NOT used
-	const usedSet = new Set<string>();
-	for (const w of existingTeams) {
-		usedSet.add(w.slug);
-		usedSet.add(w.code);
+	const usedIdentifiers = new Set<string>();
+	for (const team of existingTeams) {
+		usedIdentifiers.add(team.slug);
+		usedIdentifiers.add(team.code);
 	}
 
-	const finalSlugCode = candidates.find((c) => !usedSet.has(c));
+	const uniqueIdentifier = candidates.find((c) => !usedIdentifiers.has(c));
 
-	if (!finalSlugCode) {
+	if (!uniqueIdentifier) {
 		throw new Error(
-			"Could not generate a unique team identifier (slug/code). Try a different name.",
+			"Could not generate a unique team identifier (slug/code). Try a different name."
 		);
 	}
 
-	// Prepare all data structures
 	const now = new Date();
+
 	const teamRow = {
 		id: teamId,
 		orgId,
 		name: teamName,
-		slug: finalSlugCode,
-		code: finalSlugCode,
+		slug: uniqueIdentifier,
+		code: uniqueIdentifier,
 		icon: "📁",
 		description: "Default team",
 		organizationId: orgId,
@@ -112,7 +131,7 @@ export async function seedTeamDefaults({
 		updatedAt: now,
 	};
 
-	const labelRows = DEFAULT_LABELS.map((label, index) => ({
+	const labelRows = TEAM_DEFAULT_LABELS.map((label, index) => ({
 		id: labelIds[index],
 		orgId,
 		name: label.name,
@@ -123,7 +142,7 @@ export async function seedTeamDefaults({
 		updatedAt: now,
 	}));
 
-	const statusRows = DEFAULT_STATUSES.map((status, index) => ({
+	const statusRows = TEAM_DEFAULT_STATUSES.map((status, index) => ({
 		id: statusIds[index],
 		teamId,
 		name: status.name,
@@ -136,7 +155,6 @@ export async function seedTeamDefaults({
 		updatedAt: now,
 	}));
 
-	// Run labels + team inserts in parallel
 	await Promise.all([
 		db
 			.insert(labelsTable)
@@ -145,8 +163,7 @@ export async function seedTeamDefaults({
 		db.insert(teamsTable).values(teamRow),
 	]);
 
-	// Run all final inserts in parallel (statuses + optional membership)
-	const finalInserts: Promise<any>[] = [
+	const finalInserts: Promise<unknown>[] = [
 		db.insert(statusesTable).values(statusRows),
 	];
 
@@ -166,15 +183,11 @@ export async function seedTeamDefaults({
 				canManageTeam: true,
 				createdAt: now,
 				updatedAt: now,
-			}),
+			})
 		);
 	}
 
 	await Promise.all(finalInserts);
 
-	return {
-		teamId,
-		labelIds,
-		statusIds,
-	};
+	return { teamId, labelIds, statusIds };
 }
