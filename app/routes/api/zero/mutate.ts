@@ -10,6 +10,7 @@ import {
 	fetchOrgSubscription,
 	fetchOrgUsage,
 } from "~/lib/billing/service";
+import { sendPushNotificationToUser } from "~/lib/notifications/service";
 import { getActiveOrganizationId } from "~/lib/organization/service";
 import { must } from "~/lib/utils/must";
 import type { Route } from "./+types/mutate.ts";
@@ -52,6 +53,17 @@ export async function action({ request }: Route.ActionArgs) {
 		subscription,
 		usage,
 		clearUsageCache,
+		sendNotification: async (
+			userId: string,
+			title: string,
+			body: string,
+			url?: string,
+		) => {
+			// Don't await the result to avoid blocking the mutation
+			sendPushNotificationToUser(userId, { title, body, url }).catch((err) =>
+				console.error("[Zero] Failed to send notification:", err),
+			);
+		},
 	};
 
 	return await handleMutateRequest(

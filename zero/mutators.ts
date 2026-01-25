@@ -6,15 +6,15 @@ import { TEAM_DEFAULT_STATUSES } from "~/lib/organization/defaults";
 import { RESERVED_TEAM_SLUGS } from "~/lib/organization/validations";
 import { assignMatterShortId } from "./helpers/mutator";
 import {
+	checkMatterModifyAccess,
+	clearOrganizationUsageCache,
 	enforceMatterCreationPermission,
 	enforceTeamCreationPermission,
-	requireAuthentication,
-	requireTeamRole,
-	checkMatterModifyAccess,
 	findOrganizationMembership,
 	findTeamMembership,
-	clearOrganizationUsageCache,
 	PERMISSION_ERRORS,
+	requireAuthentication,
+	requireTeamRole,
 } from "./helpers/permission";
 import { zql } from "./schema";
 
@@ -82,7 +82,12 @@ export const mutators = defineMutators({
 				}
 
 				// Allocate short ID (handles both client and server logic)
-				await assignMatterShortId(tx, args.teamId, baseInsert, args.clientShortID);
+				await assignMatterShortId(
+					tx,
+					args.teamId,
+					baseInsert,
+					args.clientShortID,
+				);
 
 				// Invalidate usage cache after matter creation
 				clearOrganizationUsageCache(ctx, membership.orgId);
@@ -113,7 +118,11 @@ export const mutators = defineMutators({
 		updateStatus: defineMutator(
 			z.object({ id: z.string(), statusId: z.string() }),
 			async ({ tx, ctx, args }) => {
-				const { matter, membership } = await checkMatterModifyAccess(tx, ctx, args.id);
+				const { matter, membership } = await checkMatterModifyAccess(
+					tx,
+					ctx,
+					args.id,
+				);
 
 				// Permission: Only assignee or manager can change status
 				if (
@@ -134,7 +143,11 @@ export const mutators = defineMutators({
 		assign: defineMutator(
 			z.object({ id: z.string(), assigneeId: z.string().nullable() }),
 			async ({ tx, ctx, args }) => {
-				const { matter, membership } = await checkMatterModifyAccess(tx, ctx, args.id);
+				const { matter, membership } = await checkMatterModifyAccess(
+					tx,
+					ctx,
+					args.id,
+				);
 
 				// Permission: Managers can assign, or users can (un)assign themselves
 				const isManager = membership.role === teamRole.manager;
@@ -150,6 +163,21 @@ export const mutators = defineMutators({
 					assigneeId: args.assigneeId,
 					updatedAt: Date.now(),
 				});
+
+				// Notification: Task Assignment
+				if (
+					tx.location === "server" &&
+					args.assigneeId &&
+					args.assigneeId !== ctx.userId &&
+					ctx.sendNotification
+				) {
+					await ctx.sendNotification(
+						args.assigneeId,
+						"New Task Assigned",
+						`You have been assigned to: ${matter.title}`,
+						`/organization/matter/${matter.id}`,
+					);
+				}
 			},
 		),
 
@@ -272,6 +300,20 @@ export const mutators = defineMutators({
 					statusId: defaultStatus.id, // Assign task status (guaranteed to exist)
 					updatedAt: Date.now(),
 				});
+
+				// Notification: Request Approved
+				if (
+					tx.location === "server" &&
+					matter.authorId !== ctx.userId &&
+					ctx.sendNotification
+				) {
+					await ctx.sendNotification(
+						matter.authorId,
+						"Request Approved",
+						`Your request "${matter.title}" has been approved.`,
+						`/organization/matter/${matter.id}`,
+					);
+				}
 			},
 		),
 
@@ -310,6 +352,20 @@ export const mutators = defineMutators({
 					statusId: rejectedStatus?.id ?? matter.statusId, // Best effort fallback
 					updatedAt: Date.now(),
 				});
+
+				// Notification: Request Rejected
+				if (
+					tx.location === "server" &&
+					matter.authorId !== ctx.userId &&
+					ctx.sendNotification
+				) {
+					await ctx.sendNotification(
+						matter.authorId,
+						"Request Rejected",
+						`Your request "${matter.title}" has been rejected.`,
+						`/organization/matter/${matter.id}`,
+					);
+				}
 			},
 		),
 	},
@@ -359,7 +415,10 @@ export const mutators = defineMutators({
 				);
 
 				// Check billing limits before creating team
-				enforceTeamCreationPermission(ctx, orgMembership.role ?? teamRole.member);
+				enforceTeamCreationPermission(
+					ctx,
+					orgMembership.role ?? teamRole.member,
+				);
 
 				// Find unique code by checking existing teams
 				const existingTeams = await tx.run(
