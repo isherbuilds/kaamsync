@@ -163,21 +163,6 @@ export const mutators = defineMutators({
 					assigneeId: args.assigneeId,
 					updatedAt: Date.now(),
 				});
-
-				// Notification: Task Assignment
-				if (
-					tx.location === "server" &&
-					args.assigneeId &&
-					args.assigneeId !== ctx.userId &&
-					ctx.sendNotification
-				) {
-					await ctx.sendNotification(
-						args.assigneeId,
-						"New Task Assigned",
-						`You have been assigned to: ${matter.title}`,
-						`/organization/matter/${matter.id}`,
-					);
-				}
 			},
 		),
 
@@ -300,20 +285,6 @@ export const mutators = defineMutators({
 					statusId: defaultStatus.id, // Assign task status (guaranteed to exist)
 					updatedAt: Date.now(),
 				});
-
-				// Notification: Request Approved
-				if (
-					tx.location === "server" &&
-					matter.authorId !== ctx.userId &&
-					ctx.sendNotification
-				) {
-					await ctx.sendNotification(
-						matter.authorId,
-						"Request Approved",
-						`Your request "${matter.title}" has been approved.`,
-						`/organization/matter/${matter.id}`,
-					);
-				}
 			},
 		),
 
@@ -352,20 +323,6 @@ export const mutators = defineMutators({
 					statusId: rejectedStatus?.id ?? matter.statusId, // Best effort fallback
 					updatedAt: Date.now(),
 				});
-
-				// Notification: Request Rejected
-				if (
-					tx.location === "server" &&
-					matter.authorId !== ctx.userId &&
-					ctx.sendNotification
-				) {
-					await ctx.sendNotification(
-						matter.authorId,
-						"Request Rejected",
-						`Your request "${matter.title}" has been rejected.`,
-						`/organization/matter/${matter.id}`,
-					);
-				}
 			},
 		),
 	},

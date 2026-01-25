@@ -13,12 +13,6 @@ export type Context = {
 		teams: number;
 	};
 	clearUsageCache?: (orgId: string) => void;
-	sendNotification?: (
-		userId: string,
-		title: string,
-		body: string,
-		url?: string,
-	) => Promise<void>;
 };
 
 declare module "@rocicorp/zero" {
