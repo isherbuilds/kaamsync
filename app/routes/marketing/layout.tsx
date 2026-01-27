@@ -60,7 +60,7 @@ export default function MarketingLayout() {
 					</div>
 
 					{/* Desktop nav */}
-					<div className="hidden md:flex md:gap-x-10">
+					<div className="hidden md:flex">
 						{navLinks.map(({ to, label }) => (
 							<Link
 								key={to}
@@ -106,15 +106,15 @@ export default function MarketingLayout() {
 					}`}
 					style={{ top: "60px" }} // Approximate header height offset to ensure it doesn't overlap weirdly if z-index fails, but mainly relying on padding
 				>
-					<div className="flex h-full w-full flex-col p-6">
+					<div className="flex h-full w-full flex-col p-4">
 						<div className="flex-1 overflow-y-auto">
-							<div className="flex flex-col gap-4">
+							<div className="flex flex-col">
 								{navLinks.map(({ to, label }) => (
 									<Link
 										key={to}
 										to={to}
 										onClick={() => setOpen(false)}
-										className="text-2xl text-foreground transition-colors hover:bg-muted/50"
+										className="p-2 text-2xl text-foreground transition-colors hover:bg-muted/50"
 									>
 										{label}
 									</Link>

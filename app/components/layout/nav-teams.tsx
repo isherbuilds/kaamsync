@@ -75,7 +75,7 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 									onFocus={() => handleTeamHover(team.id)}
 									onClick={
 										isMobile
-											? () => setTimeout(() => setOpenMobile(false), 100)
+											? () => setTimeout(() => setOpenMobile(false), 50)
 											: undefined
 									}
 								>

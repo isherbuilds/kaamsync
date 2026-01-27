@@ -85,6 +85,29 @@ export class ClientCache<T> {
 			}
 		}
 	}
+
+	/**
+	 * Remove all entries for this cache from memory and localStorage.
+	 */
+	clearAll(): void {
+		this.memCache.clear();
+		if (typeof localStorage !== "undefined") {
+			try {
+				const prefix = `${this.keyPrefix}:`;
+				for (let i = localStorage.length - 1; i >= 0; i--) {
+					const k = localStorage.key(i);
+					if (k?.startsWith(prefix)) {
+						localStorage.removeItem(k);
+					}
+				}
+			} catch (e) {
+				console.warn(
+					`[ClientCache] Failed to clear keys with prefix ${this.keyPrefix}`,
+					e,
+				);
+			}
+		}
+	}
 }
 
 export interface SWROptions {

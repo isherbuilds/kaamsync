@@ -30,7 +30,7 @@ export function NavMain({ items, orgSlug }: NavMainProps) {
 	const { setOpenMobile } = useSidebar();
 
 	const handleLinkClick = useCallback(() => {
-		const timeoutId = setTimeout(() => setOpenMobile(false), 100);
+		const timeoutId = setTimeout(() => setOpenMobile(false), 50);
 		return () => clearTimeout(timeoutId);
 	}, [setOpenMobile]);
 

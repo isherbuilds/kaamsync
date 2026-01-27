@@ -13,6 +13,10 @@ export function getSubscriptionFromCache(orgSlug: string): Subscription | null {
 	return subscriptionCache.get(orgSlug);
 }
 
+export function clearSubscriptionCache() {
+	subscriptionCache.clearAll();
+}
+
 export async function getSubscriptionSWR(
 	fetchFn: () => Promise<Subscription>,
 	orgSlug: string,
