@@ -1,6 +1,6 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { CalendarIcon, ChevronDown } from "lucide-react";
+import { BanIcon, CalendarIcon, ChevronDown, InboxIcon } from "lucide-react";
 import { lazy, memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
@@ -186,18 +186,11 @@ export default function TeamTasksPage() {
 
 			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
-					// <TeamTasksEmptyState
-					// 	isManager={isManager}
-					// 	canRequest={canCreateRequests}
-					// 	teamId={team.id}
-					// 	teamCode={team.code}
-					// 	taskStatuses={taskStatuses}
-					// 	requestStatuses={
-					// 		requestStatuses.length > 0 ? requestStatuses : taskStatuses
-					// 	}
-					// 	members={team.memberships ?? []}
-					// />
-					<div>Hello</div>
+					<EmptyStateCard
+						icon={InboxIcon}
+						title="This team has no tasks"
+						description="You can create new tasks to get started."
+					/>
 				) : (
 					<VirtualizedList
 						items={flatItems}
@@ -449,53 +442,3 @@ function TaskDueDateBadge({ date }: { date: number }) {
 		</div>
 	);
 }
-
-// // ============================================================================
-// // Empty State Component
-// // ============================================================================
-
-// const TeamTasksEmptyState = memo(
-// 	({
-// 		isManager,
-// 		canRequest,
-// 		teamId,
-// 		teamCode,
-// 		taskStatuses,
-// 		requestStatuses,
-// 		members,
-// 	}: TeamActionProps) => (
-// 		<div className="flex h-full items-center justify-center p-8">
-// 			<EmptyStateCard
-// 				icon={ListTodoIcon}
-// 				title="All clear"
-// 				description="No active tasks in this team. Rest easy or create a new one."
-// 			>
-// 				<div className="flex gap-2">
-// 					{isManager && (
-// 						<CreateMatterDialog
-// 							type="task"
-// 							teamId={teamId}
-// 							teamCode={teamCode}
-// 							statuses={taskStatuses}
-// 							teamMembers={members}
-// 						/>
-// 					)}
-// 					{canRequest && (
-// 						<CreateMatterDialog
-// 							type="request"
-// 							teamId={teamId}
-// 							teamCode={teamCode}
-// 							statuses={requestStatuses}
-// 							teamMembers={members}
-// 							triggerButton={
-// 								<Button size="sm" variant="outline">
-// 									Request
-// 								</Button>
-// 							}
-// 						/>
-// 					)}
-// 				</div>
-// 			</EmptyStateCard>
-// 		</div>
-// 	),
-// );

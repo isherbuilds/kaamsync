@@ -3,10 +3,11 @@
 import {
 	BlocksIcon,
 	ChevronsUpDown,
-	CogIcon,
+	Settings2Icon,
 	Users2Icon,
 } from "lucide-react";
 import { Link } from "react-router";
+import { CustomAvatar } from "~/components/ui/avatar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -23,7 +24,6 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 import { authClient } from "~/lib/auth/client";
-import { Avatar, AvatarFallback, AvatarImage, CustomAvatar } from "~/components/ui/avatar";
 
 /* ---------------------------------- Types --------------------------------- */
 
@@ -36,12 +36,6 @@ interface Organization {
 interface OrganizationSwitcherProps {
 	organizations: Organization[];
 	activeOrganization: Organization;
-}
-
-/* ------------------------------ Avatar Helper ----------------------------- */
-
-function getAvatarUrl(name: string): string {
-	return `https://api.dicebear.com/9.x/glass/svg?seed=${name}`;
 }
 
 /* -------------------------------- Component ------------------------------- */
@@ -79,17 +73,12 @@ export function OrgSwitcher({
 							className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 							size="default"
 						>
-							<div className="flex aspect-square size-6 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-								<Avatar className="size-4 rounded-lg">
-									<AvatarImage
-										alt={currentOrg.name}
-										src={getAvatarUrl(currentOrg.name)}
-									/>
-									<AvatarFallback className="rounded-lg">
-										{currentOrg.name.charAt(0)}
-									</AvatarFallback>
-								</Avatar>
-							</div>
+							<CustomAvatar
+								key={currentOrg.id}
+								name={currentOrg.name}
+								className="size-6"
+							/>
+
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{currentOrg.name}</span>
 							</div>
@@ -108,7 +97,7 @@ export function OrgSwitcher({
 								className="cursor-pointer"
 								to={`/${currentOrg.slug}/settings`}
 							>
-								<CogIcon className="size-4" />
+								<Settings2Icon className="size-4" />
 								<div>Settings</div>
 							</Link>
 						</DropdownMenuItem>
@@ -146,7 +135,6 @@ export function OrgSwitcher({
 								>
 									<CustomAvatar
 										key={org.id}
-										avatar={getAvatarUrl(org.name)}
 										name={org.name}
 										className="size-5"
 									/>

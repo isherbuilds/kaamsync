@@ -4,6 +4,7 @@ import { useZero } from "@rocicorp/zero/react";
 import { Cog, MoreHorizontal, Plus, Users2Icon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { useParams } from "react-router";
+import { preloadTeam } from "zero/preload";
 import { StableLink } from "~/components/shared/stable-link";
 import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
 import {
@@ -22,7 +23,6 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "~/components/ui/sidebar";
-import { preloadTeam } from "../../../zero/preload";
 
 interface TeamInfo {
 	id: string;

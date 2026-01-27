@@ -11,7 +11,7 @@ export default function UnderConstruction({
 }: Props) {
 	return (
 		<section
-			className={`mx-auto flex h-full max-w-3xl flex-col justify-center gap-4 p-6 md:items-center ${className} translate-y-52`}
+			className={`mx-auto flex max-w-3xl flex-col justify-center gap-4 p-6 md:items-center ${className} translate-y-52`}
 			aria-label={message}
 		>
 			<div className="w-fit rounded bg-primary/90 px-3 py-1 text-base text-primary-foreground">

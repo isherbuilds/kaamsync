@@ -88,10 +88,9 @@ export default function OrganizationTasksPage() {
 	// Callbacks
 	// --------------------------------------------------------------------------
 
-	const now = useMemo(() => Date.now(), []);
-
 	const handleRenderTaskItem = useCallback(
 		(matter: TaskMatter) => {
+			const now = Date.now();
 			const priority = (matter.priority ?? Priority.NONE) as PriorityValue;
 			const statusType = (matter.status?.type as StatusType) ?? "not_started";
 			const StatusIcon = STATUS_TYPE_ICONS[statusType];
@@ -146,7 +145,7 @@ export default function OrganizationTasksPage() {
 				</NavLink>
 			);
 		},
-		[membersByUserId, orgSlug, isMobile, now],
+		[membersByUserId, orgSlug, isMobile],
 	);
 
 	// --------------------------------------------------------------------------
