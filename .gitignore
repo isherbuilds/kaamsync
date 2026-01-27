@@ -8,5 +8,6 @@ CURRENT.md
 zero.db*
 
 # React Router
+/.react-email/
 /.react-router/
 /build/

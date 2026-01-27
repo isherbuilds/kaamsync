@@ -1,68 +1,50 @@
-import {
-	Body,
-	Button,
-	Container,
-	Head,
-	Heading,
-	Hr,
-	Html,
-	Img,
-	Link,
-	Preview,
-	Section,
-	Tailwind,
-	Text,
-} from "@react-email/components";
+import { Button, Heading, Link, Section, Text } from "@react-email/components";
+import { brand, EmailLayout } from "./email-layout";
 
 interface VerifyEmailProps {
 	verifyUrl?: string;
 }
 
-export const baseUrl = process.env.SITE_URL;
+export const VerifyEmail = ({ verifyUrl }: VerifyEmailProps) => {
+	const previewText = "Welcome to KaamSync - Verify your email";
 
-export const VerifyEmail = ({ verifyUrl }: VerifyEmailProps) => (
-	<Html>
-		<Head />
-		<Tailwind>
-			<Body className="bg-white">
-				<Preview>Welcome to KaamSync</Preview>
+	return (
+		<EmailLayout preview={previewText}>
+			<Heading
+				style={{ color: brand.foreground }}
+				className="text-center font-normal text-2xl"
+			>
+				Verify your email
+			</Heading>
+			<Text style={{ color: brand.foreground }} className="text-sm leading-6">
+				Welcome to KaamSync! To get started, please verify your email address by
+				clicking the button below.
+			</Text>
+			<Section className="my-8 text-center">
+				<Button
+					style={{ backgroundColor: brand.primary, color: "#fff" }}
+					className="rounded px-10 py-4 text-center font-bold text-sm no-underline"
+					href={verifyUrl}
+				>
+					Verify Email Address
+				</Button>
+			</Section>
+			<Text style={{ color: brand.foreground }} className="text-sm leading-6">
+				or copy and paste this URL into your browser:{" "}
+				<Link
+					href={verifyUrl}
+					style={{ color: brand.primary }}
+					className="no-underline"
+				>
+					{verifyUrl}
+				</Link>
+			</Text>
+		</EmailLayout>
+	);
+};
 
-				<Container className="mx-auto my-0 max-w-2xl px-0 pt-5 pb-12">
-					<Img
-						src={`${baseUrl}/static/kaamsync-logo.png`}
-						width="48"
-						height="48"
-						alt="KaamSync"
-						className="h-12 w-12 bg-[#000] p-1"
-					/>
-					<Heading className="px-0 pt-10 pb-0 font-normal text-[#484848] text-[24px] leading-[1.3] tracking-[-0.5px]">
-						Welcome to KaamSync
-					</Heading>
+VerifyEmail.PreviewProps = {
+	verifyUrl: "https://kaamsync.com/verify-email/123",
+} satisfies VerifyEmailProps;
 
-					<Section className="px-0 py-6">
-						<Button
-							className="block rounded bg-[#e53300] px-6 py-4 text-center font-semibold text-[15px] text-white no-underline"
-							href={verifyUrl}
-						>
-							Login to KaamSync
-						</Button>
-					</Section>
-
-					<Text className="text-[#3c4149] text-[15px] leading-[1.4]">
-						This link will only be valid for the next 60 minutes. If the link
-						does not work, please copy and paste the following URL into your
-						browser:
-					</Text>
-					<Text className="break-all text-[#b02a00] text-[15px] leading-[1.4]">
-						{verifyUrl}
-					</Text>
-
-					<Hr className="border-[#dfe1e4] py-6" />
-					<Link href={baseUrl} className="text-[#b4becc] text-[14px]">
-						KaamSync
-					</Link>
-				</Container>
-			</Body>
-		</Tailwind>
-	</Html>
-);
+export default VerifyEmail;

@@ -3,6 +3,7 @@ import { AlertCircle } from "lucide-react";
 import { useMemo } from "react";
 import {
 	createContext,
+	Form,
 	isRouteErrorResponse,
 	Outlet,
 	redirect,
@@ -258,9 +259,9 @@ export function ErrorBoundary() {
 					<Button asChild variant="outline">
 						<a href="/">Home</a>
 					</Button>
-					<Button asChild>
-						<a href="/logout">Sign Out</a>
-					</Button>
+					<Form method="post" action="/auth/logout">
+						<Button type="submit">Sign Out</Button>
+					</Form>
 				</div>
 			</div>
 		</div>

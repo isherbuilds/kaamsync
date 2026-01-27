@@ -43,6 +43,7 @@ import { Priority, type PriorityValue } from "~/config/matter";
 import { parseMatterKeyString } from "~/db/helpers";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
+import { sendNotificationToUser } from "~/hooks/use-push-notifications";
 import type { Route } from "./+types/matter.$matterKey";
 
 export const meta: Route.MetaFunction = ({ params }) => [
@@ -58,7 +59,7 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 }
 
 export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
-	const { orgSlug } = useOrganizationLoaderData();
+	const { orgSlug, authSession } = useOrganizationLoaderData();
 	const { parsed } = loaderData;
 	const navigate = useNavigate();
 	const z = useZero();
@@ -112,26 +113,48 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		(s: string) => {
 			if (!matter) return;
 			setIsUpdating((prev) => ({ ...prev, status: true }));
+
+			if (matter.assigneeId && matter.assigneeId !== authSession.user.id) {
+				const newStatusName =
+					statuses.find((st) => st.id === s)?.name || "Unknown";
+				sendNotificationToUser(
+					matter.assigneeId,
+					"Task Status Updated",
+					`${matter.teamCode}-${matter.shortID}: ${matter.title} is now ${newStatusName}`,
+					window.location.href,
+				);
+			}
+
 			z.mutate(
 				mutators.matter.updateStatus({ id: matter.id, statusId: s }),
 			).server.finally(() =>
 				setIsUpdating((prev) => ({ ...prev, status: false })),
 			);
 		},
-		[matter, z],
+		[matter, z, authSession.user.id, statuses],
 	);
 
 	const handleAssign = useCallback(
 		(u: string | null) => {
 			if (!matter) return;
 			setIsUpdating((prev) => ({ ...prev, assignee: true }));
+
+			if (u && u !== authSession.user.id && u !== matter.assigneeId) {
+				sendNotificationToUser(
+					u,
+					"New Task Assignment",
+					`You have been assigned to ${matter.teamCode}-${matter.shortID}: ${matter.title}`,
+					window.location.href,
+				);
+			}
+
 			z.mutate(
 				mutators.matter.assign({ id: matter.id, assigneeId: u }),
 			).server.finally(() =>
 				setIsUpdating((prev) => ({ ...prev, assignee: false })),
 			);
 		},
-		[matter, z],
+		[matter, z, authSession.user.id],
 	);
 
 	const handlePriorityChange = useCallback(

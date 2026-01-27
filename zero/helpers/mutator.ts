@@ -146,6 +146,3 @@ export async function assignMatterShortId(
 
 	await allocateServerSideShortId(tx, teamId, baseInsert);
 }
-
-/** @deprecated Use assignMatterShortId instead */
-export const allocateShortID = assignMatterShortId;

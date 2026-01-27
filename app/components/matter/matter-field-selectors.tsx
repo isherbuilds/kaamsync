@@ -27,10 +27,10 @@ import {
 	getPriorityColorClass,
 	Priority,
 	type PriorityValue,
-	sortStatusComparator,
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
+	sortStatusComparator,
 } from "~/config/matter";
 import { cn } from "~/lib/utils";
 
@@ -57,13 +57,13 @@ interface FieldSelectorBaseProps<T> {
 	className?: string;
 }
 
-interface PrioritySelectorProps extends FieldSelectorBaseProps<PriorityValue> {}
+interface PrioritySelectProps extends FieldSelectorBaseProps<PriorityValue> {}
 
-interface StatusSelectorProps extends FieldSelectorBaseProps<string> {
+interface StatusSelectProps extends FieldSelectorBaseProps<string> {
 	statuses: readonly StatusRow[];
 }
 
-interface AssigneeSelectorProps extends FieldSelectorBaseProps<string | null> {
+interface MemberSelectProps extends FieldSelectorBaseProps<string | null> {
 	members: readonly MemberOption[];
 }
 
@@ -117,7 +117,7 @@ PopoverTriggerButton.displayName = "PopoverTriggerButton";
 // Priority Selector
 // ============================================================================
 
-export const PrioritySelector = memo(
+export const PrioritySelect = memo(
 	({
 		value,
 		onChange,
@@ -126,7 +126,7 @@ export const PrioritySelector = memo(
 		align = "start",
 		showLabel,
 		className,
-	}: PrioritySelectorProps) => {
+	}: PrioritySelectProps) => {
 		const [open, setOpen] = useState(false);
 
 		const currentPriority =
@@ -204,7 +204,7 @@ export const PrioritySelector = memo(
 // Status Selector
 // ============================================================================
 
-export const StatusSelector = memo(
+export const StatusSelect = memo(
 	({
 		value,
 		statuses = [],
@@ -214,7 +214,7 @@ export const StatusSelector = memo(
 		align = "start",
 		showLabel,
 		className,
-	}: StatusSelectorProps) => {
+	}: StatusSelectProps) => {
 		const [open, setOpen] = useState(false);
 
 		const currentStatus = statuses.find((s) => s.id === value);
@@ -304,7 +304,7 @@ export const StatusSelector = memo(
 // Assignee Selector
 // ============================================================================
 
-export const AssigneeSelector = memo(
+export const MemberSelect = memo(
 	({
 		value,
 		members = [],
@@ -314,7 +314,7 @@ export const AssigneeSelector = memo(
 		align = "start",
 		showLabel,
 		className,
-	}: AssigneeSelectorProps) => {
+	}: MemberSelectProps) => {
 		const [open, setOpen] = useState(false);
 
 		const selectedMember = members.find((m) => m.userId === value);
@@ -403,11 +403,4 @@ export const AssigneeSelector = memo(
 	},
 );
 
-// ============================================================================
-// Legacy Exports (for backward compatibility)
-// ============================================================================
-
-export const PrioritySelect = PrioritySelector;
-export const StatusSelect = StatusSelector;
-export const MemberSelect = AssigneeSelector;
 export type MemberSelectorItem = MemberOption;
