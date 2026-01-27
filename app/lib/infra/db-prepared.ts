@@ -8,6 +8,7 @@ import { db } from "~/db";
 import {
 	mattersTable,
 	membersTable,
+	organizationsTable,
 	subscriptionsTable,
 	teamsTable,
 	usersTable,
@@ -54,8 +55,8 @@ export const getOrganizationOwnerUser = db
 	.where(
 		and(
 			eq(membersTable.organizationId, sql.placeholder("organizationId")),
-			eq(membersTable.role, sql.placeholder("role"))
-		)
+			eq(membersTable.role, sql.placeholder("role")),
+		),
 	)
 	.orderBy(desc(membersTable.createdAt))
 	.limit(1)
@@ -73,8 +74,8 @@ export const getOrganizationMembership = db
 	.where(
 		and(
 			eq(membersTable.userId, sql.placeholder("userId")),
-			eq(membersTable.organizationId, sql.placeholder("organizationId"))
-		)
+			eq(membersTable.organizationId, sql.placeholder("organizationId")),
+		),
 	)
 	.prepare("getOrganizationMembership");
 
@@ -88,8 +89,8 @@ export const getTeamByCode = db
 	.where(
 		and(
 			eq(teamsTable.orgId, sql.placeholder("orgId")),
-			eq(teamsTable.code, sql.placeholder("code"))
-		)
+			eq(teamsTable.code, sql.placeholder("code")),
+		),
 	)
 	.prepare("getTeamByCode");
 
@@ -103,8 +104,8 @@ export const getMatterById = db
 	.where(
 		and(
 			eq(mattersTable.id, sql.placeholder("matterId")),
-			eq(mattersTable.orgId, sql.placeholder("orgId"))
-		)
+			eq(mattersTable.orgId, sql.placeholder("orgId")),
+		),
 	)
 	.prepare("getMatterById");
 
@@ -114,8 +115,8 @@ export const getTeamMattersCount = db
 	.where(
 		and(
 			eq(mattersTable.teamId, sql.placeholder("teamId")),
-			eq(mattersTable.orgId, sql.placeholder("orgId"))
-		)
+			eq(mattersTable.orgId, sql.placeholder("orgId")),
+		),
 	)
 	.prepare("getTeamMattersCount");
 
@@ -127,18 +128,51 @@ export const getOrganizationSubscription = db
 	.select()
 	.from(subscriptionsTable)
 	.where(
-		eq(subscriptionsTable.organizationId, sql.placeholder("organizationId"))
+		eq(subscriptionsTable.organizationId, sql.placeholder("organizationId")),
 	)
 	.orderBy(desc(subscriptionsTable.createdAt))
 	.limit(1)
 	.prepare("getOrganizationSubscription");
+
+export const getSubscriptionByCustomerId = db
+	.select({ id: subscriptionsTable.id })
+	.from(subscriptionsTable)
+	.where(
+		and(
+			eq(subscriptionsTable.organizationId, sql.placeholder("organizationId")),
+			eq(subscriptionsTable.billingCustomerId, sql.placeholder("customerId")),
+		),
+	)
+	.limit(1)
+	.prepare("getSubscriptionByCustomerId");
+
+export const getOrganizationById = db
+	.select({
+		id: organizationsTable.id,
+		name: organizationsTable.name,
+		slug: organizationsTable.slug,
+		logo: organizationsTable.logo,
+		createdAt: organizationsTable.createdAt,
+		metadata: organizationsTable.metadata,
+	})
+	.from(organizationsTable)
+	.where(eq(organizationsTable.id, sql.placeholder("organizationId")))
+	.limit(1)
+	.prepare("getOrganizationById");
+
+export const getUserByEmail = db
+	.select()
+	.from(usersTable)
+	.where(eq(usersTable.email, sql.placeholder("email")))
+	.limit(1)
+	.prepare("getUserByEmail");
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
 
 export async function getOrganizationUsage(
-	organizationId: string
+	organizationId: string,
 ): Promise<OrganizationUsage> {
 	const [memberResult, teamResult, matterResult] = await Promise.all([
 		getOrganizationMemberCount.execute({ organizationId }),
@@ -154,7 +188,7 @@ export async function getOrganizationUsage(
 }
 
 export async function getUserActiveOrganization(
-	userId: string
+	userId: string,
 ): Promise<string | null> {
 	const membership = await getUserOrganizationMembership.execute({ userId });
 	return membership[0]?.organizationId ?? null;

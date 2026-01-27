@@ -5,6 +5,12 @@ import { useId, useRef, useState } from "react";
 import type { buttonVariants } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+	InputGroupText,
+} from "~/components/ui/input-group";
 import { Label } from "~/components/ui/label";
 import {
 	Select,
@@ -14,14 +20,8 @@ import {
 	SelectValue,
 } from "~/components/ui/select";
 import { Spinner } from "~/components/ui/spinner";
-import { cn } from "~/lib/utils";
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-	InputGroupText,
-} from "~/components/ui/input-group";
 import { Textarea } from "~/components/ui/textarea";
+import { cn } from "~/lib/utils";
 
 export type ListOfErrors = Array<string | null | undefined> | null | undefined;
 
@@ -53,7 +53,7 @@ export function ErrorList({
 		return null;
 	}
 	return (
-		<ul className="flex flex-col" id={id}>
+		<ul className="flex flex-col" id={id} aria-live="polite">
 			{errorsToRender.map((e) => (
 				<li className="text-destructive text-xs" key={e}>
 					{e}

@@ -48,6 +48,10 @@ export const auth = betterAuth({
 		enabled: true,
 		window: 60, // 60 seconds
 		max: 100, // 100 requests per window (global default)
+		// TODO: Switch to "database" storage after running migrations to create 'rate_limits' table
+		// storage: "database",
+		// modelName: "rateLimitsTable",
+		storage: "memory",
 		customRules: {
 			// Zero sync endpoints - moderate limits
 			"/api/zero/*": { window: 60, max: 30 },
@@ -64,7 +68,6 @@ export const auth = betterAuth({
 			"/api/notifications/send": { window: 60, max: 30 },
 			"/api/notifications/subscribe": { window: 60, max: 20 },
 		},
-		storage: "memory",
 	},
 	// IP address detection for rate limiting
 	advanced: {
@@ -94,7 +97,7 @@ export const auth = betterAuth({
 		updateAge: 60 * 60 * 24, // 1 day - refresh session daily
 		cookieCache: {
 			enabled: true,
-			maxAge: 24 * 60 * 60, // 1 day cache duration
+			maxAge: 5 * 60, // 5 minutes - balance between DB hits and security
 			strategy: "compact",
 			refreshCache: true, // Enable stateless refresh
 		},
@@ -146,7 +149,7 @@ export const auth = betterAuth({
 			? [
 					dodopayments({
 						client: dodo,
-						createCustomerOnSignUp: true,
+						createCustomerOnSignUp: false,
 						use: [
 							checkout({
 								products: [

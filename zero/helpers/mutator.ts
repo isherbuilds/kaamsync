@@ -8,25 +8,25 @@ type ServerMutatorTx = Extract<MutatorTx, { location: "server" }>;
 
 /** Base matter insert data, excluding shortID which is assigned separately */
 type MatterInsertBase = Omit<Partial<MattersTable>, "shortID"> &
-	Pick<MattersTable, "id" | "teamId" | "orgId" | "authorId" | "statusId" | "title" | "type" | "teamCode" | "createdAt" | "updatedAt">;
-
-/** Maximum retry attempts for server-side ID allocation */
-const MAX_RETRY_ATTEMPTS = 3;
+	Pick<
+		MattersTable,
+		| "id"
+		| "teamId"
+		| "orgId"
+		| "authorId"
+		| "statusId"
+		| "title"
+		| "type"
+		| "teamCode"
+		| "createdAt"
+		| "updatedAt"
+	>;
 
 /**
  * Check if a value is a valid positive short ID
  */
 function isValidShortId(value: number | undefined): value is number {
 	return Number.isFinite(value) && (value as number) > 0;
-}
-
-/**
- * Check if an error is a unique constraint violation
- */
-function isUniqueConstraintError(err: unknown): boolean {
-	return /unique|duplicate|constraint/i.test(
-		err instanceof Error ? err.message : String(err),
-	);
 }
 
 /**
@@ -88,37 +88,32 @@ async function allocateServerSideShortId(
 	teamId: string,
 	baseInsert: MatterInsertBase,
 ): Promise<void> {
-	for (let attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++) {
-		try {
-			const result = await tx.dbTransaction.query(
-				"SELECT COALESCE(MAX(short_id), 0) + 1 AS next FROM matters WHERE team_id = $1",
-				[teamId],
-			);
-			const rows = Array.from(result as unknown as Array<{ next: number }>);
-			const nextShortID = rows[0]?.next ?? 1;
+	try {
+		// Atomic reservation of short ID
+		const result = await tx.dbTransaction.query(
+			"UPDATE teams SET next_short_id = next_short_id + 1 WHERE id = $1 RETURNING next_short_id",
+			[teamId],
+		);
+		const rows = Array.from(
+			result as unknown as Array<{ next_short_id: number }>,
+		);
+		const nextShortIdState = rows[0]?.next_short_id;
 
-			await tx.mutate.mattersTable.insert({
-				...baseInsert,
-				shortID: nextShortID,
-			});
-
-			await tx.dbTransaction.query(
-				"UPDATE teams SET next_short_id = next_short_id + 1 WHERE id = $1",
-				[teamId],
-			);
-
-			return;
-		} catch (err) {
-			const isLastAttempt = attempt === MAX_RETRY_ATTEMPTS - 1;
-
-			if (isUniqueConstraintError(err) && !isLastAttempt) {
-				continue;
-			}
-
-			throw new Error(
-				`Failed to allocate short ID after ${attempt + 1} attempts: ${err}`,
-			);
+		if (!nextShortIdState) {
+			throw new Error(`Failed to allocate short ID: Team ${teamId} not found`);
 		}
+
+		// The reserved ID is the one we just stepped over (new state - 1)
+		const reservedId = nextShortIdState - 1;
+
+		await tx.mutate.mattersTable.insert({
+			...baseInsert,
+			shortID: reservedId,
+		});
+
+		return;
+	} catch (err) {
+		throw new Error(`Failed to allocate short ID: ${err}`);
 	}
 }
 

@@ -1,4 +1,3 @@
-
 import {
 	data,
 	Links,
@@ -90,8 +89,6 @@ export const shouldRevalidate = ({
 export function Layout({ children }: { children: React.ReactNode }) {
 	const colorScheme = useColorScheme();
 	const nonce = useNonce();
-
-
 
 	return (
 		<html

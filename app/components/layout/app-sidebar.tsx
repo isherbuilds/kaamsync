@@ -112,7 +112,7 @@ export function AppSidebar({
 	...props
 }: AppSidebarProps) {
 	const matches = useMatches();
-	const isSettings = matches.find(
+	const isSettings = matches.some(
 		(match) => match.id === "routes/organization/settings/layout",
 	);
 

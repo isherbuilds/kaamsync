@@ -17,15 +17,6 @@ interface SyncEvent extends Event {
 	waitUntil(promise: Promise<any>): void;
 }
 
-interface ServiceWorkerRegistration {
-	readonly sync: SyncManager;
-}
-
-interface SyncManager {
-	register(tag: string): Promise<void>;
-	getTags(): Promise<string[]>;
-}
-
 const SHELL_CACHE = "KaamSync-shell";
 const STATIC_CACHE = "KaamSync-static";
 const SHELL_URLS = ["/", "/offline.html"];

@@ -31,13 +31,11 @@ export function CommentInput({ matterId }: CommentInputProps) {
 		const sanitized = sanitizeContent(content);
 		if (!sanitized || isSubmitting) return;
 
+		setContent("");
 		setIsSubmitting(true);
 		z.mutate(mutators.timeline.addComment({ matterId, content: sanitized }))
-			.server.then(() => {
-				setContent("");
-				toast.success("Comment added");
-			})
-			.catch((err) => {
+			.server.catch((err) => {
+				setContent(sanitized);
 				toast.error("Failed to add comment");
 				console.error("Comment mutation failed:", err);
 			})

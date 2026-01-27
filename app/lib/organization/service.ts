@@ -1,14 +1,16 @@
-import { and, eq } from "drizzle-orm";
 import { v7 as uuid } from "uuid";
 import { db } from "~/db";
-import {
-	invitationsTable,
-	membersTable,
-	organizationsTable,
-	subscriptionsTable,
-	usersTable,
-} from "~/db/schema";
+import { invitationsTable, membersTable } from "~/db/schema";
 import type { OrgRole } from "~/lib/auth/permissions";
+import {
+	getOrganizationMembership,
+	getOrganizationOwnerUser,
+	getOrganizationById as getOrgByIdPrepared,
+	getOrganizationMemberCount as getOrgMemberCountPrepared,
+	getSubscriptionByCustomerId,
+	getUserByEmail,
+	getUserOrganizationMembership,
+} from "~/lib/infra/db-prepared";
 
 // =============================================================================
 // TYPES
@@ -44,17 +46,13 @@ export async function addMemberToOrganization(
 	inviterId?: string,
 ): Promise<AddMemberResult> {
 	// Check if user already exists
-	const existingUser = await db.query.usersTable.findFirst({
-		where: eq(usersTable.email, email),
-	});
+	const [existingUser] = await getUserByEmail.execute({ email });
 
 	// Check if already a member
 	if (existingUser) {
-		const existingMember = await db.query.membersTable.findFirst({
-			where: and(
-				eq(membersTable.userId, existingUser.id),
-				eq(membersTable.organizationId, organizationId),
-			),
+		const [existingMember] = await getOrganizationMembership.execute({
+			userId: existingUser.id,
+			organizationId,
 		});
 
 		if (existingMember) {
@@ -88,13 +86,21 @@ export async function addMemberToOrganization(
 	let resolvedInviterId = inviterId;
 	if (!resolvedInviterId) {
 		// Find an admin or owner in the organization to use as inviter
-		const adminMember = await db.query.membersTable.findFirst({
-			where: and(
-				eq(membersTable.organizationId, organizationId),
-				// Look for owner or admin role
-			),
+		const adminMember = await getOrganizationOwnerUser.execute({
+			organizationId,
+			role: "owner", // Prefer owner
 		});
-		resolvedInviterId = adminMember?.userId || "system";
+
+		// Fallback to finding an admin if no owner (though owner should exist)
+		if (!adminMember[0]) {
+			const [admin] = await getOrganizationOwnerUser.execute({
+				organizationId,
+				role: "admin",
+			});
+			resolvedInviterId = admin?.user?.id || "system";
+		} else {
+			resolvedInviterId = adminMember[0].user?.id || "system";
+		}
 	}
 
 	const invitationId = uuid();
@@ -123,11 +129,8 @@ export async function addMemberToOrganization(
  * Get organization member count (for billing purposes).
  */
 export async function getMemberCount(organizationId: string): Promise<number> {
-	const members = await db.query.membersTable.findMany({
-		where: eq(membersTable.organizationId, organizationId),
-	});
-
-	return members.length;
+	const result = await getOrgMemberCountPrepared.execute({ organizationId });
+	return result[0]?.count ?? 0;
 }
 
 /**
@@ -136,19 +139,8 @@ export async function getMemberCount(organizationId: string): Promise<number> {
 export async function getActiveOrganizationId(
 	userId: string,
 ): Promise<string | undefined> {
-	const membership = await db.query.membersTable.findFirst({
-		where: eq(membersTable.userId, userId),
-		columns: {
-			id: true,
-		},
-		orderBy: (m, { desc }) => desc(m.createdAt),
-	});
-
-	// if (!membership) {
-	// 	throw new Error("User does not belong to any organization");
-	// }
-
-	return membership?.id;
+	const result = await getUserOrganizationMembership.execute({ userId });
+	return result[0]?.organizationId;
 }
 
 /**
@@ -158,27 +150,19 @@ export async function getMemberRole(
 	organizationId: string,
 	userId: string,
 ): Promise<OrgRole | null> {
-	const membership = await db.query.membersTable.findFirst({
-		where: and(
-			eq(membersTable.organizationId, organizationId),
-			eq(membersTable.userId, userId),
-		),
+	const result = await getOrganizationMembership.execute({
+		userId,
+		organizationId,
 	});
+	const membership = result[0];
 
 	if (!membership) {
 		return null;
 	}
 
-	// Map database role to OrgRole type
-	switch (membership.role) {
-		case "owner":
-			return "owner";
-		case "admin":
-			return "admin";
-		case "member":
-		default:
-			return "member";
-	}
+	if (membership.role === "owner") return "owner";
+	if (membership.role === "admin") return "admin";
+	return "member";
 }
 
 // =============================================================================
@@ -188,11 +172,9 @@ export async function getMemberRole(
 export async function getOrganizationById(
 	organizationId: string,
 ): Promise<OrganizationInfo | null> {
-	const organization = await db.query.organizationsTable.findFirst({
-		where: eq(organizationsTable.id, organizationId),
-	});
-
-	return organization ?? null;
+	const result = await getOrgByIdPrepared.execute({ organizationId });
+	const org = result[0];
+	return org ? (org as OrganizationInfo) : null;
 }
 
 // =============================================================================
@@ -203,15 +185,9 @@ export async function findSubscriptionId(
 	organizationId: string,
 	customerId: string,
 ): Promise<string | undefined> {
-	const existingSubscription = await db.query.subscriptionsTable.findFirst({
-		where: and(
-			eq(subscriptionsTable.organizationId, organizationId),
-			eq(subscriptionsTable.billingCustomerId, customerId),
-		),
-		columns: {
-			id: true,
-		},
+	const result = await getSubscriptionByCustomerId.execute({
+		organizationId,
+		customerId,
 	});
-
-	return existingSubscription?.id;
+	return result[0]?.id;
 }

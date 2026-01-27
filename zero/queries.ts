@@ -32,9 +32,14 @@ const filterByOrganization = <T extends Q>(q: T, ctx: Context): T =>
 		.where("orgId", ctx.activeOrganizationId ?? "")
 		.where("deletedAt", "IS", null);
 
-const excludeDeleted = <T extends Q>(q: T): T => q.where("deletedAt", "IS", null);
+const excludeDeleted = <T extends Q>(q: T): T =>
+	q.where("deletedAt", "IS", null);
 
-const filterByTeamWithMembershipCheck = <T>(q: T, ctx: Context, teamId: string): T =>
+const filterByTeamWithMembershipCheck = <T>(
+	q: T,
+	ctx: Context,
+	teamId: string,
+): T =>
 	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
 	(q as any)
 		.where("teamId", teamId)
@@ -292,13 +297,19 @@ export const queries = defineQueries({
 
 	// LABEL & STATUS QUERIES
 	getOrganizationLabels: defineQuery(({ ctx }) =>
-		filterByOrganization(zql.labelsTable, ctx).orderBy("name", "asc").limit(DEFAULT_LIMIT),
+		filterByOrganization(zql.labelsTable, ctx)
+			.orderBy("name", "asc")
+			.limit(DEFAULT_LIMIT),
 	),
 
 	getTeamStatuses: defineQuery(
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
-			filterByTeamWithMembershipCheck(excludeDeleted(zql.statusesTable), ctx, teamId)
+			filterByTeamWithMembershipCheck(
+				excludeDeleted(zql.statusesTable),
+				ctx,
+				teamId,
+			)
 				.orderBy("position", "asc")
 				.limit(DEFAULT_LIMIT),
 	),
@@ -339,6 +350,9 @@ export const queries = defineQueries({
 	// USER QUERIES
 	getOrganizationUsers: defineQuery(z.object({}), ({ ctx }) =>
 		zql.usersTable
+			.whereExists("membersTables", (q) =>
+				q.where("organizationId", ctx.activeOrganizationId ?? ""),
+			)
 			.related("membersTables", (q) =>
 				q
 					.where("organizationId", ctx.activeOrganizationId ?? "")
@@ -365,7 +379,12 @@ export const queries = defineQueries({
 		}),
 		({ ctx, args: { teamId, limit, cursor, direction } }) => {
 			const q = filterByTeamWithMembershipCheck(zql.mattersTable, ctx, teamId);
-			return applyKeysetPagination(includeMatterRelations(q), cursor, direction, limit);
+			return applyKeysetPagination(
+				includeMatterRelations(q),
+				cursor,
+				direction,
+				limit,
+			);
 		},
 	),
 
@@ -386,7 +405,12 @@ export const queries = defineQueries({
 					w.where("type", "IN", [statusType.notStarted, statusType.started]),
 				);
 
-			return applyKeysetPagination(includeMatterRelations(q), cursor, direction, limit);
+			return applyKeysetPagination(
+				includeMatterRelations(q),
+				cursor,
+				direction,
+				limit,
+			);
 		},
 	),
 
@@ -407,7 +431,12 @@ export const queries = defineQueries({
 					w.where("type", "IN", [statusType.pendingApproval]),
 				);
 
-			return applyKeysetPagination(includeMatterRelations(q), cursor, direction, limit);
+			return applyKeysetPagination(
+				includeMatterRelations(q),
+				cursor,
+				direction,
+				limit,
+			);
 		},
 	),
 });

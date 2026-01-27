@@ -22,6 +22,7 @@ import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
 import { getAuthSessionSWR } from "~/lib/auth/offline";
 import { getServerSession } from "~/lib/auth/server.js";
+import { getSubscriptionSWR } from "~/lib/billing/offline";
 import { fetchOrgSubscription } from "~/lib/billing/service";
 import { requireAuth } from "~/middlewares/auth-guard";
 import type { Route } from "./+types/layout";
@@ -100,15 +101,30 @@ export async function clientLoader({
 	context,
 	serverLoader,
 }: Route.ClientLoaderArgs) {
-	const serverData = await serverLoader();
 	const authSession = context.get(clientAuthContext);
+	const orgSlug = params.orgSlug as string;
+
+	const subscription = await getSubscriptionSWR(async () => {
+		const data = await serverLoader();
+		return data.subscription;
+	}, orgSlug);
+
+	if (!authSession || !subscription) {
+		throw new Response("Failed to load application data", { status: 503 });
+	}
 
 	return {
-		authSession: authSession ?? serverData.authSession,
-		orgSlug: params.orgSlug,
-		subscription: serverData.subscription,
+		authSession,
+		orgSlug,
+		subscription,
 	};
 }
+
+clientLoader.hydrate = true as const; // `as const` for type inference
+
+// export function HydrateFallback() {
+// 	return <SidebarSkeleton />;
+// }
 
 export default function ParentLayout({ loaderData }: Route.ComponentProps) {
 	const { authSession, orgSlug } = loaderData;

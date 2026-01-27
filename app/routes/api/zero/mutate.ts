@@ -57,10 +57,17 @@ export async function action({ request }: Route.ActionArgs) {
 	return await handleMutateRequest(
 		dbProvider,
 		(transact) =>
-			transact(async (tx: any, name: string, args: any) => {
-				const mutator = mustGetMutator(mutators, name);
-				await mutator.fn({ tx, ctx, args });
-			}),
+			transact(
+				async (
+					// biome-ignore lint/suspicious/noExplicitAny: zero provides runtime transaction type
+					tx: any,
+					name,
+					args,
+				) => {
+					const mutator = mustGetMutator(mutators, name);
+					await mutator.fn({ tx, ctx, args });
+				},
+			),
 		request,
 	);
 }

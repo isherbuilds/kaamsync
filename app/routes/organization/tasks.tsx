@@ -5,21 +5,21 @@ import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
-import { renderPriorityIcon } from "~/components/shared/icons";
 import { MatterListWithDetailPanel } from "~/components/matter/matter-list-layout";
+import { renderPriorityIcon } from "~/components/shared/icons";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Item, ItemContent, ItemTitle } from "~/components/ui/item";
-import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
-import { useIsMobile } from "~/hooks/use-mobile";
 import {
 	getPriorityColorClass,
 	Priority,
 	type PriorityValue,
-	sortStatusComparator,
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
+	sortStatusComparator,
 } from "~/config/matter";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { cn, formatDueDateLabel } from "~/lib/utils";
 
 import type { Route } from "./+types/tasks";
@@ -69,10 +69,10 @@ export default function OrganizationTasksPage() {
 	// --------------------------------------------------------------------------
 
 	const tasksSortedByStatus = useMemo(() => {
-		if (!tasks) return [];
-		return [...tasks]
-			.filter((t) => t)
-			.sort((a, b) => sortStatusComparator(a.status || {}, b.status || {}));
+		if (!tasks?.length) return [];
+		return [...tasks].sort((a, b) =>
+			sortStatusComparator(a.status || {}, b.status || {}),
+		);
 	}, [tasks]);
 
 	const membersByUserId = useMemo(() => {
@@ -87,6 +87,8 @@ export default function OrganizationTasksPage() {
 	// --------------------------------------------------------------------------
 	// Callbacks
 	// --------------------------------------------------------------------------
+
+	const now = useMemo(() => Date.now(), []);
 
 	const handleRenderTaskItem = useCallback(
 		(matter: TaskMatter) => {
@@ -129,7 +131,7 @@ export default function OrganizationTasksPage() {
 										<span
 											className={cn(
 												"text-muted-foreground text-xs",
-												(matter.dueDate < Date.now() ||
+												(matter.dueDate < now ||
 													priority === Priority.URGENT) &&
 													"font-medium text-priority-urgent",
 											)}
@@ -144,7 +146,7 @@ export default function OrganizationTasksPage() {
 				</NavLink>
 			);
 		},
-		[orgSlug, isMobile, membersByUserId],
+		[membersByUserId, orgSlug, isMobile, now],
 	);
 
 	// --------------------------------------------------------------------------

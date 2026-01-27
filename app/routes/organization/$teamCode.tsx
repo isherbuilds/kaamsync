@@ -1,31 +1,21 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { CalendarIcon, ChevronDown, ListTodoIcon } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { CalendarIcon, ChevronDown } from "lucide-react";
+import { lazy, memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
-import { CreateMatterDialog } from "~/components/matter/matter-dialog";
 import {
 	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
 import { StableLink } from "~/components/shared/stable-link";
+import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import { EmptyStateCard } from "~/components/ui/empty-state";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { VirtualizedList } from "~/components/shared/virtualized-list";
-import {
-	type StatusGroupHeader,
-	type StatusGroupListItem,
-	type TaskListItem,
-	useTasksByStatusGroup,
-} from "~/hooks/use-grouped-tasks";
-import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
-import { usePermissions } from "~/hooks/use-permissions";
 import {
 	// COMPLETED_STATUS_TYPES,
 	type PriorityValue,
@@ -33,8 +23,23 @@ import {
 	STATUS_TYPE_ICONS,
 	type StatusType,
 } from "~/config/matter";
+import {
+	type StatusGroupHeader as StatusGroupHeaderType,
+	type StatusGroupListItem,
+	type TaskListItem,
+	useTasksByStatusGroup,
+} from "~/hooks/use-grouped-tasks";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { usePermissions } from "~/hooks/use-permissions";
 import { cn, formatDueDateLabel } from "~/lib/utils";
 import type { Route } from "./+types/$teamCode";
+
+// Lazy load heavy dialog component
+const CreateMatterDialog = lazy(() =>
+	import("~/components/matter/matter-dialog").then((module) => ({
+		default: module.CreateMatterDialog,
+	})),
+);
 
 // ============================================================================
 // Route Meta
@@ -110,34 +115,37 @@ export default function TeamTasksPage() {
 	);
 
 	const handleAssigneeChange = useCallback(
-		(id: string, assigneeId: string | null, taskTitle?: string, taskCode?: string) => {
-			z.mutate(mutators.matter.assign({ id, assigneeId })).server.then(
-				() => {
-					if (assigneeId) {
-						const notificationUrl = taskCode
-							? `/${orgSlug}/matter/${taskCode}`
-							: `/${orgSlug}/matter`;
+		(
+			id: string,
+			assigneeId: string | null,
+			taskTitle?: string,
+			taskCode?: string,
+		) => {
+			z.mutate(mutators.matter.assign({ id, assigneeId })).server.then(() => {
+				if (assigneeId) {
+					const notificationUrl = taskCode
+						? `/${orgSlug}/matter/${taskCode}`
+						: `/${orgSlug}/matter`;
 
-						import("~/hooks/use-push-notifications")
-							.then(({ sendNotificationToUser }) => {
-								sendNotificationToUser(
-									assigneeId,
-									"Task Assigned to You",
-									taskTitle
-										? `${taskCode}: ${taskTitle}`
-										: "A task was assigned to you",
-									notificationUrl,
-								);
-							})
-							.catch((err) => {
-								console.error(
-									"[PushNotification] Failed to send notification:",
-									err,
-								);
-							});
-					}
-				},
-			);
+					import("~/hooks/use-push-notifications")
+						.then(({ sendNotificationToUser }) => {
+							sendNotificationToUser(
+								assigneeId,
+								"Task Assigned to You",
+								taskTitle
+									? `${taskCode}: ${taskTitle}`
+									: "A task was assigned to you",
+								notificationUrl,
+							);
+						})
+						.catch((err) => {
+							console.error(
+								"[PushNotification] Failed to send notification:",
+								err,
+							);
+						});
+				}
+			});
 		},
 		[z, orgSlug],
 	);
@@ -178,17 +186,18 @@ export default function TeamTasksPage() {
 
 			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
-					<TeamTasksEmptyState
-						isManager={isManager}
-						canRequest={canCreateRequests}
-						teamId={team.id}
-						teamCode={team.code}
-						taskStatuses={taskStatuses}
-						requestStatuses={
-							requestStatuses.length > 0 ? requestStatuses : taskStatuses
-						}
-						members={team.memberships ?? []}
-					/>
+					// <TeamTasksEmptyState
+					// 	isManager={isManager}
+					// 	canRequest={canCreateRequests}
+					// 	teamId={team.id}
+					// 	teamCode={team.code}
+					// 	taskStatuses={taskStatuses}
+					// 	requestStatuses={
+					// 		requestStatuses.length > 0 ? requestStatuses : taskStatuses
+					// 	}
+					// 	members={team.memberships ?? []}
+					// />
+					<div>Hello</div>
 				) : (
 					<VirtualizedList
 						items={flatItems}
@@ -282,7 +291,7 @@ const StatusGroupHeader = memo(
 		item,
 		onToggle,
 	}: {
-		item: StatusGroupHeader;
+		item: StatusGroupHeaderType;
 		onToggle: (id: string) => void;
 	}) => {
 		const { status, count, isExpanded } = item;
@@ -363,7 +372,8 @@ const TaskListRow = memo(
 		);
 
 		const handleAssigneeSelect = useCallback(
-			(assigneeId: string | null) => onAssigneeChange(task.id, assigneeId, task.title, taskCode),
+			(assigneeId: string | null) =>
+				onAssigneeChange(task.id, assigneeId, task.title, taskCode),
 			[onAssigneeChange, task.id, task.title, taskCode],
 		);
 
@@ -440,52 +450,52 @@ function TaskDueDateBadge({ date }: { date: number }) {
 	);
 }
 
-// ============================================================================
-// Empty State Component
-// ============================================================================
+// // ============================================================================
+// // Empty State Component
+// // ============================================================================
 
-const TeamTasksEmptyState = memo(
-	({
-		isManager,
-		canRequest,
-		teamId,
-		teamCode,
-		taskStatuses,
-		requestStatuses,
-		members,
-	}: TeamActionProps) => (
-		<div className="flex h-full items-center justify-center p-8">
-			<EmptyStateCard
-				icon={ListTodoIcon}
-				title="All clear"
-				description="No active tasks in this team. Rest easy or create a new one."
-			>
-				<div className="flex gap-2">
-					{isManager && (
-						<CreateMatterDialog
-							type="task"
-							teamId={teamId}
-							teamCode={teamCode}
-							statuses={taskStatuses}
-							teamMembers={members}
-						/>
-					)}
-					{canRequest && (
-						<CreateMatterDialog
-							type="request"
-							teamId={teamId}
-							teamCode={teamCode}
-							statuses={requestStatuses}
-							teamMembers={members}
-							triggerButton={
-								<Button size="sm" variant="outline">
-									Request
-								</Button>
-							}
-						/>
-					)}
-				</div>
-			</EmptyStateCard>
-		</div>
-	),
-);
+// const TeamTasksEmptyState = memo(
+// 	({
+// 		isManager,
+// 		canRequest,
+// 		teamId,
+// 		teamCode,
+// 		taskStatuses,
+// 		requestStatuses,
+// 		members,
+// 	}: TeamActionProps) => (
+// 		<div className="flex h-full items-center justify-center p-8">
+// 			<EmptyStateCard
+// 				icon={ListTodoIcon}
+// 				title="All clear"
+// 				description="No active tasks in this team. Rest easy or create a new one."
+// 			>
+// 				<div className="flex gap-2">
+// 					{isManager && (
+// 						<CreateMatterDialog
+// 							type="task"
+// 							teamId={teamId}
+// 							teamCode={teamCode}
+// 							statuses={taskStatuses}
+// 							teamMembers={members}
+// 						/>
+// 					)}
+// 					{canRequest && (
+// 						<CreateMatterDialog
+// 							type="request"
+// 							teamId={teamId}
+// 							teamCode={teamCode}
+// 							statuses={requestStatuses}
+// 							teamMembers={members}
+// 							triggerButton={
+// 								<Button size="sm" variant="outline">
+// 									Request
+// 								</Button>
+// 							}
+// 						/>
+// 					)}
+// 				</div>
+// 			</EmptyStateCard>
+// 		</div>
+// 	),
+// );

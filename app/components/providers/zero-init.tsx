@@ -1,6 +1,6 @@
 import type { Zero, ZeroOptions } from "@rocicorp/zero";
 import { ZeroProvider } from "@rocicorp/zero/react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { mutators } from "zero/mutators";
 import { preloadAll } from "zero/preload";
 import { schema } from "zero/schema";

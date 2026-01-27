@@ -103,6 +103,7 @@ export const mutators = defineMutators({
 				dueDate: z.number().nullable().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
@@ -110,7 +111,7 @@ export const mutators = defineMutators({
 
 				await tx.mutate.mattersTable.update({
 					...args,
-					updatedAt: Date.now(),
+					updatedAt: now,
 				});
 			},
 		),
@@ -118,6 +119,7 @@ export const mutators = defineMutators({
 		updateStatus: defineMutator(
 			z.object({ id: z.string(), statusId: z.string() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { matter, membership } = await checkMatterModifyAccess(
 					tx,
 					ctx,
@@ -135,7 +137,19 @@ export const mutators = defineMutators({
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					statusId: args.statusId,
-					updatedAt: Date.now(),
+					updatedAt: now,
+				});
+
+				tx.mutate.timelinesTable.insert({
+					id: uuid(),
+					matterId: args.id,
+					userId: ctx.userId,
+					type: "status_change",
+					fromStatusId: matter.statusId,
+					toStatusId: args.statusId,
+					edited: false,
+					createdAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -143,6 +157,7 @@ export const mutators = defineMutators({
 		assign: defineMutator(
 			z.object({ id: z.string(), assigneeId: z.string().nullable() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { matter, membership } = await checkMatterModifyAccess(
 					tx,
 					ctx,
@@ -161,7 +176,19 @@ export const mutators = defineMutators({
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					assigneeId: args.assigneeId,
-					updatedAt: Date.now(),
+					updatedAt: now,
+				});
+
+				tx.mutate.timelinesTable.insert({
+					id: uuid(),
+					matterId: args.id,
+					userId: ctx.userId,
+					type: "assignment",
+					fromAssigneeId: matter.assigneeId ?? null,
+					toAssigneeId: args.assigneeId ?? null,
+					edited: false,
+					createdAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -169,6 +196,7 @@ export const mutators = defineMutators({
 		delete: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
@@ -176,8 +204,8 @@ export const mutators = defineMutators({
 
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					deletedAt: Date.now(),
-					updatedAt: Date.now(),
+					deletedAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -185,6 +213,7 @@ export const mutators = defineMutators({
 		restore: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id, {
 					deleted: true,
 				});
@@ -195,7 +224,17 @@ export const mutators = defineMutators({
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					deletedAt: null,
-					updatedAt: Date.now(),
+					updatedAt: now,
+				});
+
+				tx.mutate.timelinesTable.insert({
+					id: uuid(),
+					matterId: args.id,
+					userId: ctx.userId,
+					type: "restore",
+					edited: false,
+					createdAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -203,6 +242,7 @@ export const mutators = defineMutators({
 		archive: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
@@ -211,9 +251,19 @@ export const mutators = defineMutators({
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					archived: true,
-					archivedAt: Date.now(),
+					archivedAt: now,
 					archivedBy: ctx.userId,
-					updatedAt: Date.now(),
+					updatedAt: now,
+				});
+
+				tx.mutate.timelinesTable.insert({
+					id: uuid(),
+					matterId: args.id,
+					userId: ctx.userId,
+					type: "archive",
+					edited: false,
+					createdAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -221,6 +271,7 @@ export const mutators = defineMutators({
 		unarchive: defineMutator(
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
@@ -231,7 +282,7 @@ export const mutators = defineMutators({
 					archived: false,
 					archivedAt: null,
 					archivedBy: null,
-					updatedAt: Date.now(),
+					updatedAt: now,
 				});
 			},
 		),
@@ -239,6 +290,7 @@ export const mutators = defineMutators({
 		approve: defineMutator(
 			z.object({ id: z.string(), note: z.string().optional() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				requireAuthentication(ctx);
 				const matter = await tx.run(
 					zql.mattersTable
@@ -278,12 +330,25 @@ export const mutators = defineMutators({
 
 				await tx.mutate.mattersTable.update({
 					id: args.id,
-					type: matterType.task, // Convert request to task
+					type: matterType.task,
 					approvedBy: ctx.userId,
-					approvedAt: Date.now(),
+					approvedAt: now,
 					rejectionReason: args.note ?? null,
-					statusId: defaultStatus.id, // Assign task status (guaranteed to exist)
-					updatedAt: Date.now(),
+					statusId: defaultStatus.id,
+					updatedAt: now,
+				});
+
+				tx.mutate.timelinesTable.insert({
+					id: uuid(),
+					matterId: args.id,
+					userId: ctx.userId,
+					type: "approval",
+					content: args.note,
+					fromStatusId: matter.statusId,
+					toStatusId: defaultStatus.id,
+					edited: false,
+					createdAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -291,6 +356,7 @@ export const mutators = defineMutators({
 		reject: defineMutator(
 			z.object({ id: z.string(), note: z.string().optional() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				requireAuthentication(ctx);
 				const matter = await tx.run(
 					zql.mattersTable
@@ -318,10 +384,23 @@ export const mutators = defineMutators({
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					approvedBy: ctx.userId,
-					approvedAt: Date.now(),
+					approvedAt: now,
 					rejectionReason: args.note ?? null,
-					statusId: rejectedStatus?.id ?? matter.statusId, // Best effort fallback
-					updatedAt: Date.now(),
+					statusId: rejectedStatus?.id ?? matter.statusId,
+					updatedAt: now,
+				});
+
+				tx.mutate.timelinesTable.insert({
+					id: uuid(),
+					matterId: args.id,
+					userId: ctx.userId,
+					type: "rejection",
+					content: args.note,
+					fromStatusId: matter.statusId,
+					toStatusId: rejectedStatus?.id ?? matter.statusId,
+					edited: false,
+					createdAt: now,
+					updatedAt: now,
 				});
 			},
 		),
@@ -331,13 +410,12 @@ export const mutators = defineMutators({
 		addComment: defineMutator(
 			z.object({ matterId: z.string(), content: z.string() }),
 			async ({ tx, ctx, args }) => {
+				const now = Date.now();
 				// Permission: Ensure user can access the matter
 				await checkMatterModifyAccess(tx, ctx, args.matterId);
 
-				const id = uuid();
-				const now = Date.now();
 				await tx.mutate.timelinesTable.insert({
-					id,
+					id: uuid(),
 					matterId: args.matterId,
 					userId: ctx.userId,
 					type: "comment",
@@ -489,11 +567,12 @@ export const mutators = defineMutators({
 				if (existingMembership) {
 					if (existingMembership.deletedAt) {
 						// Reactivate
+						const now = Date.now();
 						await tx.mutate.teamMembershipsTable.update({
 							id: existingMembership.id,
 							role: args.role,
 							deletedAt: null,
-							updatedAt: Date.now(),
+							updatedAt: now,
 						});
 					} else {
 						throw new Error("User is already a member of this team");
@@ -542,13 +621,14 @@ export const mutators = defineMutators({
 					throw new Error("User is not a member of this team");
 				}
 
+				const now = Date.now();
 				await tx.mutate.teamMembershipsTable.update({
 					id: membership.id,
 					role: args.role,
 					canApproveRequests: args.role === teamRole.manager,
 					canManageMembers: args.role === teamRole.manager,
 					canManageTeam: args.role === teamRole.manager,
-					updatedAt: Date.now(),
+					updatedAt: now,
 				});
 			},
 		),
@@ -574,10 +654,11 @@ export const mutators = defineMutators({
 					throw new Error("User is not a member of this team");
 				}
 
+				const now = Date.now();
 				await tx.mutate.teamMembershipsTable.update({
 					id: membership.id,
-					deletedAt: Date.now(),
-					updatedAt: Date.now(),
+					deletedAt: now,
+					updatedAt: now,
 				});
 			},
 		),

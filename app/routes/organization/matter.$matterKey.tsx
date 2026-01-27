@@ -39,10 +39,10 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Separator } from "~/components/ui/separator";
+import { Priority, type PriorityValue } from "~/config/matter";
 import { parseMatterKeyString } from "~/db/helpers";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
-import { Priority, type PriorityValue } from "~/config/matter";
 import type { Route } from "./+types/matter.$matterKey";
 
 export const meta: Route.MetaFunction = ({ params }) => [
@@ -89,15 +89,16 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		: false;
 
 	// Filter statuses based on matter type (task vs request)
+	const matterType = matter?.type;
 	const filteredStatuses = useMemo(() => {
-		if (!matter) return statuses;
-		const isRequest = matter.type === "request";
+		if (!matterType) return statuses;
+		const isRequest = matterType === "request";
 		return statuses.filter((s) => {
 			const isRequestStatus =
 				s.type === "pending_approval" || s.type === "rejected";
 			return isRequest ? isRequestStatus : !isRequestStatus;
 		});
-	}, [matter, statuses]);
+	}, [matterType, statuses]);
 
 	// 3. State & Loading
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -208,7 +209,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						<ChevronRight className="size-4 rotate-180" />
 						<span className="ml-1 hidden sm:inline">Back</span>
 					</Button>
-					<span className="truncate font-medium font-mono text-muted-foreground/50 text-xs">
+					<span className="truncate font-medium font-mono text-muted-foreground text-xs">
 						{matter.teamCode}-{matter.shortID}
 					</span>
 				</div>
