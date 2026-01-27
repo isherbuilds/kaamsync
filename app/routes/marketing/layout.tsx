@@ -60,12 +60,12 @@ export default function MarketingLayout() {
 					</div>
 
 					{/* Desktop nav */}
-					<div className="hidden md:flex">
+					<div className="hidden gap-x-6 md:flex">
 						{navLinks.map(({ to, label }) => (
 							<Link
 								key={to}
 								to={to}
-								className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
+								className="px-4 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
 							>
 								{label}
 							</Link>
