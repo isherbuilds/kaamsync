@@ -5,24 +5,28 @@ import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
-import { renderPriorityIcon } from "~/components/icons";
-import { MatterListLayout } from "~/components/matter/matter-list-layout";
+import { MatterListWithDetailPanel } from "~/components/matter/matter-list-layout";
+import { renderPriorityIcon } from "~/components/shared/icons";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Item, ItemContent, ItemTitle } from "~/components/ui/item";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
-import { useIsMobile } from "~/hooks/use-mobile";
 import {
-	compareStatuses,
-	getPriorityColor,
+	getPriorityColorClass,
 	Priority,
 	type PriorityValue,
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
-import { cn, formatCompactRelativeDate } from "~/lib/utils";
+	sortStatusComparator,
+} from "~/config/matter";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { useIsMobile } from "~/hooks/use-mobile";
+import { cn, formatDueDateLabel } from "~/lib/utils";
 
 import type { Route } from "./+types/tasks";
+
+// ============================================================================
+// Meta
+// ============================================================================
 
 export const meta: Route.MetaFunction = ({ params }) => [
 	{
@@ -34,11 +38,23 @@ export const meta: Route.MetaFunction = ({ params }) => [
 	},
 ];
 
+// ============================================================================
+// Types
+// ============================================================================
+
 type TaskMatter = Row["mattersTable"] & { status?: Row["statusesTable"] };
 
-export default function TasksPage() {
-	const { orgSlug } = useOrgLoaderData();
+// ============================================================================
+// Component
+// ============================================================================
+
+export default function OrganizationTasksPage() {
+	const { orgSlug } = useOrganizationLoaderData();
 	const isMobile = useIsMobile();
+
+	// --------------------------------------------------------------------------
+	// Data Fetching
+	// --------------------------------------------------------------------------
 
 	const [tasks] = useQuery(queries.getUserAssignedMatters(), {
 		...CACHE_LONG,
@@ -48,14 +64,18 @@ export default function TasksPage() {
 		...CACHE_LONG,
 	});
 
-	const sortedTasks = useMemo(() => {
-		if (!tasks) return [];
-		return [...tasks]
-			.filter((t) => t)
-			.sort((a, b) => compareStatuses(a.status || {}, b.status || {}));
+	// --------------------------------------------------------------------------
+	// Memoized Values
+	// --------------------------------------------------------------------------
+
+	const tasksSortedByStatus = useMemo(() => {
+		if (!tasks?.length) return [];
+		return [...tasks].sort((a, b) =>
+			sortStatusComparator(a.status || {}, b.status || {}),
+		);
 	}, [tasks]);
 
-	const membersMap = useMemo(() => {
+	const membersByUserId = useMemo(() => {
 		const map = new Map();
 		if (!members) return map;
 		for (const m of members) {
@@ -64,12 +84,17 @@ export default function TasksPage() {
 		return map;
 	}, [members]);
 
-	const renderTaskItem = useCallback(
+	// --------------------------------------------------------------------------
+	// Callbacks
+	// --------------------------------------------------------------------------
+
+	const handleRenderTaskItem = useCallback(
 		(matter: TaskMatter) => {
+			const now = Date.now();
 			const priority = (matter.priority ?? Priority.NONE) as PriorityValue;
 			const statusType = (matter.status?.type as StatusType) ?? "not_started";
 			const StatusIcon = STATUS_TYPE_ICONS[statusType];
-			const author = membersMap.get(matter.authorId);
+			const author = membersByUserId.get(matter.authorId);
 
 			return (
 				<NavLink
@@ -97,7 +122,7 @@ export default function TasksPage() {
 								)}
 
 								<div className="flex items-center gap-1">
-									<div className={getPriorityColor(priority)}>
+									<div className={getPriorityColorClass(priority)}>
 										{renderPriorityIcon(priority)}
 									</div>
 
@@ -105,12 +130,12 @@ export default function TasksPage() {
 										<span
 											className={cn(
 												"text-muted-foreground text-xs",
-												(matter.dueDate < Date.now() ||
+												(matter.dueDate < now ||
 													priority === Priority.URGENT) &&
 													"font-medium text-priority-urgent",
 											)}
 										>
-											{formatCompactRelativeDate(matter.dueDate)}
+											{formatDueDateLabel(matter.dueDate)}
 										</span>
 									)}
 								</div>
@@ -120,22 +145,26 @@ export default function TasksPage() {
 				</NavLink>
 			);
 		},
-		[orgSlug, isMobile, membersMap],
+		[membersByUserId, orgSlug, isMobile],
 	);
 
+	// --------------------------------------------------------------------------
+	// Render
+	// --------------------------------------------------------------------------
+
 	return (
-		<MatterListLayout
+		<MatterListWithDetailPanel
 			title="Tasks"
 			icon={CheckCircle2}
 			accentColor="blue"
-			items={sortedTasks}
+			items={tasksSortedByStatus}
 			isLoading={!tasks}
 			emptyState={{
 				title: "No tasks assigned",
 				description: "You're all caught up",
 			}}
 			estimateSize={60}
-			renderItem={renderTaskItem}
+			renderItem={handleRenderTaskItem}
 		/>
 	);
 }

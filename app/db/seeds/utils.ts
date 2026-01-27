@@ -1,4 +1,4 @@
-import { db } from "~/db/index";
+import { db } from "~/db";
 
 export const randomDate = (start: Date, end: Date): Date =>
 	new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));

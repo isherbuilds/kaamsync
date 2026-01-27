@@ -9,7 +9,7 @@ import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
-import { CustomChildrenField } from "~/components/forms";
+import { CustomChildrenField } from "~/components/shared/forms";
 import { MemberSelect } from "~/components/matter/matter-field-selectors";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -30,7 +30,7 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { type TeamRole, teamRole } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 
 const addMemberSchema = z.object({
 	userId: z.string().min(1, "Select a user"),
@@ -38,7 +38,7 @@ const addMemberSchema = z.object({
 });
 
 export default function TeamMembersPage() {
-	const { authSession } = useOrgLoaderData();
+	const { authSession } = useOrganizationLoaderData();
 	const { teamCode } = useParams();
 	const zr = useZero();
 	const [open, setOpen] = useState(false);

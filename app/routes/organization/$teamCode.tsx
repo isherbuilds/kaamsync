@@ -1,50 +1,62 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { CalendarIcon, ChevronDown, ListTodoIcon } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { BanIcon, CalendarIcon, ChevronDown, InboxIcon } from "lucide-react";
+import { lazy, memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
-import { MatterDialog } from "~/components/matter/matter-dialog";
 import {
 	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
-import { StableLink } from "~/components/stable-link";
+import { StableLink } from "~/components/shared/stable-link";
+import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
 import { EmptyStateCard } from "~/components/ui/empty-state";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { VirtualizedList } from "~/components/virtualized-list";
-import {
-	type HeaderItem,
-	type ListItem,
-	type TaskItem,
-	useGroupedTasks,
-} from "~/hooks/use-grouped-tasks";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
-import { usePermissions } from "~/hooks/use-permissions";
 import {
 	// COMPLETED_STATUS_TYPES,
 	type PriorityValue,
 	STATUS_TYPE_COLORS,
 	STATUS_TYPE_ICONS,
 	type StatusType,
-} from "~/lib/matter-constants";
-import { cn, formatCompactRelativeDate } from "~/lib/utils";
+} from "~/config/matter";
+import {
+	type StatusGroupHeader as StatusGroupHeaderType,
+	type StatusGroupListItem,
+	type TaskListItem,
+	useTasksByStatusGroup,
+} from "~/hooks/use-grouped-tasks";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { usePermissions } from "~/hooks/use-permissions";
+import { cn, formatDueDateLabel } from "~/lib/utils";
 import type { Route } from "./+types/$teamCode";
+
+// Lazy load heavy dialog component
+const CreateMatterDialog = lazy(() =>
+	import("~/components/matter/matter-dialog").then((module) => ({
+		default: module.CreateMatterDialog,
+	})),
+);
+
+// ============================================================================
+// Route Meta
+// ============================================================================
 
 export const meta: Route.MetaFunction = ({ params }) => [
 	{ title: `${params.teamCode} - Tasks` },
 ];
 
+// ============================================================================
+// Types
+// ============================================================================
+
 type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
 type Status = Row["statusesTable"];
 
-// Header and EmptyState props
-type ActionProps = {
+type TeamActionProps = {
 	isManager: boolean;
 	canRequest: boolean;
 	teamId: string;
@@ -54,8 +66,12 @@ type ActionProps = {
 	members: readonly Row["teamMembershipsTable"][];
 };
 
-export default function TeamIndex() {
-	const { orgSlug } = useOrgLoaderData();
+// ============================================================================
+// Main Component
+// ============================================================================
+
+export default function TeamTasksPage() {
+	const { orgSlug } = useOrganizationLoaderData();
 	const { teamCode } = useParams();
 	const z = useZero();
 
@@ -79,53 +95,57 @@ export default function TeamIndex() {
 
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
-		useGroupedTasks(matters as Matter[], statuses);
+		useTasksByStatusGroup(matters as Matter[], statuses);
 
 	const { isManager, canCreateRequests } = usePermissions(
 		teamId,
 		team?.memberships,
 	);
 
-	const onPriority = useCallback(
-		(id: string, p: PriorityValue) =>
-			z.mutate(mutators.matter.update({ id, priority: p })),
+	const handlePriorityChange = useCallback(
+		(id: string, priority: PriorityValue) =>
+			z.mutate(mutators.matter.update({ id, priority })),
 		[z],
 	);
-	const onStatus = useCallback(
-		(id: string, s: string) =>
-			z.mutate(mutators.matter.updateStatus({ id, statusId: s })),
-		[z],
-	);
-	const onAssign = useCallback(
-		(id: string, u: string | null, taskTitle?: string, taskCode?: string) => {
-			z.mutate(mutators.matter.assign({ id, assigneeId: u })).server.then(
-				() => {
-					// Send push notification to new assignee (fire and forget)
-					if (u) {
-						const notificationUrl = taskCode
-							? `/${orgSlug}/matter/${taskCode}`
-							: `/${orgSlug}/matter`;
 
-						import("~/hooks/use-push-notifications")
-							.then(({ sendNotificationToUser }) => {
-								sendNotificationToUser(
-									u,
-									"Task Assigned to You",
-									taskTitle
-										? `${taskCode}: ${taskTitle}`
-										: "A task was assigned to you",
-									notificationUrl,
-								);
-							})
-							.catch((err) => {
-								console.error(
-									"[PushNotification] Failed to send notification:",
-									err,
-								);
-							});
-					}
-				},
-			);
+	const handleStatusChange = useCallback(
+		(id: string, statusId: string) =>
+			z.mutate(mutators.matter.updateStatus({ id, statusId })),
+		[z],
+	);
+
+	const handleAssigneeChange = useCallback(
+		(
+			id: string,
+			assigneeId: string | null,
+			taskTitle?: string,
+			taskCode?: string,
+		) => {
+			z.mutate(mutators.matter.assign({ id, assigneeId })).server.then(() => {
+				if (assigneeId) {
+					const notificationUrl = taskCode
+						? `/${orgSlug}/matter/${taskCode}`
+						: `/${orgSlug}/matter`;
+
+					import("~/hooks/use-push-notifications")
+						.then(({ sendNotificationToUser }) => {
+							sendNotificationToUser(
+								assigneeId,
+								"Task Assigned to You",
+								taskTitle
+									? `${taskCode}: ${taskTitle}`
+									: "A task was assigned to you",
+								notificationUrl,
+							);
+						})
+						.catch((err) => {
+							console.error(
+								"[PushNotification] Failed to send notification:",
+								err,
+							);
+						});
+				}
+			});
 		},
 		[z, orgSlug],
 	);
@@ -150,7 +170,7 @@ export default function TeamIndex() {
 
 	return (
 		<div className="flex h-full flex-col overflow-hidden bg-background">
-			<Header
+			<TeamPageHeader
 				name={team.name}
 				count={activeCount}
 				isManager={isManager}
@@ -166,16 +186,10 @@ export default function TeamIndex() {
 
 			<div className="min-h-0 flex-1">
 				{flatItems.length === 0 ? (
-					<TeamEmptyState
-						isManager={isManager}
-						canRequest={canCreateRequests}
-						teamId={team.id}
-						teamCode={team.code}
-						taskStatuses={taskStatuses}
-						requestStatuses={
-							requestStatuses.length > 0 ? requestStatuses : taskStatuses
-						}
-						members={team.memberships ?? []}
+					<EmptyStateCard
+						icon={InboxIcon}
+						title="This team has no tasks"
+						description="You can create new tasks to get started."
 					/>
 				) : (
 					<VirtualizedList
@@ -183,18 +197,18 @@ export default function TeamIndex() {
 						getItemKey={(item) => item.id}
 						estimateSize={44}
 						stickyIndices={stickyIndices}
-						renderItem={(item: ListItem) =>
+						renderItem={(item: StatusGroupListItem) =>
 							item.type === "header" ? (
-								<GroupHeader item={item} onToggle={toggleGroup} />
+								<StatusGroupHeader item={item} onToggle={toggleGroup} />
 							) : (
-								<TaskRow
+								<TaskListRow
 									item={item}
 									orgSlug={orgSlug}
 									members={team.memberships ?? []}
 									statuses={taskStatuses}
-									onPriority={onPriority}
-									onStatus={onStatus}
-									onAssign={onAssign}
+									onPriorityChange={handlePriorityChange}
+									onStatusChange={handleStatusChange}
+									onAssigneeChange={handleAssigneeChange}
 								/>
 							)
 						}
@@ -205,12 +219,16 @@ export default function TeamIndex() {
 	);
 }
 
-interface HeaderProps extends ActionProps {
+// ============================================================================
+// Header Component
+// ============================================================================
+
+interface TeamPageHeaderProps extends TeamActionProps {
 	name: string;
 	count: number;
 }
 
-const Header = memo(
+const TeamPageHeader = memo(
 	({
 		name,
 		count,
@@ -221,7 +239,7 @@ const Header = memo(
 		taskStatuses,
 		requestStatuses,
 		members,
-	}: HeaderProps) => (
+	}: TeamPageHeaderProps) => (
 		<div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
 			<div className="flex min-w-0 items-center gap-2">
 				<SidebarTrigger className="-ml-1 lg:hidden" />
@@ -235,7 +253,7 @@ const Header = memo(
 			</div>
 			<div className="flex items-center gap-2">
 				{isManager && (
-					<MatterDialog
+					<CreateMatterDialog
 						type="task"
 						teamId={teamId}
 						teamCode={teamCode}
@@ -244,7 +262,7 @@ const Header = memo(
 					/>
 				)}
 				{canRequest && (
-					<MatterDialog
+					<CreateMatterDialog
 						type="request"
 						teamId={teamId}
 						teamCode={teamCode}
@@ -257,12 +275,16 @@ const Header = memo(
 	),
 );
 
-const GroupHeader = memo(
+// ============================================================================
+// Status Group Header Component
+// ============================================================================
+
+const StatusGroupHeader = memo(
 	({
 		item,
 		onToggle,
 	}: {
-		item: HeaderItem;
+		item: StatusGroupHeaderType;
 		onToggle: (id: string) => void;
 	}) => {
 		const { status, count, isExpanded } = item;
@@ -299,48 +321,53 @@ const GroupHeader = memo(
 	},
 );
 
-interface TaskRowProps {
-	item: TaskItem;
+// ============================================================================
+// Task List Row Component
+// ============================================================================
+
+interface TaskListRowProps {
+	item: TaskListItem;
 	orgSlug: string;
 	members: readonly Row["teamMembershipsTable"][];
 	statuses: readonly Status[];
-	onPriority: (id: string, p: PriorityValue) => void;
-	onStatus: (id: string, s: string) => void;
-	onAssign: (
+	onPriorityChange: (id: string, priority: PriorityValue) => void;
+	onStatusChange: (id: string, statusId: string) => void;
+	onAssigneeChange: (
 		id: string,
-		u: string | null,
+		assigneeId: string | null,
 		taskTitle?: string,
 		taskCode?: string,
 	) => void;
 }
 
-const TaskRow = memo(
+const TaskListRow = memo(
 	({
 		item,
 		orgSlug,
 		members,
 		statuses,
-		onPriority,
-		onStatus,
-		onAssign,
-	}: TaskRowProps) => {
-		const { task, isCompleted } = item as TaskItem;
+		onPriorityChange,
+		onStatusChange,
+		onAssigneeChange,
+	}: TaskListRowProps) => {
+		const { task, isCompleted } = item as TaskListItem;
 		const taskCode = `${task.teamCode}-${task.shortID}`;
 		const link = `/${orgSlug}/matter/${taskCode}`;
 
-		const handlePriority = useCallback(
-			(p: PriorityValue) => onPriority(task.id, p),
-			[onPriority, task.id],
+		const handlePrioritySelect = useCallback(
+			(priority: PriorityValue) => onPriorityChange(task.id, priority),
+			[onPriorityChange, task.id],
 		);
 
-		const handleStatus = useCallback(
-			(s: string) => onStatus(task.id, s),
-			[onStatus, task.id],
+		const handleStatusSelect = useCallback(
+			(statusId: string) => onStatusChange(task.id, statusId),
+			[onStatusChange, task.id],
 		);
 
-		const handleAssign = useCallback(
-			(u: string | null) => onAssign(task.id, u, task.title, taskCode),
-			[onAssign, task.id, task.title, taskCode],
+		const handleAssigneeSelect = useCallback(
+			(assigneeId: string | null) =>
+				onAssigneeChange(task.id, assigneeId, task.title, taskCode),
+			[onAssigneeChange, task.id, task.title, taskCode],
 		);
 
 		return (
@@ -351,7 +378,7 @@ const TaskRow = memo(
 					<div className="flex shrink-0 items-center gap-3">
 						<PrioritySelect
 							value={task.priority as PriorityValue}
-							onChange={handlePriority}
+							onChange={handlePrioritySelect}
 							className="z-20 p-2"
 							align="start"
 						/>
@@ -364,7 +391,7 @@ const TaskRow = memo(
 						<StatusSelect
 							value={task.statusId}
 							statuses={statuses}
-							onChange={handleStatus}
+							onChange={handleStatusSelect}
 							align="start"
 						/>
 					</div>
@@ -381,11 +408,11 @@ const TaskRow = memo(
 					</div>
 
 					<div className="flex shrink-0 items-center gap-4">
-						{task.dueDate && <DueDateBadge date={task.dueDate} />}
+						{task.dueDate && <TaskDueDateBadge date={task.dueDate} />}
 						<MemberSelect
 							value={task.assigneeId}
 							members={members}
-							onChange={handleAssign}
+							onChange={handleAssigneeSelect}
 							align="end"
 							className="z-20 p-0"
 						/>
@@ -396,8 +423,12 @@ const TaskRow = memo(
 	},
 );
 
-function DueDateBadge({ date }: { date: number }) {
-	const label = formatCompactRelativeDate(date);
+// ============================================================================
+// Due Date Badge Component
+// ============================================================================
+
+function TaskDueDateBadge({ date }: { date: number }) {
+	const label = formatDueDateLabel(date);
 	const isOverdue = label === "Overdue";
 	return (
 		<div
@@ -411,49 +442,3 @@ function DueDateBadge({ date }: { date: number }) {
 		</div>
 	);
 }
-
-const TeamEmptyState = memo(
-	({
-		isManager,
-		canRequest,
-		teamId,
-		teamCode,
-		taskStatuses,
-		requestStatuses,
-		members,
-	}: ActionProps) => (
-		<div className="flex h-full items-center justify-center p-8">
-			<EmptyStateCard
-				icon={ListTodoIcon}
-				title="All clear"
-				description="No active tasks in this team. Rest easy or create a new one."
-			>
-				<div className="flex gap-2">
-					{isManager && (
-						<MatterDialog
-							type="task"
-							teamId={teamId}
-							teamCode={teamCode}
-							statuses={taskStatuses}
-							teamMembers={members}
-						/>
-					)}
-					{canRequest && (
-						<MatterDialog
-							type="request"
-							teamId={teamId}
-							teamCode={teamCode}
-							statuses={requestStatuses}
-							teamMembers={members}
-							triggerButton={
-								<Button size="sm" variant="outline">
-									Request
-								</Button>
-							}
-						/>
-					)}
-				</div>
-			</EmptyStateCard>
-		</div>
-	),
-);

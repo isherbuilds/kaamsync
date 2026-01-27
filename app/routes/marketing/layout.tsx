@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link, Outlet, redirect } from "react-router";
 // import { ColorSchemeToggle } from "~/components/layout/color-scheme-toggle";
 import { Button } from "~/components/ui/button";
-import { authClient } from "~/lib/auth-client";
+import { authClient } from "~/lib/auth/client";
 
 export async function clientLoader() {
 	const session = await authClient.getSession();
@@ -60,12 +60,12 @@ export default function MarketingLayout() {
 					</div>
 
 					{/* Desktop nav */}
-					<div className="hidden md:flex md:gap-x-10">
+					<div className="hidden gap-x-6 md:flex">
 						{navLinks.map(({ to, label }) => (
 							<Link
 								key={to}
 								to={to}
-								className="font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
+								className="px-4 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
 							>
 								{label}
 							</Link>
@@ -82,7 +82,7 @@ export default function MarketingLayout() {
 						<Button
 							asChild
 							size="sm"
-							className="h-8 rounded-md bg-primary px-4 font-bold text-foreground text-xs hover:bg-primary/90"
+							className="h-8 rounded-md bg-primary px-4 font-bold text-white text-xs hover:bg-primary/90"
 						>
 							<Link to="/signup">Sign Up</Link>
 						</Button>
@@ -106,15 +106,15 @@ export default function MarketingLayout() {
 					}`}
 					style={{ top: "60px" }} // Approximate header height offset to ensure it doesn't overlap weirdly if z-index fails, but mainly relying on padding
 				>
-					<div className="flex h-full w-full flex-col p-6">
+					<div className="flex h-full w-full flex-col p-4">
 						<div className="flex-1 overflow-y-auto">
-							<div className="flex flex-col gap-4">
+							<div className="flex flex-col">
 								{navLinks.map(({ to, label }) => (
 									<Link
 										key={to}
 										to={to}
 										onClick={() => setOpen(false)}
-										className="text-2xl text-foreground transition-colors hover:bg-muted/50"
+										className="p-2 text-2xl text-foreground transition-colors hover:bg-muted/50"
 									>
 										{label}
 									</Link>

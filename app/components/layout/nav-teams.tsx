@@ -1,9 +1,11 @@
 "use client";
 
+import { useZero } from "@rocicorp/zero/react";
 import { Cog, MoreHorizontal, Plus, Users2Icon } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams } from "react-router";
-import { StableLink } from "~/components/stable-link";
+import { preloadTeam } from "zero/preload";
+import { StableLink } from "~/components/shared/stable-link";
 import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
 import {
 	DropdownMenu,
@@ -22,22 +24,31 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 
-export function NavTeams({
-	teams,
-	orgSlug,
-}: {
-	teams: {
-		id: string;
-		name: string;
-		code: string;
-		slug: string;
-	}[];
+interface TeamInfo {
+	id: string;
+	name: string;
+	code: string;
+	slug: string;
+}
+
+interface NavTeamsProps {
+	teams: TeamInfo[];
 	orgSlug: string;
-}) {
+}
+
+export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 	const { isMobile, setOpenMobile } = useSidebar();
 	const [createTeamOpen, setCreateTeamOpen] = useState(false);
 	const params = useParams();
 	const activeCode = params.teamCode;
+	const z = useZero();
+
+	const handleTeamHover = useCallback(
+		(teamId: string) => {
+			preloadTeam(z, teamId);
+		},
+		[z],
+	);
 
 	return (
 		<>
@@ -60,12 +71,13 @@ export function NavTeams({
 								<StableLink
 									to={`/${orgSlug}/${team.code}`}
 									prefetch="intent"
+									onMouseEnter={() => handleTeamHover(team.id)}
+									onFocus={() => handleTeamHover(team.id)}
 									onClick={
 										isMobile
-											? () => setTimeout(() => setOpenMobile(false), 100)
+											? () => setTimeout(() => setOpenMobile(false), 50)
 											: undefined
 									}
-									// viewTransition
 								>
 									{team.name}
 								</StableLink>
@@ -106,11 +118,6 @@ export function NavTeams({
 											<span>Settings</span>
 										</StableLink>
 									</DropdownMenuItem>
-									{/* <DropdownMenuSeparator />
-									<DropdownMenuItem>
-										<Trash2 className="text-muted-foreground" />
-										<span>Delete Team</span>
-									</DropdownMenuItem> */}
 								</DropdownMenuContent>
 							</DropdownMenu>
 						</SidebarMenuItem>

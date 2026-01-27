@@ -8,15 +8,19 @@ import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useState } from "react";
 import { data, Form, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
-import { InputField, InputGroupField, LoadingButton } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
+import {
+	InputField,
+	InputGroupField,
+	LoadingButton,
+} from "~/components/shared/forms";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { AppInfo } from "~/lib/app-config";
-import { auth, getServerSession } from "~/lib/auth";
-import { getOrganization } from "~/lib/server/organization.server";
-import { seedTeamDefaults } from "~/lib/server/seed-defaults.server";
-import { sanitizeSlug } from "~/lib/utils";
-import { orgOnboardingSchema } from "~/lib/validations/organization";
+import { AppInfo } from "~/config/app";
+import { auth, getServerSession } from "~/lib/auth/server";
+import { seedTeamDefaults } from "~/lib/infra/seed";
+import { getOrganizationById } from "~/lib/organization/service";
+import { organizationOnboardingSchema } from "~/lib/organization/validations";
+import { toUrlSlug } from "~/lib/utils";
 import type { Route } from "./+types/join";
 
 export const meta: Route.MetaFunction = () => [
@@ -47,7 +51,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 	// Fetch organizations if needed
 	const organizations = orgIds.length
-		? (await Promise.all(orgIds.map((id) => getOrganization(id)))).filter(
+		? (await Promise.all(orgIds.map((id) => getOrganizationById(id)))).filter(
 				(org) => org !== null,
 			)
 		: [];
@@ -74,7 +78,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: orgOnboardingSchema.superRefine(async (formValues, ctx) => {
+		schema: organizationOnboardingSchema.superRefine(async (formValues, ctx) => {
 			if (formValues.intent === "create") {
 				const uniqueSlug = await auth.api.checkOrganizationSlug({
 					body: {
@@ -170,9 +174,9 @@ export default function onboardingOrganization({
 		lastResult: typed?.result,
 		onValidate({ formData }) {
 			// Only synchronous validation here; async checks must be done server-side
-			return parseWithZod(formData, { schema: orgOnboardingSchema });
+			return parseWithZod(formData, { schema: organizationOnboardingSchema });
 		},
-		constraint: getZodConstraint(orgOnboardingSchema),
+		constraint: getZodConstraint(organizationOnboardingSchema),
 		shouldRevalidate: "onBlur",
 	});
 
@@ -217,7 +221,7 @@ export default function onboardingOrganization({
 								autoFocus: true,
 								onBlur: (e) => {
 									if (orgSlugField.length === 0) {
-										setOrgSlugField(sanitizeSlug(e.target.value));
+										setOrgSlugField(toUrlSlug(e.target.value));
 									}
 								},
 							}}
@@ -235,7 +239,7 @@ export default function onboardingOrganization({
 									setOrgSlugField(e.target.value);
 								},
 								onBlur: (e) => {
-									const sanitized = sanitizeSlug(e.target.value);
+									const sanitized = toUrlSlug(e.target.value);
 									setOrgSlugField(sanitized);
 								},
 							}}

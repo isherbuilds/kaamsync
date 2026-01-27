@@ -202,7 +202,7 @@ export default function HomePage() {
 						<Button
 							asChild
 							size="lg"
-							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-foreground text-lg transition-all hover:scale-105 hover:bg-primary/90"
+							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/90"
 						>
 							<Link to="/signup">
 								Try it for your team

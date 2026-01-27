@@ -25,16 +25,18 @@ import {
 	useSidebar,
 } from "~/components/ui/sidebar";
 
-export function NavUser({
-	user,
-}: {
-	user: {
-		id: string;
-		name: string;
-		email: string;
-		avatar?: string;
-	};
-}) {
+interface UserInfo {
+	id: string;
+	name: string;
+	email: string;
+	avatar?: string;
+}
+
+interface NavUserProps {
+	user: UserInfo;
+}
+
+export function NavUser({ user }: NavUserProps) {
 	const { isMobile } = useSidebar();
 	const submit = useSubmit();
 

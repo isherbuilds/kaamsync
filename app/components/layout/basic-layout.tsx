@@ -3,17 +3,19 @@ import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
+interface BasicLayoutProps {
+	title: string;
+	description: string;
+	children: React.ReactNode;
+	contentClassName?: string;
+}
+
 export function BasicLayout({
 	title,
 	description,
 	children,
 	contentClassName,
-}: {
-	title: string;
-	description: string;
-	children: React.ReactNode;
-	contentClassName?: string;
-}) {
+}: BasicLayoutProps) {
 	return (
 		<div className="flex h-dvh w-full flex-col items-center justify-center bg-background px-4">
 			<Button

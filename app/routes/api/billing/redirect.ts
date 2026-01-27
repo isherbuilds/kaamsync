@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
-import { getServerSession } from "~/lib/auth";
-import { getOrganization } from "~/lib/server/organization.server";
+import { getServerSession } from "~/lib/auth/server";
+import { getOrganizationById } from "~/lib/organization/service";
 
 /**
  * Billing redirect handler
@@ -26,7 +26,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 		if (session?.session?.activeOrganizationId) {
 			// Get the organization details to find the slug
-			const org = await getOrganization(session.session.activeOrganizationId);
+			const org = await getOrganizationById(session.session.activeOrganizationId);
 
 			if (org?.slug) {
 				const redirectUrl = `/${org.slug}/settings/billing${queryString ? `?${queryString}` : ""}`;

@@ -1,15 +1,18 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-// import { useEffect, useState } from "react";
 import { Form, Link, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
-import { InputField, LoadingButton, PasswordField } from "~/components/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
+import {
+	InputField,
+	LoadingButton,
+	PasswordField,
+} from "~/components/shared/forms";
 import { Button } from "~/components/ui/button";
-import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/lib/app-config";
-import { type AuthSession, authClient } from "~/lib/auth-client";
-import { saveAuthSessionToLocalStorage } from "~/lib/offline-auth";
-import { signInSchema } from "~/lib/validations/auth";
+import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/config/app";
+import { type AuthSession, authClient } from "~/lib/auth/client";
+import { saveAuthSessionToLocalStorage } from "~/lib/auth/offline";
+import { signInSchema } from "~/lib/auth/validations";
 import type { Route } from "./+types/login";
 
 export const meta: Route.MetaFunction = () => [

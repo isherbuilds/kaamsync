@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useRevalidator, useSearchParams } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
-	PaymentHistory,
 	PricingComparison,
 	PricingGrid,
 	SubscriptionStatus,
@@ -22,28 +21,27 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { getServerSession } from "~/lib/auth";
-import { authClient } from "~/lib/auth-client";
 import {
 	type BillingInterval,
 	canCheckout,
 	getCheckoutSlug,
 	type ProductKey,
 	products,
-} from "~/lib/billing";
+} from "~/config/billing";
+import { authClient } from "~/lib/auth/client";
 import {
-	canManageBilling,
-	canViewBilling,
+	hasBillingManagePermission,
+	hasBillingViewPermission,
 	type OrgRole,
-} from "~/lib/permissions";
+} from "~/lib/auth/permissions";
+import { getServerSession } from "~/lib/auth/server";
 import {
 	billingConfig,
-	getOrganizationPayments,
-	getOrganizationSubscription,
-	getOrganizationUsage,
-	getPlanByProductId,
-} from "~/lib/server/billing.server";
-import { getOrganizationMemberRole } from "~/lib/server/organization.server";
+	fetchOrgSubscription,
+	fetchOrgUsage,
+	resolveProductPlan,
+} from "~/lib/billing/service";
+import { getMemberRole } from "~/lib/organization/service";
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const session = await getServerSession(request);
@@ -63,23 +61,21 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const userId = session.user.id;
 
 	// Fetch role, billing data, and usage in parallel
-	const [subscription, payments, userRole, usage] = await Promise.all([
-		getOrganizationSubscription(orgId),
-		getOrganizationPayments(orgId),
-		getOrganizationMemberRole(orgId, userId),
-		getOrganizationUsage(orgId),
+	const [subscription, userRole, usage] = await Promise.all([
+		fetchOrgSubscription(orgId),
+		getMemberRole(orgId, userId),
+		fetchOrgUsage(orgId),
 	]);
 
 	// Determine current plan - use stored planKey if available, fallback to productId lookup
 	const currentPlan: ProductKey | null =
-		(subscription?.planKey as ProductKey | null) ??
+		(subscription?.plan as ProductKey | null) ??
 		(subscription?.productId
-			? getPlanByProductId(subscription.productId)
+			? resolveProductPlan(subscription.productId)
 			: null);
 
 	return {
 		subscription,
-		payments,
 		usage,
 		billingEnabled: billingConfig.enabled,
 		organizationId: orgId,
@@ -97,7 +93,6 @@ export default function BillingSettings() {
 	const loaderData = useLoaderData<typeof loader>();
 	const {
 		subscription,
-		payments,
 		usage,
 		billingEnabled,
 		organizationId,
@@ -105,15 +100,14 @@ export default function BillingSettings() {
 		currentPlan,
 	} = loaderData;
 	const [searchParams] = useSearchParams();
-	const revalidator = useRevalidator();
 	const [loading, setLoading] = useState(false);
 	const [showPricing, setShowPricing] = useState(false);
 	const [showComparison, setShowComparison] = useState(false);
 	const [selectedPlan, setSelectedPlan] = useState<SelectedPlan | null>(null);
 
 	// Permission checks
-	const canManage = canManageBilling(userRole);
-	const canView = canViewBilling(userRole);
+	const canManage = hasBillingManagePermission(userRole);
+	const canView = hasBillingViewPermission(userRole);
 
 	// Rate limiting for checkout attempts (5 per minute)
 	const checkoutAttempts = useRef<number[]>([]);
@@ -124,15 +118,14 @@ export default function BillingSettings() {
 	const success = searchParams.get("success");
 	const cancelled = searchParams.get("cancelled");
 
-	useEffect(() => {
-		if (success === "true") {
-			toast.success("Subscription updated successfully!");
-			// Revalidate to get fresh data
-			revalidator.revalidate();
-		} else if (cancelled === "true") {
-			toast.info("Checkout cancelled");
-		}
-	}, [success, cancelled, revalidator]);
+	if (success === "true") {
+		// Clean URL by removing query params
+		searchParams.delete("success");
+		toast.success("Subscription updated successfully!");
+	} else if (cancelled === "true") {
+		searchParams.delete("cancelled");
+		toast.info("Checkout cancelled");
+	}
 
 	const handleCheckout = useCallback(
 		async (plan: ProductKey, interval: BillingInterval) => {
@@ -371,14 +364,6 @@ export default function BillingSettings() {
 						</Button>
 						{showComparison && <PricingComparison />}
 					</div>
-				</div>
-			)}
-
-			{/* Payment History */}
-			{payments.length > 0 && (
-				<div className="space-y-4">
-					<h4 className="font-medium text-md">Payment History</h4>
-					<PaymentHistory payments={payments} />
 				</div>
 			)}
 

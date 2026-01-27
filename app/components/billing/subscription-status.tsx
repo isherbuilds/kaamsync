@@ -9,16 +9,15 @@ import {
 	CardHeader,
 	CardTitle,
 } from "~/components/ui/card";
-import { type ProductKey, products } from "~/lib/billing";
+import { type ProductKey, products } from "~/config/billing";
 
 interface Subscription {
 	id: string;
 	status: string;
 	productId: string;
-	amount: number | null;
-	currency: string | null;
+	preTaxAmount: number | null;
 	billingInterval: string | null;
-	currentPeriodEnd: Date | null;
+	nextBillingDate: Date | null;
 	cancelledAt: Date | null;
 }
 
@@ -72,11 +71,11 @@ function formatDate(date: Date | null): string {
 	}).format(new Date(date));
 }
 
-function formatAmount(amount: number | null, currency: string | null): string {
+function formatAmount(amount: number | null): string {
 	if (amount === null) return "N/A";
 	return new Intl.NumberFormat("en-US", {
 		style: "currency",
-		currency: currency ?? "USD",
+		currency: "USD",
 	}).format(amount / 100);
 }
 
@@ -132,7 +131,7 @@ export function SubscriptionStatus({
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Amount</span>
 						<span className="font-medium">
-							{formatAmount(subscription.amount, subscription.currency)}
+							{formatAmount(subscription.preTaxAmount)}
 							{subscription.billingInterval && (
 								<span className="text-muted-foreground">
 									/{subscription.billingInterval}
@@ -140,13 +139,13 @@ export function SubscriptionStatus({
 							)}
 						</span>
 					</div>
-					{subscription.currentPeriodEnd && (
+					{subscription.nextBillingDate && (
 						<div className="flex justify-between">
 							<span className="text-muted-foreground">
 								{subscription.status === "cancelled" ? "Ends on" : "Renews on"}
 							</span>
 							<span className="font-medium">
-								{formatDate(subscription.currentPeriodEnd)}
+								{formatDate(subscription.nextBillingDate)}
 							</span>
 						</div>
 					)}

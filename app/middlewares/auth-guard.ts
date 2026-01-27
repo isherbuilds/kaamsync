@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import type { MiddlewareFunction, RouterContextProvider } from "react-router";
 import { createContext, href, redirect } from "react-router";
-import { type AuthServerSession, auth as serverAuth } from "~/lib/auth";
+import { type AuthServerSession, auth as serverAuth } from "~/lib/auth/server";
 
 const authStorage = new AsyncLocalStorage<AuthServerSession>();
 export const authContext = createContext<AuthServerSession>();

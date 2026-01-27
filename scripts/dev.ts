@@ -1,6 +1,6 @@
 import { concurrently } from "concurrently";
-import { must } from "shared/must";
-import "shared/env";
+import { must } from "~/lib/utils/must";
+import "./lib/env";
 
 const devPgAddress = must(
 	process.env.DEV_PG_ADDRESS,
@@ -24,10 +24,10 @@ concurrently([
 		name: "z0",
 		prefixColor: "#ff11cc",
 	},
-	{
-		command:
-			"chokidar 'db/schema.ts' 'auth/schema.ts' -c 'npm run generate-zero-schema'",
-		name: "gz",
-		prefixColor: "#11ffcc",
-	},
+	// {
+	// 	command:
+	// 		"chokidar 'db/schema.ts' 'auth/schema.ts' -c 'npm run generate-zero-schema'",
+	// 	name: "gz",
+	// 	prefixColor: "#11ffcc",
+	// },
 ]);

@@ -10,12 +10,12 @@ import {
 	X,
 } from "lucide-react";
 import { useState, useTransition } from "react";
+import { data, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
-import { InputField, SelectField } from "~/components/forms";
-
+import { InputField, SelectField } from "~/components/shared/forms";
 // UI Components
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -35,30 +35,43 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/select";
-
 import { orgRole } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
-// Auth & Hooks
-import { authClient } from "~/lib/auth-client";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { authClient } from "~/lib/auth/client";
+import { getServerSession } from "~/lib/auth/server";
+import { checkMemberLimit } from "~/lib/billing/service";
+import type { Route } from "./+types/members.ts";
+import type { loader as settingsLoader } from "./layout";
 
 const inviteSchema = z.object({
 	email: z.email("Please enter a valid email"),
 	role: z.enum(orgRole),
 });
 
+export async function action({ request }: Route.ActionArgs) {
+	const session = await getServerSession(request);
+	if (!session?.session?.activeOrganizationId) {
+		return data({ error: "No active organization" }, { status: 401 });
+	}
+	const result = await checkMemberLimit(session.session.activeOrganizationId);
+	if (!result.allowed) {
+		return data(
+			{ error: result.reason ?? "Member limit reached" },
+			{ status: 403 },
+		);
+	}
+	return data({ success: true });
+}
+
 export default function OrgMembersPage() {
-	const { authSession } = useOrgLoaderData();
+	const { authSession } = useOrganizationLoaderData();
+	const settingsData = useRouteLoaderData<typeof settingsLoader>(
+		"routes/organization/settings/layout",
+	);
+	const memberLimit = settingsData?.limits?.members ?? { allowed: true };
 	const [isPending, startTransition] = useTransition();
 	const [inviteOpen, setInviteOpen] = useState(false);
 
-	// Data
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 	const [invites] = useQuery(queries.getOrganizationInvitations(), CACHE_LONG);
 
@@ -67,7 +80,6 @@ export default function OrgMembersPage() {
 	const isAdminOrOwner =
 		currentMember?.role === "admin" || currentMember?.role === "owner";
 
-	// Form logic
 	const [form, fields] = useForm({
 		id: "org-invite-member",
 		defaultValue: { role: "member" },
@@ -77,27 +89,15 @@ export default function OrgMembersPage() {
 			event.preventDefault();
 			if (submission?.status !== "success") return;
 
+			if (!memberLimit.allowed) {
+				toast.error(
+					memberLimit.reason ??
+						"Member limit reached. Please upgrade your plan.",
+				);
+				return;
+			}
+
 			startTransition(async () => {
-				// Check billing limits before inviting
-				let memberRequiresPayment = false;
-				try {
-					const limitsRes = await fetch("/api/billing/check-limits");
-					const limits = await limitsRes.json();
-
-					if (!limits.canAddMember) {
-						toast.error(
-							limits.memberMessage ||
-								"Member limit reached. Please upgrade your plan.",
-						);
-						return;
-					}
-
-					memberRequiresPayment = limits.memberRequiresPayment;
-				} catch (err) {
-					console.error("[Billing] Failed to check limits:", err);
-					// Continue with invite on error - server will reject if truly over limit
-				}
-
 				toast.promise(
 					(async () => {
 						const { data: invite, error } =
@@ -105,7 +105,6 @@ export default function OrgMembersPage() {
 								email: submission.value.email,
 								role: submission.value.role,
 							});
-
 						if (error) throw error;
 						return invite;
 					})(),
@@ -113,9 +112,6 @@ export default function OrgMembersPage() {
 						loading: "Sending invitation...",
 						success: () => {
 							setInviteOpen(false);
-							if (memberRequiresPayment) {
-								return `Invitation sent to ${submission.value.email}. Note: This will add $5/mo to your upcoming invoice.`;
-							}
 							return `Invitation sent to ${submission.value.email}`;
 						},
 						error: (err: unknown) =>

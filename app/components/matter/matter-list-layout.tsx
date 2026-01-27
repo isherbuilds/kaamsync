@@ -9,7 +9,7 @@ import {
 	ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { VirtualizedList } from "~/components/virtualized-list";
+import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { useBreakpoints } from "~/hooks/use-mobile";
 import {
 	DETAIL_PANEL_MIN_SIZE,
@@ -17,14 +17,14 @@ import {
 	getListPanelSize,
 	PANEL_MAX_SIZE,
 	PANEL_MIN_SIZE,
-} from "~/lib/layout-constants";
+} from "~/config/layout";
 import { cn } from "~/lib/utils";
 
 type MatterWithStatus = Row["mattersTable"] & {
 	status?: Row["statusesTable"];
 };
 
-interface MatterListLayoutProps<T extends MatterWithStatus> {
+interface MatterListWithDetailPanelProps<T extends MatterWithStatus> {
 	/** Page title shown in header */
 	title: string;
 	/** Icon shown next to title */
@@ -46,7 +46,7 @@ interface MatterListLayoutProps<T extends MatterWithStatus> {
 	renderItem: (item: T) => React.ReactNode;
 }
 
-const ACCENT_COLORS = {
+const ACCENT_COLOR_CLASSES = {
 	blue: {
 		icon: "text-brand-tasks",
 		badge: "bg-brand-tasks/10 text-brand-tasks",
@@ -65,7 +65,7 @@ const ACCENT_COLORS = {
  * Shared layout component for matter list pages (Tasks, Requests).
  * Provides resizable panel structure with header, empty state, and virtualized list.
  */
-function MatterListLayoutInner<T extends MatterWithStatus>({
+function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 	title,
 	icon: Icon,
 	accentColor,
@@ -74,14 +74,14 @@ function MatterListLayoutInner<T extends MatterWithStatus>({
 	emptyState,
 	estimateSize = 60,
 	renderItem,
-}: MatterListLayoutProps<T>) {
+}: MatterListWithDetailPanelProps<T>) {
 	const { isMobile, isTablet, isExtraLargeScreen } = useBreakpoints();
 
-	const colors = ACCENT_COLORS[accentColor];
+	const colors = ACCENT_COLOR_CLASSES[accentColor];
 	const itemCount = items.length;
 
 	// Sub-components for better organization
-	const Header = () => (
+	const ListHeader = () => (
 		<div className="flex h-12 items-center justify-between border-b bg-background px-4">
 			<div className="flex items-center gap-2">
 				<SidebarTrigger className="lg:hidden" />
@@ -105,7 +105,7 @@ function MatterListLayoutInner<T extends MatterWithStatus>({
 		</div>
 	);
 
-	const ListSkeleton = () => (
+	const ListLoadingSkeleton = () => (
 		<div className="space-y-1 p-1">
 			{Array.from({ length: 8 }).map((_, i) => (
 				<div
@@ -126,7 +126,7 @@ function MatterListLayoutInner<T extends MatterWithStatus>({
 		</div>
 	);
 
-	const DetailSkeleton = () => (
+	const DetailPanelPlaceholder = () => (
 		<div className="flex h-full items-center justify-center">
 			<div className="text-center">
 				<Icon className="mx-auto size-12 text-muted-foreground/30" />
@@ -145,10 +145,10 @@ function MatterListLayoutInner<T extends MatterWithStatus>({
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
 			>
-				<Header />
+				<ListHeader />
 				<div className="h-[calc(100%-48px)]">
 					{isLoading ? (
-						<ListSkeleton />
+						<ListLoadingSkeleton />
 					) : itemCount === 0 ? (
 						<EmptyState
 							icon={Icon}
@@ -176,7 +176,7 @@ function MatterListLayoutInner<T extends MatterWithStatus>({
 						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
 						minSize={DETAIL_PANEL_MIN_SIZE}
 					>
-						{isLoading ? <DetailSkeleton /> : <Outlet />}
+						{isLoading ? <DetailPanelPlaceholder /> : <Outlet />}
 					</ResizablePanel>
 				</>
 			)}
@@ -184,6 +184,6 @@ function MatterListLayoutInner<T extends MatterWithStatus>({
 	);
 }
 
-export const MatterListLayout = memo(
-	MatterListLayoutInner,
-) as typeof MatterListLayoutInner;
+export const MatterListWithDetailPanel = memo(
+	MatterListWithDetailPanelInner,
+) as typeof MatterListWithDetailPanelInner;

@@ -1,5 +1,6 @@
-import { createId } from "@paralleldrive/cuid2";
 import { and, asc, eq, sql } from "drizzle-orm";
+import { v7 as uuid } from "uuid";
+import { db } from "~/db";
 import {
 	orgRole as membershipRole,
 	membershipStatus,
@@ -7,7 +8,6 @@ import {
 	teamRole,
 	teamVisibility,
 } from "~/db/helpers";
-import { db } from "~/db/index";
 import {
 	labelsTable,
 	membersTable,
@@ -42,7 +42,7 @@ export async function createOrganization(
 	const [org] = await db
 		.insert(organizationsTable)
 		.values({
-			id: createId(),
+			id: uuid(),
 			name: config.name,
 			slug: config.slug,
 			logo: null,
@@ -81,7 +81,7 @@ export async function createOrganization(
 		orgMemberIds.push(user.id);
 
 		memberValues.push({
-			id: createId(),
+			id: uuid(),
 			organizationId: org.id,
 			userId: user.id,
 			role:
@@ -125,7 +125,7 @@ export async function createOrganization(
 		} else {
 			console.log(`👤 Inserting Admin ${adminUser.email} into ${org.name}`);
 			await db.insert(membersTable).values({
-				id: createId(),
+				id: uuid(),
 				organizationId: org.id,
 				userId: adminUser.id,
 				role: membershipRole.owner,
@@ -155,7 +155,7 @@ export async function createOrganization(
 		}
 		usedCodes.add(code);
 
-		const teamId = createId();
+		const teamId = uuid();
 
 		// Create Team
 		const [team] = await db
@@ -204,7 +204,7 @@ export async function createOrganization(
 
 		const labelValues = labelNames.map((name, i) => {
 			return {
-				id: createId(),
+				id: uuid(),
 				orgId: org.id,
 				name: `${name}`,
 				color: labelColors[i % labelColors.length],
@@ -308,7 +308,7 @@ export async function createOrganization(
 			const allStatuses = [...statusConfigs, ...requestStatusConfigs];
 
 			const statusValues = allStatuses.map((status, i) => {
-				const statusId = createId();
+				const statusId = uuid();
 				statusIds.push(statusId);
 				return {
 					id: statusId,
@@ -344,7 +344,7 @@ export async function createOrganization(
 			}
 
 			membershipValues.push({
-				id: createId(),
+				id: uuid(),
 				teamId: actualTeamId,
 				userId,
 				orgId: org.id,

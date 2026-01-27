@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import {
 	data,
 	Links,
@@ -13,7 +12,7 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { getToast } from "remix-toast";
 import { Toaster } from "sonner";
-import { GeneralErrorBoundary } from "./components/error-boundary";
+import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -90,16 +89,6 @@ export const shouldRevalidate = ({
 export function Layout({ children }: { children: React.ReactNode }) {
 	const colorScheme = useColorScheme();
 	const nonce = useNonce();
-
-	useEffect(() => {
-		if (typeof window === "undefined" || import.meta.env.DEV) return;
-
-		if ("serviceWorker" in navigator) {
-			navigator.serviceWorker.register("/service-worker.js").catch((error) => {
-				console.error("Service worker registration failed:", error);
-			});
-		}
-	}, []);
 
 	return (
 		<html

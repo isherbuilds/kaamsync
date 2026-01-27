@@ -1,16 +1,16 @@
 import type { Row } from "@rocicorp/zero";
 import { useMemo } from "react";
 import {
-	canApproveRequests,
-	canCreateRequests,
-	canCreateTasks,
-	canDeleteMatter,
-	canEditMatter,
-	canManageMembers,
-	canManageTeam,
+	hasMatterDeletePermission,
+	hasMatterEditPermission,
+	hasMemberManagementPermission,
+	hasRequestApprovalPermission,
+	hasRequestCreationPermission,
+	hasTaskCreationPermission,
+	hasTeamManagementPermission,
 	type TeamRole,
-} from "~/lib/permissions";
-import { useOrgLoaderData } from "./use-loader-data";
+} from "~/lib/auth/permissions";
+import { useOrganizationLoaderData } from "./use-loader-data";
 
 export type UsePermissionsResult = {
 	role: TeamRole | undefined;
@@ -37,7 +37,7 @@ export function usePermissions(
 	teamId?: string,
 	teamMemberships?: readonly Row["teamMembershipsTable"][],
 ): UsePermissionsResult {
-	const { authSession } = useOrgLoaderData();
+	const { authSession } = useOrganizationLoaderData();
 	const userId = authSession.user.id;
 
 	// Find membership for current team
@@ -54,27 +54,21 @@ export function usePermissions(
 	return useMemo(
 		() => ({
 			role,
-			// Team permissions
-			canCreateTasks: canCreateTasks(role),
-			canCreateRequests: canCreateRequests(role),
-			canApproveRequests: canApproveRequests(role),
-			canManageMembers: canManageMembers(role),
-			canManageTeam: canManageTeam(role),
-
-			// Matter specific permissions (curried)
+			canCreateTasks: hasTaskCreationPermission(role),
+			canCreateRequests: hasRequestCreationPermission(role),
+			canApproveRequests: hasRequestApprovalPermission(role),
+			canManageMembers: hasMemberManagementPermission(role),
+			canManageTeam: hasTeamManagementPermission(role),
 			canEditMatter: (
 				matterAuthorId: string,
 				matterAssigneeId?: string | null,
 			) =>
-				canEditMatter(
+				hasMatterEditPermission(
 					role,
 					matterAuthorId === userId,
 					matterAssigneeId === userId,
 				),
-
-			canDeleteMatter: () => canDeleteMatter(role),
-
-			// Helper to check for multiple roles easily
+			canDeleteMatter: () => hasMatterDeletePermission(role),
 			isManager: role === "manager",
 			isMember: role === "member",
 			isViewer: role === "viewer",

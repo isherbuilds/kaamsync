@@ -1,16 +1,12 @@
-import { createId } from "@paralleldrive/cuid2";
 import { eq } from "drizzle-orm";
 import { data } from "react-router";
+import { v7 as uuid } from "uuid";
 import { z } from "zod";
 import { db } from "~/db";
 import { pushSubscriptionsTable } from "~/db/schema";
-import {
-	auditLog,
-	getRequestIP,
-	getRequestUserAgent,
-} from "~/lib/audit-logger";
-import { getVapidPublicKey } from "~/lib/notifications.server";
-import { requireSession } from "~/lib/server/auth-helper";
+import { requireSession } from "~/lib/auth/guard";
+import { auditLog, getRequestIP, getRequestUserAgent } from "~/lib/infra/audit";
+import { getVapidPublicKey } from "~/lib/notifications/service";
 import type { Route } from "./+types/subscribe";
 
 const subscriptionSchema = z.object({
@@ -139,7 +135,7 @@ export async function action({ request }: Route.ActionArgs) {
 	}
 
 	// Create new subscription (guard for races on unique endpoint)
-	const newSubscriptionId = createId();
+	const newSubscriptionId = uuid();
 	try {
 		await db.insert(pushSubscriptionsTable).values({
 			id: newSubscriptionId,

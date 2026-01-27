@@ -1,7 +1,18 @@
 export type Context = {
 	userId: string;
 	activeOrganizationId: string | null;
-	invalidateUsageCache?: (orgId: string) => void;
+	subscription?: {
+		plan: string;
+		status: string;
+		purchasedSeats: number;
+		purchasedStorageGB: number;
+	};
+	usage?: {
+		members: number;
+		matters: number;
+		teams: number;
+	};
+	clearUsageCache?: (orgId: string) => void;
 };
 
 declare module "@rocicorp/zero" {

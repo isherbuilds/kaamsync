@@ -1,28 +1,40 @@
 import { useZero } from "@rocicorp/zero/react";
 import { useEffect, useRef } from "react";
 import { zql } from "zero/schema";
-import { peekNextShortId, seedNextShortId } from "~/lib/short-id-cache";
+import {
+	getNextShortIdWithoutIncrement,
+	initializeShortIdCache,
+} from "~/lib/cache/short-id";
 
 /**
- * Hook to seed the short ID cache for a team.
- * Allocates a block from the server if needed and seeds the local cache.
+ * Seeds and manages the short ID cache for a specific team.
+ *
+ * This hook ensures the local short ID cache is initialized with a value
+ * higher than the highest existing shortID in the team's matters. This
+ * prevents duplicate short IDs when creating new matters.
+ *
+ * The cache is re-seeded when the team changes.
+ *
+ * @param teamId - The team ID to seed the cache for
+ * @param enabled - Whether seeding is enabled (e.g., only when dialog is open)
  */
-export function useShortIdSeeder(teamId: string, enabled = true) {
+export function useTeamShortIdCache(teamId: string, enabled = true) {
 	const z = useZero();
-	// Remember the last team we seeded so we can re-seed when it changes
-	const seededTeam = useRef<string | null>(null);
+
+	// Track the last team we seeded to avoid redundant seeding
+	const lastSeededTeamId = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (!enabled) return;
 
 		// If there's no team selected, clear the seeded marker and exit
 		if (!teamId) {
-			seededTeam.current = null;
+			lastSeededTeamId.current = null;
 			return;
 		}
 
 		// Already seeded for this team — skip
-		if (seededTeam.current === teamId) return;
+		if (lastSeededTeamId.current === teamId) return;
 		if (typeof navigator !== "undefined" && !navigator.onLine) return;
 
 		(async () => {
@@ -38,14 +50,14 @@ export function useShortIdSeeder(teamId: string, enabled = true) {
 
 				// Fetched highest shortID (efficient due to index)
 				const proposed = (matters[0]?.shortID ?? 0) + 1;
-				const current = peekNextShortId(teamId) ?? 0;
+				const current = getNextShortIdWithoutIncrement(teamId) ?? 0;
 
 				if (proposed > current) {
-					seedNextShortId(teamId, proposed);
+					initializeShortIdCache(teamId, proposed);
 				}
 
 				// Mark this team as seeded
-				seededTeam.current = teamId;
+				lastSeededTeamId.current = teamId;
 			} catch (err) {
 				console.error("Failed to seed short ID cache:", err);
 			}

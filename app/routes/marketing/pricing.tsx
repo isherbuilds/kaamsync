@@ -11,7 +11,11 @@ import {
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { type BillingInterval, type ProductKey, products } from "~/lib/billing";
+import {
+	type BillingInterval,
+	type ProductKey,
+	products,
+} from "~/config/billing";
 import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [
@@ -138,7 +142,7 @@ export default function PricingPage() {
 
 							const isPopular = plan.popular;
 							const isEnterprise = key === "enterprise";
-							const hasUsage = "usageBased" in plan && plan.usageBased;
+							const hasUsage = "hasAddons" in plan && plan.hasAddons;
 
 							return (
 								<div

@@ -1,819 +1,328 @@
 import { relations } from "drizzle-orm";
-import {
-	bigint,
-	boolean,
-	index,
-	integer,
-	pgTable,
-	primaryKey,
-	smallint,
-	text,
-	timestamp,
-	uniqueIndex,
-	varchar,
-} from "drizzle-orm/pg-core";
-import { commonColumns } from "../helpers";
-import {
-	accountsTable,
-	invitationsTable,
-	membersTable,
-	organizationsTable,
-	sessionsTable,
-	usersTable,
-	verificationsTable,
-} from "./auth-schema";
-import {
-	customersTable,
-	customersTableRelations,
-	paymentsTable,
-	paymentsTableRelations,
-	subscriptionsTable,
-	subscriptionsTableRelations,
-	webhookEventsTable,
-} from "./billing-schema";
-
-// --------------------------------------------------------
-// 1. RE-EXPORT AUTH TABLES
-// --------------------------------------------------------
-export {
-	organizationsTable,
-	usersTable,
-	sessionsTable,
-	accountsTable,
-	verificationsTable,
-	membersTable,
-	invitationsTable,
-};
-
-// --------------------------------------------------------
-// 1.1. RE-EXPORT BILLING TABLES
-// --------------------------------------------------------
-export {
-	customersTable,
-	customersTableRelations,
-	subscriptionsTable,
-	subscriptionsTableRelations,
-	paymentsTable,
-	paymentsTableRelations,
-	webhookEventsTable,
-};
-
-// --------------------------------------------------------
-// 2. DEFINE APP TABLES (Before defining relations)
-// --------------------------------------------------------
-
-export const teamsTable = pgTable(
-	"teams",
-	{
-		id: text("id").primaryKey(),
-
-		// Foreign keys
-		orgId: text("org_id")
-			.notNull()
-			.references(() => organizationsTable.id, { onDelete: "cascade" }),
-
-		// Core fields
-		name: varchar("name", { length: 255 }).notNull(),
-		slug: varchar("slug", { length: 255 }).notNull(),
-		code: varchar("code", { length: 50 }).notNull(),
-		icon: varchar("icon", { length: 255 }),
-		description: text("description"),
-
-		// Short ID block tracking
-		nextShortId: integer("next_short_id").notNull(),
-
-		// Metadata
-		visibility: varchar("visibility", { length: 20 }).notNull(),
-		archived: boolean("archived"),
-		archivedAt: timestamp("archived_at", { withTimezone: true }),
-
-		...commonColumns,
-	},
-	(table) => [
-		uniqueIndex("teams_org_slug_unique").on(table.orgId, table.slug),
-		uniqueIndex("teams_org_code_unique").on(table.orgId, table.code),
-		index("teams_org_archived_idx").on(table.orgId, table.archived),
-		index("teams_org_code_idx").on(table.orgId, table.code),
-	],
-);
-
-export const teamMembershipsTable = pgTable(
-	"team_memberships",
-	{
-		id: text("id").primaryKey(),
-
-		// Foreign keys
-		teamId: text("team_id")
-			.notNull()
-			.references(() => teamsTable.id, { onDelete: "cascade" }),
-		userId: text("user_id")
-			.notNull()
-			.references(() => usersTable.id, { onDelete: "cascade" }),
-		orgId: text("org_id")
-			.notNull()
-			.references(() => organizationsTable.id, { onDelete: "cascade" }),
-
-		// Core fields
-		role: varchar("role", { length: 50 }).notNull(), // MANAGER, MEMBER, VIEWER
-		status: varchar("status", { length: 20 }).notNull(),
-
-		// Permissions (for fine-grained control)
-		canCreateTasks: boolean("can_create_tasks"), // Can create task directly
-		canCreateRequests: boolean("can_create_requests"), // Can create request (needs approval)
-		canApproveRequests: boolean("can_approve_requests"), // Can approve/reject requests
-		canManageMembers: boolean("can_manage_members"), // Can add/remove team members
-		canManageTeam: boolean("can_manage_team"), // Can edit team settings
-
-		...commonColumns,
-	},
-	(table) => [
-		index("team_memberships_team_idx").on(table.teamId),
-		index("team_memberships_user_idx").on(table.userId),
-		index("team_memberships_org_user_idx").on(table.orgId, table.userId),
-		uniqueIndex("team_memberships_team_user_unique").on(
-			table.teamId,
-			table.userId,
-		),
-	],
-);
-
-export const statusesTable = pgTable(
-	"statuses",
-	{
-		id: text("id").primaryKey(),
-
-		// Foreign keys
-		teamId: text("team_id")
-			.notNull()
-			.references(() => teamsTable.id, { onDelete: "cascade" }),
-
-		// Core fields
-		name: varchar("name", { length: 100 }).notNull(),
-		color: varchar("color", { length: 50 }),
-		type: varchar("type", { length: 50 }).notNull(), // e.g. 'backlog', 'not_started', 'started', 'completed', 'canceled', 'pending_approval', 'approved', 'rejected'
-		position: integer("position").notNull(),
-
-		// Metadata
-		isDefault: boolean("is_default"),
-		archived: boolean("archived"),
-
-		creatorId: text("creator_id").references(() => usersTable.id),
-
-		...commonColumns,
-	},
-	(table) => [
-		index("statuses_team_position_idx").on(table.teamId, table.position),
-	],
-);
-
-export const labelsTable = pgTable(
-	"labels",
-	{
-		id: text("id").primaryKey(),
-
-		// Foreign keys
-		orgId: text("org_id")
-			.notNull()
-			.references(() => organizationsTable.id, { onDelete: "cascade" }),
-
-		// Core fields
-		name: varchar("name", { length: 100 }).notNull(),
-		color: varchar("color", { length: 50 }),
-		description: text("description"),
-
-		// Metadata
-		archived: boolean("archived"),
-
-		creatorId: text("creator_id").references(() => usersTable.id),
-
-		...commonColumns,
-	},
-	(table) => [
-		uniqueIndex("labels_org_name_unique").on(table.orgId, table.name),
-		index("labels_org_idx").on(table.orgId),
-		index("labels_org_archived_idx").on(table.orgId, table.archived),
-	],
-);
-
-export const mattersTable = pgTable(
-	"matters",
-	{
-		id: text("id").primaryKey(),
-		shortID: integer("short_id").notNull(),
-
-		// Foreign keys
-		orgId: text("org_id")
-			.notNull()
-			.references(() => organizationsTable.id, { onDelete: "cascade" }),
-		teamId: text("team_id")
-			.notNull()
-			.references(() => teamsTable.id, { onDelete: "cascade" }),
-		authorId: text("author_id")
-			.notNull()
-			.references(() => usersTable.id),
-		assigneeId: text("assignee_id").references(() => usersTable.id),
-		statusId: text("status_id")
-			.notNull()
-			.references(() => statusesTable.id),
-
-		// Denormalized for performance (avoids join when displaying matter keys)
-		teamCode: varchar("team_code", { length: 50 }).notNull(),
-
-		// Core content
-		title: varchar("title", { length: 500 }).notNull(),
-		description: text("description"),
-
-		// Metadata
-		type: varchar("type", { length: 50 }).notNull(), // 'request' or 'task'
-		priority: smallint("priority").notNull().default(4), // 0=urgent, 1=high, 2=medium, 3=low, 4=none
-		source: varchar("source", { length: 50 }),
-
-		// REQUEST approval workflow
-		approvedBy: text("approved_by").references(() => usersTable.id), // Who approved/rejected
-		approvedAt: timestamp("approved_at", { withTimezone: true }),
-		rejectionReason: text("rejection_reason"),
-
-		// Dates
-		dueDate: timestamp("due_date", { withTimezone: true }),
-		startDate: timestamp("start_date", { withTimezone: true }),
-		completedAt: timestamp("completed_at", { withTimezone: true }), // Tracking
-		estimatedHours: integer("estimated_hours"),
-		actualHours: integer("actual_hours"),
-
-		// Archive status
-		archived: boolean("archived"),
-		archivedAt: timestamp("archived_at", { withTimezone: true }),
-		archivedBy: text("archived_by").references(() => usersTable.id),
-
-		...commonColumns,
-	},
-	(table) => [
-		uniqueIndex("matters_team_short_id_unique").on(table.teamId, table.shortID),
-		// Composite index for fast matter key lookup (GEN-001)
-		uniqueIndex("matters_team_code_short_id_unique").on(
-			table.teamCode,
-			table.shortID,
-		),
-		// Optimized indexes for better query performance
-		index("matters_short_id_idx").on(table.shortID),
-		index("matters_team_idx").on(table.teamId),
-
-		// Composite indexes for common query patterns
-		index("matters_team_archived_updated_idx").on(
-			table.teamId,
-			table.archived,
-			table.updatedAt,
-		),
-		index("matters_team_status_updated_idx").on(
-			table.teamId,
-			table.statusId,
-			table.updatedAt,
-		),
-		index("matters_team_assignee_archived_idx").on(
-			table.teamId,
-			table.assigneeId,
-			table.archived,
-		),
-		index("matters_team_priority_archived_idx").on(
-			table.teamId,
-			table.priority,
-			table.archived,
-		),
-
-		// User-centric indexes for dashboard queries
-		index("matters_assignee_archived_idx").on(table.assigneeId, table.archived),
-		index("matters_author_idx").on(table.authorId),
-		index("matters_author_type_archived_idx").on(
-			table.authorId,
-			table.type,
-			table.archived,
-		),
-
-		// Organization-level indexes
-		index("matters_org_archived_updated_idx").on(
-			table.orgId,
-			table.archived,
-			table.updatedAt,
-		),
-
-		// Due date and time-based indexes
-		index("matters_due_date_idx").on(table.dueDate),
-		index("matters_due_date_archived_idx").on(table.dueDate, table.archived),
-
-		// Request/Task workflow indexes
-		index("matters_team_type_idx").on(table.teamId, table.type),
-		index("matters_approved_by_idx").on(table.approvedBy),
-		index("matters_type_approved_by_idx").on(table.type, table.approvedBy),
-
-		// Performance optimization: covering index for matter list queries
-		index("matters_team_list_covering_idx").on(
-			table.teamId,
-			table.archived,
-			table.priority,
-			table.updatedAt,
-			table.statusId,
-			table.assigneeId,
-		),
-	],
-);
-
-export const matterLabelsTable = pgTable(
-	"matter_labels",
-	{
-		matterId: text("matter_id")
-			.notNull()
-			.references(() => mattersTable.id, { onDelete: "cascade" }),
-		labelId: text("label_id")
-			.notNull()
-			.references(() => labelsTable.id, { onDelete: "cascade" }),
-
-		...commonColumns,
-	},
-	(table) => [
-		primaryKey({ columns: [table.matterId, table.labelId] }),
-		index("matter_labels_matter_idx").on(table.matterId),
-		index("matter_labels_label_idx").on(table.labelId),
-	],
-);
-
-export const timelinesTable = pgTable(
-	"timelines",
-	{
-		id: text("id").primaryKey(),
-		matterId: text("matter_id")
-			.notNull()
-			.references(() => mattersTable.id, { onDelete: "cascade" }),
-		userId: text("user_id")
-			.notNull()
-			.references(() => usersTable.id),
-
-		// Event data
-		type: varchar("type", { length: 50 }).notNull(), // e.g. 'created', 'comment', 'status_change', 'assigned', etc.
-		content: text("content"),
-
-		// Change tracking
-		fromStatusId: text("from_status_id"),
-		toStatusId: text("to_status_id"),
-		fromAssigneeId: text("from_assignee_id"),
-		toAssigneeId: text("to_assignee_id"),
-		labelId: text("label_id"),
-		fromValue: text("from_value"),
-		toValue: text("to_value"),
-
-		// Mentions (JSON array of user IDs)
-		mentions: text("mentions"),
-
-		// Metadata
-		edited: boolean("edited"),
-		editedAt: timestamp("edited_at", { withTimezone: true }),
-
-		...commonColumns,
-	},
-	(table) => [
-		index("timelines_matter_created_idx").on(table.matterId, table.createdAt),
-		index("timelines_user_idx").on(table.userId),
-	],
-);
-
-export const attachmentsTable = pgTable(
-	"attachments",
-	{
-		id: text("id").primaryKey(),
-
-		// Foreign keys
-		orgId: text("org_id")
-			.notNull()
-			.references(() => organizationsTable.id, { onDelete: "cascade" }),
-		matterId: text("matter_id")
-			.notNull()
-			.references(() => mattersTable.id, { onDelete: "cascade" }),
-		uploaderId: text("uploader_id")
-			.notNull()
-			.references(() => usersTable.id),
-
-		// File data
-		storageKey: text("storage_key").notNull(), // S3 key
-		fileName: varchar("file_name", { length: 500 }).notNull(),
-		fileType: varchar("file_type", { length: 100 }).notNull(),
-		fileSize: integer("file_size").notNull(), // bytes
-		description: text("description"), // optional description
-
-		...commonColumns,
-	},
-	(table) => [
-		// For listing attachments in a matter
-		index("attachments_matter_idx").on(table.matterId),
-		// For fast org-level storage usage queries (billing)
-		index("attachments_org_idx").on(table.orgId),
-		// For querying user's uploads
-		index("attachments_uploader_idx").on(table.uploaderId),
-	],
-);
-
-/**
- * Storage usage cache - denormalized for fast billing queries
- * Updated on upload/delete via triggers or application logic
- */
-export const storageUsageCacheTable = pgTable("storage_usage_cache", {
-	orgId: text("org_id")
-		.primaryKey()
-		.references(() => organizationsTable.id, { onDelete: "cascade" }),
-	totalBytes: bigint("total_bytes", { mode: "number" }).notNull().default(0),
-	fileCount: integer("file_count").notNull().default(0),
-
-	updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-});
-
-export const matterViewsTable = pgTable(
-	"matter_views",
-	{
-		// Foreign keys (composite primary key)
-		userId: text("user_id")
-			.notNull()
-			.references(() => usersTable.id, { onDelete: "cascade" }),
-		matterId: text("matter_id")
-			.notNull()
-			.references(() => mattersTable.id, { onDelete: "cascade" }),
-
-		// Tracking
-		lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }).notNull(),
-		lastActivityAt: timestamp("last_activity_at", { withTimezone: true }),
-
-		...commonColumns,
-	},
-	(table) => [
-		primaryKey({ columns: [table.userId, table.matterId] }),
-		index("matter_views_user_activity_idx").on(
-			table.userId,
-			table.lastActivityAt,
-		),
-	],
-);
-
-export const matterSubscriptionsTable = pgTable(
-	"matter_subscriptions",
-	{
-		// Foreign keys (composite primary key)
-		userId: text("user_id")
-			.notNull()
-			.references(() => usersTable.id, { onDelete: "cascade" }),
-		matterId: text("matter_id")
-			.notNull()
-			.references(() => mattersTable.id, { onDelete: "cascade" }),
-
-		// Subscription data
-		subscribed: boolean("subscribed"),
-		reason: varchar("reason", { length: 50 }),
-
-		...commonColumns,
-	},
-	(table) => [
-		primaryKey({ columns: [table.userId, table.matterId] }),
-		index("matter_subscriptions_user_subscribed_idx").on(
-			table.userId,
-			table.subscribed,
-		),
-	],
-);
-
-// Matter Watchers - For oversight without being assignee (e.g., principals watching accountants)
-export const matterWatchersTable = pgTable(
-	"matter_watchers",
-	{
-		// Foreign keys (composite primary key)
-		matterId: text("matter_id")
-			.notNull()
-			.references(() => mattersTable.id, { onDelete: "cascade" }),
-		userId: text("user_id")
-			.notNull()
-			.references(() => usersTable.id, { onDelete: "cascade" }),
-
-		// Watcher metadata
-		addedBy: text("added_by")
-			.notNull()
-			.references(() => usersTable.id),
-		reason: varchar("reason", { length: 100 }), // e.g., "oversight", "interested_party", "collaborator"
-		notifyOnUpdate: boolean("notify_on_update"), // Get notifications for changes
-		canComment: boolean("can_comment"), // Can add comments/feedback
-
-		...commonColumns,
-	},
-	(table) => [
-		primaryKey({ columns: [table.matterId, table.userId] }),
-		index("matter_watchers_matter_idx").on(table.matterId),
-		index("matter_watchers_user_idx").on(table.userId),
-		index("matter_watchers_added_by_idx").on(table.addedBy),
-	],
-);
-
-// Push Notification Subscriptions - Store browser push subscriptions per user
-export const pushSubscriptionsTable = pgTable(
-	"push_subscriptions",
-	{
-		id: text("id").primaryKey(),
-
-		// Foreign keys
-		userId: text("user_id")
-			.notNull()
-			.references(() => usersTable.id, { onDelete: "cascade" }),
-
-		// Push subscription data
-		endpoint: text("endpoint").notNull(),
-		p256dh: text("p256dh").notNull(), // Public key for encryption
-		auth: text("auth").notNull(), // Auth secret
-
-		// Metadata
-		userAgent: text("user_agent"), // Browser/device info
-
-		...commonColumns,
-	},
-	(table) => [
-		index("push_subscriptions_user_idx").on(table.userId),
-		uniqueIndex("push_subscriptions_endpoint_unique").on(table.endpoint),
-	],
-);
-
-// --------------------------------------------------------
-// 3. DEFINE MERGED RELATIONS (Auth + App)
-// --------------------------------------------------------
-
-export const usersTableRelations = relations(usersTable, ({ many }) => ({
-	sessionsTables: many(sessionsTable),
-	accountsTables: many(accountsTable),
-	membersTables: many(membersTable),
-	invitationsTables: many(invitationsTable),
-
-	// --- App Relations ---
-	teamMemberships: many(teamMembershipsTable),
-	authoredMatters: many(mattersTable, {
+import * as auth from "./auth";
+import * as billing from "./billing";
+import * as matters from "./matters";
+import * as notifications from "./notifications";
+import * as storage from "./storage";
+import * as teams from "./teams";
+import * as timelines from "./timelines";
+
+export * from "./auth";
+export * from "./billing";
+export * from "./matters";
+export * from "./notifications";
+export * from "./storage";
+export * from "./teams";
+export * from "./timelines";
+
+export const usersTableRelations = relations(auth.usersTable, ({ many }) => ({
+	sessionsTables: many(auth.sessionsTable),
+	accountsTables: many(auth.accountsTable),
+	membersTables: many(auth.membersTable),
+	invitationsTables: many(auth.invitationsTable),
+
+	teamMemberships: many(teams.teamMembershipsTable),
+	authoredMatters: many(matters.mattersTable, {
 		relationName: "authoredMatters",
 	}),
-	assignedMatters: many(mattersTable, {
+	assignedMatters: many(matters.mattersTable, {
 		relationName: "assignedMatters",
 	}),
-	approvedMatters: many(mattersTable, {
+	approvedMatters: many(matters.mattersTable, {
 		relationName: "approvedMatters",
 	}),
-	createdStatuses: many(statusesTable),
-	createdLabels: many(labelsTable),
-	timelines: many(timelinesTable),
-	attachments: many(attachmentsTable),
-	matterViews: many(matterViewsTable),
-	matterSubscriptions: many(matterSubscriptionsTable),
-	watchedMatters: many(matterWatchersTable, {
+	createdStatuses: many(teams.statusesTable),
+	createdLabels: many(matters.labelsTable),
+	timelines: many(timelines.timelinesTable),
+	attachments: many(storage.attachmentsTable),
+	matterViews: many(matters.matterViewsTable),
+	matterSubscriptions: many(matters.matterSubscriptionsTable),
+	watchedMatters: many(matters.matterWatchersTable, {
 		relationName: "watchedByUser",
 	}),
-	watchersAdded: many(matterWatchersTable, {
+	watchersAdded: many(matters.matterWatchersTable, {
 		relationName: "watchersAdded",
 	}),
-	pushSubscriptions: many(pushSubscriptionsTable),
+	pushSubscriptions: many(notifications.pushSubscriptionsTable),
 }));
 
-export const sessionsTableRelations = relations(sessionsTable, ({ one }) => ({
-	usersTable: one(usersTable, {
-		fields: [sessionsTable.userId],
-		references: [usersTable.id],
+export const sessionsTableRelations = relations(
+	auth.sessionsTable,
+	({ one }) => ({
+		usersTable: one(auth.usersTable, {
+			fields: [auth.sessionsTable.userId],
+			references: [auth.usersTable.id],
+		}),
 	}),
-}));
+);
 
-export const accountsTableRelations = relations(accountsTable, ({ one }) => ({
-	usersTable: one(usersTable, {
-		fields: [accountsTable.userId],
-		references: [usersTable.id],
+export const accountsTableRelations = relations(
+	auth.accountsTable,
+	({ one }) => ({
+		usersTable: one(auth.usersTable, {
+			fields: [auth.accountsTable.userId],
+			references: [auth.usersTable.id],
+		}),
 	}),
-}));
+);
 
 export const organizationsTableRelations = relations(
-	organizationsTable,
+	auth.organizationsTable,
 	({ many }) => ({
-		membersTables: many(membersTable),
-		invitationsTables: many(invitationsTable),
-
-		// --- App Relations ---
-		teams: many(teamsTable),
-		teamMemberships: many(teamMembershipsTable),
-		labels: many(labelsTable),
-		matters: many(mattersTable),
+		membersTables: many(auth.membersTable),
+		invitationsTables: many(auth.invitationsTable),
+		teams: many(teams.teamsTable),
+		teamMemberships: many(teams.teamMembershipsTable),
+		labels: many(matters.labelsTable),
+		matters: many(matters.mattersTable),
 	}),
 );
 
-export const membersTableRelations = relations(membersTable, ({ one }) => ({
-	organizationsTable: one(organizationsTable, {
-		fields: [membersTable.organizationId],
-		references: [organizationsTable.id],
+export const membersTableRelations = relations(
+	auth.membersTable,
+	({ one }) => ({
+		organizationsTable: one(auth.organizationsTable, {
+			fields: [auth.membersTable.organizationId],
+			references: [auth.organizationsTable.id],
+		}),
+		usersTable: one(auth.usersTable, {
+			fields: [auth.membersTable.userId],
+			references: [auth.usersTable.id],
+		}),
 	}),
-	usersTable: one(usersTable, {
-		fields: [membersTable.userId],
-		references: [usersTable.id],
-	}),
-}));
+);
 
 export const invitationsTableRelations = relations(
-	invitationsTable,
+	auth.invitationsTable,
 	({ one }) => ({
-		organizationsTable: one(organizationsTable, {
-			fields: [invitationsTable.organizationId],
-			references: [organizationsTable.id],
+		organizationsTable: one(auth.organizationsTable, {
+			fields: [auth.invitationsTable.organizationId],
+			references: [auth.organizationsTable.id],
 		}),
-		usersTable: one(usersTable, {
-			fields: [invitationsTable.inviterId],
-			references: [usersTable.id],
+		usersTable: one(auth.usersTable, {
+			fields: [auth.invitationsTable.inviterId],
+			references: [auth.usersTable.id],
 		}),
 	}),
 );
 
-export const teamsRelations = relations(teamsTable, ({ one, many }) => ({
-	organization: one(organizationsTable, {
-		fields: [teamsTable.orgId],
-		references: [organizationsTable.id],
+export const teamsRelations = relations(teams.teamsTable, ({ one, many }) => ({
+	organization: one(auth.organizationsTable, {
+		fields: [teams.teamsTable.orgId],
+		references: [auth.organizationsTable.id],
 	}),
-	statuses: many(statusesTable),
-	matters: many(mattersTable),
-	memberships: many(teamMembershipsTable),
+	statuses: many(teams.statusesTable),
+	matters: many(matters.mattersTable),
+	memberships: many(teams.teamMembershipsTable),
 }));
 
 export const teamMembershipsRelations = relations(
-	teamMembershipsTable,
+	teams.teamMembershipsTable,
 	({ one }) => ({
-		team: one(teamsTable, {
-			fields: [teamMembershipsTable.teamId],
-			references: [teamsTable.id],
+		team: one(teams.teamsTable, {
+			fields: [teams.teamMembershipsTable.teamId],
+			references: [teams.teamsTable.id],
 		}),
-		user: one(usersTable, {
-			fields: [teamMembershipsTable.userId],
-			references: [usersTable.id],
+		user: one(auth.usersTable, {
+			fields: [teams.teamMembershipsTable.userId],
+			references: [auth.usersTable.id],
 		}),
-		organization: one(organizationsTable, {
-			fields: [teamMembershipsTable.orgId],
-			references: [organizationsTable.id],
+		organization: one(auth.organizationsTable, {
+			fields: [teams.teamMembershipsTable.orgId],
+			references: [auth.organizationsTable.id],
 		}),
 	}),
 );
 
-export const statusesRelations = relations(statusesTable, ({ one, many }) => ({
-	team: one(teamsTable, {
-		fields: [statusesTable.teamId],
-		references: [teamsTable.id],
+export const statusesRelations = relations(
+	teams.statusesTable,
+	({ one, many }) => ({
+		team: one(teams.teamsTable, {
+			fields: [teams.statusesTable.teamId],
+			references: [teams.teamsTable.id],
+		}),
+		creator: one(auth.usersTable, {
+			fields: [teams.statusesTable.creatorId],
+			references: [auth.usersTable.id],
+		}),
+		matters: many(matters.mattersTable),
 	}),
-	creator: one(usersTable, {
-		fields: [statusesTable.creatorId],
-		references: [usersTable.id],
-	}),
-	matters: many(mattersTable),
-}));
+);
 
-export const labelsRelations = relations(labelsTable, ({ one, many }) => ({
-	organization: one(organizationsTable, {
-		fields: [labelsTable.orgId],
-		references: [organizationsTable.id],
+export const labelsRelations = relations(
+	matters.labelsTable,
+	({ one, many }) => ({
+		organization: one(auth.organizationsTable, {
+			fields: [matters.labelsTable.orgId],
+			references: [auth.organizationsTable.id],
+		}),
+		creator: one(auth.usersTable, {
+			fields: [matters.labelsTable.creatorId],
+			references: [auth.usersTable.id],
+		}),
+		matterLabels: many(matters.matterLabelsTable),
 	}),
-	creator: one(usersTable, {
-		fields: [labelsTable.creatorId],
-		references: [usersTable.id],
-	}),
-	matterLabels: many(matterLabelsTable),
-}));
+);
 
-export const mattersRelations = relations(mattersTable, ({ one, many }) => ({
-	team: one(teamsTable, {
-		fields: [mattersTable.teamId],
-		references: [teamsTable.id],
+export const mattersRelations = relations(
+	matters.mattersTable,
+	({ one, many }) => ({
+		team: one(teams.teamsTable, {
+			fields: [matters.mattersTable.teamId],
+			references: [teams.teamsTable.id],
+		}),
+		organization: one(auth.organizationsTable, {
+			fields: [matters.mattersTable.orgId],
+			references: [auth.organizationsTable.id],
+		}),
+		author: one(auth.usersTable, {
+			fields: [matters.mattersTable.authorId],
+			references: [auth.usersTable.id],
+			relationName: "authoredMatters",
+		}),
+		assignee: one(auth.usersTable, {
+			fields: [matters.mattersTable.assigneeId],
+			references: [auth.usersTable.id],
+			relationName: "assignedMatters",
+		}),
+		status: one(teams.statusesTable, {
+			fields: [matters.mattersTable.statusId],
+			references: [teams.statusesTable.id],
+		}),
+		labels: many(matters.matterLabelsTable),
+		timelines: many(timelines.timelinesTable),
+		attachments: many(storage.attachmentsTable),
+		views: many(matters.matterViewsTable),
+		subscriptions: many(matters.matterSubscriptionsTable),
+		watchers: many(matters.matterWatchersTable),
+		approver: one(auth.usersTable, {
+			fields: [matters.mattersTable.approvedBy],
+			references: [auth.usersTable.id],
+			relationName: "approvedMatters",
+		}),
 	}),
-	organization: one(organizationsTable, {
-		fields: [mattersTable.orgId],
-		references: [organizationsTable.id],
-	}),
-	author: one(usersTable, {
-		fields: [mattersTable.authorId],
-		references: [usersTable.id],
-		relationName: "authoredMatters",
-	}),
-	assignee: one(usersTable, {
-		fields: [mattersTable.assigneeId],
-		references: [usersTable.id],
-		relationName: "assignedMatters",
-	}),
-	status: one(statusesTable, {
-		fields: [mattersTable.statusId],
-		references: [statusesTable.id],
-	}),
-	labels: many(matterLabelsTable),
-	timelines: many(timelinesTable),
-	attachments: many(attachmentsTable),
-	views: many(matterViewsTable),
-	subscriptions: many(matterSubscriptionsTable),
-	watchers: many(matterWatchersTable),
-	approver: one(usersTable, {
-		fields: [mattersTable.approvedBy],
-		references: [usersTable.id],
-		relationName: "approvedMatters",
-	}),
-}));
+);
 
 export const matterLabelsRelations = relations(
-	matterLabelsTable,
+	matters.matterLabelsTable,
 	({ one }) => ({
-		matter: one(mattersTable, {
-			fields: [matterLabelsTable.matterId],
-			references: [mattersTable.id],
+		matter: one(matters.mattersTable, {
+			fields: [matters.matterLabelsTable.matterId],
+			references: [matters.mattersTable.id],
 		}),
-		label: one(labelsTable, {
-			fields: [matterLabelsTable.labelId],
-			references: [labelsTable.id],
+		label: one(matters.labelsTable, {
+			fields: [matters.matterLabelsTable.labelId],
+			references: [matters.labelsTable.id],
 		}),
 	}),
 );
 
-export const timelinesRelations = relations(timelinesTable, ({ one }) => ({
-	matter: one(mattersTable, {
-		fields: [timelinesTable.matterId],
-		references: [mattersTable.id],
+export const timelinesRelations = relations(
+	timelines.timelinesTable,
+	({ one }) => ({
+		matter: one(matters.mattersTable, {
+			fields: [timelines.timelinesTable.matterId],
+			references: [matters.mattersTable.id],
+		}),
+		user: one(auth.usersTable, {
+			fields: [timelines.timelinesTable.userId],
+			references: [auth.usersTable.id],
+		}),
 	}),
-	user: one(usersTable, {
-		fields: [timelinesTable.userId],
-		references: [usersTable.id],
-	}),
-}));
+);
 
-export const attachmentsRelations = relations(attachmentsTable, ({ one }) => ({
-	organization: one(organizationsTable, {
-		fields: [attachmentsTable.orgId],
-		references: [organizationsTable.id],
+export const attachmentsRelations = relations(
+	storage.attachmentsTable,
+	({ one }) => ({
+		organization: one(auth.organizationsTable, {
+			fields: [storage.attachmentsTable.orgId],
+			references: [auth.organizationsTable.id],
+		}),
+		matter: one(matters.mattersTable, {
+			fields: [storage.attachmentsTable.matterId],
+			references: [matters.mattersTable.id],
+		}),
+		uploader: one(auth.usersTable, {
+			fields: [storage.attachmentsTable.uploaderId],
+			references: [auth.usersTable.id],
+		}),
 	}),
-	matter: one(mattersTable, {
-		fields: [attachmentsTable.matterId],
-		references: [mattersTable.id],
-	}),
-	uploader: one(usersTable, {
-		fields: [attachmentsTable.uploaderId],
-		references: [usersTable.id],
-	}),
-}));
+);
 
 export const storageUsageCacheRelations = relations(
-	storageUsageCacheTable,
+	storage.storageUsageCacheTable,
 	({ one }) => ({
-		organization: one(organizationsTable, {
-			fields: [storageUsageCacheTable.orgId],
-			references: [organizationsTable.id],
+		organization: one(auth.organizationsTable, {
+			fields: [storage.storageUsageCacheTable.orgId],
+			references: [auth.organizationsTable.id],
 		}),
 	}),
 );
 
 export const matterViewsTableRelations = relations(
-	matterViewsTable,
+	matters.matterViewsTable,
 	({ one }) => ({
-		user: one(usersTable, {
-			fields: [matterViewsTable.userId],
-			references: [usersTable.id],
+		user: one(auth.usersTable, {
+			fields: [matters.matterViewsTable.userId],
+			references: [auth.usersTable.id],
 		}),
-		matter: one(mattersTable, {
-			fields: [matterViewsTable.matterId],
-			references: [mattersTable.id],
+		matter: one(matters.mattersTable, {
+			fields: [matters.matterViewsTable.matterId],
+			references: [matters.mattersTable.id],
 		}),
 	}),
 );
 
 export const matterSubscriptionsRelations = relations(
-	matterSubscriptionsTable,
+	matters.matterSubscriptionsTable,
 	({ one }) => ({
-		user: one(usersTable, {
-			fields: [matterSubscriptionsTable.userId],
-			references: [usersTable.id],
+		user: one(auth.usersTable, {
+			fields: [matters.matterSubscriptionsTable.userId],
+			references: [auth.usersTable.id],
 		}),
-		matter: one(mattersTable, {
-			fields: [matterSubscriptionsTable.matterId],
-			references: [mattersTable.id],
+		matter: one(matters.mattersTable, {
+			fields: [matters.matterSubscriptionsTable.matterId],
+			references: [matters.mattersTable.id],
 		}),
 	}),
 );
 
 export const matterWatchersRelations = relations(
-	matterWatchersTable,
+	matters.matterWatchersTable,
 	({ one }) => ({
-		matter: one(mattersTable, {
-			fields: [matterWatchersTable.matterId],
-			references: [mattersTable.id],
+		matter: one(matters.mattersTable, {
+			fields: [matters.matterWatchersTable.matterId],
+			references: [matters.mattersTable.id],
 		}),
-		user: one(usersTable, {
-			fields: [matterWatchersTable.userId],
-			references: [usersTable.id],
+		user: one(auth.usersTable, {
+			fields: [matters.matterWatchersTable.userId],
+			references: [auth.usersTable.id],
 			relationName: "watchedByUser",
 		}),
-		addedByUser: one(usersTable, {
-			fields: [matterWatchersTable.addedBy],
-			references: [usersTable.id],
+		addedByUser: one(auth.usersTable, {
+			fields: [matters.matterWatchersTable.addedBy],
+			references: [auth.usersTable.id],
 			relationName: "watchersAdded",
 		}),
 	}),
 );
 
 export const pushSubscriptionsTableRelations = relations(
-	pushSubscriptionsTable,
+	notifications.pushSubscriptionsTable,
 	({ one }) => ({
-		user: one(usersTable, {
-			fields: [pushSubscriptionsTable.userId],
-			references: [usersTable.id],
+		user: one(auth.usersTable, {
+			fields: [notifications.pushSubscriptionsTable.userId],
+			references: [auth.usersTable.id],
+		}),
+	}),
+);
+
+export const subscriptionsTableRelations = relations(
+	billing.subscriptionsTable,
+	({ one }) => ({
+		organization: one(auth.organizationsTable, {
+			fields: [billing.subscriptionsTable.organizationId],
+			references: [auth.organizationsTable.id],
 		}),
 	}),
 );

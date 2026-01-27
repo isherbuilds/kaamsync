@@ -39,10 +39,11 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Separator } from "~/components/ui/separator";
-import { parseMatterKey } from "~/db/helpers";
-import { useOrgLoaderData } from "~/hooks/use-loader-data";
+import { Priority, type PriorityValue } from "~/config/matter";
+import { parseMatterKeyString } from "~/db/helpers";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
-import { Priority, type PriorityValue } from "~/lib/matter-constants";
+import { sendNotificationToUser } from "~/hooks/use-push-notifications";
 import type { Route } from "./+types/matter.$matterKey";
 
 export const meta: Route.MetaFunction = ({ params }) => [
@@ -52,13 +53,13 @@ export const meta: Route.MetaFunction = ({ params }) => [
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 	const matterKey = params.matterKey;
 	if (!matterKey) throw new Response("Not Found", { status: 404 });
-	const parsed = parseMatterKey(matterKey);
+	const parsed = parseMatterKeyString(matterKey);
 	if (!parsed) throw new Response("Invalid matter key format", { status: 400 });
 	return { matterKey, parsed };
 }
 
 export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
-	const { orgSlug } = useOrgLoaderData();
+	const { orgSlug, authSession } = useOrganizationLoaderData();
 	const { parsed } = loaderData;
 	const navigate = useNavigate();
 	const z = useZero();
@@ -89,15 +90,16 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		: false;
 
 	// Filter statuses based on matter type (task vs request)
+	const matterType = matter?.type;
 	const filteredStatuses = useMemo(() => {
-		if (!matter) return statuses;
-		const isRequest = matter.type === "request";
+		if (!matterType) return statuses;
+		const isRequest = matterType === "request";
 		return statuses.filter((s) => {
 			const isRequestStatus =
 				s.type === "pending_approval" || s.type === "rejected";
 			return isRequest ? isRequestStatus : !isRequestStatus;
 		});
-	}, [matter, statuses]);
+	}, [matterType, statuses]);
 
 	// 3. State & Loading
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -111,26 +113,48 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		(s: string) => {
 			if (!matter) return;
 			setIsUpdating((prev) => ({ ...prev, status: true }));
+
+			if (matter.assigneeId && matter.assigneeId !== authSession.user.id) {
+				const newStatusName =
+					statuses.find((st) => st.id === s)?.name || "Unknown";
+				sendNotificationToUser(
+					matter.assigneeId,
+					"Task Status Updated",
+					`${matter.teamCode}-${matter.shortID}: ${matter.title} is now ${newStatusName}`,
+					window.location.href,
+				);
+			}
+
 			z.mutate(
 				mutators.matter.updateStatus({ id: matter.id, statusId: s }),
 			).server.finally(() =>
 				setIsUpdating((prev) => ({ ...prev, status: false })),
 			);
 		},
-		[matter, z],
+		[matter, z, authSession.user.id, statuses],
 	);
 
 	const handleAssign = useCallback(
 		(u: string | null) => {
 			if (!matter) return;
 			setIsUpdating((prev) => ({ ...prev, assignee: true }));
+
+			if (u && u !== authSession.user.id && u !== matter.assigneeId) {
+				sendNotificationToUser(
+					u,
+					"New Task Assignment",
+					`You have been assigned to ${matter.teamCode}-${matter.shortID}: ${matter.title}`,
+					window.location.href,
+				);
+			}
+
 			z.mutate(
 				mutators.matter.assign({ id: matter.id, assigneeId: u }),
 			).server.finally(() =>
 				setIsUpdating((prev) => ({ ...prev, assignee: false })),
 			);
 		},
-		[matter, z],
+		[matter, z, authSession.user.id],
 	);
 
 	const handlePriorityChange = useCallback(
@@ -208,7 +232,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 						<ChevronRight className="size-4 rotate-180" />
 						<span className="ml-1 hidden sm:inline">Back</span>
 					</Button>
-					<span className="truncate font-medium font-mono text-muted-foreground/50 text-xs">
+					<span className="truncate font-medium font-mono text-muted-foreground text-xs">
 						{matter.teamCode}-{matter.shortID}
 					</span>
 				</div>
