@@ -41,20 +41,18 @@ export const auth = betterAuth({
 		schema,
 	}),
 
-	trustedOrigins: ["https://kaamsync.gapple.in", "http://localhost:3000"],
+	// trustedOrigins: ["https://kaamsync.gapple.in", "http://localhost:3000"],
 
 	// Handles all /api/auth/* routes automatically
 	rateLimit: {
 		enabled: true,
 		window: 60, // 60 seconds
 		max: 100, // 100 requests per window (global default)
-		// TODO: Switch to "database" storage after running migrations to create 'rate_limits' table
 		// storage: "database",
-		// modelName: "rateLimitsTable",
 		storage: "memory",
 		customRules: {
 			// Zero sync endpoints - moderate limits
-			"/api/zero/*": { window: 60, max: 30 },
+			// "/api/zero/*": { window: 60, max: 30 },
 			// Auth endpoints - strict limits to prevent brute force
 			"/api/auth/sign-in/*": { window: 60, max: 10 },
 			"/api/auth/sign-up/*": { window: 60, max: 5 },
@@ -62,11 +60,11 @@ export const auth = betterAuth({
 			"/api/auth/reset-password": { window: 300, max: 5 },
 			"/api/auth/verify-email": { window: 60, max: 10 },
 			// Billing endpoints - moderate limits
-			"/api/auth/dodopayments/checkout/*": { window: 60, max: 5 },
-			"/api/billing/*": { window: 60, max: 10 },
+			"/api/auth/dodopayments/*": { window: 60, max: 5 },
+			// "/api/billing/*": { window: 60, max: 10 },
 			// Notifications - moderate limits for normal use
-			"/api/notifications/send": { window: 60, max: 30 },
-			"/api/notifications/subscribe": { window: 60, max: 20 },
+			// "/api/notifications/send": { window: 60, max: 30 },
+			// "/api/notifications/subscribe": { window: 60, max: 20 },
 		},
 	},
 	// IP address detection for rate limiting
@@ -149,7 +147,7 @@ export const auth = betterAuth({
 			? [
 					dodopayments({
 						client: dodo,
-						createCustomerOnSignUp: false,
+						createCustomerOnSignUp: true,
 						use: [
 							checkout({
 								products: [
