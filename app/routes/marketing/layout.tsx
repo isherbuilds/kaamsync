@@ -1,4 +1,5 @@
-import { Menu, X } from "lucide-react";
+import Menu from "lucide-react/dist/esm/icons/menu";
+import X from "lucide-react/dist/esm/icons/x";
 import { useState } from "react";
 import { Link, Outlet, redirect } from "react-router";
 // import { ColorSchemeToggle } from "~/components/layout/color-scheme-toggle";
@@ -91,7 +92,7 @@ export default function MarketingLayout() {
 
 					{/* Mobile menu button */}
 					<div className="flex md:hidden">
-						<button type="button" onClick={() => setOpen(!open)}>
+						<button type="button" onClick={() => setOpen((o) => !o)}>
 							<span className="sr-only">Toggle menu</span>
 							{open ? <X className="size-5" /> : <Menu className="size-5" />}
 						</button>

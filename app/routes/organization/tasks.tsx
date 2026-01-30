@@ -1,6 +1,6 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
-import { CheckCircle2 } from "lucide-react";
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
 import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";

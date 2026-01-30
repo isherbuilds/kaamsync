@@ -1,7 +1,9 @@
 import { getCollectionProps, getFormProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { MoreVertical, Trash2, UserPlus } from "lucide-react";
+import MoreVertical from "lucide-react/dist/esm/icons/more-vertical";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import UserPlus from "lucide-react/dist/esm/icons/user-plus";
 import { useMemo, useState } from "react";
 import { Link, useParams, useRouteError } from "react-router";
 import { toast } from "sonner";

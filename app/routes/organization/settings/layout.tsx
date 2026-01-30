@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
 import { data, Link, Outlet } from "react-router";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 import { getServerSession } from "~/lib/auth/server";

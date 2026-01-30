@@ -1,5 +1,5 @@
 import { useZero } from "@rocicorp/zero/react";
-import { CheckCircle2 } from "lucide-react";
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { Button } from "~/components/ui/button";

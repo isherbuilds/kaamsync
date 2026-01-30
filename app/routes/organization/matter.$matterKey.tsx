@@ -1,12 +1,10 @@
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import {
-	Archive,
-	ArchiveRestore,
-	ChevronRight,
-	MoreHorizontal,
-	Star,
-	Trash2,
-} from "lucide-react";
+import Archive from "lucide-react/dist/esm/icons/archive";
+import ArchiveRestore from "lucide-react/dist/esm/icons/archive-restore";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
+import Star from "lucide-react/dist/esm/icons/star";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
 import { useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";

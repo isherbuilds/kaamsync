@@ -1,6 +1,7 @@
 import { useControl } from "@conform-to/react/future";
 import type { VariantProps } from "class-variance-authority";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import EyeIcon from "lucide-react/dist/esm/icons/eye";
+import EyeOffIcon from "lucide-react/dist/esm/icons/eye-off";
 import { useId, useRef, useState } from "react";
 import type { buttonVariants } from "~/components/ui/button";
 import { Button } from "~/components/ui/button";
@@ -106,7 +107,7 @@ export function InputField({
 
 	return (
 		<div className={cn(className, "flex flex-col gap-2")}>
-			{labelProps && <Label htmlFor={id} {...labelProps} />}
+			{labelProps ? <Label htmlFor={id} {...labelProps} /> : null}
 			<Input
 				aria-describedby={errorId}
 				aria-invalid={errorId ? true : undefined}
@@ -131,7 +132,7 @@ export function InputGroupField({
 
 	return (
 		<div className={cn(className, "flex flex-col gap-2")}>
-			{labelProps && <Label htmlFor={id} {...labelProps} />}
+			{labelProps ? <Label htmlFor={id} {...labelProps} /> : null}
 			<InputGroup>
 				<InputGroupAddon>
 					<InputGroupText>{groupText}</InputGroupText>
@@ -162,7 +163,7 @@ export function PasswordField({
 
 	return (
 		<div className={cn(className, "flex flex-col gap-2")}>
-			{labelProps && <Label htmlFor={id} {...labelProps} />}
+			{labelProps ? <Label htmlFor={id} {...labelProps} /> : null}
 			<div className="relative">
 				<Input
 					aria-describedby={errorId}
@@ -175,7 +176,7 @@ export function PasswordField({
 				<Button
 					aria-label={isVisible ? "Hide password" : "Show password"}
 					className="absolute inset-y-0 right-0 flex h-full items-center justify-center pr-3 text-muted-foreground/80"
-					onClick={() => setIsVisible(!isVisible)}
+					onClick={() => setIsVisible((v) => !v)}
 					size="icon"
 					tabIndex={-1}
 					type="button"
@@ -258,7 +259,7 @@ export function SelectField({
 	return (
 		<div className={cn(className, "flex flex-col gap-2")}>
 			<input name={name} ref={control.register} hidden />
-			{labelProps && <Label htmlFor={selectId} {...labelProps} />}
+			{labelProps ? <Label htmlFor={selectId} {...labelProps} /> : null}
 			<Select
 				value={control.value}
 				onValueChange={(value) => control.change(value)}

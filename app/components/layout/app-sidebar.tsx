@@ -1,14 +1,12 @@
 "use client";
 
-import {
-	ChevronLeft,
-	CircleCheckBigIcon,
-	CreditCard,
-	Plug,
-	SendIcon,
-	Settings,
-	Users,
-} from "lucide-react";
+import ChevronLeft from "lucide-react/dist/esm/icons/chevron-left";
+import CircleCheckBigIcon from "lucide-react/dist/esm/icons/circle-check-big";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import Plug from "lucide-react/dist/esm/icons/plug";
+import SendIcon from "lucide-react/dist/esm/icons/send";
+import Settings from "lucide-react/dist/esm/icons/settings";
+import Users from "lucide-react/dist/esm/icons/users";
 import { useMatches } from "react-router";
 
 import { NavMain } from "~/components/layout/nav-main";
@@ -126,7 +124,7 @@ export function AppSidebar({
 					items={isSettings ? NAV_SETTINGS_ITEMS : NAV_MAIN_ITEMS}
 					orgSlug={selectedOrg.slug}
 				/>
-				{!isSettings && <NavTeams teams={teams} orgSlug={selectedOrg.slug} />}
+				{!isSettings ? <NavTeams teams={teams} orgSlug={selectedOrg.slug} /> : null}
 			</SidebarContent>
 			<SidebarFooter className="flex-row items-center">
 				<NavUser user={authUser} />

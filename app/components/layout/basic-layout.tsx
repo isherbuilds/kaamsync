@@ -1,4 +1,4 @@
-import { ArrowLeftIcon } from "lucide-react";
+import ArrowLeftIcon from "lucide-react/dist/esm/icons/arrow-left";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";

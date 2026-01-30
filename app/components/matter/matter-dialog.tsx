@@ -6,7 +6,9 @@ import {
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
-import { GitPullRequest, ListTodo, SquarePen } from "lucide-react";
+import GitPullRequest from "lucide-react/dist/esm/icons/gitide-pull-request";
+import ListTodo from "lucide-react/dist/esm/icons/list-todo";
+import SquarePen from "lucide-react/dist/esm/icons/square-pen";
 import { memo, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";

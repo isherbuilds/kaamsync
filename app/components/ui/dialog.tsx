@@ -1,4 +1,4 @@
-import { XIcon } from "lucide-react";
+import XIcon from "lucide-react/dist/esm/icons/x";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type * as React from "react";
 

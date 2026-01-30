@@ -1,6 +1,9 @@
 "use client";
 
-import { ExternalLink, FileIcon, XIcon, ZoomInIcon } from "lucide-react";
+import ExternalLink from "lucide-react/dist/esm/icons/external-link";
+import FileIcon from "lucide-react/dist/esm/icons/file";
+import XIcon from "lucide-react/dist/esm/icons/x";
+import ZoomInIcon from "lucide-react/dist/esm/icons/zoom-in";
 import { useState } from "react";
 import { formatBytes } from "~/hooks/use-file-upload";
 import { cn } from "~/lib/utils";

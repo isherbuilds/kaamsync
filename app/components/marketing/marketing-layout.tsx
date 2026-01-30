@@ -41,7 +41,7 @@ export function MarketingHeading({
 	return (
 		<Component className={cn(baseStyles, variantStyles[Component], className)}>
 			{children}
-			{italic && <span className="text-muted-foreground italic">{italic}</span>}
+			{italic ? <span className="text-muted-foreground italic">{italic}</span> : null}
 		</Component>
 	);
 }

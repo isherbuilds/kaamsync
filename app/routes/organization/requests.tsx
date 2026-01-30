@@ -1,6 +1,9 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
-import { CalendarIcon, Clock, Send, UserIcon } from "lucide-react";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Send from "lucide-react/dist/esm/icons/send";
+import UserIcon from "lucide-react/dist/esm/icons/user";
 import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";

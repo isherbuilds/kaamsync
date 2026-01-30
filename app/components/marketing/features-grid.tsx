@@ -1,4 +1,9 @@
-import { Activity, CheckCircle2, Layout, Lock, Users, Zap } from "lucide-react";
+import Activity from "lucide-react/dist/esm/icons/activity";
+import CheckCircle2 from "lucide-react/dist/esm/icons/check-circle-2";
+import Layout from "lucide-react/dist/esm/icons/layout";
+import Lock from "lucide-react/dist/esm/icons/lock";
+import Users from "lucide-react/dist/esm/icons/users";
+import Zap from "lucide-react/dist/esm/icons/zap";
 
 const features = [
 	{

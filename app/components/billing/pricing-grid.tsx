@@ -1,4 +1,8 @@
-import { Check, Mail, Sparkles, Users, Zap } from "lucide-react";
+import Check from "lucide-react/dist/esm/icons/check";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Sparkles from "lucide-react/dist/esm/icons/sparkles";
+import Users from "lucide-react/dist/esm/icons/users";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import { useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";

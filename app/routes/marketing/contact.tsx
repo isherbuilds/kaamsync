@@ -1,4 +1,5 @@
-import { Mail, MessageSquare } from "lucide-react";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import MessageSquare from "lucide-react/dist/esm/icons/message-square";
 
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";

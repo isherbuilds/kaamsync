@@ -1,6 +1,8 @@
 "use client";
 
-import { Paperclip, TriangleAlert, XIcon } from "lucide-react";
+import Paperclip from "lucide-react/dist/esm/icons/paperclip";
+import TriangleAlert from "lucide-react/dist/esm/icons/triangle-alert";
+import XIcon from "lucide-react/dist/esm/icons/x";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	type FileWithPreview,
@@ -156,25 +158,31 @@ export function AttachmentUpload({
 	);
 
 	const prevUploadedAttachmentsRef = useRef<UploadedAttachment[]>([]);
-	useEffect(() => {
-		const prevIds = prevUploadedAttachmentsRef.current
-			.map((a) => a.id)
-			.join(",");
-		const currentIds = uploadedAttachments.map((a) => a.id).join(",");
-		if (prevIds !== currentIds) {
-			prevUploadedAttachmentsRef.current = uploadedAttachments;
-			onAttachmentsChange(uploadedAttachments);
-		}
-	}, [uploadedAttachments, onAttachmentsChange]);
+	useEffect(
+		function syncUploadedAttachments() {
+			const prevIds = prevUploadedAttachmentsRef.current
+				.map((a) => a.id)
+				.join(",");
+			const currentIds = uploadedAttachments.map((a) => a.id).join(",");
+			if (prevIds !== currentIds) {
+				prevUploadedAttachmentsRef.current = uploadedAttachments;
+				onAttachmentsChange(uploadedAttachments);
+			}
+		},
+		[uploadedAttachments, onAttachmentsChange],
+	);
 
 	const actionsRef = useRef(actions);
 	actionsRef.current = actions;
-	useEffect(() => {
-		if (resetSignal === undefined) return;
-		actionsRef.current.clearFiles();
-		setUploadEntries({});
-		setUploadedAttachments([]);
-	}, [resetSignal]);
+	useEffect(
+		function resetOnSignalChange() {
+			if (resetSignal === undefined) return;
+			actionsRef.current.clearFiles();
+			setUploadEntries({});
+			setUploadedAttachments([]);
+		},
+		[resetSignal],
+	);
 
 	return (
 		<div className={cn("space-y-3", className)}>

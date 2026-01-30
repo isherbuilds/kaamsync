@@ -1,7 +1,7 @@
 "use client";
 
 import { Command as CommandPrimitive } from "cmdk";
-import { SearchIcon } from "lucide-react";
+import SearchIcon from "lucide-react/dist/esm/icons/search";
 import type * as React from "react";
 import {
 	Dialog,

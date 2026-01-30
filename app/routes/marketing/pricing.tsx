@@ -1,4 +1,8 @@
-import { Building2, Check, ShieldCheck, Users, Zap } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Check from "lucide-react/dist/esm/icons/check";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
+import Users from "lucide-react/dist/esm/icons/users";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import { type ReactNode, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";

@@ -1,4 +1,5 @@
-import { ArrowRight, ChevronRight } from "lucide-react";
+import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
+import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { ChatSimulator } from "~/components/marketing/chat-simulator";

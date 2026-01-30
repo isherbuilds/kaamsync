@@ -1,4 +1,5 @@
-import { AlertCircle, MehIcon } from "lucide-react";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
+import MehIcon from "lucide-react/dist/esm/icons/meh";
 import {
 	isRouteErrorResponse,
 	Link,

@@ -1,5 +1,6 @@
 import type { Row } from "@rocicorp/zero";
-import { Check, User } from "lucide-react";
+import Check from "lucide-react/dist/esm/icons/check";
+import User from "lucide-react/dist/esm/icons/user";
 import {
 	type ButtonHTMLAttributes,
 	forwardRef,
@@ -370,7 +371,7 @@ export const MemberSelect = memo(
 								>
 									<User className="mr-2 size-3.5 opacity-50" />
 									<span>Unassigned</span>
-									{!value && <Check className="ml-auto size-3" />}
+									{!value ? <Check className="ml-auto size-3" /> : null}
 								</CommandItem>
 								{members.map((member) => {
 									const memberUser = member.user ?? member.usersTable;

@@ -1,5 +1,5 @@
 import { useQuery } from "@rocicorp/zero/react";
-import { AlertCircle } from "lucide-react";
+import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import { useMemo } from "react";
 import {
 	createContext,

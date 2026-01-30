@@ -1,14 +1,12 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery } from "@rocicorp/zero/react";
-import {
-	Mail,
-	MoreVertical,
-	ShieldCheck,
-	Trash2,
-	UserPlus,
-	X,
-} from "lucide-react";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import MoreVertical from "lucide-react/dist/esm/icons/more-vertical";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import UserPlus from "lucide-react/dist/esm/icons/user-plus";
+import X from "lucide-react/dist/esm/icons/x";
 import { useState, useTransition } from "react";
 import { data, Link, useRouteError, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";

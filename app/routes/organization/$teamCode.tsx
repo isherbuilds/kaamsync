@@ -1,6 +1,9 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { BanIcon, CalendarIcon, ChevronDown, InboxIcon } from "lucide-react";
+import BanIcon from "lucide-react/dist/esm/icons/ban";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import InboxIcon from "lucide-react/dist/esm/icons/inbox";
 import { lazy, memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
@@ -420,7 +423,7 @@ const TaskListRow = memo(
 					</div>
 
 					<div className="flex shrink-0 items-center gap-4">
-						{task.dueDate && <TaskDueDateBadge date={task.dueDate} />}
+						{task.dueDate ? <TaskDueDateBadge date={task.dueDate} /> : null}
 						<MemberSelect
 							value={task.assigneeId}
 							members={members}

@@ -1,4 +1,7 @@
-import { AlertTriangle, HardDrive, Layers, Users } from "lucide-react";
+import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
+import HardDrive from "lucide-react/dist/esm/icons/hard-drive";
+import Layers from "lucide-react/dist/esm/icons/layers";
+import Users from "lucide-react/dist/esm/icons/users";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Progress } from "~/components/ui/progress";
 import {
@@ -226,7 +229,7 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 				/>
 
 				{/* Show addon pricing info for plans with add-ons */}
-				{product.hasAddons && <AddonPricingInfo planKey={planKey} />}
+				{product.hasAddons ? <AddonPricingInfo planKey={planKey} /> : null}
 			</CardContent>
 		</Card>
 	);

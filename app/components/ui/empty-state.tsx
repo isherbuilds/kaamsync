@@ -55,7 +55,7 @@ export function EmptyState({
 			</div>
 			<p className="mt-3 font-medium text-muted-foreground text-sm">{title}</p>
 			<p className="mt-1 text-muted-foreground/70 text-xs">{description}</p>
-			{children && <div className="mt-4">{children}</div>}
+			{children ? <div className="mt-4">{children}</div> : null}
 		</div>
 	);
 }

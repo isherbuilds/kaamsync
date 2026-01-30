@@ -356,12 +356,12 @@ export default function Component({ loaderData }: Route.ComponentProps) {
 						<Button
 							variant="ghost"
 							size="sm"
-							onClick={() => setShowComparison(!showComparison)}
+							onClick={() => setShowComparison((s) => !s)}
 							className="text-muted-foreground text-sm"
 						>
 							{showComparison ? "Hide" : "Show"} feature comparison
 						</Button>
-						{showComparison && <PricingComparison />}
+						{showComparison ? <PricingComparison /> : null}
 					</div>
 				</div>
 			)}
