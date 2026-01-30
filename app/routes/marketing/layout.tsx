@@ -50,7 +50,7 @@ export default function MarketingLayout() {
 				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
 						<Link to="/" className="flex items-center gap-1">
-							<div className="flex size-7 items-center justify-center bg-white">
+							<div className="flex size-7 center bg-white">
 								<img
 									src="/static/kaamsync-logo.png"
 									alt="KaamSync"
@@ -110,7 +110,7 @@ export default function MarketingLayout() {
 				>
 					<div className="flex h-full w-full flex-col p-4">
 						<div className="flex-1 overflow-y-auto">
-							<div className="flex flex-col">
+							<div className="v-stack">
 								{navLinks.map(({ to, label }) => (
 									<Link
 										key={to}
@@ -128,14 +128,14 @@ export default function MarketingLayout() {
 									<Link
 										to="/login"
 										onClick={() => setOpen(false)}
-										className="flex items-center justify-center rounded-xl bg-muted/50 px-3 py-3 font-medium text-base text-foreground transition-colors hover:bg-muted"
+										className="flex center rounded-xl bg-muted/50 px-3 py-3 font-medium text-base text-foreground transition-colors hover:bg-muted"
 									>
 										Log In
 									</Link>
 									<Link
 										to="/signup"
 										onClick={() => setOpen(false)}
-										className="flex items-center justify-center rounded-xl bg-foreground px-3 py-3 font-medium text-background text-base transition-colors hover:bg-foreground/90"
+										className="flex center rounded-xl bg-foreground px-3 py-3 font-medium text-background text-base transition-colors hover:bg-foreground/90"
 									>
 										Get Started
 									</Link>
@@ -155,7 +155,7 @@ export default function MarketingLayout() {
 					<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
 						<div className="space-y-4 lg:col-span-2">
 							<Link to="/" className="flex items-center gap-2.5">
-								<div className="flex size-7 items-center justify-center bg-white">
+								<div className="flex size-7 center bg-white">
 									<img
 										src="/static/kaamsync-logo.png"
 										alt="KaamSync"
@@ -171,14 +171,14 @@ export default function MarketingLayout() {
 						</div>
 						<div className="space-y-4">
 							<h4 className="font-medium text-sm">Product</h4>
-							<div className="flex flex-col gap-3">
+							<div className="v-stack gap-3">
 								<FooterLink to="/pricing">Pricing</FooterLink>
 								<FooterLink to="/about">About</FooterLink>
 							</div>
 						</div>
 						<div className="space-y-4">
 							<h4 className="font-medium text-sm">Resources</h4>
-							<div className="flex flex-col gap-3">
+							<div className="v-stack gap-3">
 								<FooterLink to="/contact">Contact</FooterLink>
 								<FooterLink to="/terms">Terms</FooterLink>
 								<FooterLink to="/privacy">Privacy</FooterLink>
@@ -186,7 +186,7 @@ export default function MarketingLayout() {
 						</div>
 						<div className="space-y-4">
 							<h4 className="font-medium text-sm">Connect</h4>
-							<div className="flex flex-col gap-3">
+							<div className="v-stack gap-3">
 								<FooterLink to="/twitter">Twitter</FooterLink>
 								<FooterLink to="/linkedin">LinkedIn</FooterLink>
 							</div>

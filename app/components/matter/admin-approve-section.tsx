@@ -45,7 +45,7 @@ export function AdminApproveSection({
 	if (statusType === "rejected") {
 		return (
 			<div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
-				<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+				<div className="v-stack items-start justify-between gap-4 sm:flex-row sm:items-center">
 					<div className="space-y-1">
 						<h3 className="font-bold text-destructive text-sm">
 							Request Rejected
@@ -70,7 +70,7 @@ export function AdminApproveSection({
 
 	return (
 		<div className="rounded-lg border border-status-pending/20 bg-status-pending/10 p-4">
-			<div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+			<div className="v-stack items-start justify-between gap-4 sm:flex-row sm:items-center">
 				<div className="space-y-1">
 					<h3 className="font-bold text-sm text-status-pending">
 						Pending Approval

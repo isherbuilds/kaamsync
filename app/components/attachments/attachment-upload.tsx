@@ -229,7 +229,7 @@ export function AttachmentUpload({
 										className="size-10 rounded-md object-cover"
 									/>
 								) : (
-									<div className="flex size-10 items-center justify-center rounded-md bg-muted text-muted-foreground text-xs">
+									<div className="flex size-10 center rounded-md bg-muted text-muted-foreground text-xs">
 										{fileItem.file.name.split(".").pop()?.toUpperCase() ??
 											"FILE"}
 									</div>

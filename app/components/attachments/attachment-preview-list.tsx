@@ -64,13 +64,13 @@ export function AttachmentPreviewList({
 							) : (
 								<div
 									className={cn(
-										"flex h-full w-full flex-col items-center justify-center bg-muted/50",
+										"flex h-full w-full flex-col center bg-muted/50",
 										c ? "gap-1 p-2" : "gap-2 p-4",
 									)}
 								>
 									<div
 										className={cn(
-											"flex items-center justify-center rounded-lg bg-muted",
+											"flex center rounded-lg bg-muted",
 											c ? "h-6 w-6" : "h-12 w-12",
 										)}
 									>
@@ -93,7 +93,7 @@ export function AttachmentPreviewList({
 							)}
 							<div
 								className={cn(
-									"absolute inset-0 flex flex-col justify-between bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100",
+									"absolute inset-0 v-stack justify-between bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100",
 									c ? "p-1.5" : "p-3",
 								)}
 							>
@@ -145,7 +145,7 @@ export function AttachmentPreviewList({
 			{selected && (
 				<button
 					type="button"
-					className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+					className="fixed inset-0 z-50 flex center bg-black/90 p-4 backdrop-blur-sm"
 					onClick={() => setSelected(null)}
 				>
 					<div className="relative max-h-[90vh] max-w-[90vw]">

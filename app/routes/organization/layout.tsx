@@ -223,7 +223,7 @@ function Layout({
 
 function SidebarSkeleton() {
 	return (
-		<div className="hidden w-64 flex-col items-center justify-center bg-sidebar p-2 lg:flex">
+		<div className="v-stack center hidden w-64 bg-sidebar p-2 lg:flex">
 			<Spinner className="size-5" />
 		</div>
 	);
@@ -240,7 +240,7 @@ export function ErrorBoundary() {
 		: "Failed to load organization.";
 
 	return (
-		<div className="flex h-screen w-full items-center justify-center bg-background p-4">
+		<div className="center flex h-screen w-full bg-background p-4">
 			<div className="flex max-w-md flex-col items-center gap-4 text-center">
 				<div className="rounded-full bg-destructive/10 p-2">
 					<AlertCircle className="size-5 text-destructive" />

@@ -2,8 +2,8 @@
 
 import BlocksIcon from "lucide-react/dist/esm/icons/blocks";
 import ChevronsUpDown from "lucide-react/dist/esm/icons/chevrons-up-down";
-import Settings2Icon from "lucide-react/dist/esm/icons/settings2";
-import Users2Icon from "lucide-react/dist/esm/icons/users2";
+import Settings2Icon from "lucide-react/dist/esm/icons/settings-2";
+import Users2Icon from "lucide-react/dist/esm/icons/users-2";
 import { Link } from "react-router";
 import { CustomAvatar } from "~/components/ui/avatar";
 import {

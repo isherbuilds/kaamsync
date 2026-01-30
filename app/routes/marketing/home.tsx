@@ -43,9 +43,9 @@ const FAQS = [
 
 export default function HomePage() {
 	return (
-		<div className="flex flex-col bg-background text-foreground">
+		<div className="v-stack bg-background text-foreground">
 			{/* HERO SECTION */}
-			<section className="relative flex flex-col items-center justify-center border-border/40 border-b pt-24 pb-32">
+			<section className="v-stack center relative border-border/40 border-b pt-24 pb-32">
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
 				<div className="container relative z-10 px-4 text-center md:px-6">
@@ -61,7 +61,7 @@ export default function HomePage() {
 						in one calm workspace — even when teams are offline.
 					</p>
 
-					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
 						<Button
 							size="lg"
 							className="h-14 w-full rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground hover:shadow-none md:max-w-2xs"
@@ -124,7 +124,7 @@ export default function HomePage() {
 									},
 								].map((item) => (
 									<div key={item.title} className="flex items-start gap-4">
-										<div className="mt-1 flex size-6 shrink-0 items-center justify-center rounded-full border border-destructive text-destructive">
+										<div className="center mt-1 flex size-6 shrink-0 rounded-full border border-destructive text-destructive">
 											<span className="font-bold text-sm">×</span>
 										</div>
 										<div>
@@ -200,7 +200,7 @@ export default function HomePage() {
 						Join forward-thinking teams moving their operations out of the chat
 						and into KaamSync.
 					</p>
-					<div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
 						<Button
 							asChild
 							size="lg"

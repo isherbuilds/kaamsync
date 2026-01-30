@@ -17,7 +17,7 @@ export default function UnderConstruction({
 			<div className="w-fit rounded bg-primary/90 px-3 py-1 text-base text-primary-foreground">
 				{route}
 			</div>
-			<h1 className="flex items-center justify-center gap-2 font-bold text-5xl">
+			<h1 className="flex center gap-2 font-bold text-5xl">
 				{message}
 			</h1>
 			<p className="md:text-xl">

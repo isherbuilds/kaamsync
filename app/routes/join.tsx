@@ -34,9 +34,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 		return redirect("/login");
 	}
 
-	const invitations = await auth.api.listUserInvitations({
+	const invitationsPromise = auth.api.listUserInvitations({
 		query: { email: session.user.email },
 	});
+
+	const invitations = await invitationsPromise;
 
 	const pendingInvites = invitations.filter(
 		(invite) => !invite.status || invite.status === "pending",
@@ -259,7 +261,7 @@ export default function onboardingOrganization({
 				<TabsContent value="join">
 					{!showJoin && (
 						<div className="empty-state py-12 text-center">
-							<div className="mx-auto flex flex-col items-center gap-2">
+							<div className="mx-auto v-stack items-center gap-2">
 								<h3 className="font-semibold text-lg">
 									No pending invitations
 								</h3>

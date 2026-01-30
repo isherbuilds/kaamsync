@@ -65,7 +65,7 @@ export default function ContactPage() {
 									href={href}
 									className="group flex items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
 								>
-									<div className="flex size-10 shrink-0 items-center justify-center bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
+									<div className="flex size-10 shrink-0 center bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
 										<Icon className="size-5" />
 									</div>
 									<div>
@@ -182,9 +182,9 @@ export default function ContactPage() {
 						].map((item) => (
 							<div
 								key={item.title}
-								className="group flex flex-col items-start gap-4"
+								className="group v-stack items-start gap-4"
 							>
-								<div className="flex size-12 items-center justify-center rounded-none border border-border bg-background transition-colors group-hover:border-primary group-hover:bg-primary/5">
+								<div className="flex size-12 center rounded-none border border-border bg-background transition-colors group-hover:border-primary group-hover:bg-primary/5">
 									<item.icon className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
 								</div>
 								<div>

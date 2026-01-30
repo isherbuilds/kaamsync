@@ -267,4 +267,41 @@ body {
 		writing-mode: vertical-rl;
 		text-orientation: mixed;
 	}
+
+	/* Stack Utilities - Layout Patterns */
+	.v-stack {
+		@apply flex flex-col;
+	}
+
+	.h-stack {
+		@apply flex flex-row;
+	}
+
+	.v-stack-reverse {
+		@apply flex flex-col-reverse;
+	}
+
+	.h-stack-reverse {
+		@apply flex flex-row-reverse;
+	}
+
+	.z-stack {
+		@apply grid;
+	}
+
+	.z-stack > * {
+		@apply col-start-1 row-start-1;
+	}
+
+	.center {
+		@apply flex items-center justify-center;
+	}
+
+	.spacer {
+		@apply grow;
+	}
+
+	.circle {
+		@apply aspect-square rounded-full;
+	}
 }

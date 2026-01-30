@@ -54,7 +54,7 @@ export function ErrorList({
 		return null;
 	}
 	return (
-		<ul className="flex flex-col" id={id} aria-live="polite">
+		<ul className="v-stack" id={id} aria-live="polite">
 			{errorsToRender.map((e) => (
 				<li className="text-destructive text-xs" key={e}>
 					{e}
@@ -82,7 +82,7 @@ export function CustomChildrenField({
 	const isFn = typeof children === "function";
 
 	return (
-		<div className={cn(className, "flex flex-col gap-2")}>
+		<div className={cn(className, "v-stack gap-2")}>
 			{labelProps &&
 				(isFn ? (
 					<Label htmlFor={id} {...labelProps} />
@@ -106,7 +106,7 @@ export function InputField({
 	const errorId = errors?.length ? `${id}-error` : undefined;
 
 	return (
-		<div className={cn(className, "flex flex-col gap-2")}>
+		<div className={cn(className, "v-stack gap-2")}>
 			{labelProps ? <Label htmlFor={id} {...labelProps} /> : null}
 			<Input
 				aria-describedby={errorId}
@@ -131,7 +131,7 @@ export function InputGroupField({
 	const errorId = errors?.length ? `${id}-error` : undefined;
 
 	return (
-		<div className={cn(className, "flex flex-col gap-2")}>
+		<div className={cn(className, "v-stack gap-2")}>
 			{labelProps ? <Label htmlFor={id} {...labelProps} /> : null}
 			<InputGroup>
 				<InputGroupAddon>
@@ -162,7 +162,7 @@ export function PasswordField({
 	const { ...restInputProps } = inputProps;
 
 	return (
-		<div className={cn(className, "flex flex-col gap-2")}>
+		<div className={cn(className, "v-stack gap-2")}>
 			{labelProps ? <Label htmlFor={id} {...labelProps} /> : null}
 			<div className="relative">
 				<Input
@@ -175,7 +175,7 @@ export function PasswordField({
 				/>
 				<Button
 					aria-label={isVisible ? "Hide password" : "Show password"}
-					className="absolute inset-y-0 right-0 flex h-full items-center justify-center pr-3 text-muted-foreground/80"
+					className="absolute inset-y-0 right-0 flex h-full center pr-3 text-muted-foreground/80"
 					onClick={() => setIsVisible((v) => !v)}
 					size="icon"
 					tabIndex={-1}
@@ -209,7 +209,7 @@ export function TextareaField({
 	const id = textareaProps.id ?? textareaProps.name ?? fallbackId;
 	const errorId = errors?.length ? `${id}-error` : undefined;
 	return (
-		<div className={cn(className, "flex flex-col gap-2")}>
+		<div className={cn(className, "v-stack gap-2")}>
 			<Label htmlFor={id} {...labelProps} />
 			<Textarea
 				aria-describedby={errorId}
@@ -257,7 +257,7 @@ export function SelectField({
 	});
 
 	return (
-		<div className={cn(className, "flex flex-col gap-2")}>
+		<div className={cn(className, "v-stack gap-2")}>
 			<input name={name} ref={control.register} hidden />
 			{labelProps ? <Label htmlFor={selectId} {...labelProps} /> : null}
 			<Select

@@ -4,7 +4,7 @@ import { useZero } from "@rocicorp/zero/react";
 import Cog from "lucide-react/dist/esm/icons/cog";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
 import Plus from "lucide-react/dist/esm/icons/plus";
-import Users2Icon from "lucide-react/dist/esm/icons/users2";
+import Users2Icon from "lucide-react/dist/esm/icons/users-2";
 import { useCallback, useState } from "react";
 import { useParams } from "react-router";
 import { preloadTeam } from "zero/preload";

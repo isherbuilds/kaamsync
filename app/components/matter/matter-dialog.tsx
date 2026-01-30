@@ -6,7 +6,7 @@ import {
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
-import GitPullRequest from "lucide-react/dist/esm/icons/gitide-pull-request";
+import GitPullRequest from "lucide-react/dist/esm/icons/git-pull-request";
 import ListTodo from "lucide-react/dist/esm/icons/list-todo";
 import SquarePen from "lucide-react/dist/esm/icons/square-pen";
 import { memo, useCallback, useMemo, useState } from "react";
@@ -246,7 +246,7 @@ export const CreateMatterDialog = memo(
 						{dialogDescription}
 					</DialogDescription>
 
-					<form {...getFormProps(form)} className="flex flex-col bg-background">
+					<form {...getFormProps(form)} className="v-stack bg-background">
 						<div className="space-y-4 p-6">
 							<div
 								className={`flex items-center gap-2 font-bold text-xs uppercase tracking-tight ${dialogAccentClass}`}
@@ -289,7 +289,7 @@ export const CreateMatterDialog = memo(
 							/>
 						</div>
 
-						<div className="flex flex-col gap-3 border-t bg-muted/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+						<div className="v-stack gap-3 border-t bg-muted/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
 							<div className="flex flex-wrap items-center gap-1">
 								{!isRequest && (
 									<StatusSelect

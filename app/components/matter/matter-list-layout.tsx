@@ -109,7 +109,7 @@ const ListLoadingSkeleton = () => (
 					<div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
 					<div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
 				</div>
-				<div className="flex flex-col items-end gap-1">
+				<div className="v-stack items-end gap-1">
 					<div className="size-4 animate-pulse rounded bg-muted" />
 					<div className="h-3 w-8 animate-pulse rounded bg-muted" />
 				</div>
@@ -119,7 +119,7 @@ const ListLoadingSkeleton = () => (
 );
 
 const DetailPanelPlaceholder = ({ Icon }: { Icon: LucideIcon }) => (
-	<div className="flex h-full items-center justify-center">
+	<div className="flex h-full center">
 		<div className="text-center">
 			<Icon className="mx-auto size-12 text-muted-foreground/30" />
 			<p className="mt-2 text-muted-foreground text-sm">

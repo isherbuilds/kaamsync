@@ -46,7 +46,7 @@ export function EmptyState({
 	return (
 		<div
 			className={cn(
-				"flex flex-col items-center justify-center py-16 text-center",
+				"v-stack center py-16 text-center",
 				className,
 			)}
 		>
@@ -76,14 +76,14 @@ export function EmptyStateCard({
 	return (
 		<div
 			className={cn(
-				"m-4 flex h-full flex-col items-center justify-center rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/30 p-8 text-center",
+				"m-4 flex h-full flex-col center rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/30 p-8 text-center",
 				className,
 			)}
 		>
 			<div className="mx-auto max-w-md space-y-4">
 				<div
 					className={cn(
-						"mx-auto flex size-16 items-center justify-center rounded-full",
+						"mx-auto flex size-16 center rounded-full",
 						iconColorClass,
 					)}
 				>
@@ -96,7 +96,7 @@ export function EmptyStateCard({
 					</p>
 				</div>
 				{children && (
-					<div className="flex flex-col items-center justify-center gap-2 pt-2 sm:flex-row">
+					<div className="v-stack center gap-2 pt-2 sm:flex-row">
 						{children}
 					</div>
 				)}

@@ -345,7 +345,7 @@ export const MemberSelect = memo(
 								name={selectedUser.name}
 							/>
 						) : (
-							<div className="flex size-6 shrink-0 items-center justify-center rounded-full border border-muted-foreground/50 border-dashed">
+							<div className="flex size-6 shrink-0 center rounded-full border border-muted-foreground/50 border-dashed">
 								<User className="size-2.5" />
 							</div>
 						)}

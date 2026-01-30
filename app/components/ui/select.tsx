@@ -114,7 +114,7 @@ function SelectItem({
 			)}
 			{...props}
 		>
-			<span className="absolute right-2 flex size-3.5 items-center justify-center">
+			<span className="absolute right-2 flex size-3.5 center">
 				<SelectPrimitive.ItemIndicator>
 					<CheckIcon className="size-4" />
 				</SelectPrimitive.ItemIndicator>
@@ -145,7 +145,7 @@ function SelectScrollUpButton({
 		<SelectPrimitive.ScrollUpButton
 			data-slot="select-scroll-up-button"
 			className={cn(
-				"flex cursor-default items-center justify-center py-1",
+				"flex cursor-default center py-1",
 				className,
 			)}
 			{...props}
@@ -163,7 +163,7 @@ function SelectScrollDownButton({
 		<SelectPrimitive.ScrollDownButton
 			data-slot="select-scroll-down-button"
 			className={cn(
-				"flex cursor-default items-center justify-center py-1",
+				"flex cursor-default center py-1",
 				className,
 			)}
 			{...props}
