@@ -27,23 +27,15 @@ const isTest = process.env.NODE_ENV === "test";
 
 type LogLevel = "log" | "warn" | "error" | "info" | "debug";
 
+const ENABLED = isDevelopment || isTest;
+const PRODUCTION_ONLY_ERROR_WARN = !isDevelopment && !isTest;
+
 class Logger {
-	private enabled: boolean;
-	private level: LogLevel;
-
-	constructor() {
-		this.enabled = isDevelopment || isTest;
-		this.level = "log";
-	}
-
 	private shouldLog(level: LogLevel): boolean {
-		if (!this.enabled) return false;
-
-		// In production, only allow error and warn
-		if (!isDevelopment && !isTest) {
+		if (!ENABLED) return false;
+		if (PRODUCTION_ONLY_ERROR_WARN) {
 			return level === "error" || level === "warn";
 		}
-
 		return true;
 	}
 
@@ -77,15 +69,15 @@ class Logger {
 		}
 	}
 
-	// Handle unknown errors safely
 	safeError(error: unknown, context?: string): void {
 		if (!this.shouldLog("error")) return;
 
 		if (error instanceof Error) {
-			console.error(
-				context ? `${context}: ${error.message}` : error.message,
-				error,
-			);
+			if (context) {
+				console.error(`${context}: ${error.message}`, error);
+			} else {
+				console.error(error.message, error);
+			}
 		} else if (typeof error === "string") {
 			console.error(context ? `${context}: ${error}` : error);
 		} else {

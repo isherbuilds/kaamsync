@@ -7,18 +7,6 @@ import { zql } from "./schema";
 const DEFAULT_LIMIT = 100;
 const BULK_SYNC_LIMIT = 1000; // High limit for pre-sync - Zero caches to IndexedDB
 const TIMELINE_LIMIT = 50;
-const ATTACHMENTS_LIMIT = 25;
-
-/** Sort cursor for keyset pagination - use createdAt + id for stable sorting */
-export type MatterSortCursor = {
-	id: string;
-	createdAt: number;
-};
-
-const matterCursorSchema = z.object({
-	id: z.string(),
-	createdAt: z.number(),
-});
 
 // ============================================================================
 // HELPERS
@@ -28,20 +16,17 @@ const matterCursorSchema = z.object({
 type Q = { where: (f: string, opOrVal: unknown, v?: unknown) => any };
 
 const filterByOrganization = <T extends Q>(q: T, ctx: Context): T =>
-	q
-		.where("orgId", ctx.activeOrganizationId ?? "")
-		.where("deletedAt", "IS", null);
+	q.where("orgId", ctx.activeOrganizationId).where("deletedAt", "IS", null);
 
 const excludeDeleted = <T extends Q>(q: T): T =>
 	q.where("deletedAt", "IS", null);
 
-const filterByTeamWithMembershipCheck = <T>(
+const filterByTeamWithMembershipCheck = <T extends Q>(
 	q: T,
 	ctx: Context,
 	teamId: string,
 ): T =>
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
-	(q as any)
+	q
 		.where("teamId", teamId)
 		.where("deletedAt", "IS", null) // Filter deleted matters
 		.whereExists("team", (w: any) =>
@@ -53,41 +38,10 @@ const filterByTeamWithMembershipCheck = <T>(
 				),
 		);
 
-const includeMatterRelations = <T>(q: T): T =>
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
-	(q as any)
-		.related("author")
-		.related("assignee")
-		.related("status")
-		.related("labels", (q: any) => q.related("label"));
-
-/**
- * Apply keyset pagination. Uses a consistent sort direction ("desc") for both
- * `createdAt` and `id`. The `direction` parameter is accepted for API
- * compatibility but is ignored here — callers should reverse results if they
- * need the opposite presentation (e.g., to show oldest-first).
- */
-const applyKeysetPagination = <T>(
-	q: T,
-	cursor: { id: string; createdAt: number } | null,
-	_direction: "forward" | "backward",
-	limit: number,
-): T => {
-	// biome-ignore lint/suspicious/noExplicitAny: Zero query builder types
-	let query = q as any;
-	if (cursor) {
-		query = query.start(cursor);
-	}
-	return query.orderBy("createdAt", "desc").orderBy("id", "desc").limit(limit);
-};
-
 export const queries = defineQueries({
 	// TEAM QUERIES
 	getTeamsList: defineQuery(({ ctx }) =>
 		filterByOrganization(zql.teamsTable, ctx)
-			.whereExists("memberships", (q) =>
-				q.where("userId", ctx.userId).where("deletedAt", "IS", null),
-			)
 			.related("memberships", (q) => excludeDeleted(q).related("user"))
 			.orderBy("createdAt", "desc")
 			.limit(DEFAULT_LIMIT),
@@ -121,15 +75,13 @@ export const queries = defineQueries({
 				.related("status")
 				.related("team")
 				.related("organization")
+				.related("attachments")
 				.related("labels", (q) => q.related("label"))
 				.related("timelines", (q) =>
 					excludeDeleted(q)
 						.related("user")
 						.orderBy("createdAt", "asc")
 						.limit(TIMELINE_LIMIT),
-				)
-				.related("attachments", (q) =>
-					excludeDeleted(q).related("uploader").limit(ATTACHMENTS_LIMIT),
 				)
 				.one(),
 	),
@@ -145,15 +97,13 @@ export const queries = defineQueries({
 				.related("assignee")
 				.related("status")
 				.related("organization")
+				.related("attachments")
 				.related("labels", (q) => q.related("label"))
 				.related("timelines", (q) =>
 					excludeDeleted(q)
 						.related("user")
 						.orderBy("createdAt", "asc")
 						.limit(TIMELINE_LIMIT),
-				)
-				.related("attachments", (q) =>
-					excludeDeleted(q).related("uploader").limit(ATTACHMENTS_LIMIT),
 				)
 				.one(),
 	),
@@ -295,6 +245,28 @@ export const queries = defineQueries({
 				.limit(DEFAULT_LIMIT),
 	),
 
+	getMatterAttachments: defineQuery(
+		z.object({ matterId: z.string() }),
+		({ ctx, args: { matterId } }) =>
+			zql.attachmentsTable
+				.where("subjectType", "matter")
+				.where("subjectId", matterId)
+				.where("orgId", ctx.activeOrganizationId ?? "")
+				.orderBy("created", "desc")
+				.limit(DEFAULT_LIMIT),
+	),
+
+	getCommentAttachments: defineQuery(
+		z.object({ commentId: z.string() }),
+		({ ctx, args: { commentId } }) =>
+			zql.attachmentsTable
+				.where("subjectType", "comment")
+				.where("subjectId", commentId)
+				.where("orgId", ctx.activeOrganizationId ?? "")
+				.orderBy("created", "desc")
+				.limit(DEFAULT_LIMIT),
+	),
+
 	// LABEL & STATUS QUERIES
 	getOrganizationLabels: defineQuery(({ ctx }) =>
 		filterByOrganization(zql.labelsTable, ctx)
@@ -359,85 +331,6 @@ export const queries = defineQueries({
 					.related("organizationsTable"),
 			)
 			.limit(DEFAULT_LIMIT),
-	),
-
-	// =========================================================================
-	// PAGINATED QUERIES (following zbugs issueListV2 pattern)
-	// For large datasets (10k+ matters), use keyset pagination
-	// =========================================================================
-
-	/**
-	 * Paginated team matters - use when team has 1000+ matters.
-	 * Uses keyset pagination with cursor for efficient large list navigation.
-	 */
-	getTeamMattersPaginated: defineQuery(
-		z.object({
-			teamId: z.string(), // teamId
-			limit: z.number(), // limit (page size)
-			cursor: matterCursorSchema.nullable(), // cursor (null for first page)
-			direction: z.enum(["forward", "backward"]), // direction
-		}),
-		({ ctx, args: { teamId, limit, cursor, direction } }) => {
-			const q = filterByTeamWithMembershipCheck(zql.mattersTable, ctx, teamId);
-			return applyKeysetPagination(
-				includeMatterRelations(q),
-				cursor,
-				direction,
-				limit,
-			);
-		},
-	),
-
-	/**
-	 * Paginated user assigned matters - use for users with many tasks.
-	 */
-	getUserAssignedMattersPaginated: defineQuery(
-		z.object({
-			limit: z.number(), // limit
-			cursor: matterCursorSchema.nullable(), // cursor
-			direction: z.enum(["forward", "backward"]), // direction
-		}),
-		({ ctx, args: { limit, cursor, direction } }) => {
-			const q = filterByOrganization(zql.mattersTable, ctx)
-				.where("assigneeId", ctx.userId)
-				.where("type", matterType.task)
-				.whereExists("status", (w) =>
-					w.where("type", "IN", [statusType.notStarted, statusType.started]),
-				);
-
-			return applyKeysetPagination(
-				includeMatterRelations(q),
-				cursor,
-				direction,
-				limit,
-			);
-		},
-	),
-
-	/**
-	 * Paginated user authored matters - use for users with many requests.
-	 */
-	getUserAuthoredMattersPaginated: defineQuery(
-		z.object({
-			limit: z.number(), // limit
-			cursor: matterCursorSchema.nullable(), // cursor
-			direction: z.enum(["forward", "backward"]), // direction
-		}),
-		({ ctx, args: { limit, cursor, direction } }) => {
-			const q = filterByOrganization(zql.mattersTable, ctx)
-				.where("authorId", ctx.userId)
-				.where("type", matterType.request)
-				.whereExists("status", (w) =>
-					w.where("type", "IN", [statusType.pendingApproval]),
-				);
-
-			return applyKeysetPagination(
-				includeMatterRelations(q),
-				cursor,
-				direction,
-				limit,
-			);
-		},
 	),
 });
 

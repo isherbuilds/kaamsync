@@ -8,15 +8,13 @@ import {
 	teamRole,
 	teamVisibility,
 } from "~/db/helpers";
+import { membersTable, organizationsTable, usersTable } from "~/db/schema/auth";
+import { labelsTable } from "~/db/schema/matters";
 import {
-	labelsTable,
-	membersTable,
-	organizationsTable,
 	statusesTable,
 	teamMembershipsTable,
 	teamsTable,
-	type usersTable,
-} from "~/db/schema";
+} from "~/db/schema/teams";
 import type { IndustryConfig } from "../data/industries";
 import { randomDate, randomPickMultiple } from "../utils";
 

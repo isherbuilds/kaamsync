@@ -3,14 +3,17 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 
-// const pgURL = process.env.ZERO_UPSTREAM_DB as string;
+const connectionString = process.env.ZERO_UPSTREAM_DB;
 
-if (!process.env.ZERO_UPSTREAM_DB) {
+if (!connectionString) {
 	throw new Error("ZERO_UPSTREAM_DB environment variable is not defined");
 }
 
 const pool = new Pool({
-	connectionString: process.env.ZERO_UPSTREAM_DB,
+	connectionString,
+	max: 20,
+	idleTimeoutMillis: 30000,
+	connectionTimeoutMillis: 2000,
 });
 
 export const db = drizzle(pool, { schema });

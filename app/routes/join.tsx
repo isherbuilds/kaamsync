@@ -70,32 +70,36 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-	const session = await getServerSession(request);
+	const [session, formData] = await Promise.all([
+		getServerSession(request),
+		request.formData(),
+	]);
 
 	if (!session) {
 		return redirect("/login?callbackURL=/join");
 	}
 
-	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: organizationOnboardingSchema.superRefine(async (formValues, ctx) => {
-			if (formValues.intent === "create") {
-				const uniqueSlug = await auth.api.checkOrganizationSlug({
-					body: {
-						slug: formValues.slug,
-					},
-				});
-
-				if (!uniqueSlug) {
-					ctx.addIssue({
-						path: ["slug"],
-						code: "custom",
-						message: "URL already exists.",
+		schema: organizationOnboardingSchema.superRefine(
+			async (formValues, ctx) => {
+				if (formValues.intent === "create") {
+					const uniqueSlug = await auth.api.checkOrganizationSlug({
+						body: {
+							slug: formValues.slug,
+						},
 					});
-					return;
+
+					if (!uniqueSlug) {
+						ctx.addIssue({
+							path: ["slug"],
+							code: "custom",
+							message: "URL already exists.",
+						});
+						return;
+					}
 				}
-			}
-		}),
+			},
+		),
 		async: true,
 	});
 

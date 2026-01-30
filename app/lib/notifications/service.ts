@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "~/db";
-import { pushSubscriptionsTable } from "~/db/schema";
+import { pushSubscriptionsTable } from "~/db/schema/notifications";
 
 // Type for web-push errors
 interface WebPushError extends Error {

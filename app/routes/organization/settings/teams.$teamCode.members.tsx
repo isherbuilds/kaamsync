@@ -3,14 +3,14 @@ import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import { MoreVertical, Trash2, UserPlus } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams, useRouteError } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
-import { CustomChildrenField } from "~/components/shared/forms";
 import { MemberSelect } from "~/components/matter/matter-field-selectors";
+import { CustomChildrenField } from "~/components/shared/forms";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -30,7 +30,9 @@ import {
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { type TeamRole, teamRole } from "~/db/helpers";
+
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import type { Route } from "./+types/teams.$teamCode.members";
 
 const addMemberSchema = z.object({
 	userId: z.string().min(1, "Select a user"),
@@ -247,5 +249,21 @@ export default function TeamMembersPage() {
 				</div>
 			</section>
 		</>
+	);
+}
+
+export function ErrorBoundary() {
+	const error = useRouteError();
+
+	return (
+		<div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+			<h2 className="font-semibold text-lg">Team Members Error</h2>
+			<p className="text-muted-foreground text-sm">
+				{error instanceof Error ? error.message : "Failed to load team members"}
+			</p>
+			<Link to="." className="text-primary hover:underline" prefetch="intent">
+				Try again
+			</Link>
+		</div>
 	);
 }

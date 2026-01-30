@@ -6,7 +6,7 @@ import {
 	LogOutIcon,
 	Sparkles,
 } from "lucide-react";
-import { useSubmit } from "react-router";
+import { Form } from "react-router";
 
 import { CustomAvatar } from "~/components/ui/avatar";
 import {
@@ -38,7 +38,6 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
 	const { isMobile } = useSidebar();
-	const submit = useSubmit();
 
 	return (
 		<SidebarMenu>
@@ -95,14 +94,14 @@ export function NavUser({ user }: NavUserProps) {
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onClick={() => {
-								submit(null, { method: "POST", action: "/logout" });
-							}}
-						>
-							<LogOutIcon />
-							Log out
-						</DropdownMenuItem>
+						<Form method="post" action="/logout" className="contents">
+							<DropdownMenuItem asChild>
+								<button type="submit" className="w-full cursor-pointer">
+									<LogOutIcon />
+									Log out
+								</button>
+							</DropdownMenuItem>
+						</Form>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</SidebarMenuItem>

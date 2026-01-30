@@ -11,3 +11,4 @@ zero.db*
 /.react-email/
 /.react-router/
 /build/
+/dist/

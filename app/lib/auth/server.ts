@@ -12,7 +12,26 @@ import { eq } from "drizzle-orm";
 import { cache } from "react";
 import { v7 as uuid } from "uuid";
 import { db } from "~/db";
-import * as schema from "~/db/schema";
+import * as authSchema from "~/db/schema/auth";
+import * as billingSchema from "~/db/schema/billing";
+import * as commentsSchema from "~/db/schema/comments";
+import * as mattersSchema from "~/db/schema/matters";
+import * as notificationsSchema from "~/db/schema/notifications";
+import * as storageSchema from "~/db/schema/storage";
+import * as teamsSchema from "~/db/schema/teams";
+import * as timelinesSchema from "~/db/schema/timelines";
+
+const schema = {
+	...authSchema,
+	...billingSchema,
+	...commentsSchema,
+	...mattersSchema,
+	...notificationsSchema,
+	...storageSchema,
+	...teamsSchema,
+	...timelinesSchema,
+};
+
 import { AuthService } from "~/lib/auth/service";
 import {
 	billingConfig,

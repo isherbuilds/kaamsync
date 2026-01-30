@@ -5,2063 +5,2334 @@ import type { Row } from "@rocicorp/zero";
 import { createBuilder } from "@rocicorp/zero";
 
 const accountsTable = {
-	name: "accountsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		accountId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "account_id",
-		},
-		providerId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "provider_id",
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		accessToken: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "access_token",
-		},
-		refreshToken: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "refresh_token",
-		},
-		idToken: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "id_token",
-		},
-		accessTokenExpiresAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "access_token_expires_at",
-		},
-		refreshTokenExpiresAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "refresh_token_expires_at",
-		},
-		scope: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		password: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "accounts_table",
+  name: "accountsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    accountId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "account_id",
+    },
+    providerId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "provider_id",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    accessToken: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "access_token",
+    },
+    refreshToken: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "refresh_token",
+    },
+    idToken: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "id_token",
+    },
+    accessTokenExpiresAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "access_token_expires_at",
+    },
+    refreshTokenExpiresAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "refresh_token_expires_at",
+    },
+    scope: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    password: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "accounts_table",
 } as const;
 const attachmentsTable = {
-	name: "attachmentsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		orgId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "org_id",
-		},
-		matterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "matter_id",
-		},
-		uploaderId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "uploader_id",
-		},
-		storageKey: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "storage_key",
-		},
-		fileName: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "file_name",
-		},
-		fileType: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "file_type",
-		},
-		fileSize: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "file_size",
-		},
-		description: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "attachments",
+  name: "attachmentsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    subjectId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "subject_id",
+    },
+    subjectType: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "subject_type",
+    },
+    uploaderId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "uploader_id",
+    },
+    storageKey: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "storage_key",
+    },
+    publicUrl: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "public_url",
+    },
+    fileName: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "file_name",
+    },
+    fileType: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "file_type",
+    },
+    fileSize: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "file_size",
+    },
+    created: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "attachments",
+} as const;
+const commentsTable = {
+  name: "commentsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    creatorId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "creator_id",
+    },
+    body: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    created: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+    edited: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "comments",
+} as const;
+const emojisTable = {
+  name: "emojisTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    value: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    annotation: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    subjectId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "subject_id",
+    },
+    subjectType: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "subject_type",
+    },
+    creatorId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "creator_id",
+    },
+    created: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "emojis",
 } as const;
 const invitationsTable = {
-	name: "invitationsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		organizationId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "organization_id",
-		},
-		email: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		role: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		status: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		expiresAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "expires_at",
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		inviterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "inviter_id",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "invitations_table",
+  name: "invitationsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    organizationId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "organization_id",
+    },
+    email: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    role: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    status: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    expiresAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "expires_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    inviterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "inviter_id",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "invitations_table",
 } as const;
 const labelsTable = {
-	name: "labelsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		orgId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "org_id",
-		},
-		name: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		color: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		description: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		archived: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-		},
-		creatorId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "creator_id",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "labels",
+  name: "labelsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    name: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    color: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    description: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    archived: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    creatorId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "creator_id",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "labels",
 } as const;
 const matterLabelsTable = {
-	name: "matterLabelsTable",
-	columns: {
-		matterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "matter_id",
-		},
-		labelId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "label_id",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["matterId", "labelId"],
-	serverName: "matter_labels",
+  name: "matterLabelsTable",
+  columns: {
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    labelId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "label_id",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["matterId", "labelId"],
+  serverName: "matter_labels",
+} as const;
+const matterNotificationsTable = {
+  name: "matterNotificationsTable",
+  columns: {
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    subscribed: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    created: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+  },
+  primaryKey: ["userId", "matterId"],
+  serverName: "matter_notifications",
 } as const;
 const matterSubscriptionsTable = {
-	name: "matterSubscriptionsTable",
-	columns: {
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		matterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "matter_id",
-		},
-		subscribed: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-		},
-		reason: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["userId", "matterId"],
-	serverName: "matter_subscriptions",
+  name: "matterSubscriptionsTable",
+  columns: {
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    subscribed: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    reason: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["userId", "matterId"],
+  serverName: "matter_subscriptions",
 } as const;
 const matterViewsTable = {
-	name: "matterViewsTable",
-	columns: {
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		matterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "matter_id",
-		},
-		lastViewedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "last_viewed_at",
-		},
-		lastActivityAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "last_activity_at",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["userId", "matterId"],
-	serverName: "matter_views",
+  name: "matterViewsTable",
+  columns: {
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    lastViewedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "last_viewed_at",
+    },
+    lastActivityAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "last_activity_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["userId", "matterId"],
+  serverName: "matter_views",
 } as const;
 const matterWatchersTable = {
-	name: "matterWatchersTable",
-	columns: {
-		matterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "matter_id",
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		addedBy: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "added_by",
-		},
-		reason: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		notifyOnUpdate: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "notify_on_update",
-		},
-		canComment: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "can_comment",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["matterId", "userId"],
-	serverName: "matter_watchers",
+  name: "matterWatchersTable",
+  columns: {
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    addedBy: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "added_by",
+    },
+    reason: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    notifyOnUpdate: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "notify_on_update",
+    },
+    canComment: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_comment",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["matterId", "userId"],
+  serverName: "matter_watchers",
 } as const;
 const mattersTable = {
-	name: "mattersTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		shortID: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "short_id",
-		},
-		orgId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "org_id",
-		},
-		teamId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "team_id",
-		},
-		authorId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "author_id",
-		},
-		assigneeId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "assignee_id",
-		},
-		statusId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "status_id",
-		},
-		teamCode: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "team_code",
-		},
-		title: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		description: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		type: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		priority: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-		},
-		source: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		approvedBy: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "approved_by",
-		},
-		approvedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "approved_at",
-		},
-		rejectionReason: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "rejection_reason",
-		},
-		dueDate: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "due_date",
-		},
-		startDate: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "start_date",
-		},
-		completedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "completed_at",
-		},
-		estimatedHours: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "estimated_hours",
-		},
-		actualHours: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "actual_hours",
-		},
-		archived: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-		},
-		archivedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "archived_at",
-		},
-		archivedBy: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "archived_by",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "matters",
+  name: "mattersTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    shortID: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "short_id",
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    teamId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "team_id",
+    },
+    authorId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "author_id",
+    },
+    assigneeId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "assignee_id",
+    },
+    statusId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "status_id",
+    },
+    teamCode: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "team_code",
+    },
+    title: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    description: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    type: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    priority: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+    },
+    source: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    approvedBy: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "approved_by",
+    },
+    approvedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "approved_at",
+    },
+    rejectionReason: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "rejection_reason",
+    },
+    dueDate: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "due_date",
+    },
+    startDate: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "start_date",
+    },
+    completedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "completed_at",
+    },
+    estimatedHours: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "estimated_hours",
+    },
+    actualHours: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "actual_hours",
+    },
+    archived: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    archivedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "archived_at",
+    },
+    archivedBy: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "archived_by",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "matters",
 } as const;
 const membersTable = {
-	name: "membersTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		organizationId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "organization_id",
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		role: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "members_table",
+  name: "membersTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    organizationId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "organization_id",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    role: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "members_table",
 } as const;
 const organizationsTable = {
-	name: "organizationsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		name: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		slug: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		logo: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		metadata: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "organizations_table",
+  name: "organizationsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    name: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    slug: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    logo: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    metadata: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "organizations_table",
 } as const;
 const pushSubscriptionsTable = {
-	name: "pushSubscriptionsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		endpoint: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		p256dh: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		auth: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		userAgent: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "user_agent",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "push_subscriptions",
+  name: "pushSubscriptionsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    endpoint: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    p256dh: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    auth: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    userAgent: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "user_agent",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "push_subscriptions",
 } as const;
 const sessionsTable = {
-	name: "sessionsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		expiresAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "expires_at",
-		},
-		token: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		ipAddress: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "ip_address",
-		},
-		userAgent: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "user_agent",
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		activeOrganizationId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "active_organization_id",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "sessions_table",
+  name: "sessionsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    expiresAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "expires_at",
+    },
+    token: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    ipAddress: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "ip_address",
+    },
+    userAgent: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "user_agent",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    activeOrganizationId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "active_organization_id",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "sessions_table",
 } as const;
 const statusesTable = {
-	name: "statusesTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		teamId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "team_id",
-		},
-		name: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		color: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		type: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		position: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-		},
-		isDefault: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "is_default",
-		},
-		archived: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-		},
-		creatorId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "creator_id",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "statuses",
+  name: "statusesTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    teamId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "team_id",
+    },
+    name: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    color: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    type: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    position: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+    },
+    isDefault: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "is_default",
+    },
+    archived: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    creatorId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "creator_id",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "statuses",
 } as const;
 const storageUsageCacheTable = {
-	name: "storageUsageCacheTable",
-	columns: {
-		orgId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "org_id",
-		},
-		totalBytes: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "total_bytes",
-		},
-		fileCount: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "file_count",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-	},
-	primaryKey: ["orgId"],
-	serverName: "storage_usage_cache",
+  name: "storageUsageCacheTable",
+  columns: {
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    totalBytes: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "total_bytes",
+    },
+    fileCount: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "file_count",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["orgId"],
+  serverName: "storage_usage_cache",
 } as const;
 const subscriptionsTable = {
-	name: "subscriptionsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		organizationId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "organization_id",
-		},
-		billingCustomerId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "billing_customer_id",
-		},
-		billingSubscriptionId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "billing_subscription_id",
-		},
-		plan: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		productId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "product_id",
-		},
-		status: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		billingInterval: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "billing_interval",
-		},
-		preTaxAmount: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "pre_tax_amount",
-		},
-		purchasedSeats: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "purchased_seats",
-		},
-		purchasedStorageGB: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "purchased_storage_gb",
-		},
-		onDemand: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "on_demand",
-		},
-		paymentFrequencyInterval: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "payment_frequency",
-		},
-		previousBillingDate: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "previous_billing_date",
-		},
-		nextBillingDate: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "next_billing_date",
-		},
-		cancelledAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "cancelled_at",
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "subscriptions",
+  name: "subscriptionsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    organizationId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "organization_id",
+    },
+    billingCustomerId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "billing_customer_id",
+    },
+    billingSubscriptionId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "billing_subscription_id",
+    },
+    plan: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    productId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "product_id",
+    },
+    status: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    billingInterval: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "billing_interval",
+    },
+    preTaxAmount: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "pre_tax_amount",
+    },
+    purchasedSeats: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "purchased_seats",
+    },
+    purchasedStorageGB: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "purchased_storage_gb",
+    },
+    onDemand: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "on_demand",
+    },
+    paymentFrequencyInterval: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "payment_frequency",
+    },
+    previousBillingDate: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "previous_billing_date",
+    },
+    nextBillingDate: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "next_billing_date",
+    },
+    cancelledAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "cancelled_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "subscriptions",
 } as const;
 const teamMembershipsTable = {
-	name: "teamMembershipsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		teamId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "team_id",
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		orgId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "org_id",
-		},
-		role: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		status: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		canCreateTasks: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "can_create_tasks",
-		},
-		canCreateRequests: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "can_create_requests",
-		},
-		canApproveRequests: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "can_approve_requests",
-		},
-		canManageMembers: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "can_manage_members",
-		},
-		canManageTeam: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "can_manage_team",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "team_memberships",
+  name: "teamMembershipsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    teamId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "team_id",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    role: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    status: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    canCreateTasks: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_create_tasks",
+    },
+    canCreateRequests: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_create_requests",
+    },
+    canApproveRequests: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_approve_requests",
+    },
+    canManageMembers: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_manage_members",
+    },
+    canManageTeam: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "can_manage_team",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "team_memberships",
 } as const;
 const teamsTable = {
-	name: "teamsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		orgId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "org_id",
-		},
-		name: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		slug: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		code: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		icon: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		description: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		nextShortId: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "next_short_id",
-		},
-		visibility: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		archived: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-		},
-		archivedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "archived_at",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "teams",
+  name: "teamsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    orgId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "org_id",
+    },
+    name: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    slug: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    code: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    icon: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    description: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    nextShortId: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "next_short_id",
+    },
+    visibility: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    archived: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    archivedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "archived_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "teams",
 } as const;
 const timelinesTable = {
-	name: "timelinesTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		matterId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "matter_id",
-		},
-		userId: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-			serverName: "user_id",
-		},
-		type: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		content: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		fromStatusId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "from_status_id",
-		},
-		toStatusId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "to_status_id",
-		},
-		fromAssigneeId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "from_assignee_id",
-		},
-		toAssigneeId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "to_assignee_id",
-		},
-		labelId: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "label_id",
-		},
-		fromValue: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "from_value",
-		},
-		toValue: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-			serverName: "to_value",
-		},
-		mentions: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		edited: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-		},
-		editedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "edited_at",
-		},
-		createdAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-		deletedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "deleted_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "timelines",
+  name: "timelinesTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    matterId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "matter_id",
+    },
+    userId: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+      serverName: "user_id",
+    },
+    type: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    content: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    fromStatusId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "from_status_id",
+    },
+    toStatusId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "to_status_id",
+    },
+    fromAssigneeId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "from_assignee_id",
+    },
+    toAssigneeId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "to_assignee_id",
+    },
+    labelId: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "label_id",
+    },
+    fromValue: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "from_value",
+    },
+    toValue: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "to_value",
+    },
+    mentions: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    edited: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+    },
+    editedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "edited_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+    deletedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "deleted_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "timelines",
 } as const;
 const usersTable = {
-	name: "usersTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		name: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		email: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		emailVerified: {
-			type: "boolean",
-			optional: true,
-			customType: null as unknown as boolean,
-			serverName: "email_verified",
-		},
-		image: {
-			type: "string",
-			optional: true,
-			customType: null as unknown as string,
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "users_table",
+  name: "usersTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    name: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    email: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    emailVerified: {
+      type: "boolean",
+      optional: true,
+      customType: null as unknown as boolean,
+      serverName: "email_verified",
+    },
+    image: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "users_table",
 } as const;
 const verificationsTable = {
-	name: "verificationsTable",
-	columns: {
-		id: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		identifier: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		value: {
-			type: "string",
-			optional: false,
-			customType: null as unknown as string,
-		},
-		expiresAt: {
-			type: "number",
-			optional: false,
-			customType: null as unknown as number,
-			serverName: "expires_at",
-		},
-		createdAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "created_at",
-		},
-		updatedAt: {
-			type: "number",
-			optional: true,
-			customType: null as unknown as number,
-			serverName: "updated_at",
-		},
-	},
-	primaryKey: ["id"],
-	serverName: "verifications_table",
+  name: "verificationsTable",
+  columns: {
+    id: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    identifier: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    value: {
+      type: "string",
+      optional: false,
+      customType: null as unknown as string,
+    },
+    expiresAt: {
+      type: "number",
+      optional: false,
+      customType: null as unknown as number,
+      serverName: "expires_at",
+    },
+    createdAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
+    },
+  },
+  primaryKey: ["id"],
+  serverName: "verifications_table",
 } as const;
 const accountsTableRelationships = {
-	usersTable: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  usersTable: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const attachmentsTableRelationships = {
-	organization: [
-		{
-			sourceField: ["orgId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
-	matter: [
-		{
-			sourceField: ["matterId"],
-			destField: ["id"],
-			destSchema: "mattersTable",
-			cardinality: "one",
-		},
-	],
-	uploader: [
-		{
-			sourceField: ["uploaderId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  uploader: [
+    {
+      sourceField: ["uploaderId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matter: [
+    {
+      sourceField: ["subjectId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
+  comment: [
+    {
+      sourceField: ["subjectId"],
+      destField: ["id"],
+      destSchema: "commentsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
+const commentsTableRelationships = {
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
+  creator: [
+    {
+      sourceField: ["creatorId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  attachments: [
+    {
+      sourceField: ["id"],
+      destField: ["subjectId"],
+      destSchema: "attachmentsTable",
+      cardinality: "many",
+    },
+  ],
+  emojis: [
+    {
+      sourceField: ["id"],
+      destField: ["subjectId"],
+      destSchema: "emojisTable",
+      cardinality: "many",
+    },
+  ],
+} as const;
+const emojisTableRelationships = {
+  creator: [
+    {
+      sourceField: ["creatorId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matter: [
+    {
+      sourceField: ["subjectId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
+  comment: [
+    {
+      sourceField: ["subjectId"],
+      destField: ["id"],
+      destSchema: "commentsTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const invitationsTableRelationships = {
-	organizationsTable: [
-		{
-			sourceField: ["organizationId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
-	usersTable: [
-		{
-			sourceField: ["inviterId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  organizationsTable: [
+    {
+      sourceField: ["organizationId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  usersTable: [
+    {
+      sourceField: ["inviterId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const labelsTableRelationships = {
-	organization: [
-		{
-			sourceField: ["orgId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
-	creator: [
-		{
-			sourceField: ["creatorId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	matterLabels: [
-		{
-			sourceField: ["id"],
-			destField: ["labelId"],
-			destSchema: "matterLabelsTable",
-			cardinality: "many",
-		},
-	],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  creator: [
+    {
+      sourceField: ["creatorId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matterLabels: [
+    {
+      sourceField: ["id"],
+      destField: ["labelId"],
+      destSchema: "matterLabelsTable",
+      cardinality: "many",
+    },
+  ],
 } as const;
 const matterLabelsTableRelationships = {
-	matter: [
-		{
-			sourceField: ["matterId"],
-			destField: ["id"],
-			destSchema: "mattersTable",
-			cardinality: "one",
-		},
-	],
-	label: [
-		{
-			sourceField: ["labelId"],
-			destField: ["id"],
-			destSchema: "labelsTable",
-			cardinality: "one",
-		},
-	],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
+  label: [
+    {
+      sourceField: ["labelId"],
+      destField: ["id"],
+      destSchema: "labelsTable",
+      cardinality: "one",
+    },
+  ],
+} as const;
+const matterNotificationsTableRelationships = {
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const matterSubscriptionsTableRelationships = {
-	user: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	matter: [
-		{
-			sourceField: ["matterId"],
-			destField: ["id"],
-			destSchema: "mattersTable",
-			cardinality: "one",
-		},
-	],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const matterViewsTableRelationships = {
-	user: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	matter: [
-		{
-			sourceField: ["matterId"],
-			destField: ["id"],
-			destSchema: "mattersTable",
-			cardinality: "one",
-		},
-	],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const matterWatchersTableRelationships = {
-	matter: [
-		{
-			sourceField: ["matterId"],
-			destField: ["id"],
-			destSchema: "mattersTable",
-			cardinality: "one",
-		},
-	],
-	user: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	addedByUser: [
-		{
-			sourceField: ["addedBy"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  addedByUser: [
+    {
+      sourceField: ["addedBy"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const mattersTableRelationships = {
-	team: [
-		{
-			sourceField: ["teamId"],
-			destField: ["id"],
-			destSchema: "teamsTable",
-			cardinality: "one",
-		},
-	],
-	organization: [
-		{
-			sourceField: ["orgId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
-	author: [
-		{
-			sourceField: ["authorId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	assignee: [
-		{
-			sourceField: ["assigneeId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	status: [
-		{
-			sourceField: ["statusId"],
-			destField: ["id"],
-			destSchema: "statusesTable",
-			cardinality: "one",
-		},
-	],
-	labels: [
-		{
-			sourceField: ["id"],
-			destField: ["matterId"],
-			destSchema: "matterLabelsTable",
-			cardinality: "many",
-		},
-	],
-	timelines: [
-		{
-			sourceField: ["id"],
-			destField: ["matterId"],
-			destSchema: "timelinesTable",
-			cardinality: "many",
-		},
-	],
-	attachments: [
-		{
-			sourceField: ["id"],
-			destField: ["matterId"],
-			destSchema: "attachmentsTable",
-			cardinality: "many",
-		},
-	],
-	views: [
-		{
-			sourceField: ["id"],
-			destField: ["matterId"],
-			destSchema: "matterViewsTable",
-			cardinality: "many",
-		},
-	],
-	subscriptions: [
-		{
-			sourceField: ["id"],
-			destField: ["matterId"],
-			destSchema: "matterSubscriptionsTable",
-			cardinality: "many",
-		},
-	],
-	watchers: [
-		{
-			sourceField: ["id"],
-			destField: ["matterId"],
-			destSchema: "matterWatchersTable",
-			cardinality: "many",
-		},
-	],
-	approver: [
-		{
-			sourceField: ["approvedBy"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  team: [
+    {
+      sourceField: ["teamId"],
+      destField: ["id"],
+      destSchema: "teamsTable",
+      cardinality: "one",
+    },
+  ],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  author: [
+    {
+      sourceField: ["authorId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  assignee: [
+    {
+      sourceField: ["assigneeId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  status: [
+    {
+      sourceField: ["statusId"],
+      destField: ["id"],
+      destSchema: "statusesTable",
+      cardinality: "one",
+    },
+  ],
+  labels: [
+    {
+      sourceField: ["id"],
+      destField: ["matterId"],
+      destSchema: "matterLabelsTable",
+      cardinality: "many",
+    },
+  ],
+  timelines: [
+    {
+      sourceField: ["id"],
+      destField: ["matterId"],
+      destSchema: "timelinesTable",
+      cardinality: "many",
+    },
+  ],
+  views: [
+    {
+      sourceField: ["id"],
+      destField: ["matterId"],
+      destSchema: "matterViewsTable",
+      cardinality: "many",
+    },
+  ],
+  subscriptions: [
+    {
+      sourceField: ["id"],
+      destField: ["matterId"],
+      destSchema: "matterSubscriptionsTable",
+      cardinality: "many",
+    },
+  ],
+  watchers: [
+    {
+      sourceField: ["id"],
+      destField: ["matterId"],
+      destSchema: "matterWatchersTable",
+      cardinality: "many",
+    },
+  ],
+  comments: [
+    {
+      sourceField: ["id"],
+      destField: ["matterId"],
+      destSchema: "commentsTable",
+      cardinality: "many",
+    },
+  ],
+  attachments: [
+    {
+      sourceField: ["id"],
+      destField: ["subjectId"],
+      destSchema: "attachmentsTable",
+      cardinality: "many",
+    },
+  ],
+  emojis: [
+    {
+      sourceField: ["id"],
+      destField: ["subjectId"],
+      destSchema: "emojisTable",
+      cardinality: "many",
+    },
+  ],
+  approver: [
+    {
+      sourceField: ["approvedBy"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const membersTableRelationships = {
-	organizationsTable: [
-		{
-			sourceField: ["organizationId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
-	usersTable: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  organizationsTable: [
+    {
+      sourceField: ["organizationId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  usersTable: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const organizationsTableRelationships = {
-	membersTables: [
-		{
-			sourceField: ["id"],
-			destField: ["organizationId"],
-			destSchema: "membersTable",
-			cardinality: "many",
-		},
-	],
-	invitationsTables: [
-		{
-			sourceField: ["id"],
-			destField: ["organizationId"],
-			destSchema: "invitationsTable",
-			cardinality: "many",
-		},
-	],
-	teams: [
-		{
-			sourceField: ["id"],
-			destField: ["orgId"],
-			destSchema: "teamsTable",
-			cardinality: "many",
-		},
-	],
-	teamMemberships: [
-		{
-			sourceField: ["id"],
-			destField: ["orgId"],
-			destSchema: "teamMembershipsTable",
-			cardinality: "many",
-		},
-	],
-	labels: [
-		{
-			sourceField: ["id"],
-			destField: ["orgId"],
-			destSchema: "labelsTable",
-			cardinality: "many",
-		},
-	],
-	matters: [
-		{
-			sourceField: ["id"],
-			destField: ["orgId"],
-			destSchema: "mattersTable",
-			cardinality: "many",
-		},
-	],
+  membersTables: [
+    {
+      sourceField: ["id"],
+      destField: ["organizationId"],
+      destSchema: "membersTable",
+      cardinality: "many",
+    },
+  ],
+  invitationsTables: [
+    {
+      sourceField: ["id"],
+      destField: ["organizationId"],
+      destSchema: "invitationsTable",
+      cardinality: "many",
+    },
+  ],
+  teams: [
+    {
+      sourceField: ["id"],
+      destField: ["orgId"],
+      destSchema: "teamsTable",
+      cardinality: "many",
+    },
+  ],
+  teamMemberships: [
+    {
+      sourceField: ["id"],
+      destField: ["orgId"],
+      destSchema: "teamMembershipsTable",
+      cardinality: "many",
+    },
+  ],
+  labels: [
+    {
+      sourceField: ["id"],
+      destField: ["orgId"],
+      destSchema: "labelsTable",
+      cardinality: "many",
+    },
+  ],
+  matters: [
+    {
+      sourceField: ["id"],
+      destField: ["orgId"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
 } as const;
 const pushSubscriptionsTableRelationships = {
-	user: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const sessionsTableRelationships = {
-	usersTable: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  usersTable: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const statusesTableRelationships = {
-	team: [
-		{
-			sourceField: ["teamId"],
-			destField: ["id"],
-			destSchema: "teamsTable",
-			cardinality: "one",
-		},
-	],
-	creator: [
-		{
-			sourceField: ["creatorId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	matters: [
-		{
-			sourceField: ["id"],
-			destField: ["statusId"],
-			destSchema: "mattersTable",
-			cardinality: "many",
-		},
-	],
+  team: [
+    {
+      sourceField: ["teamId"],
+      destField: ["id"],
+      destSchema: "teamsTable",
+      cardinality: "one",
+    },
+  ],
+  creator: [
+    {
+      sourceField: ["creatorId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  matters: [
+    {
+      sourceField: ["id"],
+      destField: ["statusId"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
 } as const;
 const storageUsageCacheTableRelationships = {
-	organization: [
-		{
-			sourceField: ["orgId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const subscriptionsTableRelationships = {
-	organization: [
-		{
-			sourceField: ["organizationId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
+  organization: [
+    {
+      sourceField: ["organizationId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const teamMembershipsTableRelationships = {
-	team: [
-		{
-			sourceField: ["teamId"],
-			destField: ["id"],
-			destSchema: "teamsTable",
-			cardinality: "one",
-		},
-	],
-	user: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
-	organization: [
-		{
-			sourceField: ["orgId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
+  team: [
+    {
+      sourceField: ["teamId"],
+      destField: ["id"],
+      destSchema: "teamsTable",
+      cardinality: "one",
+    },
+  ],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const teamsTableRelationships = {
-	organization: [
-		{
-			sourceField: ["orgId"],
-			destField: ["id"],
-			destSchema: "organizationsTable",
-			cardinality: "one",
-		},
-	],
-	statuses: [
-		{
-			sourceField: ["id"],
-			destField: ["teamId"],
-			destSchema: "statusesTable",
-			cardinality: "many",
-		},
-	],
-	matters: [
-		{
-			sourceField: ["id"],
-			destField: ["teamId"],
-			destSchema: "mattersTable",
-			cardinality: "many",
-		},
-	],
-	memberships: [
-		{
-			sourceField: ["id"],
-			destField: ["teamId"],
-			destSchema: "teamMembershipsTable",
-			cardinality: "many",
-		},
-	],
+  organization: [
+    {
+      sourceField: ["orgId"],
+      destField: ["id"],
+      destSchema: "organizationsTable",
+      cardinality: "one",
+    },
+  ],
+  statuses: [
+    {
+      sourceField: ["id"],
+      destField: ["teamId"],
+      destSchema: "statusesTable",
+      cardinality: "many",
+    },
+  ],
+  matters: [
+    {
+      sourceField: ["id"],
+      destField: ["teamId"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+  memberships: [
+    {
+      sourceField: ["id"],
+      destField: ["teamId"],
+      destSchema: "teamMembershipsTable",
+      cardinality: "many",
+    },
+  ],
 } as const;
 const timelinesTableRelationships = {
-	matter: [
-		{
-			sourceField: ["matterId"],
-			destField: ["id"],
-			destSchema: "mattersTable",
-			cardinality: "one",
-		},
-	],
-	user: [
-		{
-			sourceField: ["userId"],
-			destField: ["id"],
-			destSchema: "usersTable",
-			cardinality: "one",
-		},
-	],
+  matter: [
+    {
+      sourceField: ["matterId"],
+      destField: ["id"],
+      destSchema: "mattersTable",
+      cardinality: "one",
+    },
+  ],
+  user: [
+    {
+      sourceField: ["userId"],
+      destField: ["id"],
+      destSchema: "usersTable",
+      cardinality: "one",
+    },
+  ],
 } as const;
 const usersTableRelationships = {
-	sessionsTables: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "sessionsTable",
-			cardinality: "many",
-		},
-	],
-	accountsTables: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "accountsTable",
-			cardinality: "many",
-		},
-	],
-	membersTables: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "membersTable",
-			cardinality: "many",
-		},
-	],
-	invitationsTables: [
-		{
-			sourceField: ["id"],
-			destField: ["inviterId"],
-			destSchema: "invitationsTable",
-			cardinality: "many",
-		},
-	],
-	teamMemberships: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "teamMembershipsTable",
-			cardinality: "many",
-		},
-	],
-	authoredMatters: [
-		{
-			sourceField: ["id"],
-			destField: ["authorId"],
-			destSchema: "mattersTable",
-			cardinality: "many",
-		},
-	],
-	assignedMatters: [
-		{
-			sourceField: ["id"],
-			destField: ["assigneeId"],
-			destSchema: "mattersTable",
-			cardinality: "many",
-		},
-	],
-	approvedMatters: [
-		{
-			sourceField: ["id"],
-			destField: ["approvedBy"],
-			destSchema: "mattersTable",
-			cardinality: "many",
-		},
-	],
-	createdStatuses: [
-		{
-			sourceField: ["id"],
-			destField: ["creatorId"],
-			destSchema: "statusesTable",
-			cardinality: "many",
-		},
-	],
-	createdLabels: [
-		{
-			sourceField: ["id"],
-			destField: ["creatorId"],
-			destSchema: "labelsTable",
-			cardinality: "many",
-		},
-	],
-	timelines: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "timelinesTable",
-			cardinality: "many",
-		},
-	],
-	attachments: [
-		{
-			sourceField: ["id"],
-			destField: ["uploaderId"],
-			destSchema: "attachmentsTable",
-			cardinality: "many",
-		},
-	],
-	matterViews: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "matterViewsTable",
-			cardinality: "many",
-		},
-	],
-	matterSubscriptions: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "matterSubscriptionsTable",
-			cardinality: "many",
-		},
-	],
-	watchedMatters: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "matterWatchersTable",
-			cardinality: "many",
-		},
-	],
-	watchersAdded: [
-		{
-			sourceField: ["id"],
-			destField: ["addedBy"],
-			destSchema: "matterWatchersTable",
-			cardinality: "many",
-		},
-	],
-	pushSubscriptions: [
-		{
-			sourceField: ["id"],
-			destField: ["userId"],
-			destSchema: "pushSubscriptionsTable",
-			cardinality: "many",
-		},
-	],
+  sessionsTables: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "sessionsTable",
+      cardinality: "many",
+    },
+  ],
+  accountsTables: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "accountsTable",
+      cardinality: "many",
+    },
+  ],
+  membersTables: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "membersTable",
+      cardinality: "many",
+    },
+  ],
+  invitationsTables: [
+    {
+      sourceField: ["id"],
+      destField: ["inviterId"],
+      destSchema: "invitationsTable",
+      cardinality: "many",
+    },
+  ],
+  teamMemberships: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "teamMembershipsTable",
+      cardinality: "many",
+    },
+  ],
+  authoredMatters: [
+    {
+      sourceField: ["id"],
+      destField: ["authorId"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+  assignedMatters: [
+    {
+      sourceField: ["id"],
+      destField: ["assigneeId"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+  approvedMatters: [
+    {
+      sourceField: ["id"],
+      destField: ["approvedBy"],
+      destSchema: "mattersTable",
+      cardinality: "many",
+    },
+  ],
+  createdStatuses: [
+    {
+      sourceField: ["id"],
+      destField: ["creatorId"],
+      destSchema: "statusesTable",
+      cardinality: "many",
+    },
+  ],
+  createdLabels: [
+    {
+      sourceField: ["id"],
+      destField: ["creatorId"],
+      destSchema: "labelsTable",
+      cardinality: "many",
+    },
+  ],
+  timelines: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "timelinesTable",
+      cardinality: "many",
+    },
+  ],
+  attachments: [
+    {
+      sourceField: ["id"],
+      destField: ["uploaderId"],
+      destSchema: "attachmentsTable",
+      cardinality: "many",
+    },
+  ],
+  matterViews: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "matterViewsTable",
+      cardinality: "many",
+    },
+  ],
+  matterSubscriptions: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "matterSubscriptionsTable",
+      cardinality: "many",
+    },
+  ],
+  watchedMatters: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "matterWatchersTable",
+      cardinality: "many",
+    },
+  ],
+  watchersAdded: [
+    {
+      sourceField: ["id"],
+      destField: ["addedBy"],
+      destSchema: "matterWatchersTable",
+      cardinality: "many",
+    },
+  ],
+  pushSubscriptions: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "pushSubscriptionsTable",
+      cardinality: "many",
+    },
+  ],
+  comments: [
+    {
+      sourceField: ["id"],
+      destField: ["creatorId"],
+      destSchema: "commentsTable",
+      cardinality: "many",
+    },
+  ],
+  emojis: [
+    {
+      sourceField: ["id"],
+      destField: ["creatorId"],
+      destSchema: "emojisTable",
+      cardinality: "many",
+    },
+  ],
+  matterNotifications: [
+    {
+      sourceField: ["id"],
+      destField: ["userId"],
+      destSchema: "matterNotificationsTable",
+      cardinality: "many",
+    },
+  ],
 } as const;
 /**
  * The Zero schema object.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export const schema = {
-	tables: {
-		accountsTable: accountsTable,
-		attachmentsTable: attachmentsTable,
-		invitationsTable: invitationsTable,
-		labelsTable: labelsTable,
-		matterLabelsTable: matterLabelsTable,
-		matterSubscriptionsTable: matterSubscriptionsTable,
-		matterViewsTable: matterViewsTable,
-		matterWatchersTable: matterWatchersTable,
-		mattersTable: mattersTable,
-		membersTable: membersTable,
-		organizationsTable: organizationsTable,
-		pushSubscriptionsTable: pushSubscriptionsTable,
-		sessionsTable: sessionsTable,
-		statusesTable: statusesTable,
-		storageUsageCacheTable: storageUsageCacheTable,
-		subscriptionsTable: subscriptionsTable,
-		teamMembershipsTable: teamMembershipsTable,
-		teamsTable: teamsTable,
-		timelinesTable: timelinesTable,
-		usersTable: usersTable,
-		verificationsTable: verificationsTable,
-	},
-	relationships: {
-		accountsTable: accountsTableRelationships,
-		attachmentsTable: attachmentsTableRelationships,
-		invitationsTable: invitationsTableRelationships,
-		labelsTable: labelsTableRelationships,
-		matterLabelsTable: matterLabelsTableRelationships,
-		matterSubscriptionsTable: matterSubscriptionsTableRelationships,
-		matterViewsTable: matterViewsTableRelationships,
-		matterWatchersTable: matterWatchersTableRelationships,
-		mattersTable: mattersTableRelationships,
-		membersTable: membersTableRelationships,
-		organizationsTable: organizationsTableRelationships,
-		pushSubscriptionsTable: pushSubscriptionsTableRelationships,
-		sessionsTable: sessionsTableRelationships,
-		statusesTable: statusesTableRelationships,
-		storageUsageCacheTable: storageUsageCacheTableRelationships,
-		subscriptionsTable: subscriptionsTableRelationships,
-		teamMembershipsTable: teamMembershipsTableRelationships,
-		teamsTable: teamsTableRelationships,
-		timelinesTable: timelinesTableRelationships,
-		usersTable: usersTableRelationships,
-	},
-	enableLegacyQueries: false,
-	enableLegacyMutators: false,
+  tables: {
+    accountsTable: accountsTable,
+    attachmentsTable: attachmentsTable,
+    commentsTable: commentsTable,
+    emojisTable: emojisTable,
+    invitationsTable: invitationsTable,
+    labelsTable: labelsTable,
+    matterLabelsTable: matterLabelsTable,
+    matterNotificationsTable: matterNotificationsTable,
+    matterSubscriptionsTable: matterSubscriptionsTable,
+    matterViewsTable: matterViewsTable,
+    matterWatchersTable: matterWatchersTable,
+    mattersTable: mattersTable,
+    membersTable: membersTable,
+    organizationsTable: organizationsTable,
+    pushSubscriptionsTable: pushSubscriptionsTable,
+    sessionsTable: sessionsTable,
+    statusesTable: statusesTable,
+    storageUsageCacheTable: storageUsageCacheTable,
+    subscriptionsTable: subscriptionsTable,
+    teamMembershipsTable: teamMembershipsTable,
+    teamsTable: teamsTable,
+    timelinesTable: timelinesTable,
+    usersTable: usersTable,
+    verificationsTable: verificationsTable,
+  },
+  relationships: {
+    accountsTable: accountsTableRelationships,
+    attachmentsTable: attachmentsTableRelationships,
+    commentsTable: commentsTableRelationships,
+    emojisTable: emojisTableRelationships,
+    invitationsTable: invitationsTableRelationships,
+    labelsTable: labelsTableRelationships,
+    matterLabelsTable: matterLabelsTableRelationships,
+    matterNotificationsTable: matterNotificationsTableRelationships,
+    matterSubscriptionsTable: matterSubscriptionsTableRelationships,
+    matterViewsTable: matterViewsTableRelationships,
+    matterWatchersTable: matterWatchersTableRelationships,
+    mattersTable: mattersTableRelationships,
+    membersTable: membersTableRelationships,
+    organizationsTable: organizationsTableRelationships,
+    pushSubscriptionsTable: pushSubscriptionsTableRelationships,
+    sessionsTable: sessionsTableRelationships,
+    statusesTable: statusesTableRelationships,
+    storageUsageCacheTable: storageUsageCacheTableRelationships,
+    subscriptionsTable: subscriptionsTableRelationships,
+    teamMembershipsTable: teamMembershipsTableRelationships,
+    teamsTable: teamsTableRelationships,
+    timelinesTable: timelinesTableRelationships,
+    usersTable: usersTableRelationships,
+  },
+  enableLegacyQueries: false,
+  enableLegacyMutators: false,
 } as const;
 
 /**
@@ -2079,14 +2350,24 @@ export type AccountsTable = Row<(typeof schema)["tables"]["accountsTable"]>;
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type AttachmentsTable = Row<
-	(typeof schema)["tables"]["attachmentsTable"]
+  (typeof schema)["tables"]["attachmentsTable"]
 >;
+/**
+ * Represents a row from the "commentsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type CommentsTable = Row<(typeof schema)["tables"]["commentsTable"]>;
+/**
+ * Represents a row from the "emojisTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type EmojisTable = Row<(typeof schema)["tables"]["emojisTable"]>;
 /**
  * Represents a row from the "invitationsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type InvitationsTable = Row<
-	(typeof schema)["tables"]["invitationsTable"]
+  (typeof schema)["tables"]["invitationsTable"]
 >;
 /**
  * Represents a row from the "labelsTable" table.
@@ -2098,28 +2379,35 @@ export type LabelsTable = Row<(typeof schema)["tables"]["labelsTable"]>;
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type MatterLabelsTable = Row<
-	(typeof schema)["tables"]["matterLabelsTable"]
+  (typeof schema)["tables"]["matterLabelsTable"]
+>;
+/**
+ * Represents a row from the "matterNotificationsTable" table.
+ * This type is auto-generated from your Drizzle schema definition.
+ */
+export type MatterNotificationsTable = Row<
+  (typeof schema)["tables"]["matterNotificationsTable"]
 >;
 /**
  * Represents a row from the "matterSubscriptionsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type MatterSubscriptionsTable = Row<
-	(typeof schema)["tables"]["matterSubscriptionsTable"]
+  (typeof schema)["tables"]["matterSubscriptionsTable"]
 >;
 /**
  * Represents a row from the "matterViewsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type MatterViewsTable = Row<
-	(typeof schema)["tables"]["matterViewsTable"]
+  (typeof schema)["tables"]["matterViewsTable"]
 >;
 /**
  * Represents a row from the "matterWatchersTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type MatterWatchersTable = Row<
-	(typeof schema)["tables"]["matterWatchersTable"]
+  (typeof schema)["tables"]["matterWatchersTable"]
 >;
 /**
  * Represents a row from the "mattersTable" table.
@@ -2136,14 +2424,14 @@ export type MembersTable = Row<(typeof schema)["tables"]["membersTable"]>;
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type OrganizationsTable = Row<
-	(typeof schema)["tables"]["organizationsTable"]
+  (typeof schema)["tables"]["organizationsTable"]
 >;
 /**
  * Represents a row from the "pushSubscriptionsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type PushSubscriptionsTable = Row<
-	(typeof schema)["tables"]["pushSubscriptionsTable"]
+  (typeof schema)["tables"]["pushSubscriptionsTable"]
 >;
 /**
  * Represents a row from the "sessionsTable" table.
@@ -2160,21 +2448,21 @@ export type StatusesTable = Row<(typeof schema)["tables"]["statusesTable"]>;
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type StorageUsageCacheTable = Row<
-	(typeof schema)["tables"]["storageUsageCacheTable"]
+  (typeof schema)["tables"]["storageUsageCacheTable"]
 >;
 /**
  * Represents a row from the "subscriptionsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type SubscriptionsTable = Row<
-	(typeof schema)["tables"]["subscriptionsTable"]
+  (typeof schema)["tables"]["subscriptionsTable"]
 >;
 /**
  * Represents a row from the "teamMembershipsTable" table.
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type TeamMembershipsTable = Row<
-	(typeof schema)["tables"]["teamMembershipsTable"]
+  (typeof schema)["tables"]["teamMembershipsTable"]
 >;
 /**
  * Represents a row from the "teamsTable" table.
@@ -2196,7 +2484,7 @@ export type UsersTable = Row<(typeof schema)["tables"]["usersTable"]>;
  * This type is auto-generated from your Drizzle schema definition.
  */
 export type VerificationsTable = Row<
-	(typeof schema)["tables"]["verificationsTable"]
+  (typeof schema)["tables"]["verificationsTable"]
 >;
 
 /**
@@ -2212,7 +2500,7 @@ export const builder = zql;
 
 /** Defines the default types for Zero */
 declare module "@rocicorp/zero" {
-	interface DefaultTypes {
-		schema: Schema;
-	}
+  interface DefaultTypes {
+    schema: Schema;
+  }
 }

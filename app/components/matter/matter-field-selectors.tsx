@@ -217,7 +217,7 @@ export const StatusSelect = memo(
 	}: StatusSelectProps) => {
 		const [open, setOpen] = useState(false);
 
-		const currentStatus = statuses.find((s) => s.id === value);
+		const currentStatus = (statuses || []).find((s) => s.id === value);
 		const sortedStatuses = useMemo(
 			() => [...statuses].sort(sortStatusComparator),
 			[statuses],

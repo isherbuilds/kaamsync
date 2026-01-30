@@ -3,6 +3,7 @@ import { useQuery } from "@rocicorp/zero/react";
 import { memo, useMemo } from "react";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
+import { AttachmentPreviewList } from "~/components/attachments/attachment-preview-list";
 import { cn, extractNameInitials, formatActivityTimestamp } from "~/lib/utils";
 import type { MemberSelectorItem } from "./matter-field-selectors";
 
@@ -59,9 +60,7 @@ function renderActivityContent(
 			return <p className="text-sm">{entry.content}</p>;
 
 		case "created":
-			return (
-				<p className="text-muted-foreground text-sm">created this task</p>
-			);
+			return <p className="text-muted-foreground text-sm">created this task</p>;
 
 		case "status_change":
 			return (
@@ -108,6 +107,10 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 }: ActivityEntryItemProps) {
 	const authorName = entry.user?.name || "User";
 	const authorAvatar = entry.user?.image;
+	const [commentAttachments] = useQuery(
+		queries.getCommentAttachments({ commentId: entry.id }),
+		{ enabled: entry.type === "comment", ...CACHE_NAV },
+	);
 
 	const content = renderActivityContent(entry, statusLookup, memberLookup);
 
@@ -149,6 +152,20 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 				>
 					{content}
 				</div>
+				{entry.type === "comment" && commentAttachments.length > 0 && (
+					<AttachmentPreviewList
+						compact
+						className="mt-2"
+						attachments={commentAttachments.map((attachment) => ({
+							id: attachment.id,
+							fileName: attachment.fileName,
+							fileType: attachment.fileType,
+							fileSize: attachment.fileSize,
+							storageKey: attachment.storageKey,
+							publicUrl: attachment.publicUrl,
+						}))}
+					/>
+				)}
 			</div>
 		</div>
 	);

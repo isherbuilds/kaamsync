@@ -6,11 +6,12 @@ import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth/client";
 
 export async function clientLoader() {
-	const session = await authClient.getSession();
+	const [session, orgs] = await Promise.all([
+		authClient.getSession(),
+		authClient.organization.list(),
+	]);
 
 	if (!session?.data) return null;
-
-	const orgs = await authClient.organization.list();
 
 	return orgs.data?.length
 		? redirect(`/${orgs.data[0]?.slug}/tasks`)

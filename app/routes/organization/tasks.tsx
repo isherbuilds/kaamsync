@@ -6,6 +6,7 @@ import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { MatterListWithDetailPanel } from "~/components/matter/matter-list-layout";
+import { RouteErrorBoundary } from "~/components/shared/error-boundary";
 import { renderPriorityIcon } from "~/components/shared/icons";
 import { CustomAvatar } from "~/components/ui/avatar";
 import { Item, ItemContent, ItemTitle } from "~/components/ui/item";
@@ -165,6 +166,15 @@ export default function OrganizationTasksPage() {
 			}}
 			estimateSize={60}
 			renderItem={handleRenderTaskItem}
+		/>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<RouteErrorBoundary
+			title="Tasks Error"
+			description="Failed to load tasks"
 		/>
 	);
 }

@@ -1,7 +1,8 @@
 import { v7 as uuid } from "uuid";
 import { db } from "~/db";
-import { invitationsTable, membersTable } from "~/db/schema";
+import { invitationsTable, membersTable } from "~/db/schema/auth";
 import type { OrgRole } from "~/lib/auth/permissions";
+import { clearUsageCache } from "~/lib/billing/service";
 import {
 	getOrganizationMembership,
 	getOrganizationOwnerUser,
@@ -72,6 +73,9 @@ export async function addMemberToOrganization(
 		};
 
 		await db.insert(membersTable).values(memberData);
+
+		// Invalidate member count cache
+		clearUsageCache(organizationId, "members");
 
 		return {
 			id: memberId,

@@ -6,13 +6,13 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { v7 as uuid } from "uuid";
 import { db } from "~/db";
 import { membershipStatus, teamRole } from "~/db/helpers";
+import { membersTable } from "~/db/schema/auth";
+import { labelsTable } from "~/db/schema/matters";
 import {
-	labelsTable,
-	membersTable,
 	statusesTable,
 	teamMembershipsTable,
 	teamsTable,
-} from "~/db/schema";
+} from "~/db/schema/teams";
 import {
 	TEAM_DEFAULT_LABELS,
 	TEAM_DEFAULT_STATUSES,
@@ -39,7 +39,7 @@ export interface TeamSeedResult {
 
 function generateTeamIdentifierCandidates(
 	name: string,
-	maxAttempts = 10
+	maxAttempts = 10,
 ): string[] {
 	const cleaned = name.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
 	let base = cleaned.slice(0, 3) || "WRK";
@@ -65,10 +65,10 @@ export async function seedTeamDefaults({
 }: TeamSeedOptions): Promise<TeamSeedResult> {
 	const teamId = uuid();
 	const labelIds = Array.from({ length: TEAM_DEFAULT_LABELS.length }, () =>
-		uuid()
+		uuid(),
 	);
 	const statusIds = Array.from({ length: TEAM_DEFAULT_STATUSES.length }, () =>
-		uuid()
+		uuid(),
 	);
 
 	const candidates = generateTeamIdentifierCandidates(teamName, 10);
@@ -78,9 +78,7 @@ export async function seedTeamDefaults({
 			.select({ userId: membersTable.userId })
 			.from(membersTable)
 			.where(eq(membersTable.organizationId, orgId))
-			.orderBy(
-				sql`CASE WHEN ${membersTable.role} = 'owner' THEN 0 ELSE 1 END`
-			)
+			.orderBy(sql`CASE WHEN ${membersTable.role} = 'owner' THEN 0 ELSE 1 END`)
 			.limit(1)
 			.then((rows) => rows[0])
 			.catch(() => null),
@@ -92,9 +90,9 @@ export async function seedTeamDefaults({
 					eq(teamsTable.orgId, orgId),
 					or(
 						inArray(teamsTable.slug, candidates),
-						inArray(teamsTable.code, candidates)
-					)
-				)
+						inArray(teamsTable.code, candidates),
+					),
+				),
 			),
 	]);
 
@@ -108,7 +106,7 @@ export async function seedTeamDefaults({
 
 	if (!uniqueIdentifier) {
 		throw new Error(
-			"Could not generate a unique team identifier (slug/code). Try a different name."
+			"Could not generate a unique team identifier (slug/code). Try a different name.",
 		);
 	}
 
@@ -183,7 +181,7 @@ export async function seedTeamDefaults({
 				canManageTeam: true,
 				createdAt: now,
 				updatedAt: now,
-			})
+			}),
 		);
 	}
 

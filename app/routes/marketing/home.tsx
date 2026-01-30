@@ -21,7 +21,7 @@ export const meta: MetaFunction = () => [
 	},
 ];
 
-const faqs = [
+const FAQS = [
 	{
 		q: "How fast can we get started?",
 		a: "Setup takes less than 2 minutes. You can create your organization, invite up to 3 team members for free, and start tracking Matters immediately.",
@@ -39,6 +39,7 @@ const faqs = [
 		a: "Absolutely. Everything in KaamSync is designed to keep your work safe and secure. We force HTTPS for all connections and encrypt data in-transit with TLS 1.2+. For storage, we rely on best-in-class infrastructure partners who utilize industry-standard physical disk encryption to safeguard your data at rest.",
 	},
 ];
+
 export default function HomePage() {
 	return (
 		<div className="flex flex-col bg-background text-foreground">
@@ -183,7 +184,7 @@ export default function HomePage() {
 						Common Questions
 					</MarketingHeading>
 					<div className="text-left">
-						<FAQ items={faqs} />
+						<FAQ items={FAQS} />
 					</div>
 				</div>
 			</MarketingContainer>

@@ -45,12 +45,12 @@ const envSchema = z.object({
 	USESEND_SELF_HOSTED_URL: z.string().optional(),
 
 	// Storage (S3-compatible)
-	S3_ACCESS_KEY_ID: z.string().optional(),
-	S3_SECRET_ACCESS_KEY: z.string().optional(),
-	S3_BUCKET_NAME: z.string().optional(),
-	S3_REGION: z.string().default("auto"),
-	S3_ENDPOINT: z.string().optional(),
-	S3_PUBLIC_URL: z.string().optional(),
+	STORAGE_ACCESS_KEY_ID: z.string().optional(),
+	STORAGE_SECRET_ACCESS_KEY: z.string().optional(),
+	STORAGE_BUCKET_NAME: z.string().optional(),
+	STORAGE_REGION: z.string().default("auto"),
+	STORAGE_ENDPOINT: z.string().optional(),
+	STORAGE_PUBLIC_URL: z.string().optional(),
 
 	// Application
 	NODE_ENV: z

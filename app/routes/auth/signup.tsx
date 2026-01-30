@@ -2,10 +2,14 @@ import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { Form, Link, redirect } from "react-router";
 import { toast } from "sonner";
-import { InputField, LoadingButton, PasswordField } from "~/components/shared/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
-import { useIsPending } from "~/hooks/use-is-pending";
+import {
+	InputField,
+	LoadingButton,
+	PasswordField,
+} from "~/components/shared/forms";
 import { AppInfo } from "~/config/app";
+import { useIsPending } from "~/hooks/use-is-pending";
 import { authClient } from "~/lib/auth/client";
 import { signUpSchema } from "~/lib/auth/validations";
 import type { Route } from "./+types/signup";
@@ -112,10 +116,32 @@ export default function SignUpRoute() {
 			{/* Sign in */}
 			<div className="text-center text-sm">
 				Already have an account?{" "}
-				<Link className="text-primary hover:underline" to="/login">
+				<Link
+					className="text-primary hover:underline"
+					to="/login"
+					prefetch="intent"
+				>
 					Sign in
 				</Link>
 			</div>
 		</BasicLayout>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<div className="p-6 text-center">
+			<h2 className="mb-2 font-semibold text-lg">Sign Up Error</h2>
+			<p className="mb-4 text-muted-foreground text-sm">
+				An error occurred while loading the sign up page.
+			</p>
+			<Link
+				to="/signup"
+				className="text-primary hover:underline"
+				prefetch="intent"
+			>
+				Try again
+			</Link>
+		</div>
 	);
 }

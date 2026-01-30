@@ -12,7 +12,10 @@ export type Context = {
 		matters: number;
 		teams: number;
 	};
-	clearUsageCache?: (orgId: string) => void;
+	clearUsageCache?: (
+		orgId: string,
+		metric?: "members" | "teams" | "matters" | "storage" | "all",
+	) => void;
 };
 
 declare module "@rocicorp/zero" {

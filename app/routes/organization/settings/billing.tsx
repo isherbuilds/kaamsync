@@ -1,13 +1,12 @@
 import { useCallback, useRef, useState } from "react";
-import type { LoaderFunctionArgs } from "react-router";
-import { useLoaderData, useSearchParams } from "react-router";
+import { data, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import {
 	PricingComparison,
 	PricingGrid,
-	SubscriptionStatus,
-	UsageDisplay,
-} from "~/components/billing";
+} from "~/components/billing/pricing-grid";
+import { SubscriptionStatus } from "~/components/billing/subscription-status";
+import { UsageDisplay } from "~/components/billing/usage-display";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
 	AlertDialog,
@@ -42,19 +41,20 @@ import {
 	resolveProductPlan,
 } from "~/lib/billing/service";
 import { getMemberRole } from "~/lib/organization/service";
+import type { Route } from "./+types/billing";
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request }: Route.LoaderArgs) {
 	const session = await getServerSession(request);
 	if (!session?.session?.activeOrganizationId) {
-		return {
+		return data({
 			subscription: null,
 			payments: [],
-			usage: { members: 0, teams: 0 },
+			usage: { members: 0, teams: 0, matters: 0, storageGb: 0 },
 			billingEnabled: billingConfig.enabled,
 			organizationId: null,
 			userRole: null as OrgRole | null,
 			currentPlan: null as ProductKey | null,
-		};
+		});
 	}
 
 	const orgId = session.session.activeOrganizationId;
@@ -74,14 +74,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
 			? resolveProductPlan(subscription.productId)
 			: null);
 
-	return {
+	return data({
 		subscription,
 		usage,
 		billingEnabled: billingConfig.enabled,
 		organizationId: orgId,
 		userRole,
 		currentPlan,
-	};
+	});
 }
 
 interface SelectedPlan {
@@ -89,8 +89,7 @@ interface SelectedPlan {
 	interval: BillingInterval;
 }
 
-export default function BillingSettings() {
-	const loaderData = useLoaderData<typeof loader>();
+export default function Component({ loaderData }: Route.ComponentProps) {
 	const {
 		subscription,
 		usage,
@@ -392,6 +391,19 @@ export default function BillingSettings() {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
+		</div>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<div className="p-6">
+			<Alert variant="destructive">
+				<AlertTitle>Error loading billing information</AlertTitle>
+				<AlertDescription>
+					Please try again later or contact support if the problem persists.
+				</AlertDescription>
+			</Alert>
 		</div>
 	);
 }

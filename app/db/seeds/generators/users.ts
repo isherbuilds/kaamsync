@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
-import { usersTable } from "~/db/schema";
+import { usersTable } from "~/db/schema/auth";
 import { auth } from "~/lib/auth/server";
 
 export async function createUser(name?: string, suffix?: string) {

@@ -1,6 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 import { must } from "./app/lib/utils/must";
-import "scripts/lib/env";
+import "./scripts/lib/env";
 
 const pgURL = must(
 	process.env.ZERO_UPSTREAM_DB,

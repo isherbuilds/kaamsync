@@ -35,6 +35,7 @@ export const mutators = defineMutators({
 				assigneeId: z.string().optional(),
 				dueDate: z.number().optional(),
 				statusId: z.string(),
+				attachmentIds: z.array(z.string()).optional(),
 				clientShortID: z.number().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
@@ -89,8 +90,18 @@ export const mutators = defineMutators({
 					args.clientShortID,
 				);
 
-				// Invalidate usage cache after matter creation
-				clearOrganizationUsageCache(ctx, membership.orgId);
+				if (args.attachmentIds && args.attachmentIds.length > 0) {
+					for (const attachmentId of args.attachmentIds) {
+						await tx.mutate.attachmentsTable.update({
+							id: attachmentId,
+							subjectId: baseInsert.id,
+							subjectType: "matter",
+						});
+					}
+				}
+
+				// Invalidate only matter count cache after matter creation
+				clearOrganizationUsageCache(ctx, membership.orgId, "matters");
 			},
 		),
 
@@ -408,14 +419,20 @@ export const mutators = defineMutators({
 
 	timeline: {
 		addComment: defineMutator(
-			z.object({ matterId: z.string(), content: z.string() }),
+			z.object({
+				matterId: z.string(),
+				content: z.string(),
+				attachmentIds: z.array(z.string()).optional(),
+			}),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
 				// Permission: Ensure user can access the matter
 				await checkMatterModifyAccess(tx, ctx, args.matterId);
 
+				const id = uuid();
+
 				await tx.mutate.timelinesTable.insert({
-					id: uuid(),
+					id,
 					matterId: args.matterId,
 					userId: ctx.userId,
 					type: "comment",
@@ -424,6 +441,16 @@ export const mutators = defineMutators({
 					createdAt: now,
 					updatedAt: now,
 				});
+
+				if (args.attachmentIds && args.attachmentIds.length > 0) {
+					for (const attachmentId of args.attachmentIds) {
+						await tx.mutate.attachmentsTable.update({
+							id: attachmentId,
+							subjectId: id,
+							subjectType: "comment",
+						});
+					}
+				}
 			},
 		),
 	},
@@ -529,8 +556,8 @@ export const mutators = defineMutators({
 					...statusRows.map((row: any) => tx.mutate.statusesTable.insert(row)),
 				]);
 
-				// PERFORMANCE: Invalidate organization cache after team creation
-				ctx.clearUsageCache?.(orgMembership.organizationId);
+				// Invalidate only team count cache after team creation
+				ctx.clearUsageCache?.(orgMembership.organizationId, "teams");
 			},
 		),
 
@@ -716,3 +743,9 @@ export const mutators = defineMutators({
 		},
 	),
 });
+
+declare module "@rocicorp/zero" {
+	interface DefaultTypes {
+		mutators: typeof mutators;
+	}
+}

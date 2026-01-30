@@ -13,8 +13,9 @@ import { toast } from "sonner";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
+import { AttachmentPreviewList } from "~/components/attachments/attachment-preview-list";
 import { AdminApproveSection } from "~/components/matter/admin-approve-section";
-import { CommentInput } from "~/components/matter/comment-input";
+import { CommentComposer } from "~/components/matter/comment-composer";
 import {
 	MemberSelect,
 	type MemberSelectorItem,
@@ -23,6 +24,7 @@ import {
 } from "~/components/matter/matter-field-selectors";
 import { PropertyPill, PropertyRow } from "~/components/matter/properties";
 import { TaskTimeline } from "~/components/matter/task-timeline";
+import { RouteErrorBoundary } from "~/components/shared/error-boundary";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,
@@ -44,6 +46,7 @@ import { parseMatterKeyString } from "~/db/helpers";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
 import { sendNotificationToUser } from "~/hooks/use-push-notifications";
+
 import type { Route } from "./+types/matter.$matterKey";
 
 export const meta: Route.MetaFunction = ({ params }) => [
@@ -52,8 +55,10 @@ export const meta: Route.MetaFunction = ({ params }) => [
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 	const matterKey = params.matterKey;
+
 	if (!matterKey) throw new Response("Not Found", { status: 404 });
 	const parsed = parseMatterKeyString(matterKey);
+
 	if (!parsed) throw new Response("Invalid matter key format", { status: 400 });
 	return { matterKey, parsed };
 }
@@ -78,6 +83,10 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 	const [statuses] = useQuery(
 		queries.getTeamStatuses({ teamId: matter?.teamId || "" }),
 		{ enabled: !!matter?.teamId, ...CACHE_LONG },
+	);
+	const [matterAttachments] = useQuery(
+		queries.getMatterAttachments({ matterId: matter?.id || "" }),
+		{ enabled: !!matter?.id, ...CACHE_NAV },
 	);
 
 	// 2. Permissions
@@ -116,7 +125,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 			if (matter.assigneeId && matter.assigneeId !== authSession.user.id) {
 				const newStatusName =
-					statuses.find((st) => st.id === s)?.name || "Unknown";
+					(statuses || []).find((st) => st.id === s)?.name || "Unknown";
 				sendNotificationToUser(
 					matter.assigneeId,
 					"Task Status Updated",
@@ -347,11 +356,24 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								)}
 							</div>
 
+							{matterAttachments.length > 0 && (
+								<AttachmentPreviewList
+									attachments={matterAttachments.map((attachment) => ({
+										id: attachment.id,
+										fileName: attachment.fileName,
+										fileType: attachment.fileType,
+										fileSize: attachment.fileSize,
+										storageKey: attachment.storageKey,
+										publicUrl: attachment.publicUrl,
+									}))}
+								/>
+							)}
+
 							<Separator />
 
 							<div className="space-y-4">
 								<h2 className="font-semibold text-sm">Activity</h2>
-								<CommentInput matterId={matter.id} />
+								<CommentComposer matterId={matter.id} />
 								<TaskTimeline
 									matterId={matter.id}
 									members={members}
@@ -453,5 +475,14 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				</DialogContent>
 			</Dialog>
 		</div>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<RouteErrorBoundary
+			title="Matter Error"
+			description="Failed to load matter details"
+		/>
 	);
 }

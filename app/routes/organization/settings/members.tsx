@@ -10,7 +10,7 @@ import {
 	X,
 } from "lucide-react";
 import { useState, useTransition } from "react";
-import { data, useRouteLoaderData } from "react-router";
+import { data, Link, useRouteError, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -40,6 +40,7 @@ import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { authClient } from "~/lib/auth/client";
 import { getServerSession } from "~/lib/auth/server";
 import { checkMemberLimit } from "~/lib/billing/service";
+
 import type { Route } from "./+types/members.ts";
 import type { loader as settingsLoader } from "./layout";
 
@@ -353,5 +354,21 @@ export default function OrgMembersPage() {
 				</div>
 			</div>
 		</>
+	);
+}
+
+export function ErrorBoundary() {
+	const error = useRouteError();
+
+	return (
+		<div className="flex h-full flex-col items-center justify-center gap-4 p-8">
+			<h2 className="font-semibold text-lg">Members Error</h2>
+			<p className="text-muted-foreground text-sm">
+				{error instanceof Error ? error.message : "Failed to load members"}
+			</p>
+			<Link to="." className="text-primary hover:underline" prefetch="intent">
+				Try again
+			</Link>
+		</div>
 	);
 }

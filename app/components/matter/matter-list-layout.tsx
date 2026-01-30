@@ -2,6 +2,7 @@ import type { Row } from "@rocicorp/zero";
 import type { LucideIcon } from "lucide-react";
 import { memo } from "react";
 import { Outlet } from "react-router";
+import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { EmptyState } from "~/components/ui/empty-state";
 import {
 	ResizableHandle,
@@ -9,8 +10,6 @@ import {
 	ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { SidebarTrigger } from "~/components/ui/sidebar";
-import { VirtualizedList } from "~/components/shared/virtualized-list";
-import { useBreakpoints } from "~/hooks/use-mobile";
 import {
 	DETAIL_PANEL_MIN_SIZE,
 	getDetailPanelSize,
@@ -18,6 +17,7 @@ import {
 	PANEL_MAX_SIZE,
 	PANEL_MIN_SIZE,
 } from "~/config/layout";
+import { useBreakpoints } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
 
 type MatterWithStatus = Row["mattersTable"] & {
@@ -61,6 +61,74 @@ const ACCENT_COLOR_CLASSES = {
 	},
 } as const;
 
+const ListHeader = ({
+	title,
+	colors,
+	itemCount,
+	isLoading,
+	Icon,
+}: {
+	title: string;
+	colors: (typeof ACCENT_COLOR_CLASSES)["blue" | "amber"];
+	itemCount: number;
+	isLoading: boolean;
+	Icon: LucideIcon;
+}) => (
+	<div className="flex h-12 items-center justify-between border-b bg-background px-4">
+		<div className="flex items-center gap-2">
+			<SidebarTrigger className="lg:hidden" />
+			<Icon className={`size-4 ${colors.icon}`} />
+			<h5 className="font-semibold">{title}</h5>
+		</div>
+		<div className="flex items-center gap-2">
+			{isLoading ? (
+				<div className="h-5 w-8 animate-pulse rounded-full bg-muted" />
+			) : (
+				<span
+					className={cn(
+						"rounded-full px-2 py-0.5 font-medium text-xs",
+						colors.badge,
+					)}
+				>
+					{itemCount}
+				</span>
+			)}
+		</div>
+	</div>
+);
+
+const ListLoadingSkeleton = () => (
+	<div className="space-y-1 p-1">
+		{[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+			<div
+				key={`skeleton-${i}`}
+				className="flex items-start gap-3 rounded-md border border-transparent p-3"
+			>
+				<div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+				<div className="flex-1 space-y-2">
+					<div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+					<div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+				</div>
+				<div className="flex flex-col items-end gap-1">
+					<div className="size-4 animate-pulse rounded bg-muted" />
+					<div className="h-3 w-8 animate-pulse rounded bg-muted" />
+				</div>
+			</div>
+		))}
+	</div>
+);
+
+const DetailPanelPlaceholder = ({ Icon }: { Icon: LucideIcon }) => (
+	<div className="flex h-full items-center justify-center">
+		<div className="text-center">
+			<Icon className="mx-auto size-12 text-muted-foreground/30" />
+			<p className="mt-2 text-muted-foreground text-sm">
+				Select an item to view details
+			</p>
+		</div>
+	</div>
+);
+
 /**
  * Shared layout component for matter list pages (Tasks, Requests).
  * Provides resizable panel structure with header, empty state, and virtualized list.
@@ -80,63 +148,6 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 	const colors = ACCENT_COLOR_CLASSES[accentColor];
 	const itemCount = items.length;
 
-	// Sub-components for better organization
-	const ListHeader = () => (
-		<div className="flex h-12 items-center justify-between border-b bg-background px-4">
-			<div className="flex items-center gap-2">
-				<SidebarTrigger className="lg:hidden" />
-				<Icon className={`size-4 ${colors.icon}`} />
-				<h5 className="font-semibold">{title}</h5>
-			</div>
-			<div className="flex items-center gap-2">
-				{isLoading ? (
-					<div className="h-5 w-8 animate-pulse rounded-full bg-muted" />
-				) : (
-					<span
-						className={cn(
-							"rounded-full px-2 py-0.5 font-medium text-xs",
-							colors.badge,
-						)}
-					>
-						{itemCount}
-					</span>
-				)}
-			</div>
-		</div>
-	);
-
-	const ListLoadingSkeleton = () => (
-		<div className="space-y-1 p-1">
-			{Array.from({ length: 8 }).map((_, i) => (
-				<div
-					key={`skeleton-item-${i}`}
-					className="flex items-start gap-3 rounded-md border border-transparent p-3"
-				>
-					<div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
-					<div className="flex-1 space-y-2">
-						<div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-						<div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
-					</div>
-					<div className="flex flex-col items-end gap-1">
-						<div className="size-4 animate-pulse rounded bg-muted" />
-						<div className="h-3 w-8 animate-pulse rounded bg-muted" />
-					</div>
-				</div>
-			))}
-		</div>
-	);
-
-	const DetailPanelPlaceholder = () => (
-		<div className="flex h-full items-center justify-center">
-			<div className="text-center">
-				<Icon className="mx-auto size-12 text-muted-foreground/30" />
-				<p className="mt-2 text-muted-foreground text-sm">
-					Select an item to view details
-				</p>
-			</div>
-		</div>
-	);
-
 	return (
 		<ResizablePanelGroup className="h-full" orientation="horizontal">
 			<ResizablePanel
@@ -145,7 +156,13 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
 			>
-				<ListHeader />
+				<ListHeader
+					title={title}
+					colors={colors}
+					itemCount={itemCount}
+					isLoading={isLoading}
+					Icon={Icon}
+				/>
 				<div className="h-[calc(100%-48px)]">
 					{isLoading ? (
 						<ListLoadingSkeleton />
@@ -176,7 +193,7 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 						defaultSize={getDetailPanelSize(isTablet, isExtraLargeScreen)}
 						minSize={DETAIL_PANEL_MIN_SIZE}
 					>
-						{isLoading ? <DetailPanelPlaceholder /> : <Outlet />}
+						{isLoading ? <DetailPanelPlaceholder Icon={Icon} /> : <Outlet />}
 					</ResizablePanel>
 				</>
 			)}

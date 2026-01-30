@@ -1,16 +1,23 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import {
+	getInputProps as getConformInputProps,
+	getFormProps,
+	useForm,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import type { Row } from "@rocicorp/zero";
 import { useZero } from "@rocicorp/zero/react";
 import { GitPullRequest, ListTodo, SquarePen } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
-import { useTeamShortIdCache } from "~/hooks/use-short-id";
+import { AttachmentUpload } from "~/components/attachments/attachment-upload";
+import { planLimits } from "~/config/billing";
 import { Priority, type PriorityValue } from "~/config/matter";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { useTeamShortIdCache } from "~/hooks/use-short-id";
 import { consumeNextShortId } from "~/lib/cache/short-id";
-import { cn } from "~/lib/utils";
 import { matterCreateFormSchema } from "~/lib/matter/validations";
+import { cn } from "~/lib/utils";
 import { matterType, teamRole } from "../../db/helpers";
 import { Button } from "../ui/button";
 import {
@@ -71,6 +78,11 @@ export const CreateMatterDialog = memo(
 		const z = useZero();
 		const [open, setOpen] = useState(false);
 		const [isCreating, setIsCreating] = useState(false);
+		const [attachments, setAttachments] = useState<{ id: string }[]>([]);
+		const [resetSignal, setResetSignal] = useState(0);
+		const { subscription } = useOrganizationLoaderData();
+		const planKey = subscription?.plan as keyof typeof planLimits | undefined;
+		const planLimit = planKey ? planLimits[planKey] : planLimits.starter;
 
 		const isRequest = type === "request";
 		const {
@@ -94,12 +106,48 @@ export const CreateMatterDialog = memo(
 
 		useTeamShortIdCache(teamId, open);
 
+		const handleAttachmentsChange = useCallback(
+			(
+				uploaded: {
+					id: string;
+					publicUrl: string;
+					storageKey: string;
+					fileName: string;
+					fileSize: number;
+					fileType: string;
+				}[],
+			) => {
+				setAttachments(uploaded.map((file) => ({ id: file.id })));
+			},
+			[],
+		);
+
+		const handleOpenChange = useCallback(
+			(v: boolean) => {
+				if (!v && attachments.length > 0 && !isCreating) {
+					const attachmentIds = attachments.map((a) => a.id);
+					fetch("/api/attachments/cleanup", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ attachmentIds }),
+					}).catch(() => {
+						// Silent fail - orphaned attachments will be cleaned by periodic job
+					});
+					setAttachments([]);
+					setResetSignal((value) => value + 1);
+				}
+				setOpen(v);
+			},
+			[attachments, isCreating],
+		);
+
 		const [form, fields] = useForm({
 			id: `create-matter-${type}`,
 			constraint: getZodConstraint(matterCreateFormSchema),
 			defaultValue: {
 				priority: (isRequest ? Priority.MEDIUM : Priority.NONE).toString(),
-				statusId: statuses.find((s) => s.isDefault)?.id || statuses[0]?.id,
+				statusId:
+					(statuses || []).find((s) => s.isDefault)?.id || statuses?.[0]?.id,
 			},
 			onValidate: ({ formData }) =>
 				parseWithZod(formData, { schema: matterCreateFormSchema }),
@@ -132,6 +180,7 @@ export const CreateMatterDialog = memo(
 							: isRequest
 								? Date.now() + 7 * 24 * 60 * 60 * 1000
 								: undefined,
+						attachmentIds: attachments.map((attachment) => attachment.id),
 						clientShortID,
 					}),
 				)
@@ -142,6 +191,8 @@ export const CreateMatterDialog = memo(
 								: `${teamCode}-${clientShortID} created`,
 						);
 						setOpen(false);
+						setAttachments([]);
+						setResetSignal((value) => value + 1);
 						form.reset();
 
 						if (assigneeId) {
@@ -170,7 +221,7 @@ export const CreateMatterDialog = memo(
 		});
 
 		return (
-			<Dialog onOpenChange={setOpen} open={open}>
+			<Dialog onOpenChange={handleOpenChange} open={open}>
 				<DialogTrigger asChild>
 					{triggerButton || (
 						<Button
@@ -202,7 +253,7 @@ export const CreateMatterDialog = memo(
 							</div>
 
 							<input
-								{...getInputProps(fields.title, { type: "text" })}
+								{...getConformInputProps(fields.title, { type: "text" })}
 								key={fields.title.key}
 								autoFocus
 								autoComplete="off"
@@ -216,7 +267,7 @@ export const CreateMatterDialog = memo(
 							)}
 
 							<textarea
-								{...getInputProps(fields.description, { type: "text" })}
+								{...getConformInputProps(fields.description, { type: "text" })}
 								key={fields.description.key}
 								placeholder={descriptionPlaceholder}
 								className="min-h-32 w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/30"
@@ -226,6 +277,14 @@ export const CreateMatterDialog = memo(
 									{fields.description.errors}
 								</p>
 							)}
+
+							<AttachmentUpload
+								maxFiles={planLimit.maxFiles}
+								maxSize={planLimit.maxFileSizeMb * 1024 * 1024}
+								accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+								resetSignal={resetSignal}
+								onAttachmentsChange={handleAttachmentsChange}
+							/>
 						</div>
 
 						<div className="flex flex-col gap-3 border-t bg-muted/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -253,7 +312,7 @@ export const CreateMatterDialog = memo(
 										})
 									}
 									showLabel
-									className="h-7 border bg-background px-2"
+									className="h7 border bg-background px-2"
 								/>
 
 								<MemberSelect
@@ -272,7 +331,7 @@ export const CreateMatterDialog = memo(
 
 								<div className="relative">
 									<input
-										{...getInputProps(fields.dueDate, { type: "date" })}
+										{...getConformInputProps(fields.dueDate, { type: "date" })}
 										key={fields.dueDate.key}
 										className="h-7 rounded border bg-background px-2 text-muted-foreground text-xs outline-none hover:bg-muted focus:ring-1 focus:ring-ring"
 									/>

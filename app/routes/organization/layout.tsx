@@ -3,6 +3,7 @@ import { AlertCircle } from "lucide-react";
 import { useMemo } from "react";
 import {
 	createContext,
+	data,
 	Form,
 	isRouteErrorResponse,
 	Outlet,
@@ -32,6 +33,8 @@ export const clientAuthContext = createContext<AuthSession>();
 
 export const middleware = [requireAuth];
 
+const EMPTY_ORG = { id: "", name: "", slug: "" };
+
 export async function loader({ params, request }: Route.LoaderArgs) {
 	const authSession = await getServerSession(request);
 
@@ -43,11 +46,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 	const subscription = await fetchOrgSubscription(orgId);
 
-	return {
+	return data({
 		subscription,
 		orgSlug: params.orgSlug,
 		authSession,
-	};
+	});
 }
 
 // Track org state to avoid redundant server calls
@@ -105,9 +108,10 @@ export async function clientLoader({
 	const authSession = context.get(clientAuthContext);
 	const orgSlug = params.orgSlug as string;
 
+	const serverData = await serverLoader();
+
 	const subscription = await getSubscriptionSWR(async () => {
-		const data = await serverLoader();
-		return data.subscription;
+		return serverData.subscription;
 	}, orgSlug);
 
 	if (!authSession || !subscription) {
@@ -194,12 +198,7 @@ function Layout({
 
 	// Memoize org lookup to prevent unnecessary re-renders
 	const selectedOrg = useMemo(
-		() =>
-			orgsData.find((o) => o.slug === orgSlug) ?? {
-				id: "",
-				name: "",
-				slug: "",
-			},
+		() => orgsData.find((o) => o.slug === orgSlug) ?? EMPTY_ORG,
 		[orgsData, orgSlug],
 	);
 
