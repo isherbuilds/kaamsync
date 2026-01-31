@@ -1,4 +1,4 @@
-import { XIcon } from "lucide-react";
+import XIcon from "lucide-react/dist/esm/icons/x";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import type * as React from "react";
 
@@ -82,7 +82,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
 	return (
 		<div
 			data-slot="dialog-header"
-			className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
+			className={cn("v-stack gap-2 text-center sm:text-left", className)}
 			{...props}
 		/>
 	);

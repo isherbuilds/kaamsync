@@ -30,11 +30,11 @@ export const slugSchema = z
 	.max(50, "Slug too long")
 	.regex(
 		/^[a-z0-9-]+$/,
-		"Slug can only contain lowercase letters, numbers, and hyphens"
+		"Slug can only contain lowercase letters, numbers, and hyphens",
 	)
 	.refine(
 		(s) => !s.startsWith("-") && !s.endsWith("-"),
-		"Slug cannot start or end with hyphen"
+		"Slug cannot start or end with hyphen",
 	);
 
 export const baseSlugSchema = z.object({ slug: slugSchema });
@@ -97,7 +97,7 @@ export function createPasswordConfirmationSchema(passwordField = "password") {
 			{
 				message: "Passwords do not match",
 				path: ["confirmPassword"],
-			}
+			},
 		);
 }
 
@@ -105,7 +105,7 @@ export function createUniqueSlugSchema(reservedSlugs: string[] = []) {
 	return baseSlugSchema.extend({
 		slug: slugSchema.refine(
 			(slug) => !reservedSlugs.includes(slug),
-			"This slug is reserved and cannot be used"
+			"This slug is reserved and cannot be used",
 		),
 	});
 }

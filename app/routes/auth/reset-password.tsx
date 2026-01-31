@@ -1,11 +1,11 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-import { data, Form, Link, redirect } from "react-router";
+import { data, Form, Link, redirect, useRouteError } from "react-router";
 import { toast } from "sonner";
-import { LoadingButton, PasswordField } from "~/components/shared/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
-import { useIsPending } from "~/hooks/use-is-pending";
+import { LoadingButton, PasswordField } from "~/components/shared/forms";
 import { AppInfo } from "~/config/app";
+import { useIsPending } from "~/hooks/use-is-pending";
 import { authClient } from "~/lib/auth/client";
 import { resetPasswordSchema } from "~/lib/auth/validations";
 import type { Route } from "./+types/reset-password";
@@ -93,5 +93,25 @@ export default function ResetPasswordRoute({
 				</Link>
 			</div>
 		</BasicLayout>
+	);
+}
+
+export function ErrorBoundary() {
+	const error = useRouteError();
+
+	return (
+		<div className="p-6 text-center">
+			<h2 className="mb-2 font-semibold text-lg">Reset Password Error</h2>
+			<p className="mb-4 text-muted-foreground text-sm">
+				{error instanceof Error ? error.message : "An error occurred"}
+			</p>
+			<Link
+				to="/login"
+				className="text-primary hover:underline"
+				prefetch="intent"
+			>
+				Back to login
+			</Link>
+		</div>
 	);
 }

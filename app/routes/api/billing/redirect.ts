@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { getServerSession } from "~/lib/auth/server";
 import { getOrganizationById } from "~/lib/organization/service";
+import { safeError } from "~/lib/utils/logger";
 
 /**
  * Billing redirect handler
@@ -26,7 +27,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 		if (session?.session?.activeOrganizationId) {
 			// Get the organization details to find the slug
-			const org = await getOrganizationById(session.session.activeOrganizationId);
+			const org = await getOrganizationById(
+				session.session.activeOrganizationId,
+			);
 
 			if (org?.slug) {
 				const redirectUrl = `/${org.slug}/settings/billing${queryString ? `?${queryString}` : ""}`;
@@ -37,7 +40,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		// Fallback to home if no org - billing is organization-scoped
 		return redirect(`/${queryString ? `?${queryString}` : ""}`);
 	} catch (error) {
-		console.error("[Billing Redirect] Error:", error);
+		safeError(error, "[Billing Redirect] Error");
 		// Fallback on error - redirect to home
 		return redirect(`/${queryString ? `?${queryString}` : ""}`);
 	}

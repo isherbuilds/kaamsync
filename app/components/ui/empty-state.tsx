@@ -44,18 +44,13 @@ export function EmptyState({
 	className,
 }: EmptyStateProps) {
 	return (
-		<div
-			className={cn(
-				"flex flex-col items-center justify-center py-16 text-center",
-				className,
-			)}
-		>
+		<div className={cn("v-stack center py-16 text-center", className)}>
 			<div className={cn("rounded-full p-3", iconColorClass)}>
 				<Icon className={cn("size-8", iconFillClass)} />
 			</div>
 			<p className="mt-3 font-medium text-muted-foreground text-sm">{title}</p>
 			<p className="mt-1 text-muted-foreground/70 text-xs">{description}</p>
-			{children && <div className="mt-4">{children}</div>}
+			{children ? <div className="mt-4">{children}</div> : null}
 		</div>
 	);
 }
@@ -76,14 +71,14 @@ export function EmptyStateCard({
 	return (
 		<div
 			className={cn(
-				"m-4 flex h-full flex-col items-center justify-center rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/30 p-8 text-center",
+				"center m-4 flex h-full flex-col rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/30 p-8 text-center",
 				className,
 			)}
 		>
 			<div className="mx-auto max-w-md space-y-4">
 				<div
 					className={cn(
-						"mx-auto flex size-16 items-center justify-center rounded-full",
+						"center mx-auto flex size-16 rounded-full",
 						iconColorClass,
 					)}
 				>
@@ -96,7 +91,7 @@ export function EmptyStateCard({
 					</p>
 				</div>
 				{children && (
-					<div className="flex flex-col items-center justify-center gap-2 pt-2 sm:flex-row">
+					<div className="v-stack center gap-2 pt-2 sm:flex-row">
 						{children}
 					</div>
 				)}

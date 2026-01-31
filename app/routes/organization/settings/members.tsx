@@ -1,16 +1,14 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { parseWithZod } from "@conform-to/zod/v4";
 import { useQuery } from "@rocicorp/zero/react";
-import {
-	Mail,
-	MoreVertical,
-	ShieldCheck,
-	Trash2,
-	UserPlus,
-	X,
-} from "lucide-react";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import MoreVertical from "lucide-react/dist/esm/icons/more-vertical";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
+import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import UserPlus from "lucide-react/dist/esm/icons/user-plus";
+import X from "lucide-react/dist/esm/icons/x";
 import { useState, useTransition } from "react";
-import { data, useRouteLoaderData } from "react-router";
+import { data, Link, useRouteError, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
@@ -40,7 +38,8 @@ import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { authClient } from "~/lib/auth/client";
 import { getServerSession } from "~/lib/auth/server";
 import { checkMemberLimit } from "~/lib/billing/service";
-import type { Route } from "./+types/members.ts";
+
+import type { Route } from "./+types/members";
 import type { loader as settingsLoader } from "./layout";
 
 const inviteSchema = z.object({
@@ -312,7 +311,7 @@ export default function OrgMembersPage() {
 					{invites?.map((i) => (
 						<div
 							key={i.id}
-							className="group relative flex flex-col rounded-xl border bg-muted/20 p-4 text-sm shadow-sm"
+							className="group v-stack relative rounded-xl border bg-muted/20 p-4 text-sm shadow-sm"
 						>
 							<div className="mb-2 flex items-start justify-between">
 								<div className="rounded-full border bg-background p-2">
@@ -353,5 +352,21 @@ export default function OrgMembersPage() {
 				</div>
 			</div>
 		</>
+	);
+}
+
+export function ErrorBoundary() {
+	const error = useRouteError();
+
+	return (
+		<div className="v-stack center flex h-full gap-4 p-8">
+			<h2 className="font-semibold text-lg">Members Error</h2>
+			<p className="text-muted-foreground text-sm">
+				{error instanceof Error ? error.message : "Failed to load members"}
+			</p>
+			<Link to="." className="text-primary hover:underline" prefetch="intent">
+				Try again
+			</Link>
+		</div>
 	);
 }

@@ -1,26 +1,31 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery } from "@rocicorp/zero/react";
-import { CalendarIcon, Clock, Send, UserIcon } from "lucide-react";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import Clock from "lucide-react/dist/esm/icons/clock";
+import Send from "lucide-react/dist/esm/icons/send";
+import UserIcon from "lucide-react/dist/esm/icons/user";
 import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { MatterListWithDetailPanel } from "~/components/matter/matter-list-layout";
+import { RouteErrorBoundary } from "~/components/shared/error-boundary";
 import {
 	Item,
 	ItemContent,
 	ItemDescription,
 	ItemTitle,
 } from "~/components/ui/item";
-import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
-import { useIsMobile } from "~/hooks/use-mobile";
 import {
 	getPriorityBadgeClass,
 	getPriorityDisplayLabel,
 	Priority,
 	sortStatusComparator,
 } from "~/config/matter";
+import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { cn } from "~/lib/utils";
+
 import type { Route } from "./+types/requests";
 
 // --------------------------------------------------------------------------
@@ -195,6 +200,15 @@ export default function OrganizationRequestsPage() {
 			}}
 			estimateSize={100}
 			renderItem={handleRenderRequestItem}
+		/>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<RouteErrorBoundary
+			title="Requests Error"
+			description="Failed to load requests"
 		/>
 	);
 }

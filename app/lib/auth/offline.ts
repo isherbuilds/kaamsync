@@ -29,8 +29,13 @@ export async function getAuthSessionSWR(
 	getSessionFn: () => Promise<{ data: AuthSession | null }>,
 	options: SWROptions = {},
 ): Promise<AuthSession | null> {
-	return fetchWithSWR(authCache, "current", async () => {
-		const res = await getSessionFn();
-		return res.data;
-	}, options);
+	return fetchWithSWR(
+		authCache,
+		"current",
+		async () => {
+			const res = await getSessionFn();
+			return res.data;
+		},
+		options,
+	);
 }

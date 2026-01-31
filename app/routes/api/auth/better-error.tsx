@@ -34,7 +34,7 @@ export default function BetterError() {
 					again or contact the application owner if the problem persists.
 				</p>
 
-				<div className="mt-6 flex w-full shrink-0 items-center justify-center space-x-3">
+				<div className="center mt-6 flex w-full shrink-0 space-x-3">
 					<Button asChild>
 						<Link to="/login">Go to sign in</Link>
 					</Button>

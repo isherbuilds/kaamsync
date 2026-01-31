@@ -1,4 +1,8 @@
-import { Check, Mail, Sparkles, Users, Zap } from "lucide-react";
+import Check from "lucide-react/dist/esm/icons/check";
+import Mail from "lucide-react/dist/esm/icons/mail";
+import Sparkles from "lucide-react/dist/esm/icons/sparkles";
+import Users from "lucide-react/dist/esm/icons/users";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import { useState } from "react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -100,7 +104,7 @@ export function PlanCard({
 	return (
 		<Card
 			className={cn(
-				"relative flex flex-col transition-all duration-200 hover:shadow-lg",
+				"v-stack relative transition-all duration-200 hover:shadow-lg",
 				isPopular && "scale-[1.02] border-primary shadow-md",
 				isEnterprise && "border-dashed",
 			)}
@@ -228,7 +232,7 @@ export function PricingGrid({
 	return (
 		<div className="space-y-8">
 			{/* Billing Toggle */}
-			<div className="flex items-center justify-center">
+			<div className="center flex">
 				<Tabs
 					value={interval}
 					onValueChange={(value) => setInterval(value as BillingInterval)}

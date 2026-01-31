@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import Plus from "lucide-react/dist/esm/icons/plus";
 import { useState } from "react";
 import { cn } from "~/lib/utils";
 
@@ -16,7 +16,7 @@ export function FAQItem({ q, a }: FAQItemProps) {
 		<div className="group border-border/60 border-b last:border-0">
 			<button
 				type="button"
-				onClick={() => setIsOpen(!isOpen)}
+				onClick={() => setIsOpen((o) => !o)}
 				className="flex w-full items-center justify-between py-6 text-left hover:text-primary"
 			>
 				<span className="font-serif text-xl tracking-tight md:text-2xl">

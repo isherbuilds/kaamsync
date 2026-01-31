@@ -1,6 +1,9 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import { BanIcon, CalendarIcon, ChevronDown, InboxIcon } from "lucide-react";
+import BanIcon from "lucide-react/dist/esm/icons/ban";
+import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
+import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
+import InboxIcon from "lucide-react/dist/esm/icons/inbox";
 import { lazy, memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
@@ -11,6 +14,7 @@ import {
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
+import { RouteErrorBoundary } from "~/components/shared/error-boundary";
 import { StableLink } from "~/components/shared/stable-link";
 import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { Badge } from "~/components/ui/badge";
@@ -32,6 +36,8 @@ import {
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { usePermissions } from "~/hooks/use-permissions";
 import { cn, formatDueDateLabel } from "~/lib/utils";
+import { safeError } from "~/lib/utils/logger";
+
 import type { Route } from "./+types/$teamCode";
 
 // Lazy load heavy dialog component
@@ -78,7 +84,7 @@ export default function TeamTasksPage() {
 	// 1. Data Fetching
 	const [teams] = useQuery(queries.getTeamsList(), CACHE_NAV);
 	const team = useMemo(
-		() => teams.find((w) => w.code === teamCode),
+		() => (teams || []).find((w) => w.code === teamCode),
 		[teams, teamCode],
 	);
 	const teamId = team?.id ?? "";
@@ -139,10 +145,7 @@ export default function TeamTasksPage() {
 							);
 						})
 						.catch((err) => {
-							console.error(
-								"[PushNotification] Failed to send notification:",
-								err,
-							);
+							safeError(err, "[PushNotification] Failed to send notification");
 						});
 				}
 			});
@@ -164,6 +167,32 @@ export default function TeamTasksPage() {
 				(s) => s.type === "pending_approval" || s.type === "rejected",
 			),
 		[statuses],
+	);
+
+	const renderItem = useCallback(
+		(item: StatusGroupListItem) =>
+			item.type === "header" ? (
+				<StatusGroupHeader item={item} onToggle={toggleGroup} />
+			) : (
+				<TaskListRow
+					item={item}
+					orgSlug={orgSlug}
+					members={team?.memberships ?? []}
+					statuses={taskStatuses}
+					onPriorityChange={handlePriorityChange}
+					onStatusChange={handleStatusChange}
+					onAssigneeChange={handleAssigneeChange}
+				/>
+			),
+		[
+			toggleGroup,
+			orgSlug,
+			team?.memberships,
+			taskStatuses,
+			handlePriorityChange,
+			handleStatusChange,
+			handleAssigneeChange,
+		],
 	);
 
 	if (!team) return null;
@@ -197,21 +226,7 @@ export default function TeamTasksPage() {
 						getItemKey={(item) => item.id}
 						estimateSize={44}
 						stickyIndices={stickyIndices}
-						renderItem={(item: StatusGroupListItem) =>
-							item.type === "header" ? (
-								<StatusGroupHeader item={item} onToggle={toggleGroup} />
-							) : (
-								<TaskListRow
-									item={item}
-									orgSlug={orgSlug}
-									members={team.memberships ?? []}
-									statuses={taskStatuses}
-									onPriorityChange={handlePriorityChange}
-									onStatusChange={handleStatusChange}
-									onAssigneeChange={handleAssigneeChange}
-								/>
-							)
-						}
+						renderItem={renderItem}
 					/>
 				)}
 			</div>
@@ -408,7 +423,7 @@ const TaskListRow = memo(
 					</div>
 
 					<div className="flex shrink-0 items-center gap-4">
-						{task.dueDate && <TaskDueDateBadge date={task.dueDate} />}
+						{task.dueDate ? <TaskDueDateBadge date={task.dueDate} /> : null}
 						<MemberSelect
 							value={task.assigneeId}
 							members={members}
@@ -440,5 +455,14 @@ function TaskDueDateBadge({ date }: { date: number }) {
 			<CalendarIcon className="size-3" />
 			<span>{label}</span>
 		</div>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<RouteErrorBoundary
+			title="Team Tasks Error"
+			description="Failed to load team tasks"
+		/>
 	);
 }

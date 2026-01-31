@@ -1,4 +1,4 @@
-import { ArrowLeftIcon } from "lucide-react";
+import ArrowLeftIcon from "lucide-react/dist/esm/icons/arrow-left";
 import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
@@ -17,7 +17,7 @@ export function BasicLayout({
 	contentClassName,
 }: BasicLayoutProps) {
 	return (
-		<div className="flex h-dvh w-full flex-col items-center justify-center bg-background px-4">
+		<div className="center flex h-dvh w-full flex-col bg-background px-4">
 			<Button
 				asChild
 				type="button"
@@ -35,8 +35,8 @@ export function BasicLayout({
 					contentClassName,
 				)}
 			>
-				<div className="flex flex-col gap-6">
-					<div className="flex flex-col items-center gap-1 text-center">
+				<div className="v-stack gap-6">
+					<div className="v-stack items-center gap-1 text-center">
 						<h1 className="font-semibold text-lg">{title}</h1>
 						<p className="text-balance text-muted-foreground text-sm">
 							{description}

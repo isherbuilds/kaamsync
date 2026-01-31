@@ -49,7 +49,7 @@ export default function AboutPage() {
 							{ value: "50+", label: "Field Staff" },
 							{ value: "24/7", label: "Sync Uptime" },
 						].map(({ value, label }) => (
-							<div key={label} className="flex flex-col items-center">
+							<div key={label} className="v-stack items-center">
 								<div className="mb-2 font-bold font-mono text-4xl text-primary md:text-5xl">
 									{value}
 								</div>
@@ -109,7 +109,7 @@ export default function AboutPage() {
 								key={principle.title}
 								className="border border-border bg-background p-8 shadow-sm"
 							>
-								<div className="mb-4 flex size-10 items-center justify-center rounded-sm bg-primary/10 text-primary">
+								<div className="center mb-4 flex size-10 rounded-sm bg-primary/10 text-primary">
 									<principle.icon className="size-5" />
 								</div>
 								<h3 className="mb-2 font-bold font-serif text-2xl">

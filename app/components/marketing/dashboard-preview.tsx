@@ -52,7 +52,7 @@ export function DashboardPreview() {
 						<div className="relative col-span-2 min-h-[300px] border border-border bg-background p-4">
 							{/* Fake Map Grid */}
 							<div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[16px_16px] opacity-50" />
-							<div className="relative z-10 flex h-full items-center justify-center">
+							<div className="center relative z-10 flex h-full">
 								<div className="absolute size-32 animate-ping rounded-full border border-primary/30" />
 								<div className="size-4 rounded-full bg-primary ring-4 ring-primary/20" />
 								<div className="absolute top-4 right-4 border border-border bg-background px-2 py-1 font-mono text-xs shadow-sm">
@@ -60,7 +60,7 @@ export function DashboardPreview() {
 								</div>
 							</div>
 						</div>
-						<div className="flex flex-col gap-3">
+						<div className="v-stack gap-3">
 							<div className="mb-2 font-bold font-mono text-xs uppercase">
 								Recent Updates
 							</div>
@@ -71,7 +71,7 @@ export function DashboardPreview() {
 								>
 									<div className="flex items-center gap-2">
 										<div className="size-2 rounded-full bg-green-500" />
-										<div className="flex flex-col">
+										<div className="v-stack">
 											<span className="font-medium text-xs">
 												Site Visit #204-{i}
 											</span>

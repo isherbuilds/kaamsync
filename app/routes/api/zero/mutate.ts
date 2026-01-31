@@ -1,7 +1,6 @@
 import { mustGetMutator } from "@rocicorp/zero";
 import { handleMutateRequest } from "@rocicorp/zero/server";
 import { zeroPostgresJS } from "@rocicorp/zero/server/adapters/postgresjs";
-import postgres from "postgres";
 import { mutators } from "zero/mutators";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth/server";
@@ -12,14 +11,16 @@ import {
 } from "~/lib/billing/service";
 import { getActiveOrganizationId } from "~/lib/organization/service";
 import { must } from "~/lib/utils/must";
-import type { Route } from "./+types/mutate.ts";
+import type { Route } from "./+types/mutate";
 
 // Create database provider with Postgres adapter
 const pgURL = must(
 	process.env.ZERO_UPSTREAM_DB,
 	"ZERO_UPSTREAM_DB is required",
 );
-const dbProvider = zeroPostgresJS(schema, postgres(pgURL));
+
+// Use connection string to avoid cross-package postgres type mismatch
+const dbProvider = zeroPostgresJS(schema, pgURL);
 
 export async function action({ request }: Route.ActionArgs) {
 	// Get session from Better Auth

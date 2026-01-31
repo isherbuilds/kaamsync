@@ -62,7 +62,7 @@ export class AppError extends Error {
 		message: string,
 		statusCode = 500,
 		details?: Record<string, unknown>,
-		isOperational = true
+		isOperational = true,
 	) {
 		super(message);
 		this.name = "AppError";
@@ -88,12 +88,12 @@ export const createNotFoundError = (resource = "Resource", id?: string) =>
 	new AppError(
 		ErrorCode.RESOURCE_NOT_FOUND,
 		`${resource} not found${id ? ` (ID: ${id})` : ""}`,
-		404
+		404,
 	);
 
 export const createValidationError = (
 	message: string,
-	details?: Record<string, unknown>
+	details?: Record<string, unknown>,
 ) => new AppError(ErrorCode.VALIDATION_ERROR, message, 400, details);
 
 export const createRateLimitError = (retryAfter?: number) =>
@@ -103,19 +103,19 @@ export const createRateLimitError = (retryAfter?: number) =>
 
 export const createBillingError = (
 	message: string,
-	details?: Record<string, unknown>
+	details?: Record<string, unknown>,
 ) => new AppError(ErrorCode.BILLING_ERROR, message, 402, details);
 
 export const createSubscriptionRequiredError = (feature?: string) =>
 	new AppError(
 		ErrorCode.SUBSCRIPTION_REQUIRED,
 		`Active subscription required${feature ? ` for ${feature}` : ""}`,
-		402
+		402,
 	);
 
 export const createInternalError = (
 	message = "Internal server error",
-	details?: Record<string, unknown>
+	details?: Record<string, unknown>,
 ) => new AppError(ErrorCode.INTERNAL_ERROR, message, 500, details, false);
 
 export const ErrorFactory = {
@@ -147,7 +147,7 @@ export function errorToResponse(error: unknown): Response {
 		if (error.isOperational) {
 			console.warn(
 				`[API Error] ${error.code}: ${error.message}`,
-				error.details
+				error.details,
 			);
 		} else {
 			console.error(`[System Error] ${error.code}: ${error.message}`, {
@@ -191,7 +191,7 @@ export function errorToResponse(error: unknown): Response {
 // ============================================================================
 
 export function withErrorHandler<T extends unknown[], R>(
-	handler: (...args: T) => Promise<R>
+	handler: (...args: T) => Promise<R>,
 ) {
 	return async (...args: T): Promise<R | Response> => {
 		try {
@@ -208,7 +208,7 @@ export function withErrorHandler<T extends unknown[], R>(
 
 export function validateRequired<T>(
 	value: T | null | undefined,
-	fieldName: string
+	fieldName: string,
 ): T {
 	if (value === null || value === undefined) {
 		throw createValidationError(`${fieldName} is required`);
@@ -222,7 +222,7 @@ export function validateRequired<T>(
 
 export function assertAuthenticated(
 	user: unknown,
-	message = "Authentication required"
+	message = "Authentication required",
 ): asserts user {
 	if (!user) {
 		throw createUnauthorizedError(message);
@@ -231,7 +231,7 @@ export function assertAuthenticated(
 
 export function assertAuthorized(
 	condition: boolean,
-	message = "Access denied"
+	message = "Access denied",
 ): asserts condition {
 	if (!condition) {
 		throw createForbiddenError(message);

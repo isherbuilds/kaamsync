@@ -4,12 +4,9 @@ import { v7 as uuid } from "uuid";
 import { Priority } from "~/config/matter";
 import { db } from "~/db";
 import { matterType, timelineEventType } from "~/db/helpers";
-import {
-	matterLabelsTable,
-	mattersTable,
-	teamsTable,
-	timelinesTable,
-} from "~/db/schema";
+import { matterLabelsTable, mattersTable } from "~/db/schema/matters";
+import { teamsTable } from "~/db/schema/teams";
+import { timelinesTable } from "~/db/schema/timelines";
 import {
 	batchInsert,
 	randomDate,

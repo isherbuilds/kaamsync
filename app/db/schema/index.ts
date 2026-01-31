@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import * as auth from "./auth";
 import * as billing from "./billing";
+import * as comments from "./comments";
 import * as matters from "./matters";
 import * as notifications from "./notifications";
 import * as storage from "./storage";
@@ -9,6 +10,7 @@ import * as timelines from "./timelines";
 
 export * from "./auth";
 export * from "./billing";
+export * from "./comments";
 export * from "./matters";
 export * from "./notifications";
 export * from "./storage";
@@ -44,6 +46,9 @@ export const usersTableRelations = relations(auth.usersTable, ({ many }) => ({
 		relationName: "watchersAdded",
 	}),
 	pushSubscriptions: many(notifications.pushSubscriptionsTable),
+	comments: many(comments.commentsTable),
+	emojis: many(comments.emojisTable),
+	matterNotifications: many(comments.matterNotificationsTable),
 }));
 
 export const sessionsTableRelations = relations(
@@ -191,10 +196,12 @@ export const mattersRelations = relations(
 		}),
 		labels: many(matters.matterLabelsTable),
 		timelines: many(timelines.timelinesTable),
-		attachments: many(storage.attachmentsTable),
 		views: many(matters.matterViewsTable),
 		subscriptions: many(matters.matterSubscriptionsTable),
 		watchers: many(matters.matterWatchersTable),
+		comments: many(comments.commentsTable),
+		attachments: many(storage.attachmentsTable),
+		emojis: many(comments.emojisTable),
 		approver: one(auth.usersTable, {
 			fields: [matters.mattersTable.approvedBy],
 			references: [auth.usersTable.id],
@@ -238,13 +245,17 @@ export const attachmentsRelations = relations(
 			fields: [storage.attachmentsTable.orgId],
 			references: [auth.organizationsTable.id],
 		}),
-		matter: one(matters.mattersTable, {
-			fields: [storage.attachmentsTable.matterId],
-			references: [matters.mattersTable.id],
-		}),
 		uploader: one(auth.usersTable, {
 			fields: [storage.attachmentsTable.uploaderId],
 			references: [auth.usersTable.id],
+		}),
+		matter: one(matters.mattersTable, {
+			fields: [storage.attachmentsTable.subjectId],
+			references: [matters.mattersTable.id],
+		}),
+		comment: one(comments.commentsTable, {
+			fields: [storage.attachmentsTable.subjectId],
+			references: [comments.commentsTable.id],
 		}),
 	}),
 );
@@ -323,6 +334,55 @@ export const subscriptionsTableRelations = relations(
 		organization: one(auth.organizationsTable, {
 			fields: [billing.subscriptionsTable.organizationId],
 			references: [auth.organizationsTable.id],
+		}),
+	}),
+);
+
+export const commentsRelations = relations(
+	comments.commentsTable,
+	({ one, many }) => ({
+		organization: one(auth.organizationsTable, {
+			fields: [comments.commentsTable.orgId],
+			references: [auth.organizationsTable.id],
+		}),
+		matter: one(matters.mattersTable, {
+			fields: [comments.commentsTable.matterId],
+			references: [matters.mattersTable.id],
+		}),
+		creator: one(auth.usersTable, {
+			fields: [comments.commentsTable.creatorId],
+			references: [auth.usersTable.id],
+		}),
+		attachments: many(storage.attachmentsTable),
+		emojis: many(comments.emojisTable),
+	}),
+);
+
+export const emojisRelations = relations(comments.emojisTable, ({ one }) => ({
+	creator: one(auth.usersTable, {
+		fields: [comments.emojisTable.creatorId],
+		references: [auth.usersTable.id],
+	}),
+	matter: one(matters.mattersTable, {
+		fields: [comments.emojisTable.subjectId],
+		references: [matters.mattersTable.id],
+	}),
+	comment: one(comments.commentsTable, {
+		fields: [comments.emojisTable.subjectId],
+		references: [comments.commentsTable.id],
+	}),
+}));
+
+export const matterNotificationsRelations = relations(
+	comments.matterNotificationsTable,
+	({ one }) => ({
+		user: one(auth.usersTable, {
+			fields: [comments.matterNotificationsTable.userId],
+			references: [auth.usersTable.id],
+		}),
+		matter: one(matters.mattersTable, {
+			fields: [comments.matterNotificationsTable.matterId],
+			references: [matters.mattersTable.id],
 		}),
 	}),
 );

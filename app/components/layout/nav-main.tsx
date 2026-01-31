@@ -49,7 +49,7 @@ export function NavMain({ items, orgSlug }: NavMainProps) {
 								to={`/${orgSlug}${item.url}`}
 								onClick={handleLinkClick}
 							>
-								{item.icon && <item.icon />}
+								{item.icon ? <item.icon /> : null}
 								<span>{item.title}</span>
 							</StableLink>
 						</SidebarMenuButton>

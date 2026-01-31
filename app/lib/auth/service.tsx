@@ -14,8 +14,9 @@
  */
 
 import { UseSend } from "usesend-js";
-import { OrgInvitationEmail } from "~/components/email/org-invitation";
-import { VerifyEmail } from "~/components/email/verify-email";
+import OrgInvitationEmail from "~/components/email/org-invitation";
+import ResetPasswordEmail from "~/components/email/reset-password";
+import VerifyEmail from "~/components/email/verify-email";
 import { env, isDevelopment } from "~/lib/infra/env";
 import { normalizeError } from "~/lib/utils/error";
 
@@ -43,7 +44,7 @@ export const AuthService = {
 				from: "support@mail.kaamsync.com",
 				to: user.email,
 				subject: "KaamSync: Reset your password",
-				html: `<p>Click the link to reset your password: <a href="${url}">${url}</a></p>`,
+				react: <ResetPasswordEmail resetUrl={url} userName={user.email} />,
 			})
 			.catch((err) => {
 				throw normalizeError(err);

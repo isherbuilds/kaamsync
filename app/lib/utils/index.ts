@@ -31,30 +31,35 @@ export function cn(...inputs: ClassValue[]) {
 
 export const MAX_SLUG_LENGTH = 30;
 
-/**
- * Convert a string to a URL-safe slug.
- * Lowercases, replaces spaces with hyphens, removes invalid characters.
- */
+const SLUG_REGEX = /[^a-z0-9-]+/g;
+const TRIM_DASH_REGEX = /^-+|-+$/g;
+
 export function toUrlSlug(value: string) {
 	return value
 		.toLowerCase()
 		.replace(/\s+/g, "-")
-		.replace(/[^a-z0-9-]/g, "")
-		.replace(/^-+|-+$/g, "")
+		.replace(SLUG_REGEX, "")
+		.replace(TRIM_DASH_REGEX, "")
 		.slice(0, MAX_SLUG_LENGTH);
 }
 
-/**
- * Extract initials from a name (e.g., "John Doe" -> "JD")
- */
 export function extractNameInitials(name: string): string {
-	return name
-		.split(" ")
-		.filter((n) => n.length > 0)
-		.map((n) => n[0])
-		.join("")
-		.toUpperCase()
-		.slice(0, 2);
+	let result = "";
+	let count = 0;
+	let takeNext = true;
+
+	for (let i = 0; i < name.length && count < 2; i++) {
+		const char = name[i];
+		if (takeNext && char !== " ") {
+			result += char.toUpperCase();
+			count++;
+			takeNext = false;
+		} else if (char === " ") {
+			takeNext = true;
+		}
+	}
+
+	return result;
 }
 
 // ============================================================================

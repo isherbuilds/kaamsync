@@ -14,6 +14,7 @@ import {
 	DialogTitle,
 } from "~/components/ui/dialog";
 import { createTeamSchema } from "~/lib/organization/validations";
+import { safeError } from "~/lib/utils/logger";
 
 // --- Utilities ---
 
@@ -55,7 +56,7 @@ export const CreateTeamDialog = memo(
 						handleClose();
 					})
 					.catch((error) => {
-						console.error("Failed to create team:", error);
+						safeError(error, "Failed to create team");
 						toast.error(
 							error instanceof Error ? error.message : "Failed to create team",
 						);

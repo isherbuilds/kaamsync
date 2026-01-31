@@ -175,6 +175,7 @@ export const computedCache = new LRUCache<string, unknown>(200, 0.7);
 
 /**
  * Sample values and compute running average (for estimateSize in virtualizers)
+ * Uses a circular buffer approach for O(1) insertions.
  *
  * @param samples Array to store samples in (mutated)
  * @param value New value to add
@@ -186,15 +187,23 @@ export function sample(
 	maxSamples = 20,
 ): void {
 	if (samples.length >= maxSamples) {
-		samples.shift();
+		// O(1) circular shift: replace oldest instead of shifting entire array
+		samples.copyWithin(0, 1);
+		samples[maxSamples - 1] = value;
+	} else {
+		samples.push(value);
 	}
-	samples.push(value);
 }
 
 /**
- * Compute average of samples
+ * Compute average of samples - O(n) single pass
  */
 export function average(samples: number[]): number {
-	if (samples.length === 0) return 0;
-	return samples.reduce((a, b) => a + b, 0) / samples.length;
+	const len = samples.length;
+	if (len === 0) return 0;
+	let sum = 0;
+	for (let i = 0; i < len; i++) {
+		sum += samples[i];
+	}
+	return sum / len;
 }

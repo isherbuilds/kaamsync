@@ -1,12 +1,10 @@
-import {
-	BadgeCheck,
-	Bell,
-	ChevronsUpDown,
-	CreditCard,
-	LogOutIcon,
-	Sparkles,
-} from "lucide-react";
-import { useSubmit } from "react-router";
+import BadgeCheck from "lucide-react/dist/esm/icons/badge-check";
+import Bell from "lucide-react/dist/esm/icons/bell";
+import ChevronsUpDown from "lucide-react/dist/esm/icons/chevrons-up-down";
+import CreditCard from "lucide-react/dist/esm/icons/credit-card";
+import LogOutIcon from "lucide-react/dist/esm/icons/log-out";
+import Sparkles from "lucide-react/dist/esm/icons/sparkles";
+import { Form } from "react-router";
 
 import { CustomAvatar } from "~/components/ui/avatar";
 import {
@@ -38,7 +36,6 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
 	const { isMobile } = useSidebar();
-	const submit = useSubmit();
 
 	return (
 		<SidebarMenu>
@@ -95,14 +92,14 @@ export function NavUser({ user }: NavUserProps) {
 							</DropdownMenuItem>
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onClick={() => {
-								submit(null, { method: "POST", action: "/logout" });
-							}}
-						>
-							<LogOutIcon />
-							Log out
-						</DropdownMenuItem>
+						<Form method="post" action="/logout" className="contents">
+							<DropdownMenuItem asChild>
+								<button type="submit" className="w-full cursor-pointer">
+									<LogOutIcon />
+									Log out
+								</button>
+							</DropdownMenuItem>
+						</Form>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</SidebarMenuItem>

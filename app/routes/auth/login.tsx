@@ -13,6 +13,7 @@ import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/config/app";
 import { type AuthSession, authClient } from "~/lib/auth/client";
 import { saveAuthSessionToLocalStorage } from "~/lib/auth/offline";
 import { signInSchema } from "~/lib/auth/validations";
+import { safeError } from "~/lib/utils/logger";
 import type { Route } from "./+types/login";
 
 export const meta: Route.MetaFunction = () => [
@@ -50,7 +51,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 						saveAuthSessionToLocalStorage(session.data);
 					}
 				} catch (e) {
-					console.error("Failed to cache session:", e);
+					safeError(e, "Failed to cache session");
 				}
 			}
 			break;
@@ -131,6 +132,7 @@ export default function SignInRoute() {
 								<Link
 									className="font-normal text-muted-foreground hover:underline"
 									to="/forget-password"
+									prefetch="intent"
 								>
 									Forgot your password?
 								</Link>
@@ -190,10 +192,32 @@ export default function SignInRoute() {
 			{/* Sign up */}
 			<div className="text-center text-sm">
 				Don&apos;t have an account?{" "}
-				<Link className="text-primary hover:underline" to="/signup">
+				<Link
+					className="text-primary hover:underline"
+					to="/signup"
+					prefetch="intent"
+				>
 					Sign up
 				</Link>
 			</div>
 		</BasicLayout>
+	);
+}
+
+export function ErrorBoundary() {
+	return (
+		<div className="p-6 text-center">
+			<h2 className="mb-2 font-semibold text-lg">Sign In Error</h2>
+			<p className="mb-4 text-muted-foreground text-sm">
+				An error occurred while loading the sign in page.
+			</p>
+			<Link
+				to="/login"
+				className="text-primary hover:underline"
+				prefetch="intent"
+			>
+				Try again
+			</Link>
+		</div>
 	);
 }

@@ -39,14 +39,13 @@ export class ClientCache<T> {
 
 			const cached = JSON.parse(raw) as CacheEntry<T>;
 			if (this.isExpired(cached.timestamp)) {
-				this.remove(key);
+				localStorage.removeItem(storageKey);
 				return null;
 			}
 
 			this.memCache.set(key, cached);
 			return cached;
-		} catch (e) {
-			console.warn(`[ClientCache] Failed to load key ${key}`, e);
+		} catch {
 			return null;
 		}
 	}
@@ -63,15 +62,12 @@ export class ClientCache<T> {
 		}
 
 		const entry: CacheEntry<T> = { data, timestamp: Date.now() };
-
 		this.memCache.set(key, entry);
 
 		if (typeof localStorage !== "undefined") {
 			try {
 				localStorage.setItem(this.getStorageKey(key), JSON.stringify(entry));
-			} catch (e) {
-				console.warn(`[ClientCache] Failed to save key ${key}`, e);
-			}
+			} catch {}
 		}
 	}
 
@@ -80,15 +76,10 @@ export class ClientCache<T> {
 		if (typeof localStorage !== "undefined") {
 			try {
 				localStorage.removeItem(this.getStorageKey(key));
-			} catch (e) {
-				console.warn(`[ClientCache] Failed to remove key ${key}`, e);
-			}
+			} catch {}
 		}
 	}
 
-	/**
-	 * Remove all entries for this cache from memory and localStorage.
-	 */
 	clearAll(): void {
 		this.memCache.clear();
 		if (typeof localStorage !== "undefined") {
@@ -100,12 +91,7 @@ export class ClientCache<T> {
 						localStorage.removeItem(k);
 					}
 				}
-			} catch (e) {
-				console.warn(
-					`[ClientCache] Failed to clear keys with prefix ${this.keyPrefix}`,
-					e,
-				);
-			}
+			} catch {}
 		}
 	}
 }

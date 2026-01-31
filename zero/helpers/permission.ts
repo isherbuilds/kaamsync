@@ -222,10 +222,16 @@ export function enforceMatterCreationPermission(
 	teamRole: string,
 	type: string,
 ) {
-	if (type === matterType.task && !hasTaskCreationPermission(teamRole as TeamRole)) {
+	if (
+		type === matterType.task &&
+		!hasTaskCreationPermission(teamRole as TeamRole)
+	) {
 		throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
 	}
-	if (type === matterType.request && !hasRequestCreationPermission(teamRole as TeamRole)) {
+	if (
+		type === matterType.request &&
+		!hasRequestCreationPermission(teamRole as TeamRole)
+	) {
 		throw new Error(PERMISSION_ERRORS.NO_APPROPRIATE_ROLE);
 	}
 	enforceStarterPlanLimit(ctx, "matters");
@@ -242,9 +248,10 @@ export function enforceMemberAdditionLimit(ctx: Context) {
 // CACHE MANAGEMENT
 // ============================================================================
 
-/**
- * Clears the organization usage cache to force recalculation.
- */
-export function clearOrganizationUsageCache(ctx: Context, orgId: string): void {
-	ctx.clearUsageCache?.(orgId);
+export function clearOrganizationUsageCache(
+	ctx: Context,
+	orgId: string,
+	metric?: "members" | "teams" | "matters" | "storage" | "all",
+): void {
+	ctx.clearUsageCache?.(orgId, metric);
 }

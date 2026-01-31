@@ -3,7 +3,7 @@ import { data } from "react-router";
 import { v7 as uuid } from "uuid";
 import { z } from "zod";
 import { db } from "~/db";
-import { pushSubscriptionsTable } from "~/db/schema";
+import { pushSubscriptionsTable } from "~/db/schema/notifications";
 import { requireSession } from "~/lib/auth/guard";
 import { auditLog, getRequestIP, getRequestUserAgent } from "~/lib/infra/audit";
 import { getVapidPublicKey } from "~/lib/notifications/service";

@@ -9,7 +9,7 @@ function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			role="list"
 			data-slot="item-group"
-			className={cn("group/item-group flex flex-col", className)}
+			className={cn("group/item-group v-stack", className)}
 			{...props}
 		/>
 	);
@@ -71,7 +71,7 @@ function Item({
 }
 
 const itemMediaVariants = cva(
-	"flex shrink-0 items-center justify-center gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none",
+	"center flex shrink-0 gap-2 group-has-[[data-slot=item-description]]/item:translate-y-0.5 group-has-[[data-slot=item-description]]/item:self-start [&_svg]:pointer-events-none",
 	{
 		variants: {
 			variant: {

@@ -12,7 +12,10 @@ import {
 	planLimits,
 } from "~/config/billing";
 import {
-	getOrganizationUsage,
+	getOrganizationMatterCount,
+	getOrganizationMemberCount,
+	getOrganizationStorageUsage,
+	getOrganizationTeamCount,
 	getOrganizationSubscription as getOrgSubPrepared,
 } from "~/lib/infra/db-prepared";
 import { env } from "~/lib/infra/env";
@@ -25,6 +28,7 @@ export interface PlanUsage {
 	members: number;
 	teams: number;
 	matters: number;
+	storageGb?: number;
 }
 
 export interface LimitCheck {
@@ -77,13 +81,22 @@ export const billingConfig = {
 } as const;
 
 // =============================================================================
-// CACHE
+// CACHE - Split by metric for granular invalidation
 // =============================================================================
 
 const cache = {
-	usage: new Map<string, { data: PlanUsage; exp: number }>(),
+	members: new Map<string, { data: number; exp: number }>(),
+	teams: new Map<string, { data: number; exp: number }>(),
+	matters: new Map<string, { data: number; exp: number }>(),
+	storage: new Map<string, { data: number; exp: number }>(),
 	subscription: new Map<string, { data: SubscriptionRecord; exp: number }>(),
-	ttl: { usage: 5 * 60_000, subscription: 30 * 60_000 },
+	ttl: {
+		members: 5 * 60_000, // 5 minutes
+		teams: 5 * 60_000, // 5 minutes
+		matters: 30_000, // 30 seconds - high churn
+		storage: 60_000, // 1 minute
+		subscription: 30 * 60_000, // 30 minutes
+	},
 };
 
 function getCached<T>(
@@ -103,12 +116,93 @@ function setCache<T>(
 	store.set(key, { data, exp: Date.now() + ttl });
 }
 
-export function clearUsageCache(orgId: string): void {
-	cache.usage.delete(orgId);
+// =============================================================================
+// CACHE INVALIDATION - Switch statement based on metric type
+// =============================================================================
+
+export function clearUsageCache(
+	orgId: string,
+	metric?: "members" | "teams" | "matters" | "storage" | "all",
+): void {
+	// Default to "all" for backward compatibility
+	const targetMetric = metric ?? "all";
+
+	switch (targetMetric) {
+		case "members":
+			cache.members.delete(orgId);
+			break;
+		case "teams":
+			cache.teams.delete(orgId);
+			break;
+		case "matters":
+			cache.matters.delete(orgId);
+			break;
+		case "storage":
+			cache.storage.delete(orgId);
+			break;
+		case "all":
+			// Clear all usage caches
+			cache.members.delete(orgId);
+			cache.teams.delete(orgId);
+			cache.matters.delete(orgId);
+			cache.storage.delete(orgId);
+			break;
+		default:
+			// Unknown metric - clear all to be safe
+			cache.members.delete(orgId);
+			cache.teams.delete(orgId);
+			cache.matters.delete(orgId);
+			cache.storage.delete(orgId);
+	}
 }
 
 export function clearSubscriptionCache(orgId: string): void {
 	cache.subscription.delete(orgId);
+}
+
+// =============================================================================
+// INDIVIDUAL METRIC FETCHERS
+// =============================================================================
+
+async function fetchMemberCount(orgId: string): Promise<number> {
+	const cached = getCached(cache.members, orgId);
+	if (cached !== null) return cached;
+
+	const result = await getOrganizationMemberCount.execute({
+		organizationId: orgId,
+	});
+	const count = result[0]?.count ?? 0;
+	setCache(cache.members, orgId, count, cache.ttl.members);
+	return count;
+}
+
+async function fetchTeamCount(orgId: string): Promise<number> {
+	const cached = getCached(cache.teams, orgId);
+	if (cached !== null) return cached;
+
+	const result = await getOrganizationTeamCount.execute({ orgId });
+	const count = result[0]?.count ?? 0;
+	setCache(cache.teams, orgId, count, cache.ttl.teams);
+	return count;
+}
+
+async function fetchMatterCount(orgId: string): Promise<number> {
+	const cached = getCached(cache.matters, orgId);
+	if (cached !== null) return cached;
+
+	const result = await getOrganizationMatterCount.execute({ orgId });
+	const count = result[0]?.count ?? 0;
+	setCache(cache.matters, orgId, count, cache.ttl.matters);
+	return count;
+}
+
+async function fetchStorageUsage(orgId: string): Promise<number> {
+	// Storage cache disabled: in-memory Map doesn't work across server instances.
+	// The storage_usage_cache DB table serves as the authoritative cache.
+	const result = await getOrganizationStorageUsage.execute({ orgId });
+	const totalBytes = result[0]?.totalBytes ?? 0;
+	const storageGb = Math.round((totalBytes / (1024 * 1024 * 1024)) * 100) / 100;
+	return storageGb;
 }
 
 // =============================================================================
@@ -123,12 +217,20 @@ const DEFAULT_SUB = {
 };
 
 export async function fetchOrgUsage(orgId: string): Promise<PlanUsage> {
-	const cached = getCached(cache.usage, orgId);
-	if (cached) return cached;
+	// Fetch each metric independently (parallel) - each may be cached
+	const [members, teams, matters, storageGb] = await Promise.all([
+		fetchMemberCount(orgId),
+		fetchTeamCount(orgId),
+		fetchMatterCount(orgId),
+		fetchStorageUsage(orgId),
+	]);
 
-	const data = await getOrganizationUsage(orgId);
-	setCache(cache.usage, orgId, data, cache.ttl.usage);
-	return data;
+	return {
+		members,
+		teams,
+		matters,
+		storageGb,
+	};
 }
 
 export async function fetchOrgSubscription(

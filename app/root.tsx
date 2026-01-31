@@ -73,8 +73,11 @@ export const meta: Route.MetaFunction = () => [
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
-	const colorScheme = await parseColorScheme(request);
-	const { toast, headers } = await getToast(request);
+	const [colorScheme, toastData] = await Promise.all([
+		parseColorScheme(request),
+		getToast(request),
+	]);
+	const { toast, headers } = toastData;
 
 	return data({ colorScheme, toast }, { headers });
 }
@@ -122,17 +125,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	);
 }
 
-// TODO: Re-enable a better fallback UI
-// export function HydrateFallback() {
-// 	return (
-// 		<div className="flex h-screen w-screen items-center justify-center bg-background">
-// 			<div className="flex flex-col items-center gap-2">
-// 				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-// 				<p className="text-muted-foreground text-sm">Loading...</p>
-// 			</div>
-// 		</div>
-// 	);
-// }
+export function HydrateFallback() {
+	return (
+		<div className="center flex h-screen w-screen bg-background">
+			<div className="v-stack items-center gap-2">
+				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+				<p className="text-muted-foreground text-sm">Loading...</p>
+			</div>
+		</div>
+	);
+}
 
 export default function App() {
 	return <Outlet />;

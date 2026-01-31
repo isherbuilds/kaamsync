@@ -2,7 +2,7 @@ import "dotenv/config";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { db } from "~/db";
-import { teamsTable } from "~/db/schema";
+import { teamsTable } from "~/db/schema/teams";
 import { industries } from "./seeds/data/industries";
 import { createMatters } from "./seeds/generators/matters";
 import { createOrganization } from "./seeds/generators/organizations";

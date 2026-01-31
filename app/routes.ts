@@ -63,8 +63,9 @@ export default [
 		route("billing/redirect", "routes/api/billing/redirect.ts"),
 		route("color-scheme", "routes/api/color-scheme.ts"),
 
-		// Storage / Attachments
-		route("attachments", "routes/api/attachments/index.ts"),
+		// Attachments
+		route("attachments/presign", "routes/api/attachments/presign.ts"),
+		route("attachments/cleanup", "routes/api/attachments/cleanup.ts"),
 
 		// Push Notifications
 		route("notifications/subscribe", "routes/api/notifications/subscribe.tsx"),

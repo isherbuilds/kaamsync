@@ -28,7 +28,7 @@ export function useColorScheme(): ColorScheme {
 		null,
 	);
 
-	useEffect(() => {
+	useEffect(function initializeAndListenToColorScheme() {
 		// Initialize from localStorage on mount
 		if (typeof window !== "undefined") {
 			const stored = localStorage.getItem("theme") as ColorScheme | null;
@@ -44,8 +44,9 @@ export function useColorScheme(): ColorScheme {
 		};
 
 		window.addEventListener("colorSchemeChange", handleColorSchemeChange);
-		return () =>
+		return function cleanupColorSchemeListener() {
 			window.removeEventListener("colorSchemeChange", handleColorSchemeChange);
+		};
 	}, []);
 
 	// Priority: optimistic > local storage > root loader

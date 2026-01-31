@@ -1,4 +1,6 @@
-import { LaptopIcon, MoonIcon, SunIcon } from "lucide-react";
+import LaptopIcon from "lucide-react/dist/esm/icons/laptop";
+import MoonIcon from "lucide-react/dist/esm/icons/moon";
+import SunIcon from "lucide-react/dist/esm/icons/sun";
 import { Button } from "~/components/ui/button";
 import {
 	DropdownMenu,

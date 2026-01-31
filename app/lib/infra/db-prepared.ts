@@ -5,14 +5,11 @@
 
 import { and, count, desc, eq, sql } from "drizzle-orm";
 import { db } from "~/db";
-import {
-	mattersTable,
-	membersTable,
-	organizationsTable,
-	subscriptionsTable,
-	teamsTable,
-	usersTable,
-} from "~/db/schema";
+import { membersTable, organizationsTable, usersTable } from "~/db/schema/auth";
+import { subscriptionsTable } from "~/db/schema/billing";
+import { mattersTable } from "~/db/schema/matters";
+import { storageUsageCacheTable } from "~/db/schema/storage";
+import { teamsTable } from "~/db/schema/teams";
 
 // ============================================================================
 // Types
@@ -22,6 +19,7 @@ export interface OrganizationUsage {
 	members: number;
 	teams: number;
 	matters: number;
+	storageGb: number;
 }
 
 // ============================================================================
@@ -39,6 +37,12 @@ export const getOrganizationTeamCount = db
 	.from(teamsTable)
 	.where(eq(teamsTable.orgId, sql.placeholder("orgId")))
 	.prepare("getOrganizationTeamCount");
+
+export const getOrganizationStorageUsage = db
+	.select({ totalBytes: storageUsageCacheTable.totalBytes })
+	.from(storageUsageCacheTable)
+	.where(eq(storageUsageCacheTable.orgId, sql.placeholder("orgId")))
+	.prepare("getOrganizationStorageUsage");
 
 export const getUserOrganizationMembership = db
 	.select()
@@ -174,16 +178,22 @@ export const getUserByEmail = db
 export async function getOrganizationUsage(
 	organizationId: string,
 ): Promise<OrganizationUsage> {
-	const [memberResult, teamResult, matterResult] = await Promise.all([
-		getOrganizationMemberCount.execute({ organizationId }),
-		getOrganizationTeamCount.execute({ orgId: organizationId }),
-		getOrganizationMatterCount.execute({ orgId: organizationId }),
-	]);
+	const [memberResult, teamResult, matterResult, storageResult] =
+		await Promise.all([
+			getOrganizationMemberCount.execute({ organizationId }),
+			getOrganizationTeamCount.execute({ orgId: organizationId }),
+			getOrganizationMatterCount.execute({ orgId: organizationId }),
+			getOrganizationStorageUsage.execute({ orgId: organizationId }),
+		]);
+
+	const totalBytes = storageResult[0]?.totalBytes ?? 0;
+	const storageGb = totalBytes / (1024 * 1024 * 1024);
 
 	return {
 		members: memberResult[0]?.count ?? 0,
 		teams: teamResult[0]?.count ?? 0,
 		matters: matterResult[0]?.count ?? 0,
+		storageGb: Math.round(storageGb * 100) / 100,
 	};
 }
 

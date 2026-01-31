@@ -106,20 +106,25 @@ export const VirtualizedList = memo(function VirtualizedList<T>({
 		[virtualizer],
 	);
 
-	useEffect(() => {
-		if (!onEndReached) return;
-		const el = parentRef.current;
-		if (!el) return;
-		const onScroll = () => {
-			if (
-				el.scrollHeight - el.scrollTop - el.clientHeight <
-				onEndReachedThreshold
-			)
-				onEndReached();
-		};
-		el.addEventListener("scroll", onScroll, { passive: true });
-		return () => el.removeEventListener("scroll", onScroll);
-	}, [onEndReached, onEndReachedThreshold]);
+	useEffect(
+		function setupEndReachedScrollListener() {
+			if (!onEndReached) return;
+			const el = parentRef.current;
+			if (!el) return;
+			const onScroll = () => {
+				if (
+					el.scrollHeight - el.scrollTop - el.clientHeight <
+					onEndReachedThreshold
+				)
+					onEndReached();
+			};
+			el.addEventListener("scroll", onScroll, { passive: true });
+			return function cleanupEndReachedScrollListener() {
+				el.removeEventListener("scroll", onScroll);
+			};
+		},
+		[onEndReached, onEndReachedThreshold],
+	);
 
 	const vItems = virtualizer.getVirtualItems();
 

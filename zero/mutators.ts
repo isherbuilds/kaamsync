@@ -19,6 +19,66 @@ import {
 import { zql } from "./schema";
 
 // ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Validates that attachment IDs exist, belong to the org, and are unlinked/draft.
+ * Returns the validated attachments or throws an error.
+ */
+async function validateAttachmentIds(
+	tx: any,
+	attachmentIds: string[],
+	orgId: string,
+	userId: string,
+): Promise<
+	Array<{
+		id: string;
+		orgId: string;
+		uploaderId: string;
+		subjectId: string | null;
+		subjectType: string;
+	}>
+> {
+	if (!attachmentIds.length) return [];
+
+	// Query attachments by IDs
+	const attachments = await tx.run(
+		zql.attachmentsTable.where("id", "IN", attachmentIds),
+	);
+
+	// Check all attachments exist
+	if (attachments.length !== attachmentIds.length) {
+		const foundIds = new Set(attachments.map((a: { id: string }) => a.id));
+		const missingIds = attachmentIds.filter((id) => !foundIds.has(id));
+		throw new Error(`Attachments not found: ${missingIds.join(", ")}`);
+	}
+
+	// Validate each attachment
+	for (const attachment of attachments) {
+		// Check org ownership
+		if (attachment.orgId !== orgId) {
+			throw new Error(
+				`Attachment ${attachment.id} does not belong to this organization`,
+			);
+		}
+
+		// Check if attachment is unlinked (draft) or owned by current user
+		const isUnlinked =
+			!attachment.subjectId || attachment.subjectType === "draft";
+		const isOwner = attachment.uploaderId === userId;
+
+		if (!isUnlinked && !isOwner) {
+			throw new Error(
+				`Attachment ${attachment.id} is already linked to another resource and you are not the owner`,
+			);
+		}
+	}
+
+	return attachments;
+}
+
+// ============================================================================
 // MUTATORS
 // ============================================================================
 
@@ -35,6 +95,7 @@ export const mutators = defineMutators({
 				assigneeId: z.string().optional(),
 				dueDate: z.number().optional(),
 				statusId: z.string(),
+				attachmentIds: z.array(z.string()).optional(),
 				clientShortID: z.number().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
@@ -89,8 +150,26 @@ export const mutators = defineMutators({
 					args.clientShortID,
 				);
 
-				// Invalidate usage cache after matter creation
-				clearOrganizationUsageCache(ctx, membership.orgId);
+				// Validate and link attachments
+				if (args.attachmentIds && args.attachmentIds.length > 0) {
+					await validateAttachmentIds(
+						tx,
+						args.attachmentIds,
+						membership.orgId,
+						ctx.userId,
+					);
+
+					for (const attachmentId of args.attachmentIds) {
+						await tx.mutate.attachmentsTable.update({
+							id: attachmentId,
+							subjectId: baseInsert.id,
+							subjectType: "matter",
+						});
+					}
+				}
+
+				// Invalidate only matter count cache after matter creation
+				clearOrganizationUsageCache(ctx, membership.orgId, "matters");
 			},
 		),
 
@@ -408,14 +487,20 @@ export const mutators = defineMutators({
 
 	timeline: {
 		addComment: defineMutator(
-			z.object({ matterId: z.string(), content: z.string() }),
+			z.object({
+				matterId: z.string(),
+				content: z.string(),
+				attachmentIds: z.array(z.string()).optional(),
+			}),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
 				// Permission: Ensure user can access the matter
 				await checkMatterModifyAccess(tx, ctx, args.matterId);
 
+				const id = uuid();
+
 				await tx.mutate.timelinesTable.insert({
-					id: uuid(),
+					id,
 					matterId: args.matterId,
 					userId: ctx.userId,
 					type: "comment",
@@ -424,6 +509,29 @@ export const mutators = defineMutators({
 					createdAt: now,
 					updatedAt: now,
 				});
+
+				// Validate and link attachments
+				if (args.attachmentIds && args.attachmentIds.length > 0) {
+					const orgId = ctx.activeOrganizationId;
+					if (!orgId) {
+						throw new Error("No active organization");
+					}
+
+					await validateAttachmentIds(
+						tx,
+						args.attachmentIds,
+						orgId,
+						ctx.userId,
+					);
+
+					for (const attachmentId of args.attachmentIds) {
+						await tx.mutate.attachmentsTable.update({
+							id: attachmentId,
+							subjectId: id,
+							subjectType: "comment",
+						});
+					}
+				}
 			},
 		),
 	},
@@ -529,8 +637,8 @@ export const mutators = defineMutators({
 					...statusRows.map((row: any) => tx.mutate.statusesTable.insert(row)),
 				]);
 
-				// PERFORMANCE: Invalidate organization cache after team creation
-				ctx.clearUsageCache?.(orgMembership.organizationId);
+				// Invalidate only team count cache after team creation
+				ctx.clearUsageCache?.(orgMembership.organizationId, "teams");
 			},
 		),
 
@@ -716,3 +824,9 @@ export const mutators = defineMutators({
 		},
 	),
 });
+
+declare module "@rocicorp/zero" {
+	interface DefaultTypes {
+		mutators: typeof mutators;
+	}
+}

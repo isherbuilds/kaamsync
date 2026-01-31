@@ -51,22 +51,32 @@ function validateCacheVersion() {
 
 function clearAllTeamCaches() {
 	if (typeof localStorage === "undefined") return;
-	const keys = Object.keys(localStorage).filter((k) =>
-		k.startsWith(CACHE_KEY_PREFIX),
-	);
-	for (const key of keys) {
-		localStorage.removeItem(key);
+	for (let i = localStorage.length - 1; i >= 0; i--) {
+		const key = localStorage.key(i);
+		if (key?.startsWith(CACHE_KEY_PREFIX)) {
+			localStorage.removeItem(key);
+		}
 	}
 }
 
 function pruneExcessTeamCaches() {
 	if (typeof localStorage === "undefined") return;
-	const teams = listCachedTeamIds();
-	if (teams.length > MAX_CACHED_TEAMS) {
-		const toRemove = teams.slice(0, teams.length - MAX_CACHED_TEAMS);
-		for (const teamId of toRemove) {
-			clearTeamShortIdCache(teamId);
+	let count = 0;
+	const toRemove: string[] = [];
+	const prefixLen = CACHE_KEY_PREFIX.length;
+
+	for (let i = 0; i < localStorage.length; i++) {
+		const key = localStorage.key(i);
+		if (key?.startsWith(CACHE_KEY_PREFIX)) {
+			if (count >= MAX_CACHED_TEAMS) {
+				toRemove.push(key.slice(prefixLen));
+			}
+			count++;
 		}
+	}
+
+	for (const teamId of toRemove) {
+		clearTeamShortIdCache(teamId);
 	}
 }
 
@@ -112,8 +122,13 @@ export function clearTeamShortIdCache(teamId: string) {
 
 export function listCachedTeamIds(): string[] {
 	if (typeof localStorage === "undefined") return [];
-	const keys = Object.keys(localStorage).filter((k) =>
-		k.startsWith(CACHE_KEY_PREFIX),
-	);
-	return keys.map((k) => k.replace(CACHE_KEY_PREFIX, ""));
+	const prefixLen = CACHE_KEY_PREFIX.length;
+	const result: string[] = [];
+	for (let i = 0; i < localStorage.length; i++) {
+		const key = localStorage.key(i);
+		if (key?.startsWith(CACHE_KEY_PREFIX)) {
+			result.push(key.slice(prefixLen));
+		}
+	}
+	return result;
 }

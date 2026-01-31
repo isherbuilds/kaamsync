@@ -1,11 +1,11 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-import { data, Form, Link } from "react-router";
+import { data, Form, Link, useRouteError } from "react-router";
 import { toast } from "sonner";
-import { InputField, LoadingButton } from "~/components/shared/forms";
 import { BasicLayout } from "~/components/layout/basic-layout";
-import { useIsPending } from "~/hooks/use-is-pending";
+import { InputField, LoadingButton } from "~/components/shared/forms";
 import { AppInfo } from "~/config/app";
+import { useIsPending } from "~/hooks/use-is-pending";
 import { authClient } from "~/lib/auth/client";
 import { forgetPasswordSchema } from "~/lib/auth/validations";
 import type { Route } from "./+types/forget-password";
@@ -76,5 +76,25 @@ export default function ForgetPasswordRoute() {
 				</Link>
 			</div>
 		</BasicLayout>
+	);
+}
+
+export function ErrorBoundary() {
+	const error = useRouteError();
+
+	return (
+		<div className="p-6 text-center">
+			<h2 className="mb-2 font-semibold text-lg">Forgot Password Error</h2>
+			<p className="mb-4 text-muted-foreground text-sm">
+				{error instanceof Error ? error.message : "An error occurred"}
+			</p>
+			<Link
+				to="/login"
+				className="text-primary hover:underline"
+				prefetch="intent"
+			>
+				Back to login
+			</Link>
+		</div>
 	);
 }

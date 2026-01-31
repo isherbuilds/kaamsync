@@ -34,9 +34,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 		return redirect("/login");
 	}
 
-	const invitations = await auth.api.listUserInvitations({
+	const invitationsPromise = auth.api.listUserInvitations({
 		query: { email: session.user.email },
 	});
+
+	const invitations = await invitationsPromise;
 
 	const pendingInvites = invitations.filter(
 		(invite) => !invite.status || invite.status === "pending",
@@ -70,32 +72,36 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-	const session = await getServerSession(request);
+	const [session, formData] = await Promise.all([
+		getServerSession(request),
+		request.formData(),
+	]);
 
 	if (!session) {
 		return redirect("/login?callbackURL=/join");
 	}
 
-	const formData = await request.formData();
 	const submission = await parseWithZod(formData, {
-		schema: organizationOnboardingSchema.superRefine(async (formValues, ctx) => {
-			if (formValues.intent === "create") {
-				const uniqueSlug = await auth.api.checkOrganizationSlug({
-					body: {
-						slug: formValues.slug,
-					},
-				});
-
-				if (!uniqueSlug) {
-					ctx.addIssue({
-						path: ["slug"],
-						code: "custom",
-						message: "URL already exists.",
+		schema: organizationOnboardingSchema.superRefine(
+			async (formValues, ctx) => {
+				if (formValues.intent === "create") {
+					const uniqueSlug = await auth.api.checkOrganizationSlug({
+						body: {
+							slug: formValues.slug,
+						},
 					});
-					return;
+
+					if (!uniqueSlug) {
+						ctx.addIssue({
+							path: ["slug"],
+							code: "custom",
+							message: "URL already exists.",
+						});
+						return;
+					}
 				}
-			}
-		}),
+			},
+		),
 		async: true,
 	});
 
@@ -255,7 +261,7 @@ export default function onboardingOrganization({
 				<TabsContent value="join">
 					{!showJoin && (
 						<div className="empty-state py-12 text-center">
-							<div className="mx-auto flex flex-col items-center gap-2">
+							<div className="v-stack mx-auto items-center gap-2">
 								<h3 className="font-semibold text-lg">
 									No pending invitations
 								</h3>

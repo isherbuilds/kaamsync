@@ -9,14 +9,16 @@ import {
 	teamVisibility,
 } from "~/db/helpers";
 import {
-	labelsTable,
 	membersTable,
 	organizationsTable,
+	type usersTable,
+} from "~/db/schema/auth";
+import { labelsTable } from "~/db/schema/matters";
+import {
 	statusesTable,
 	teamMembershipsTable,
 	teamsTable,
-	type usersTable,
-} from "~/db/schema";
+} from "~/db/schema/teams";
 import type { IndustryConfig } from "../data/industries";
 import { randomDate, randomPickMultiple } from "../utils";
 
