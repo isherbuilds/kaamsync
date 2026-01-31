@@ -7,47 +7,88 @@ import {
 	MarketingHeading,
 } from "~/components/marketing/marketing-layout";
 import { Button } from "~/components/ui/button";
+import { env } from "~/lib/infra/env";
 
 export const meta: MetaFunction = () => [
-	{ title: "About - KaamSync Mission" },
+	{
+		title: "About KaamSync | Built for Operations Teams",
+	},
 	{
 		name: "description",
 		content:
-			"We built KaamSync because we were tired of managing field work in chat groups.",
+			"Built by someone managing 50 people through scattered messages. Now sharing the system that finally worked.",
+	},
+	{
+		tagName: "link",
+		rel: "canonical",
+		href: "https://kaamsync.com/about",
+	},
+	{ property: "og:title", content: "About KaamSync | Our Story" },
+	{
+		property: "og:description",
+		content:
+			"Built by someone who lived the chaos. Now helping teams like yours.",
+	},
+	{ property: "og:type", content: "website" },
+	{ property: "og:url", content: "https://kaamsync.com/about" },
+	{
+		property: "og:image",
+		content: "https://kaamsync.com/static/kaamsync-logo.png",
+	},
+	{ name: "twitter:card", content: "summary_large_image" },
+	{ name: "twitter:title", content: "About KaamSync | Our Story" },
+	{
+		name: "twitter:description",
+		content: "Why we built a tool for operations teams drowning in messages.",
 	},
 ];
+
+const organizationSchema = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	name: "KaamSync",
+	url: env.SITE_URL,
+	logo: `${env.SITE_URL}/static/kaamsync-logo.png`,
+	description: "Operations management for teams",
+	foundingDate: "2023",
+	knowsAbout: [
+		"Operations Management",
+		"Team Coordination",
+		"Offline-First Software",
+	],
+};
+
+const structuredData = JSON.stringify(organizationSchema);
 
 export default function AboutPage() {
 	return (
 		<>
-			{/* Hero */}
+			<script type="application/ld+json">{structuredData}</script>
+
 			<MarketingContainer className="text-center">
 				<div className="mx-auto max-w-4xl">
-					<MarketingBadge>The Mission</MarketingBadge>
-					<MarketingHeading
-						as="h2"
-						className="mb-8"
-						italic="survive our own sites."
-					>
-						We built this to <br />
+					<MarketingBadge>Our Story</MarketingBadge>
+					<MarketingHeading as="h2" className="mb-8">
+						Built because nothing else worked.
+						<br />
+						<span className="italic">Shared because you're not alone.</span>
 					</MarketingHeading>
-					<p className="mx-auto max-w-2xl text-lg text-muted-foreground leading-relaxed md:text-xl">
-						We are an operations team first, software company second. We spent
-						years drowning in WhatsApp groups, losing invoices, and chasing
-						updates. We built KaamSync because we had to.
+					<p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
+						I tried project tools and spreadsheets. None understood that
+						managing people isn't like managing code. So I built what I actually
+						needed.
 					</p>
 				</div>
 			</MarketingContainer>
 
-			{/* Authentic Stats */}
 			<section className="border-border/40 border-y bg-muted/20 py-16">
 				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto grid max-w-5xl grid-cols-2 gap-12 text-center md:grid-cols-4">
+					<div className="mx-auto grid max-w-4xl grid-cols-2 gap-12 text-center md:grid-cols-4">
 						{[
-							{ value: "100%", label: "Offline Capable" },
-							{ value: "0", label: "Lost Invoices" },
-							{ value: "50+", label: "Field Staff" },
-							{ value: "24/7", label: "Sync Uptime" },
+							{ value: "50+", label: "People Coordinated" },
+							{ value: "Zero", label: "Missed Requests" },
+							{ value: "100%", label: "Works Offline" },
+							{ value: "2min", label: "To First Matter" },
 						].map(({ value, label }) => (
 							<div key={label} className="v-stack items-center">
 								<div className="mb-2 font-bold font-mono text-4xl text-primary md:text-5xl">
@@ -62,28 +103,27 @@ export default function AboutPage() {
 				</div>
 			</section>
 
-			{/* Origin Story */}
 			<MarketingContainer>
 				<div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-16 lg:grid-cols-2">
 					<div className="sticky top-24">
 						<div className="mb-6 font-mono text-destructive text-xs uppercase tracking-widest">
-							The Problem
+							The Breaking Point
 						</div>
 						<MarketingHeading className="mb-6">
-							"Does anyone have the latest drawing?"
+							"Wait, did I approve that?"
 						</MarketingHeading>
-						<p className="text-lg text-muted-foreground leading-relaxed">
-							That single question used to cost us hours.
+						<p className="text-lg text-muted-foreground">
+							That question. Asked a dozen times a day.
 						</p>
-						<p className="mt-4 text-lg text-muted-foreground leading-relaxed">
-							In 2023, our field operations were a mess of 50+ WhatsApp groups.
-							Important decisions were buried under "Good Morning" GIFs.
-							Approvals were lost in the scroll. We tried generic PM tools, but
-							they were too complex for guys on site.
+						<p className="mt-4 text-lg text-muted-foreground">
+							My team came at me from every direction—chat groups, email, calls,
+							hallway conversations. Approvals vanished. Repair requests were
+							forgotten. I'd spend mornings calling people just to find out what
+							was happening.
 						</p>
 						<p className="mt-4 border-primary border-l-4 pl-4 font-medium text-foreground text-xl italic">
-							"We didn't need a feature-rich SaaS. We needed a digital clipboard
-							that worked offline."
+							"I needed one place where every request lived. Where nothing could
+							get buried."
 						</p>
 					</div>
 
@@ -91,18 +131,18 @@ export default function AboutPage() {
 						{[
 							{
 								icon: Target,
-								title: "Principle 1: Clarity",
-								desc: 'A message is not a task. We separated "chatter" from "work". Every job in KaamSync has an owner, a status, and a deadline.',
+								title: "Clarity Over Chatter",
+								desc: "A message is not a task. Every Matter has an owner, status, and due date. No ambiguity. No 'I thought someone else was handling it.'",
 							},
 							{
 								icon: Zap,
-								title: "Principle 2: Speed",
-								desc: "Field sites have bad reception. We engineered a local-first database so your team can work in a basement or a tunnel, and sync when they resurface.",
+								title: "Work Offline, Sync Later",
+								desc: "Your team doesn't always have internet. Log tasks, upload photos, update status—all offline. Syncs when connected.",
 							},
 							{
 								icon: Shield,
-								title: "Principle 3: Accountability",
-								desc: `No more "I didn't see that message." Every approval is logged. Every change is tracked. The system is the single source of truth.`,
+								title: "Everything Tracked",
+								desc: "Every request, approval, and status change is logged. The system becomes your single source of truth—not your memory.",
 							},
 						].map((principle) => (
 							<div
@@ -122,15 +162,14 @@ export default function AboutPage() {
 				</div>
 			</MarketingContainer>
 
-			{/* CTA */}
 			<section className="border-border border-t bg-foreground py-24 text-center text-background">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
 						<MarketingHeading className="mb-6">
-							Stop drowning in chat.
+							Join the calm side.
 						</MarketingHeading>
 						<p className="mb-10 text-lg opacity-80">
-							Join us in the calm, organized world of structured operations.
+							Tired of work disappearing into messages? You're not alone.
 						</p>
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
 							<Button
@@ -138,9 +177,20 @@ export default function AboutPage() {
 								className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
 								asChild
 							>
-								<Link to="/signup">Get started for your team</Link>
+								<Link to="/signup">Start For Free</Link>
+							</Button>
+							<Button
+								size="lg"
+								variant="outline"
+								className="h-16 rounded-none border-background/30 bg-transparent px-8 font-bold text-background text-lg hover:bg-background/10"
+								asChild
+							>
+								<Link to="/contact">Ask Us Anything</Link>
 							</Button>
 						</div>
+						<p className="mt-6 text-background/60 text-sm">
+							Free for 3 team members • No credit card required
+						</p>
 					</div>
 				</div>
 			</section>

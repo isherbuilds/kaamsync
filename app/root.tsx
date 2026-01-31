@@ -13,6 +13,7 @@ import "./app.css";
 import { getToast } from "remix-toast";
 import { Toaster } from "sonner";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
+import { Spinner } from "./components/ui/spinner.js";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -127,11 +128,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function HydrateFallback() {
 	return (
-		<div className="center flex h-screen w-screen bg-background">
-			<div className="v-stack items-center gap-2">
-				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-				<p className="text-muted-foreground text-sm">Loading...</p>
-			</div>
+		<div className="center flex h-screen w-screen text-foreground">
+			<Spinner className="size-10 text-primary" />
 		</div>
 	);
 }

@@ -1,3 +1,4 @@
+import Check from "lucide-react/dist/esm/icons/check";
 import Mail from "lucide-react/dist/esm/icons/mail";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square";
 
@@ -13,34 +14,86 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { env } from "~/lib/infra/env";
 
 export const meta: MetaFunction = () => [
-	{ title: "Contact - KaamSync Support" },
+	{
+		title: "Contact KaamSync | Questions & Enterprise",
+	},
 	{
 		name: "description",
 		content:
-			"Get in touch with the KaamSync team. Support, sales, and general inquiries.",
+			"Real humans reply within 2 hours. No sales pressure, just honest answers.",
+	},
+	{
+		tagName: "link",
+		rel: "canonical",
+		href: "https://kaamsync.com/contact",
+	},
+	{
+		property: "og:title",
+		content: "Contact KaamSync",
+	},
+	{
+		property: "og:description",
+		content:
+			"Talk to our team about enterprise deployments and custom integrations.",
+	},
+	{ property: "og:type", content: "website" },
+	{ property: "og:url", content: "https://kaamsync.com/contact" },
+	{
+		property: "og:image",
+		content: "https://kaamsync.com/static/kaamsync-logo.png",
+	},
+	{ name: "twitter:card", content: "summary_large_image" },
+	{ name: "twitter:title", content: "Contact KaamSync" },
+	{
+		name: "twitter:description",
+		content: "Enterprise sales and support inquiries",
 	},
 ];
+
+const contactPageSchema = {
+	"@context": "https://schema.org",
+	"@type": "ContactPage",
+	name: "Contact KaamSync",
+	description: "Contact page for KaamSync",
+	url: `${env.SITE_URL}/contact`,
+	mainEntity: {
+		"@type": "Organization",
+		name: "KaamSync",
+		url: env.SITE_URL,
+		email: "hello@kaamsync.com",
+		contactPoint: {
+			"@type": "ContactPoint",
+			contactType: "Customer Support",
+			availableLanguage: "English",
+		},
+	},
+};
+
+const structuredData = JSON.stringify(contactPageSchema);
 
 export default function ContactPage() {
 	return (
 		<>
-			{/* Hero */}
+			<script type="application/ld+json">{structuredData}</script>
+
 			<MarketingContainer>
 				<div className="mx-auto mb-16 max-w-3xl text-center">
-					<MarketingBadge>Support</MarketingBadge>
-					<MarketingHeading as="h2" className="mb-6" italic="to your field.">
-						Deploy KaamSync <br />
+					<MarketingBadge>We're Here</MarketingBadge>
+					<MarketingHeading as="h2" className="mb-6">
+						Questions?
+						<br />
+						<span className="italic">Talk to a real person.</span>
 					</MarketingHeading>
 					<p className="mx-auto max-w-xl text-lg text-muted-foreground">
-						Setup takes 2 minutes. For enterprise deployments or custom
-						integrations, talk to our engineering team.
+						Not sure if KaamSync fits your workflow? Wondering how to migrate
+						from scattered messages? We're listening. Under 2 hours.
 					</p>
 				</div>
 
 				<div className="mx-auto grid max-w-6xl gap-0 overflow-hidden border border-border bg-background shadow-lg lg:grid-cols-12">
-					{/* Contact Methods */}
 					<div className="border-border border-b bg-muted/20 p-8 md:p-12 lg:col-span-5 lg:border-r lg:border-b-0">
 						<MarketingHeading as="h3" className="mb-8 font-bold">
 							Direct Lines
@@ -49,14 +102,14 @@ export default function ContactPage() {
 							{[
 								{
 									icon: Mail,
-									title: "Email Engineering",
+									title: "Email",
 									description: "hello@kaamsync.com",
 									href: "mailto:hello@kaamsync.com",
 								},
 								{
 									icon: MessageSquare,
-									title: "Priority Support",
-									description: "Average response: < 2 hours",
+									title: "Response Time",
+									description: "Under 2 hours",
 									href: "#",
 								},
 							].map(({ icon: Icon, title, description, href }) => (
@@ -80,7 +133,7 @@ export default function ContactPage() {
 							))}
 
 							<div className="mt-12 border border-border bg-background p-6">
-								<h3 className="mb-2 font-bold text-sm">System Status</h3>
+								<h3 className="mb-2 font-bold text-sm">Status</h3>
 								<div className="flex items-center gap-2">
 									<span className="relative flex size-2">
 										<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
@@ -94,15 +147,33 @@ export default function ContactPage() {
 						</div>
 					</div>
 
-					{/* Contact Form */}
 					<div className="bg-background p-8 md:p-12 lg:col-span-7">
-						<MarketingHeading as="h3" className="mb-8 font-bold">
-							Start a conversation
+						<MarketingHeading as="h3" className="mb-4 font-bold">
+							Tell us what you're dealing with
 						</MarketingHeading>
+
+						<div className="mb-8 rounded-sm border border-primary/10 bg-primary/5 p-4">
+							<h4 className="mb-2 font-medium text-sm">What happens next:</h4>
+							<ul className="space-y-2 text-muted-foreground text-sm">
+								<li className="flex items-center gap-2">
+									<Check className="h-4 w-4 shrink-0 text-primary" />
+									<span>A real human reads your message</span>
+								</li>
+								<li className="flex items-center gap-2">
+									<Check className="h-4 w-4 shrink-0 text-primary" />
+									<span>Reply within 2 hours</span>
+								</li>
+								<li className="flex items-center gap-2">
+									<Check className="h-4 w-4 shrink-0 text-primary" />
+									<span>No sales pressure—just help</span>
+								</li>
+							</ul>
+						</div>
+
 						<form className="space-y-6">
 							<div className="grid gap-6 sm:grid-cols-2">
 								<div className="space-y-2">
-									<Label htmlFor="firstName">First Name</Label>
+									<Label htmlFor="firstName">First name</Label>
 									<Input
 										id="firstName"
 										placeholder="Jane"
@@ -110,7 +181,7 @@ export default function ContactPage() {
 									/>
 								</div>
 								<div className="space-y-2">
-									<Label htmlFor="lastName">Last Name</Label>
+									<Label htmlFor="lastName">Last name</Label>
 									<Input
 										id="lastName"
 										placeholder="Doe"
@@ -119,7 +190,7 @@ export default function ContactPage() {
 								</div>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="email">Work Email</Label>
+								<Label htmlFor="email">Email</Label>
 								<Input
 									id="email"
 									type="email"
@@ -128,7 +199,7 @@ export default function ContactPage() {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="company">Company Name</Label>
+								<Label htmlFor="company">Company</Label>
 								<Input
 									id="company"
 									placeholder="Acme Inc."
@@ -136,86 +207,42 @@ export default function ContactPage() {
 								/>
 							</div>
 							<div className="space-y-2">
-								<Label htmlFor="message">Operation Scale / Matter Volume</Label>
+								<Label htmlFor="message">
+									What's your coordination headache?
+								</Label>
 								<Textarea
 									id="message"
-									placeholder="Tell us about your team size, site count, and average monthly Matters..."
-									className="min-h-[150px] resize-none rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
+									placeholder="How are you managing requests now? The more we understand, the better we can help."
+									className="min-h-[120px] resize-none rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 								/>
 							</div>
 							<Button size="lg" className="w-full rounded-none font-bold">
-								Send Message
+								Send Message — Reply in 2 Hours
 							</Button>
+
+							<p className="mt-4 text-center text-muted-foreground text-xs">
+								No spam. Just a direct answer.
+							</p>
 						</form>
 					</div>
 				</div>
 			</MarketingContainer>
 
-			{/* BASE OF OPERATIONS */}
-			{/* <MarketingContainer className="bg-muted/30">
-				<div className="mx-auto max-w-4xl">
-					<div className="mb-16">
-						<MarketingBadge>Presence</MarketingBadge>
-						<MarketingHeading italic="operations.">Base of </MarketingHeading>
-					</div>
-
-					<div className="grid gap-12 md:grid-cols-3">
-						{[
-							{
-								icon: MapPin,
-								title: "Coordinates",
-								line1: "Sector 18, Cyber Hub",
-								line2: "Gurugram, HR 122002",
-							},
-							{
-								icon: Clock,
-								title: "Operational Hours",
-								line1: "Mon — Fri: 08:00 - 20:00",
-								line2: "Sat: 09:00 - 15:00",
-							},
-							{
-								icon: Globe,
-								title: "Regional Reach",
-								line1: "Supporting 500+ sites",
-								line2: "Across South East Asia",
-							},
-						].map((item) => (
-							<div
-								key={item.title}
-								className="group v-stack items-start gap-4"
-							>
-								<div className="flex size-12 center rounded-none border border-border bg-background transition-colors group-hover:border-primary group-hover:bg-primary/5">
-									<item.icon className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
-								</div>
-								<div>
-									<h3 className="mb-2 font-bold font-mono text-xs uppercase tracking-widest">
-										{item.title}
-									</h3>
-									<p className="font-medium text-foreground">{item.line1}</p>
-									<p className="text-muted-foreground text-sm">{item.line2}</p>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</MarketingContainer> */}
-
-			{/* Enterprise CTA */}
 			<MarketingCTA
 				className="py-32"
 				title={
 					<MarketingHeading as="h2" className="mb-8 leading-tight">
-						Scale your field ops <br /> with confidence.
+						Complex operation? <br /> Let's talk custom.
 					</MarketingHeading>
 				}
-				description="For custom integrations, SLA guarantees, and dedicated support channels, our engineering team is here to help."
+				description="Need specific integrations or custom workflows? We build enterprise solutions that match how you actually work."
 				action={
 					<Button
 						size="lg"
-						className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+						className="mx-auto h-16 w-fit rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
 						asChild
 					>
-						<Link to="/contact">Request Enterprise Tour</Link>
+						<Link to="/contact">Discuss Your Needs</Link>
 					</Button>
 				}
 			/>

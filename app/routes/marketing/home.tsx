@@ -12,39 +12,137 @@ import {
 } from "~/components/marketing/marketing-layout";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { env } from "~/lib/infra/env";
 
 export const meta: MetaFunction = () => [
-	{ title: "KaamSync - Stop Managing Work in WhatsApp" },
+	{
+		title: "KaamSync: Stop Losing Work in Messages | Free for 3 Users",
+	},
 	{
 		name: "description",
 		content:
-			"Stop drowning in chat groups. KaamSync helps field teams manage tasks, approvals, and operations in one simple, offline-first app.",
+			"Every request, approval, and task—in one place. Built for operations teams who manage people. Works offline. Free forever for 3 users.",
+	},
+	{
+		tagName: "link",
+		rel: "canonical",
+		href: "https://kaamsync.com/",
+	},
+	{
+		property: "og:title",
+		content: "KaamSync: Stop Losing Work in Messages",
+	},
+	{
+		property: "og:description",
+		content:
+			"Built for operations teams. Every request tracked. Nothing gets buried.",
+	},
+	{ property: "og:type", content: "website" },
+	{ property: "og:url", content: "https://kaamsync.com/" },
+	{
+		property: "og:image",
+		content: "https://kaamsync.com/static/kaamsync-logo.png",
+	},
+	{ property: "og:site_name", content: "KaamSync" },
+	{ property: "og:locale", content: "en_IN" },
+	{ name: "twitter:card", content: "summary_large_image" },
+	{
+		name: "twitter:title",
+		content: "KaamSync: Operations Management That Works",
+	},
+	{
+		name: "twitter:description",
+		content:
+			"Stop losing track of requests. Built for teams that manage people.",
+	},
+	{
+		name: "twitter:image",
+		content: "https://kaamsync.com/static/kaamsync-logo.png",
 	},
 ];
 
 const FAQS = [
 	{
-		q: "How fast can we get started?",
-		a: "Setup takes less than 2 minutes. You can create your organization, invite up to 3 team members for free, and start tracking Matters immediately.",
+		q: "What is a Matter?",
+		a: "A Matter is any piece of work that needs tracking—purchase approvals, repair requests, task assignments. Each gets a unique ID (like GEN-123), an owner, and a status. Nothing gets lost.",
 	},
 	{
-		q: "Does it really work offline?",
-		a: "Yes. Our Zero-sync architecture ensures that your team can open the app, log work, and take photos without any internet connection. Everything syncs automatically once they're back online.",
+		q: "How is this different from project tools?",
+		a: "Project tools track deadlines and deliverables. KaamSync tracks requests, approvals, and day-to-day operations. Built for managers who coordinate teams, not PMs who ship products.",
 	},
 	{
-		q: "Can we migrate from WhatsApp / Slack?",
-		a: "While there's no 'import' from chat, most teams find that starting fresh with structured flows in KaamSync immediately clears up the chaos. You can keep WhatsApp for social chatter and KaamSync for work.",
+		q: "How fast can we start?",
+		a: "2 minutes. Create your workspace, invite 3 people for free, log your first Matter immediately.",
 	},
 	{
-		q: "Is my data secure?",
-		a: "Absolutely. Everything in KaamSync is designed to keep your work safe and secure. We force HTTPS for all connections and encrypt data in-transit with TLS 1.2+. For storage, we rely on best-in-class infrastructure partners who utilize industry-standard physical disk encryption to safeguard your data at rest.",
+		q: "Does it work offline?",
+		a: "Yes. Your team logs work, uploads photos, updates status—all without internet. Syncs automatically when connected.",
+	},
+	{
+		q: "Will this replace our chat apps?",
+		a: "Keep chat for quick messages. Move all actual work requests to KaamSync. Within a week, you'll wonder how you tracked work without it.",
+	},
+	{
+		q: "Is our data secure?",
+		a: "Yes. HTTPS/TLS encryption, enterprise-grade infrastructure. Your data stays yours—export anytime.",
 	},
 ];
+
+const softwareApplicationSchema = {
+	"@context": "https://schema.org",
+	"@type": "SoftwareApplication",
+	name: "KaamSync",
+	applicationCategory: "BusinessApplication",
+	operatingSystem: "Web, iOS, Android",
+	offers: {
+		"@type": "Offer",
+		price: "0",
+		priceCurrency: "USD",
+		description: "Free for up to 3 team members",
+	},
+	description: "Operations management for teams",
+	featureList: [
+		"Offline mode",
+		"Request tracking",
+		"Approval workflows",
+		"Team coordination",
+	].join(", "),
+	softwareVersion: "1.0",
+};
+
+const organizationSchema = {
+	"@context": "https://schema.org",
+	"@type": "Organization",
+	name: "KaamSync",
+	url: env.SITE_URL,
+	logo: `${env.SITE_URL}/static/kaamsync-logo.png`,
+	description: "Operations management for teams",
+};
+
+const faqPageSchema = {
+	"@context": "https://schema.org",
+	"@type": "FAQPage",
+	mainEntity: FAQS.map((faq) => ({
+		"@type": "Question",
+		name: faq.q,
+		acceptedAnswer: {
+			"@type": "Answer",
+			text: faq.a,
+		},
+	})),
+};
+
+const structuredData = JSON.stringify([
+	softwareApplicationSchema,
+	organizationSchema,
+	faqPageSchema,
+]);
 
 export default function HomePage() {
 	return (
 		<div className="v-stack bg-background text-foreground">
-			{/* HERO SECTION */}
+			<script type="application/ld+json">{structuredData}</script>
+
 			<section className="v-stack center relative border-border/40 border-b pt-24 pb-32">
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
@@ -82,45 +180,43 @@ export default function HomePage() {
 					</div>
 
 					<p className="mt-6 font-mono text-muted-foreground text-xs uppercase tracking-wide">
-						No Credit Card Required • Setup in 2 Minutes
+						Free for 3 users • No credit card • 2-minute setup
 					</p>
 				</div>
 			</section>
 
-			{/* VISUALIZATION: The Blueprint */}
 			<section className="container relative z-20 mx-auto -mt-20 px-4 md:px-6">
 				<DashboardPreview />
 			</section>
 
-			{/* PROBLEM SECTION: The WhatsApp Pain */}
-			<section className="bg-foreground py-32 text-background">
+			<section className="bg-foreground py-28 text-background">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="grid items-center gap-16 md:grid-cols-2">
 						<div>
-							<h2 className="mb-8 max-w-xl font-bold font-serif text-4xl tracking-tight md:text-5xl">
-								<span className="text-destructive underline decoration-4 decoration-destructive underline-offset-4">
-									Drowning
-								</span>{" "}
-								in Messages?
+							<h2 className="mb-6 max-w-xl font-bold font-serif text-4xl tracking-tight md:text-5xl">
+								<span className="text-destructive decoration-destructive">
+									Requests get buried.
+								</span>
 							</h2>
-							<p className="border-primary/50 border-l-2 pl-6 text-background/80 text-xl leading-relaxed">
-								"Running operations on WhatsApp is like trying to build a
-								skyscraper with duct tape. It works until it collapses."
+							<p className="border-primary/50 border-l-2 pl-4 text-background/80 text-xl leading-relaxed">
+								"Managing people across departments. Approvals, requests,
+								everything came through scattered messages. I'd spend mornings
+								calling people just to find out what was actually getting done."
 							</p>
 
 							<div className="mt-12 grid gap-6">
 								{[
 									{
-										title: "No Context",
-										desc: "Important updates buried in threads.",
+										title: "Important requests vanish",
+										desc: "Urgent approvals buried under hundreds of messages. Your team resends. You still miss them.",
 									},
 									{
-										title: "No Accountability",
-										desc: "Who approved this? No one knows.",
+										title: "No record of decisions",
+										desc: "Did you approve that expense? When? For how much? Now you're scrolling through weeks of history.",
 									},
 									{
-										title: "No Data",
-										desc: "You can't create reports from chat logs.",
+										title: "Your team works blind",
+										desc: "No visibility without internet. You don't know what's done until someone calls you—or doesn't.",
 									},
 								].map((item) => (
 									<div key={item.title} className="flex items-start gap-4">
@@ -143,62 +239,100 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* FEATURES GRID: Swiss Utility */}
 			<MarketingContainer>
-				<div className="mb-20">
-					<MarketingHeading>Engineered for clarity.</MarketingHeading>
+				<div className="mb-10">
+					<MarketingHeading>Built for clarity.</MarketingHeading>
 					<div className="mt-4 h-1 w-24 bg-primary" />
 				</div>
 				<FeaturesGrid />
 			</MarketingContainer>
 
-			{/* SOCIAL PROOF: Authentic Origin */}
-			<section className="border-border/40 border-y py-24">
+			<section className="border-border/40 border-y bg-muted/20">
+				<MarketingContainer>
+					<div className="mx-auto max-w-4xl text-center">
+						<MarketingHeading className="mb-16">
+							Three steps to calm
+						</MarketingHeading>
+						<div className="grid gap-8 md:grid-cols-3">
+							{[
+								{
+									step: "1",
+									title: "Create your workspace",
+									desc: "2 minutes. Add your teams. Invite your people.",
+								},
+								{
+									step: "2",
+									title: "Log your first Matter",
+									desc: "Instead of sending a request to chat, create a Matter. Everyone sees it.",
+								},
+								{
+									step: "3",
+									title: "Let the system work",
+									desc: "Your team updates status. You see everything at a glance.",
+								},
+							].map((item) => (
+								<div key={item.step} className="text-center">
+									<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
+										{item.step}
+									</div>
+									<h3 className="mb-2 font-bold text-lg">{item.title}</h3>
+									<p className="text-muted-foreground text-sm">{item.desc}</p>
+								</div>
+							))}
+						</div>
+					</div>
+				</MarketingContainer>
+			</section>
+
+			<section className="border-border/40 border-y bg-muted/20 py-24">
 				<div className="container mx-auto max-w-3xl px-4 text-center">
 					<MarketingHeading as="h3">
-						Built because we needed it ourselves.
+						Built by someone who lived this.
 					</MarketingHeading>
 
 					<p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-						We run a real field operations team. WhatsApp was fine for talking,
-						but work kept falling through the cracks. KaamSync is the system we
-						use every day to track jobs, approvals, and updates — calmly and
-						clearly.
+						"I managed 50 people. Requests came from everywhere—chat, calls,
+						in-person. Nothing was tracked. I built KaamSync because I needed
+						one place where every request lived."
 					</p>
 
-					<div className="mt-8 font-mono text-muted-foreground text-xs uppercase tracking-widest">
-						Internal usage • 50-person team • Offline-first by necessity
+					<div className="mt-8 flex items-center justify-center gap-8 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+						<span>50+ people</span>
+						<span className="text-muted-foreground/30">•</span>
+						<span>12 channels → 1 system</span>
+						<span className="text-muted-foreground/30">•</span>
+						<span>Zero missed requests</span>
 					</div>
 				</div>
 			</section>
 
-			{/* FAQ SECTION */}
 			<MarketingContainer className="py-32">
 				<div className="mx-auto max-w-4xl text-center">
 					<Badge
 						variant="outline"
-						className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
+						className="mx-auto mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
 					>
 						FAQ
 					</Badge>
-					<MarketingHeading className="mb-16">
-						Common Questions
-					</MarketingHeading>
+					<MarketingHeading className="mb-4">Questions?</MarketingHeading>
+					<p className="mb-16 text-muted-foreground">
+						Everything you need to get started.
+					</p>
 					<div className="text-left">
 						<FAQ items={FAQS} />
 					</div>
 				</div>
 			</MarketingContainer>
 
-			{/* FINAL CTA: High Contrast */}
 			<MarketingContainer className="text-center">
 				<div className="mx-auto max-w-4xl">
 					<MarketingHeading as="h2" className="mb-8">
-						Bring order to <br /> the chaos.
+						Stop losing work in messages.
 					</MarketingHeading>
 					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">
-						Join forward-thinking teams moving their operations out of the chat
-						and into KaamSync.
+						Join teams who replaced chaos with calm.
+						<br />
+						First 3 users free forever.
 					</p>
 					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
 						<Button
@@ -207,13 +341,21 @@ export default function HomePage() {
 							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/90"
 						>
 							<Link to="/signup">
-								Try it for your team
+								Start For Free
 								<ChevronRight className="size-5" />
 							</Link>
 						</Button>
+						<Button
+							asChild
+							variant="outline"
+							size="lg"
+							className="h-16 min-w-60 rounded-none px-8 font-bold text-lg"
+						>
+							<Link to="/contact">Ask Us Anything</Link>
+						</Button>
 					</div>
 					<p className="mt-6 text-muted-foreground text-sm">
-						Free for small teams • No Credit Card Required
+						Free for 3 users • No credit card • Setup in 2 minutes
 					</p>
 				</div>
 			</MarketingContainer>

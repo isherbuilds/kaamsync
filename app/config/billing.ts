@@ -181,7 +181,7 @@ export const products = {
 		hasAddons: true,
 		addonPricing: addonPricing.growth,
 		popular: true,
-		cta: "Start Free Trial",
+		cta: "Select Plan",
 		features: [
 			"Up to 10 team members",
 			"Unlimited teams",
@@ -203,7 +203,7 @@ export const products = {
 		hasAddons: true,
 		addonPricing: addonPricing.pro,
 		popular: false,
-		cta: "Start Free Trial",
+		cta: "Select Plan",
 		features: [
 			"Up to 25 team members",
 			"Unlimited teams",

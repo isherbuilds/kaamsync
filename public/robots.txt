@@ -1,0 +1,21 @@
+# KaamSync robots.txt
+# Allow all crawlers to access marketing pages
+User-agent: *
+Allow: /
+
+# Disallow auth and API routes
+Disallow: /login
+Disallow: /signup
+Disallow: /join
+Disallow: /api/
+Disallow: /auth/
+Disallow: /organization/
+
+# Disallow system routes
+Disallow: /terms
+Disallow: /privacy
+Disallow: /twitter
+Disallow: /linkedin
+
+# Sitemap location
+Sitemap: https://kaamsync.com/sitemap.xml

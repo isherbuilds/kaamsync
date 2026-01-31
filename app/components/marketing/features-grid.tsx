@@ -7,33 +7,33 @@ import Zap from "lucide-react/dist/esm/icons/zap";
 
 const features = [
 	{
-		title: "Structured Tasks",
-		desc: "Every job has an owner, deadline, and priority. Ambiguity is engineered out.",
+		title: "Everything Has an Owner",
+		desc: 'No more "I thought someone else was handling it." Every Matter has a clear owner, deadline, and status. Everyone knows who\'s responsible.',
 		icon: Layout,
 	},
 	{
-		title: "Offline First",
-		desc: "Works flawlessly without internet. Syncs automatically when you're back online.",
+		title: "Works Without Internet",
+		desc: "Your team can log work from anywhere and update status all offline. Everything syncs automatically when they reconnect.",
 		icon: Zap,
 	},
 	{
-		title: "Approval Gates",
-		desc: "Digital signatures and one-click approvals. Keep a perfect audit trail.",
+		title: "Approvals, Tracked",
+		desc: "Every approval is logged with a timestamp. Know who approved what, when, and why. No more searching through chat history.",
 		icon: CheckCircle2,
 	},
 	{
-		title: "Team Spaces",
-		desc: "Keep Finance, HR, and Ops separate. Organizing your business made simple.",
+		title: "Teams Stay Separate",
+		desc: "Finance, HR, and Operations each get their own space. Organized by default. No clutter, no confusion about who's working on what.",
 		icon: Users,
 	},
 	{
-		title: "Real-time Telemetry",
-		desc: "Live GPS and status updates. Know exactly what's happening on the ground with high-fidelity logs.",
+		title: "See What's Happening",
+		desc: "Real-time status updates show you exactly what's being worked on, what's waiting for approval, and what's done. Complete visibility.",
 		icon: Activity,
 	},
 	{
-		title: "Enterprise-grade security",
-		desc: "Peace of mind-as-a-service. Built with best-in-class security practices, forced HTTPS/TLS encryption, and secure storage via trusted infrastructure partners.",
+		title: "Your Data is Safe",
+		desc: "Enterprise grade encryption for data in transit and at rest. HTTPS/TLS everywhere. Your work stays private and protected.",
 		icon: Lock,
 	},
 ];

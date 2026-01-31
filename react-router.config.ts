@@ -5,7 +5,15 @@ export default {
 	// Server-side render by default, to enable SPA mode set this to `false`
 	ssr: true,
 
-	prerender: ["/", "/login", "/signup", "/about", "/contact", "/pricing"],
+	prerender: [
+		"/",
+		"/login",
+		"/signup",
+		"/about",
+		"/contact",
+		"/pricing",
+		"/sitemap.xml",
+	],
 
 	routeDiscovery: { mode: "initial" },
 

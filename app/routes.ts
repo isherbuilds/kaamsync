@@ -85,4 +85,7 @@ export default [
 		"/.well-known/appspecific/com.chrome.devtools.json",
 		"routes/[com.chrome.devtools.json].tsx",
 	),
+
+	// Sitemap - server-only resource route
+	route("sitemap.xml", "routes/sitemap[.]xml.ts"),
 ] satisfies RouteConfig;
