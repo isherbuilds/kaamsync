@@ -191,6 +191,9 @@ export const useFileUpload = (
 				maxFiles !== Number.POSITIVE_INFINITY &&
 				latestFilesRef.current.length + newFilesArray.length > maxFiles
 			) {
+				if (inputRef.current) {
+					inputRef.current.value = "";
+				}
 				errors.push(`You can only upload a maximum of ${maxFiles} files.`);
 				onError?.(errors);
 				setState((prev) => ({ ...prev, errors }));
