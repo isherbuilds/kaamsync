@@ -106,7 +106,9 @@ export function useTasksByStatusGroup(
 
 		// Second pass: flatten into list items
 		for (const group of sortedGroups) {
-			const isCompletedType = DEFAULT_COLLAPSED_STATUS_TYPES.has(group.status.type as string);
+			const isCompletedType = DEFAULT_COLLAPSED_STATUS_TYPES.has(
+				group.status.type as string,
+			);
 			const isExpanded = toggledStatuses.has(group.status.id)
 				? isCompletedType // Toggle from default
 				: !isCompletedType; // Default expanded for active, collapsed for completed

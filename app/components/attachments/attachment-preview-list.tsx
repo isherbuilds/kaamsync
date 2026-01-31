@@ -44,8 +44,8 @@ export function AttachmentPreviewList({
 		<div className={cn(c ? "space-y-2" : "space-y-3", className)}>
 			<div className={cn("grid", gridClass)}>
 				{attachments.map((a) => {
-					const url = a.publicUrl || "";
-					const isImg = a.fileType.startsWith("image/");
+					const url = a.publicUrl ?? null;
+					const isImg = Boolean(url) && a.fileType.startsWith("image/");
 					return (
 						<div
 							key={a.id}
@@ -54,7 +54,7 @@ export function AttachmentPreviewList({
 								c ? "aspect-[4/3]" : "aspect-square",
 							)}
 						>
-							{isImg ? (
+							{isImg && url ? (
 								<img
 									src={url}
 									alt={a.fileName}
@@ -98,7 +98,7 @@ export function AttachmentPreviewList({
 								)}
 							>
 								<div className="flex justify-end gap-1">
-									{isImg && (
+									{isImg && url && (
 										<Button
 											type="button"
 											variant="secondary"
@@ -112,20 +112,24 @@ export function AttachmentPreviewList({
 											<ZoomInIcon className={c ? "h-3 w-3" : "h-3.5 w-3.5"} />
 										</Button>
 									)}
-									<Button
-										type="button"
-										variant="secondary"
-										size="icon"
-										className={cn(
-											"bg-white/90 hover:bg-white",
-											c ? "h-5 w-5" : "h-7 w-7",
-										)}
-										asChild
-									>
-										<a href={url} target="_blank" rel="noreferrer">
-											<ExternalLink className={c ? "h-3 w-3" : "h-3.5 w-3.5"} />
-										</a>
-									</Button>
+									{url && (
+										<Button
+											type="button"
+											variant="secondary"
+											size="icon"
+											className={cn(
+												"bg-white/90 hover:bg-white",
+												c ? "h-5 w-5" : "h-7 w-7",
+											)}
+											asChild
+										>
+											<a href={url} target="_blank" rel="noreferrer">
+												<ExternalLink
+													className={c ? "h-3 w-3" : "h-3.5 w-3.5"}
+												/>
+											</a>
+										</Button>
+									)}
 								</div>
 								<div className="space-y-0.5">
 									<p className="truncate font-medium text-[10px] text-white">

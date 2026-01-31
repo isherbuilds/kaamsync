@@ -1,11 +1,11 @@
 import { z } from "zod";
+import { Priority } from "~/config/matter";
 import {
+	optionalDateSchema,
 	prioritySchema,
 	statusSchema,
 	userIdSchema,
-	optionalDateSchema,
 } from "~/lib/infra/shared-validations";
-import { Priority } from "~/config/matter";
 
 // ============================================================================
 // CONFIGURATION
@@ -73,6 +73,9 @@ export const matterStatusUpdateFormSchema = z.object({
 
 export const matterCommentFormSchema = z.object({
 	matterId: z.string().min(1, "Matter ID is required"),
-	content: z.string().min(1, "Comment cannot be empty").max(2000, "Comment too long"),
+	content: z
+		.string()
+		.min(1, "Comment cannot be empty")
+		.max(2000, "Comment too long"),
 	mentions: z.array(z.string()).optional(),
 });

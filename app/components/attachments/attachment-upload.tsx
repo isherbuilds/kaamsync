@@ -185,6 +185,7 @@ export function AttachmentUpload({
 	useEffect(
 		function resetOnSignalChange() {
 			if (resetSignal === undefined) return;
+			removedIdsRef.current.clear();
 			actionsRef.current.clearFiles();
 			setUploadEntries({});
 			setUploadedAttachments([]);

@@ -24,7 +24,7 @@ export const commentsTable = pgTable(
 			.references(() => mattersTable.id, { onDelete: "cascade" }),
 		creatorId: text("creator_id")
 			.notNull()
-			.references(() => usersTable.id),
+			.references(() => usersTable.id, { onDelete: "cascade" }),
 		body: text("body").notNull(),
 		created: doublePrecision("created").notNull(),
 		edited: boolean("edited").default(false),

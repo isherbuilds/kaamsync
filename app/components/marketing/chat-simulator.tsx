@@ -63,7 +63,7 @@ export function ChatSimulator() {
 				</div>
 
 				{/* Overlay Error */}
-				<div className="absolute inset-0 flex center rounded-2xl bg-black/30">
+				<div className="center absolute inset-0 flex rounded-2xl bg-black/30">
 					<div className="rotate-[-5deg] border-2 border-destructive bg-destructive/10 px-6 py-3 font-bold font-mono text-destructive text-xl uppercase tracking-widest backdrop-blur-sm">
 						System Failure
 					</div>

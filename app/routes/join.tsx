@@ -261,7 +261,7 @@ export default function onboardingOrganization({
 				<TabsContent value="join">
 					{!showJoin && (
 						<div className="empty-state py-12 text-center">
-							<div className="mx-auto v-stack items-center gap-2">
+							<div className="v-stack mx-auto items-center gap-2">
 								<h3 className="font-semibold text-lg">
 									No pending invitations
 								</h3>

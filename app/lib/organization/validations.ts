@@ -251,10 +251,9 @@ export const organizationSlugSchema = z
 	})
 	.min(MIN_SLUG_LENGTH, "Slug must be at least 2 characters.")
 	.max(MAX_SLUG_LENGTH, "Slug must be at most 64 characters.")
-	.refine(
-		(slug) => !(RESERVED_ORG_SLUGS as readonly string[]).includes(slug),
-		{ message: "This URL is reserved." },
-	);
+	.refine((slug) => !(RESERVED_ORG_SLUGS as readonly string[]).includes(slug), {
+		message: "This URL is reserved.",
+	});
 
 export const organizationOnboardingSchema = z.discriminatedUnion("intent", [
 	z.object({

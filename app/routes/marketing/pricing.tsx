@@ -107,7 +107,7 @@ export default function PricingPage() {
 						</p>
 
 						{/* Billing Toggle */}
-						<div className="flex center">
+						<div className="center flex">
 							<Tabs
 								value={interval}
 								onValueChange={(value) => setInterval(value as BillingInterval)}
@@ -152,7 +152,7 @@ export default function PricingPage() {
 								<div
 									key={key}
 									className={cn(
-										"relative v-stack bg-background p-8 transition-all duration-300",
+										"v-stack relative bg-background p-8 transition-all duration-300",
 										isPopular && "z-10 ring-2 ring-primary",
 									)}
 								>
@@ -227,7 +227,7 @@ export default function PricingPage() {
 												key={`${key}-${index}-${feature}`}
 												className="flex items-start gap-3 text-sm"
 											>
-												<div className="mt-0.5 flex size-4 shrink-0 center rounded-sm bg-primary/10 text-primary">
+												<div className="center mt-0.5 flex size-4 shrink-0 rounded-sm bg-primary/10 text-primary">
 													<Check className="size-3" />
 												</div>
 												<span className="text-muted-foreground">{feature}</span>

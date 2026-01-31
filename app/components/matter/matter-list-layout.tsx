@@ -119,7 +119,7 @@ const ListLoadingSkeleton = () => (
 );
 
 const DetailPanelPlaceholder = ({ Icon }: { Icon: LucideIcon }) => (
-	<div className="flex h-full center">
+	<div className="center flex h-full">
 		<div className="text-center">
 			<Icon className="mx-auto size-12 text-muted-foreground/30" />
 			<p className="mt-2 text-muted-foreground text-sm">

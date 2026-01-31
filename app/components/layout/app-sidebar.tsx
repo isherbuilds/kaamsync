@@ -117,14 +117,19 @@ export function AppSidebar({
 	return (
 		<Sidebar collapsible="offcanvas" {...props}>
 			<SidebarHeader>
-				<OrgSwitcher organizations={organizations} activeOrganization={selectedOrg} />
+				<OrgSwitcher
+					organizations={organizations}
+					activeOrganization={selectedOrg}
+				/>
 			</SidebarHeader>
 			<SidebarContent>
 				<NavMain
 					items={isSettings ? NAV_SETTINGS_ITEMS : NAV_MAIN_ITEMS}
 					orgSlug={selectedOrg.slug}
 				/>
-				{!isSettings ? <NavTeams teams={teams} orgSlug={selectedOrg.slug} /> : null}
+				{!isSettings ? (
+					<NavTeams teams={teams} orgSlug={selectedOrg.slug} />
+				) : null}
 			</SidebarContent>
 			<SidebarFooter className="flex-row items-center">
 				<NavUser user={authUser} />

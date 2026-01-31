@@ -175,7 +175,7 @@ export function PasswordField({
 				/>
 				<Button
 					aria-label={isVisible ? "Hide password" : "Show password"}
-					className="absolute inset-y-0 right-0 flex h-full center pr-3 text-muted-foreground/80"
+					className="center absolute inset-y-0 right-0 flex h-full pr-3 text-muted-foreground/80"
 					onClick={() => setIsVisible((v) => !v)}
 					size="icon"
 					tabIndex={-1}

@@ -111,7 +111,7 @@ export default function AboutPage() {
 								key={principle.title}
 								className="border border-border bg-background p-8 shadow-sm"
 							>
-								<div className="mb-4 flex size-10 center rounded-sm bg-primary/10 text-primary">
+								<div className="center mb-4 flex size-10 rounded-sm bg-primary/10 text-primary">
 									<principle.icon className="size-5" />
 								</div>
 								<h3 className="mb-2 font-bold font-serif text-2xl">

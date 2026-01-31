@@ -40,7 +40,7 @@ export function ErrorDisplay({
 	detail: string;
 }) {
 	return (
-		<main className="flex h-screen center p-6">
+		<main className="center flex h-screen p-6">
 			<div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
 				<div className="rounded-full bg-muted p-3">
 					<MehIcon className="size-6" />
@@ -157,7 +157,7 @@ export function RouteErrorBoundary({
 	// Dev mode with stack trace
 	if (isDev && stack) {
 		return (
-			<div className="flex h-full flex-col center gap-4 p-8">
+			<div className="center flex h-full flex-col gap-4 p-8">
 				<div className="rounded-full bg-destructive/10 p-3">
 					<AlertCircle className="size-6 text-destructive" />
 				</div>
@@ -181,7 +181,7 @@ export function RouteErrorBoundary({
 
 	// Production or no stack trace
 	return (
-		<div className="flex h-full flex-col center gap-4 p-8">
+		<div className="center flex h-full flex-col gap-4 p-8">
 			<div className="rounded-full bg-muted p-3">
 				<MehIcon className="size-6" />
 			</div>

@@ -8,7 +8,11 @@ import {
 	teamRole,
 	teamVisibility,
 } from "~/db/helpers";
-import { membersTable, organizationsTable, usersTable } from "~/db/schema/auth";
+import {
+	membersTable,
+	organizationsTable,
+	type usersTable,
+} from "~/db/schema/auth";
 import { labelsTable } from "~/db/schema/matters";
 import {
 	statusesTable,

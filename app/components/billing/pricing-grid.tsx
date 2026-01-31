@@ -104,7 +104,7 @@ export function PlanCard({
 	return (
 		<Card
 			className={cn(
-				"relative v-stack transition-all duration-200 hover:shadow-lg",
+				"v-stack relative transition-all duration-200 hover:shadow-lg",
 				isPopular && "scale-[1.02] border-primary shadow-md",
 				isEnterprise && "border-dashed",
 			)}
@@ -232,7 +232,7 @@ export function PricingGrid({
 	return (
 		<div className="space-y-8">
 			{/* Billing Toggle */}
-			<div className="flex center">
+			<div className="center flex">
 				<Tabs
 					value={interval}
 					onValueChange={(value) => setInterval(value as BillingInterval)}

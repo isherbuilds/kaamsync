@@ -65,7 +65,7 @@ export default function ContactPage() {
 									href={href}
 									className="group flex items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
 								>
-									<div className="flex size-10 shrink-0 center bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
+									<div className="center flex size-10 shrink-0 bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
 										<Icon className="size-5" />
 									</div>
 									<div>

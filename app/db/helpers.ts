@@ -125,8 +125,6 @@ export const timelineEventType = {
 	watcherRemoved: "watcher_removed",
 } as const;
 
-
-
 // ==================== TYPE HELPERS ====================
 
 /**

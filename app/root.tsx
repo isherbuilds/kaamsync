@@ -127,7 +127,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function HydrateFallback() {
 	return (
-		<div className="flex h-screen w-screen center bg-background">
+		<div className="center flex h-screen w-screen bg-background">
 			<div className="v-stack items-center gap-2">
 				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
 				<p className="text-muted-foreground text-sm">Loading...</p>

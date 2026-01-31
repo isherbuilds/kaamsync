@@ -17,7 +17,7 @@ export function BasicLayout({
 	contentClassName,
 }: BasicLayoutProps) {
 	return (
-		<div className="flex h-dvh w-full flex-col center bg-background px-4">
+		<div className="center flex h-dvh w-full flex-col bg-background px-4">
 			<Button
 				asChild
 				type="button"

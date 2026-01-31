@@ -122,7 +122,7 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 			)}
 
 			{/* Author avatar */}
-			<div className="relative z-10 flex size-8 shrink-0 center rounded-full bg-muted ring-2 ring-background">
+			<div className="center relative z-10 flex size-8 shrink-0 rounded-full bg-muted ring-2 ring-background">
 				{authorAvatar ? (
 					<img
 						src={authorAvatar}

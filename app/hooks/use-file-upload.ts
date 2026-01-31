@@ -126,7 +126,9 @@ export const useFileUpload = (
 	const createPreview = useCallback(
 		(file: File | FileMetadata): string | undefined => {
 			if (file instanceof File) {
-				return URL.createObjectURL(file);
+				return file.type.startsWith("image/")
+					? URL.createObjectURL(file)
+					: undefined;
 			}
 			return file.url;
 		},
@@ -144,11 +146,7 @@ export const useFileUpload = (
 		setState((prev) => {
 			// Clean up object URLs
 			for (const file of prev.files) {
-				if (
-					file.preview &&
-					file.file instanceof File &&
-					file.file.type.startsWith("image/")
-				) {
+				if (file.preview && file.file instanceof File) {
 					URL.revokeObjectURL(file.preview);
 				}
 			}
@@ -282,11 +280,7 @@ export const useFileUpload = (
 		(id: string) => {
 			setState((prev) => {
 				const fileToRemove = prev.files.find((file) => file.id === id);
-				if (
-					fileToRemove?.preview &&
-					fileToRemove.file instanceof File &&
-					fileToRemove.file.type.startsWith("image/")
-				) {
+				if (fileToRemove?.preview && fileToRemove.file instanceof File) {
 					URL.revokeObjectURL(fileToRemove.preview);
 				}
 
