@@ -65,6 +65,7 @@ export function AttachmentUpload({
 	const [uploadedAttachments, setUploadedAttachments] = useState<
 		UploadedAttachment[]
 	>([]);
+	const removedIdsRef = useRef<Set<string>>(new Set());
 
 	const uploadFiles = useCallback(async (filesToUpload: FileWithPreview[]) => {
 		const uploadPromises = filesToUpload.map(async (fileItem) => {
@@ -83,6 +84,7 @@ export function AttachmentUpload({
 
 			try {
 				const result = await uploadAttachmentFile(fileItem.file);
+				if (removedIdsRef.current.has(localId)) return;
 				const attachment: UploadedAttachment = {
 					id: result.attachmentId,
 					publicUrl: result.publicUrl,
@@ -94,15 +96,20 @@ export function AttachmentUpload({
 				setUploadedAttachments((prev) => [...prev, attachment]);
 				setUploadEntries((prev) => ({
 					...prev,
-					[localId]: {
-						...prev[localId],
-						status: "uploaded",
-						attachmentId: result.attachmentId,
-						publicUrl: result.publicUrl,
-						storageKey: result.storageKey,
-					},
+					...(prev[localId]
+						? {
+								[localId]: {
+									...prev[localId],
+									status: "uploaded",
+									attachmentId: result.attachmentId,
+									publicUrl: result.publicUrl,
+									storageKey: result.storageKey,
+								},
+							}
+						: {}),
 				}));
 			} catch (error) {
+				if (removedIdsRef.current.has(localId)) return;
 				setUploadEntries((prev) => ({
 					...prev,
 					[localId]: {
@@ -141,6 +148,7 @@ export function AttachmentUpload({
 
 	const handleRemove = useCallback(
 		(fileId: string) => {
+			removedIdsRef.current.add(fileId);
 			setUploadedAttachments((prev) => {
 				const attachmentId = uploadEntries[fileId]?.attachmentId;
 				return attachmentId
@@ -229,7 +237,7 @@ export function AttachmentUpload({
 										className="size-10 rounded-md object-cover"
 									/>
 								) : (
-									<div className="flex size-10 center rounded-md bg-muted text-muted-foreground text-xs">
+									<div className="center flex size-10 rounded-md bg-muted text-muted-foreground text-xs">
 										{fileItem.file.name.split(".").pop()?.toUpperCase() ??
 											"FILE"}
 									</div>
@@ -285,8 +293,8 @@ export function AttachmentUpload({
 							{uploadEntries._errors?.error && (
 								<p>{uploadEntries._errors.error}</p>
 							)}
-							{errors.map((error, index) => (
-								<p key={index}>{error}</p>
+							{errors.map((error) => (
+								<p key={error}>{error}</p>
 							))}
 						</AlertDescription>
 					</AlertContent>

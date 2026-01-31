@@ -64,13 +64,13 @@ export function AttachmentPreviewList({
 							) : (
 								<div
 									className={cn(
-										"flex h-full w-full flex-col center bg-muted/50",
+										"center flex h-full w-full flex-col bg-muted/50",
 										c ? "gap-1 p-2" : "gap-2 p-4",
 									)}
 								>
 									<div
 										className={cn(
-											"flex center rounded-lg bg-muted",
+											"center flex rounded-lg bg-muted",
 											c ? "h-6 w-6" : "h-12 w-12",
 										)}
 									>
@@ -93,7 +93,7 @@ export function AttachmentPreviewList({
 							)}
 							<div
 								className={cn(
-									"absolute inset-0 v-stack justify-between bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100",
+									"v-stack absolute inset-0 justify-between bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100",
 									c ? "p-1.5" : "p-3",
 								)}
 							>
@@ -143,16 +143,25 @@ export function AttachmentPreviewList({
 				})}
 			</div>
 			{selected && (
-				<button
-					type="button"
-					className="fixed inset-0 z-50 flex center bg-black/90 p-4 backdrop-blur-sm"
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-label="Image preview"
+					className="center fixed inset-0 z-50 flex bg-black/90 p-4 backdrop-blur-sm"
 					onClick={() => setSelected(null)}
+					onKeyDown={(e) => {
+						if (e.key === "Escape") {
+							setSelected(null);
+						}
+					}}
 				>
 					<div className="relative max-h-[90vh] max-w-[90vw]">
 						<img
 							src={selected}
 							alt="Preview"
 							className="max-h-[85vh] max-w-[85vw] rounded-lg shadow-2xl"
+							onClick={(e) => e.stopPropagation()}
+							onKeyDown={(e) => e.stopPropagation()}
 						/>
 						<Button
 							type="button"
@@ -164,7 +173,7 @@ export function AttachmentPreviewList({
 							<XIcon className="h-4 w-4" />
 						</Button>
 					</div>
-				</button>
+				</div>
 			)}
 		</div>
 	);

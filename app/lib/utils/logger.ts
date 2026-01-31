@@ -27,16 +27,14 @@ const isTest = process.env.NODE_ENV === "test";
 
 type LogLevel = "log" | "warn" | "error" | "info" | "debug";
 
-const ENABLED = isDevelopment || isTest;
-const PRODUCTION_ONLY_ERROR_WARN = !isDevelopment && !isTest;
+const IS_DEV_OR_TEST = isDevelopment || isTest;
 
 class Logger {
 	private shouldLog(level: LogLevel): boolean {
-		if (!ENABLED) return false;
-		if (PRODUCTION_ONLY_ERROR_WARN) {
-			return level === "error" || level === "warn";
+		if (IS_DEV_OR_TEST) {
+			return true;
 		}
-		return true;
+		return level === "error" || level === "warn";
 	}
 
 	log(...args: unknown[]): void {

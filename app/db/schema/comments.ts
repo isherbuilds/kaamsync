@@ -45,9 +45,9 @@ export const emojisTable = pgTable(
 		annotation: varchar("annotation", { length: 100 }),
 		subjectId: text("subject_id").notNull(),
 		subjectType: varchar("subject_type", { length: 50 }).notNull(),
-		creatorId: text("creator_id").references(() => usersTable.id, {
-			onDelete: "cascade",
-		}),
+		creatorId: text("creator_id")
+			.notNull()
+			.references(() => usersTable.id, { onDelete: "cascade" }),
 		created: doublePrecision("created").notNull(),
 	},
 	(table) => [

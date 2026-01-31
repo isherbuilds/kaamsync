@@ -11,7 +11,7 @@ import {
 } from "~/lib/billing/service";
 import { getActiveOrganizationId } from "~/lib/organization/service";
 import { must } from "~/lib/utils/must";
-import type { Route } from "./+types/mutate.ts";
+import type { Route } from "./+types/mutate";
 
 // Create database provider with Postgres adapter
 const pgURL = must(

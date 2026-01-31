@@ -39,7 +39,7 @@ import { authClient } from "~/lib/auth/client";
 import { getServerSession } from "~/lib/auth/server";
 import { checkMemberLimit } from "~/lib/billing/service";
 
-import type { Route } from "./+types/members.ts";
+import type { Route } from "./+types/members";
 import type { loader as settingsLoader } from "./layout";
 
 const inviteSchema = z.object({
@@ -311,7 +311,7 @@ export default function OrgMembersPage() {
 					{invites?.map((i) => (
 						<div
 							key={i.id}
-							className="group relative v-stack rounded-xl border bg-muted/20 p-4 text-sm shadow-sm"
+							className="group v-stack relative rounded-xl border bg-muted/20 p-4 text-sm shadow-sm"
 						>
 							<div className="mb-2 flex items-start justify-between">
 								<div className="rounded-full border bg-background p-2">
@@ -359,7 +359,7 @@ export function ErrorBoundary() {
 	const error = useRouteError();
 
 	return (
-		<div className="flex h-full v-stack center gap-4 p-8">
+		<div className="v-stack center flex h-full gap-4 p-8">
 			<h2 className="font-semibold text-lg">Members Error</h2>
 			<p className="text-muted-foreground text-sm">
 				{error instanceof Error ? error.message : "Failed to load members"}

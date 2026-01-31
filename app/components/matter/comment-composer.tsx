@@ -1,9 +1,9 @@
 "use client";
 
+import { useZero } from "@rocicorp/zero/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
-import { useZero } from "@rocicorp/zero/react";
 import { AttachmentUpload } from "~/components/attachments/attachment-upload";
 import { Button } from "~/components/ui/button";
 import { planLimits } from "~/config/billing";
@@ -20,6 +20,8 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 	const { subscription } = useOrganizationLoaderData();
 	const planKey = subscription?.plan as keyof typeof planLimits | undefined;
 	const planLimit = planKey ? planLimits[planKey] : planLimits.starter;
+	const normalizedMaxFiles =
+		planLimit.maxFiles < 0 ? Number.POSITIVE_INFINITY : planLimit.maxFiles;
 
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,15 +35,13 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 		}
 		setIsSubmitting(true);
 		try {
-			await z
-				.mutate(
-					mutators.timeline.addComment({
-						matterId,
-						content: content.trim(),
-						attachmentIds: attachments.map((attachment) => attachment.id),
-					}),
-				)
-				.server;
+			await z.mutate(
+				mutators.timeline.addComment({
+					matterId,
+					content: content.trim(),
+					attachmentIds: attachments.map((attachment) => attachment.id),
+				}),
+			).server;
 			setContent("");
 			setAttachments([]);
 			setResetSignal((value) => value + 1);
@@ -64,7 +64,7 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 				className="min-h-24 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
 			/>
 			<AttachmentUpload
-				maxFiles={planLimit.maxFiles}
+				maxFiles={normalizedMaxFiles}
 				maxSize={planLimit.maxFileSizeMb * 1024 * 1024}
 				accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
 				resetSignal={resetSignal}
@@ -73,11 +73,7 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 				}
 			/>
 			<div className="flex justify-end">
-				<Button
-					type="button"
-					onClick={handleSubmit}
-					disabled={isSubmitting}
-				>
+				<Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
 					{isSubmitting ? "Posting..." : "Post comment"}
 				</Button>
 			</div>

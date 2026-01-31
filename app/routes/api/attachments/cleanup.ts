@@ -1,5 +1,5 @@
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { data } from "react-router";
 import { z } from "zod";
 import { db } from "~/db";
@@ -49,7 +49,12 @@ export async function action({ request }: Route.ActionArgs) {
 				fileSize: attachmentsTable.fileSize,
 			})
 			.from(attachmentsTable)
-			.where(eq(attachmentsTable.orgId, orgId));
+			.where(
+				and(
+					eq(attachmentsTable.orgId, orgId),
+					eq(attachmentsTable.subjectType, "draft"),
+				),
+			);
 
 		const deletableAttachments = attachments.filter(
 			(a) =>
@@ -93,7 +98,7 @@ export async function action({ request }: Route.ActionArgs) {
 			.where(
 				and(
 					eq(attachmentsTable.orgId, orgId),
-					eq(attachmentsTable.subjectType, "draft"),
+					inArray(attachmentsTable.id, idsToDelete),
 				),
 			);
 

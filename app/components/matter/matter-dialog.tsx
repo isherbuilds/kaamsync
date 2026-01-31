@@ -85,6 +85,8 @@ export const CreateMatterDialog = memo(
 		const { subscription } = useOrganizationLoaderData();
 		const planKey = subscription?.plan as keyof typeof planLimits | undefined;
 		const planLimit = planKey ? planLimits[planKey] : planLimits.starter;
+		const normalizedMaxFiles =
+			planLimit.maxFiles < 0 ? Number.POSITIVE_INFINITY : planLimit.maxFiles;
 
 		const isRequest = type === "request";
 		const {
@@ -281,7 +283,7 @@ export const CreateMatterDialog = memo(
 							)}
 
 							<AttachmentUpload
-								maxFiles={planLimit.maxFiles}
+								maxFiles={normalizedMaxFiles}
 								maxSize={planLimit.maxFileSizeMb * 1024 * 1024}
 								accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
 								resetSignal={resetSignal}
@@ -314,7 +316,7 @@ export const CreateMatterDialog = memo(
 										})
 									}
 									showLabel
-									className="h7 border bg-background px-2"
+									className="h-7 border bg-background px-2"
 								/>
 
 								<MemberSelect
