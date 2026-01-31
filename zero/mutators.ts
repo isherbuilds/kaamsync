@@ -19,6 +19,66 @@ import {
 import { zql } from "./schema";
 
 // ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Validates that attachment IDs exist, belong to the org, and are unlinked/draft.
+ * Returns the validated attachments or throws an error.
+ */
+async function validateAttachmentIds(
+	tx: any,
+	attachmentIds: string[],
+	orgId: string,
+	userId: string,
+): Promise<
+	Array<{
+		id: string;
+		orgId: string;
+		uploaderId: string;
+		subjectId: string | null;
+		subjectType: string;
+	}>
+> {
+	if (!attachmentIds.length) return [];
+
+	// Query attachments by IDs
+	const attachments = await tx.run(
+		zql.attachmentsTable.where("id", "IN", attachmentIds),
+	);
+
+	// Check all attachments exist
+	if (attachments.length !== attachmentIds.length) {
+		const foundIds = new Set(attachments.map((a: { id: string }) => a.id));
+		const missingIds = attachmentIds.filter((id) => !foundIds.has(id));
+		throw new Error(`Attachments not found: ${missingIds.join(", ")}`);
+	}
+
+	// Validate each attachment
+	for (const attachment of attachments) {
+		// Check org ownership
+		if (attachment.orgId !== orgId) {
+			throw new Error(
+				`Attachment ${attachment.id} does not belong to this organization`,
+			);
+		}
+
+		// Check if attachment is unlinked (draft) or owned by current user
+		const isUnlinked =
+			!attachment.subjectId || attachment.subjectType === "draft";
+		const isOwner = attachment.uploaderId === userId;
+
+		if (!isUnlinked && !isOwner) {
+			throw new Error(
+				`Attachment ${attachment.id} is already linked to another resource and you are not the owner`,
+			);
+		}
+	}
+
+	return attachments;
+}
+
+// ============================================================================
 // MUTATORS
 // ============================================================================
 
@@ -90,7 +150,15 @@ export const mutators = defineMutators({
 					args.clientShortID,
 				);
 
+				// Validate and link attachments
 				if (args.attachmentIds && args.attachmentIds.length > 0) {
+					await validateAttachmentIds(
+						tx,
+						args.attachmentIds,
+						membership.orgId,
+						ctx.userId,
+					);
+
 					for (const attachmentId of args.attachmentIds) {
 						await tx.mutate.attachmentsTable.update({
 							id: attachmentId,
@@ -442,7 +510,20 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
+				// Validate and link attachments
 				if (args.attachmentIds && args.attachmentIds.length > 0) {
+					const orgId = ctx.activeOrganizationId;
+					if (!orgId) {
+						throw new Error("No active organization");
+					}
+
+					await validateAttachmentIds(
+						tx,
+						args.attachmentIds,
+						orgId,
+						ctx.userId,
+					);
+
 					for (const attachmentId of args.attachmentIds) {
 						await tx.mutate.attachmentsTable.update({
 							id: attachmentId,

@@ -7,12 +7,12 @@ import { Button } from "~/components/ui/button";
 import { authClient } from "~/lib/auth/client";
 
 export async function clientLoader() {
-	const [session, orgs] = await Promise.all([
-		authClient.getSession(),
-		authClient.organization.list(),
-	]);
+	const session = await authClient.getSession();
 
 	if (!session?.data) return null;
+
+	// Sequential: prevents 401 from organization.list() crashing loader
+	const orgs = await authClient.organization.list();
 
 	return orgs.data?.length
 		? redirect(`/${orgs.data[0]?.slug}/tasks`)

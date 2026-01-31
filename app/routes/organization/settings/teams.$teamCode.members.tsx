@@ -34,7 +34,6 @@ import {
 import { type TeamRole, teamRole } from "~/db/helpers";
 
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
-import type { Route } from "./+types/teams.$teamCode.members";
 
 const addMemberSchema = z.object({
 	userId: z.string().min(1, "Select a user"),

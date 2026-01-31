@@ -1,6 +1,4 @@
-import Shield from "lucide-react/dist/esm/icons/shield";
-import Target from "lucide-react/dist/esm/icons/target";
-import Zap from "lucide-react/dist/esm/icons/zap";
+import { Shield, Target, Zap } from "lucide-react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import {

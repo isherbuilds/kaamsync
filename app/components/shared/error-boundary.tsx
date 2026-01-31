@@ -150,7 +150,9 @@ export function RouteErrorBoundary({
 			(error.status === 404 ? "404 Not Found" : `${error.status} Error`);
 		details = description ?? error.statusText ?? "Failed to load content.";
 	} else if (isDev && error && error instanceof Error) {
-		details = error.message;
+		if (!details) {
+			details = error.message;
+		}
 		stack = error.stack;
 	}
 

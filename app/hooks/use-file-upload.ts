@@ -83,6 +83,9 @@ export const useFileUpload = (
 		errors: [],
 	});
 
+	// Ref to track latest files for stale closure avoidance in addFiles
+	const latestFilesRef = useRef<FileWithPreview[]>(state.files);
+
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const validateFile = useCallback(
@@ -161,6 +164,7 @@ export const useFileUpload = (
 				errors: [],
 			};
 
+			latestFilesRef.current = newState.files;
 			onFilesChange?.(newState.files);
 			return newState;
 		});
@@ -185,7 +189,7 @@ export const useFileUpload = (
 			if (
 				multiple &&
 				maxFiles !== Number.POSITIVE_INFINITY &&
-				state.files.length + newFilesArray.length > maxFiles
+				latestFilesRef.current.length + newFilesArray.length > maxFiles
 			) {
 				errors.push(`You can only upload a maximum of ${maxFiles} files.`);
 				onError?.(errors);
@@ -198,7 +202,7 @@ export const useFileUpload = (
 			for (const file of newFilesArray) {
 				// Only check for duplicates if multiple files are allowed
 				if (multiple) {
-					const isDuplicate = state.files.some(
+					const isDuplicate = latestFilesRef.current.some(
 						(existingFile) =>
 							existingFile.file.name === file.name &&
 							existingFile.file.size === file.size,
@@ -241,6 +245,7 @@ export const useFileUpload = (
 					const newFiles = !multiple
 						? validFiles
 						: [...prev.files, ...validFiles];
+					latestFilesRef.current = newFiles;
 					onFilesChange?.(newFiles);
 					return {
 						...prev,
@@ -262,7 +267,6 @@ export const useFileUpload = (
 			}
 		},
 		[
-			state.files,
 			maxFiles,
 			multiple,
 			maxSize,
@@ -285,6 +289,7 @@ export const useFileUpload = (
 				}
 
 				const newFiles = prev.files.filter((file) => file.id !== id);
+				latestFilesRef.current = newFiles;
 				onFilesChange?.(newFiles);
 
 				return {
@@ -407,5 +412,5 @@ export const formatBytes = (bytes: number, decimals = 2): string => {
 
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-	return Number.parseFloat((bytes / k ** i).toFixed(dm)) + sizes[i];
+	return `${Number.parseFloat((bytes / k ** i).toFixed(dm))} ${sizes[i]}`;
 };

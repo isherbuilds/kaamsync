@@ -294,8 +294,8 @@ export function AttachmentUpload({
 							{uploadEntries._errors?.error && (
 								<p>{uploadEntries._errors.error}</p>
 							)}
-							{errors.map((error) => (
-								<p key={error}>{error}</p>
+							{errors.map((error, i) => (
+								<p key={`${error}-${i}`}>{error}</p>
 							))}
 						</AlertDescription>
 					</AlertContent>
