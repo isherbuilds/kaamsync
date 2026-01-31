@@ -204,7 +204,7 @@ function Layout({
 
 	return (
 		<SidebarProvider>
-			<ClientOnly fallback={<SidebarSkeleton />}>
+			<ClientOnly>
 				{() => (
 					<AppSidebar
 						authUser={authSession.user}
@@ -214,18 +214,10 @@ function Layout({
 					/>
 				)}
 			</ClientOnly>
-			<div className="h-screen w-full bg-card">
+			<div className="h-dvh w-full">
 				<Outlet />
 			</div>
 		</SidebarProvider>
-	);
-}
-
-function SidebarSkeleton() {
-	return (
-		<div className="v-stack center hidden w-64 bg-sidebar p-2 lg:flex">
-			<Spinner className="size-5" />
-		</div>
 	);
 }
 
@@ -240,26 +232,30 @@ export function ErrorBoundary() {
 		: "Failed to load organization.";
 
 	return (
-		<div className="center flex h-screen w-full bg-background p-4">
-			<div className="flex max-w-md flex-col items-center gap-4 text-center">
-				<div className="rounded-full bg-destructive/10 p-2">
-					<AlertCircle className="size-5 text-destructive" />
+		<div className="center h-screen w-full bg-background p-4">
+			<div className="v-stack max-w-md items-center gap-5 text-center">
+				<div className="rounded-full bg-destructive/10 p-3 ring-1 ring-destructive/20">
+					<AlertCircle className="size-6 text-destructive" />
 				</div>
-				<div className="space-y-1">
-					<h1 className="font-semibold text-lg">{message}</h1>
-					<p className="text-muted-foreground text-sm">{details}</p>
+				<div className="space-y-1.5">
+					<h1 className="font-semibold text-lg tracking-tight">{message}</h1>
+					<p className="text-muted-foreground text-sm leading-relaxed">
+						{details}
+					</p>
 				</div>
 				{isDev && error instanceof Error && error.stack && (
-					<pre className="max-h-48 w-full overflow-auto rounded-lg bg-destructive/5 p-3 text-left text-destructive text-xs">
+					<pre className="max-h-48 w-full overflow-auto rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-left text-destructive text-xs">
 						<code>{error.stack}</code>
 					</pre>
 				)}
-				<div className="flex gap-2">
-					<Button asChild variant="outline">
+				<div className="flex gap-3 pt-2">
+					<Button asChild variant="outline" size="sm">
 						<a href="/">Home</a>
 					</Button>
 					<Form method="post" action="/auth/logout">
-						<Button type="submit">Sign Out</Button>
+						<Button type="submit" size="sm" variant="default">
+							Sign Out
+						</Button>
 					</Form>
 				</div>
 			</div>

@@ -4,18 +4,16 @@ User-agent: *
 Allow: /
 
 # Disallow auth and API routes
-Disallow: /login
-Disallow: /signup
+
 Disallow: /join
 Disallow: /api/
-Disallow: /auth/
 Disallow: /organization/
 
-# Disallow system routes
-Disallow: /terms
-Disallow: /privacy
-Disallow: /twitter
-Disallow: /linkedin
+# Planned routes - to be implemented
+# Disallow: /terms
+# Disallow: /privacy
+# Disallow: /twitter
+# Disallow: /linkedin
 
 # Sitemap location
 Sitemap: https://kaamsync.com/sitemap.xml

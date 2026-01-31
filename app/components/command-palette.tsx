@@ -61,7 +61,8 @@ export function CommandPalette({ teams = [] }: CommandPaletteProps) {
 	const [open, setOpen] = useState(false);
 	const navigate = useNavigate();
 	const params = useParams();
-	const orgSlug = params.orgSlug as string;
+	const hasOrgContext = Boolean(params.orgSlug);
+	const orgSlug = hasOrgContext ? (params.orgSlug as string) : "";
 	const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
 
 	useEffect(() => {
@@ -92,56 +93,68 @@ export function CommandPalette({ teams = [] }: CommandPaletteProps) {
 		[navigate],
 	);
 
-	const navigationCommands = [
-		{
-			id: "nav-tasks",
-			label: "Go to Tasks",
-			icon: LayoutDashboard,
-			url: `/${orgSlug}/tasks`,
-			shortcut: "G T",
-		},
-		{
-			id: "nav-requests",
-			label: "Go to Requests",
-			icon: Inbox,
-			url: `/${orgSlug}/requests`,
-			shortcut: "G R",
-		},
-		{
-			id: "nav-settings",
-			label: "Go to Settings",
-			icon: Settings,
-			url: `/${orgSlug}/settings`,
-			shortcut: "G S",
-		},
-		{
-			id: "nav-home",
-			label: "Go to Home",
-			icon: Home,
-			url: "/",
-			shortcut: "G H",
-		},
-	];
+	const navigationCommands = hasOrgContext
+		? [
+				{
+					id: "nav-tasks",
+					label: "Go to Tasks",
+					icon: LayoutDashboard,
+					url: `/${orgSlug}/tasks`,
+					shortcut: "G T",
+				},
+				{
+					id: "nav-requests",
+					label: "Go to Requests",
+					icon: Inbox,
+					url: `/${orgSlug}/requests`,
+					shortcut: "G R",
+				},
+				{
+					id: "nav-settings",
+					label: "Go to Settings",
+					icon: Settings,
+					url: `/${orgSlug}/settings`,
+					shortcut: "G S",
+				},
+				{
+					id: "nav-home",
+					label: "Go to Home",
+					icon: Home,
+					url: "/",
+					shortcut: "G H",
+				},
+			]
+		: [
+				{
+					id: "nav-home",
+					label: "Go to Home",
+					icon: Home,
+					url: "/",
+					shortcut: "G H",
+				},
+			];
 
-	const actionCommands = [
-		{
-			id: "action-create-task",
-			label: "Create new Task",
-			icon: Plus,
-			url: `/${orgSlug}/tasks?create=true`,
-			shortcut: "C T",
-		},
-		{
-			id: "action-create-request",
-			label: "Create new Request",
-			icon: FileText,
-			url: `/${orgSlug}/requests?create=true`,
-			shortcut: "C R",
-		},
-	];
+	const actionCommands = hasOrgContext
+		? [
+				{
+					id: "action-create-task",
+					label: "Create new Task",
+					icon: Plus,
+					url: `/${orgSlug}/tasks?create=true`,
+					shortcut: "C T",
+				},
+				{
+					id: "action-create-request",
+					label: "Create new Request",
+					icon: FileText,
+					url: `/${orgSlug}/requests?create=true`,
+					shortcut: "C R",
+				},
+			]
+		: [];
 
 	const hasRecentItems = recentItems.length > 0;
-	const hasTeams = teams.length > 0;
+	const hasTeams = hasOrgContext && teams.length > 0;
 
 	return (
 		<CommandDialog open={open} onOpenChange={setOpen}>
@@ -220,27 +233,30 @@ export function CommandPalette({ teams = [] }: CommandPaletteProps) {
 					</>
 				)}
 
-				<CommandSeparator />
-
-				<CommandGroup heading="Actions">
-					{actionCommands.map((cmd) => (
-						<CommandItem
-							key={cmd.id}
-							onSelect={() =>
-								handleNavigate(cmd.url, {
-									id: cmd.id,
-									title: cmd.label,
-									url: cmd.url,
-									type: "page",
-								})
-							}
-						>
-							<cmd.icon className="size-4" />
-							<span>{cmd.label}</span>
-							<CommandShortcut>{cmd.shortcut}</CommandShortcut>
-						</CommandItem>
-					))}
-				</CommandGroup>
+				{hasOrgContext && (
+					<>
+						<CommandSeparator />
+						<CommandGroup heading="Actions">
+							{actionCommands.map((cmd) => (
+								<CommandItem
+									key={cmd.id}
+									onSelect={() =>
+										handleNavigate(cmd.url, {
+											id: cmd.id,
+											title: cmd.label,
+											url: cmd.url,
+											type: "page",
+										})
+									}
+								>
+									<cmd.icon className="size-4" />
+									<span>{cmd.label}</span>
+									<CommandShortcut>{cmd.shortcut}</CommandShortcut>
+								</CommandItem>
+							))}
+						</CommandGroup>
+					</>
+				)}
 			</CommandList>
 		</CommandDialog>
 	);

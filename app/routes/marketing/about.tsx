@@ -7,7 +7,8 @@ import {
 	MarketingHeading,
 } from "~/components/marketing/marketing-layout";
 import { Button } from "~/components/ui/button";
-import { env } from "~/lib/infra/env";
+
+const SITE_URL = "https://kaamsync.com";
 
 export const meta: MetaFunction = () => [
 	{
@@ -47,8 +48,8 @@ const organizationSchema = {
 	"@context": "https://schema.org",
 	"@type": "Organization",
 	name: "KaamSync",
-	url: env.SITE_URL,
-	logo: `${env.SITE_URL}/static/kaamsync-logo.png`,
+	url: SITE_URL,
+	logo: `${SITE_URL}/static/kaamsync-logo.png`,
 	description: "Operations management for teams",
 	foundingDate: "2023",
 	knowsAbout: [

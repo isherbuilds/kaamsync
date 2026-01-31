@@ -3,19 +3,13 @@ import { useQuery } from "@rocicorp/zero/react";
 import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
 import Clock from "lucide-react/dist/esm/icons/clock";
 import Send from "lucide-react/dist/esm/icons/send";
-import UserIcon from "lucide-react/dist/esm/icons/user";
 import { useCallback, useMemo } from "react";
 import { NavLink } from "react-router";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { MatterListWithDetailPanel } from "~/components/matter/matter-list-layout";
 import { RouteErrorBoundary } from "~/components/shared/error-boundary";
-import {
-	Item,
-	ItemContent,
-	ItemDescription,
-	ItemTitle,
-} from "~/components/ui/item";
+import { CustomAvatar } from "~/components/ui/avatar";
 import {
 	getPriorityBadgeClass,
 	getPriorityDisplayLabel,
@@ -24,7 +18,7 @@ import {
 } from "~/config/matter";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
-import { cn } from "~/lib/utils";
+import { cn, formatDueDateLabel } from "~/lib/utils";
 
 import type { Route } from "./+types/requests";
 
@@ -95,6 +89,8 @@ export default function OrganizationRequestsPage() {
 	const handleRenderRequestItem = useCallback(
 		(matter: RequestMatter) => {
 			const assignee = membersByUserId.get(matter.assigneeId);
+			const now = Date.now();
+			const priority = matter.priority ?? Priority.NONE;
 			const createdDate = matter.createdAt
 				? new Date(matter.createdAt).toLocaleDateString("en-IN", {
 						month: "short",
@@ -104,13 +100,6 @@ export default function OrganizationRequestsPage() {
 
 			return (
 				<NavLink
-					className={({ isActive }: { isActive: boolean }) =>
-						cn(
-							"group relative block transition-all duration-200",
-							isActive ? "bg-brand-requests/5" : "hover:bg-muted/50",
-							"border-b p-2",
-						)
-					}
 					key={matter.id}
 					prefetch="viewport"
 					to={
@@ -118,65 +107,86 @@ export default function OrganizationRequestsPage() {
 							? `/${orgSlug}/matter/${matter.teamCode}-${matter.shortID}`
 							: `/${orgSlug}/requests/matter/${matter.teamCode}-${matter.shortID}`
 					}
+					className={({ isActive }: { isActive: boolean }) =>
+						cn(
+							"group my-0.5 block rounded-lg border p-4 transition-all duration-200",
+							isActive
+								? "border-brand-requests/40 bg-brand-requests/5"
+								: "border-border bg-background/30 hover:border-brand-requests/20 hover:bg-brand-requests/5",
+						)
+					}
 				>
-					<Item className="w-full" key={matter.id}>
-						<ItemContent className="flex-col gap-2">
-							<div className="flex items-center gap-2">
-								<span className="font-mono text-muted-foreground/70 text-xs">
-									{matter.teamCode}-{matter.shortID}
-								</span>
-								{matter.priority != null &&
-									matter.priority !== Priority.NONE && (
-										<span
-											className={cn(
-												"inline-flex items-center rounded px-1.5 py-0.5 font-semibold text-[10px] uppercase tracking-wider transition-colors",
-												getPriorityBadgeClass(matter.priority),
-											)}
-										>
-											{getPriorityDisplayLabel(matter.priority)}
-										</span>
+					{/* Header Row: ID, Status, Priority */}
+					<div className="mb-3 flex items-center justify-between">
+						<div className="flex items-center gap-2">
+							<span className="font-mono text-muted-foreground text-xs">
+								{matter.teamCode}-{matter.shortID}
+							</span>
+							{matter.priority != null && matter.priority !== Priority.NONE && (
+								<span
+									className={cn(
+										"inline-flex items-center rounded px-2 py-0.5 font-semibold text-[10px] uppercase tracking-wider",
+										getPriorityBadgeClass(priority),
 									)}
-								{matter.status && (
-									<span
-										className={cn(
-											"inline-flex items-center rounded border px-1.5 py-0.5 font-medium text-[10px] uppercase tracking-wider",
-											matter.status.type === "pending_approval" &&
-												"border-status-pending/20 bg-status-pending/10 text-status-pending",
-											matter.status.type === "rejected" &&
-												"border-status-rejected/20 bg-status-rejected/10 text-status-rejected",
-											matter.status.type === "approved" &&
-												"border-status-approved/20 bg-status-approved/10 text-status-approved",
-										)}
-									>
-										{matter.status.name}
-									</span>
+								>
+									{getPriorityDisplayLabel(priority)}
+								</span>
+							)}
+						</div>
+						{matter.status && (
+							<span
+								className={cn(
+									"inline-flex items-center rounded border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wider",
+									matter.status.type === "pending_approval" &&
+										"border-status-pending/30 bg-status-pending/10 text-status-pending",
+									matter.status.type === "rejected" &&
+										"border-status-rejected/30 bg-status-rejected/10 text-status-rejected",
 								)}
+							>
+								{matter.status.name}
+							</span>
+						)}
+					</div>
+
+					{/* Title */}
+					<h3 className="mb-3 line-clamp-2 font-medium text-foreground text-sm leading-relaxed">
+						{matter.title}
+					</h3>
+
+					{/* Footer Row: Assignee, Due Date, Created */}
+					<div className="flex items-center justify-between gap-4 text-muted-foreground text-xs">
+						{assignee && (
+							<div className="flex items-center gap-1.5">
+								<CustomAvatar
+									name={assignee.usersTable?.name}
+									className="size-6"
+								/>
+								<span className="max-w-[100px] truncate">
+									{assignee.usersTable?.name}
+								</span>
 							</div>
-							<ItemTitle className="line-clamp-2 font-medium text-foreground/90 text-sm leading-snug transition-colors group-hover:text-foreground">
-								{matter.title}
-							</ItemTitle>
-							<ItemDescription className="flex flex-wrap items-center gap-2 text-muted-foreground/70 text-xs">
-								{assignee && (
-									<span className="flex items-center gap-1.5">
-										<UserIcon className="size-3 opacity-60" />
-										<span className="">{assignee.usersTable?.name}</span>
-									</span>
-								)}
-								{matter.dueDate && (
-									<span className="flex items-center gap-1.5">
-										<CalendarIcon className="size-3 opacity-60" />
-										<span>{new Date(matter.dueDate).toLocaleDateString()}</span>
-									</span>
-								)}
-								{createdDate && (
-									<span className="flex items-center gap-1.5">
-										<Clock className="size-3 opacity-60" />
-										<span>{createdDate}</span>
-									</span>
-								)}
-							</ItemDescription>
-						</ItemContent>
-					</Item>
+						)}
+
+						<div className="flex gap-2">
+							{matter.dueDate && (
+								<div
+									className={cn(
+										"flex items-center gap-1",
+										matter.dueDate < now && "text-priority-urgent",
+									)}
+								>
+									<CalendarIcon className="size-3.5" />
+									<span>{formatDueDateLabel(matter.dueDate)}</span>
+								</div>
+							)}
+							{createdDate && (
+								<div className="flex items-center gap-1">
+									<Clock className="size-3.5" />
+									<span>{createdDate}</span>
+								</div>
+							)}
+						</div>
+					</div>
 				</NavLink>
 			);
 		},
@@ -198,7 +208,7 @@ export default function OrganizationRequestsPage() {
 				title: "No requests created",
 				description: "Requests you create will appear here",
 			}}
-			estimateSize={100}
+			estimateSize={140}
 			renderItem={handleRenderRequestItem}
 		/>
 	);

@@ -14,7 +14,8 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { env } from "~/lib/infra/env";
+
+const SITE_URL = "https://kaamsync.com";
 
 export const meta: MetaFunction = () => [
 	{
@@ -58,11 +59,11 @@ const contactPageSchema = {
 	"@type": "ContactPage",
 	name: "Contact KaamSync",
 	description: "Contact page for KaamSync",
-	url: `${env.SITE_URL}/contact`,
+	url: `${SITE_URL}/contact`,
 	mainEntity: {
 		"@type": "Organization",
 		name: "KaamSync",
-		url: env.SITE_URL,
+		url: SITE_URL,
 		email: "hello@kaamsync.com",
 		contactPoint: {
 			"@type": "ContactPoint",

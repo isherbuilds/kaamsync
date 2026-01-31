@@ -56,26 +56,33 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 	};
 
 	return (
-		<div className={cn("space-y-3", className)}>
+		<div className={cn("space-y-3 sm:space-y-4", className)}>
 			<textarea
 				value={content}
 				onChange={(event) => setContent(event.target.value)}
 				placeholder="Write a comment..."
-				className="min-h-24 w-full resize-none rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+				className="min-h-20 w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-muted-foreground/50 focus:border-ring focus:ring-2 focus:ring-ring sm:min-h-24 sm:px-4 sm:py-3 sm:text-base"
 			/>
-			<AttachmentUpload
-				maxFiles={normalizedMaxFiles}
-				maxSize={planLimit.maxFileSizeMb * 1024 * 1024}
-				accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-				resetSignal={resetSignal}
-				onAttachmentsChange={(uploaded) =>
-					setAttachments(uploaded.map((file) => ({ id: file.id })))
-				}
-			/>
-			<div className="flex justify-end">
-				<Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-					{isSubmitting ? "Posting..." : "Post comment"}
-				</Button>
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<AttachmentUpload
+					maxFiles={normalizedMaxFiles}
+					maxSize={planLimit.maxFileSizeMb * 1024 * 1024}
+					accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+					resetSignal={resetSignal}
+					onAttachmentsChange={(uploaded) =>
+						setAttachments(uploaded.map((file) => ({ id: file.id })))
+					}
+				/>
+				<div className="flex justify-end">
+					<Button
+						type="button"
+						size="sm"
+						onClick={handleSubmit}
+						disabled={isSubmitting || !content.trim()}
+					>
+						{isSubmitting ? "Posting..." : "Post comment"}
+					</Button>
+				</div>
 			</div>
 		</div>
 	);

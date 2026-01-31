@@ -76,7 +76,7 @@ const demoMatters = [
 		title: "Transport for field visit tomorrow",
 		type: "request",
 		priority: Priority.HIGH,
-		statusIndex: 2,
+		statusIndex: 6,
 		assigneeIndex: 6,
 		authorIndex: 5,
 	},

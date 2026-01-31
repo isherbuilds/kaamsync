@@ -277,10 +277,10 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				</div>
 			</header>
 
-			<div className="flex flex-1 @3xl:flex-row flex-col overflow-hidden">
-				<main className="flex-1 overflow-y-auto @3xl:pb-6 pb-20">
-					<div className="mx-auto max-w-3xl @3xl:px-8 px-4 @3xl:py-8 py-4">
-						<div className="@3xl:space-y-6 space-y-4">
+			<div className="flex min-h-0 flex-1 @3xl:flex-row flex-col overflow-hidden">
+				<main className="flex-1 overflow-y-auto">
+					<div className="mx-auto max-w-3xl @3xl:px-8 px-4 @3xl:py-8 py-6">
+						<div className="@3xl:space-y-6 space-y-5 pb-8">
 							{matter.archived && (
 								<div className="mb-4 flex items-center justify-between rounded-lg border border-status-pending/20 bg-status-pending/10 p-4">
 									<div className="flex items-center gap-2">
@@ -367,16 +367,18 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								/>
 							)}
 
-							<Separator />
+							<Separator className="my-6" />
 
-							<div className="space-y-4">
-								<h2 className="font-semibold text-sm">Activity</h2>
-								<CommentComposer matterId={matter.id} />
+							<div className="space-y-5">
+								<h2 className="font-semibold text-base sm:text-lg">Activity</h2>
 								<TaskTimeline
 									matterId={matter.id}
 									members={members}
 									statuses={statuses}
 								/>
+								<div className="rounded-lg border bg-card/50 p-3 sm:p-4">
+									<CommentComposer matterId={matter.id} />
+								</div>
 							</div>
 						</div>
 					</div>

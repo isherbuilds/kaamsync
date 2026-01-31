@@ -151,7 +151,6 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 	return (
 		<ResizablePanelGroup className="h-full" orientation="horizontal">
 			<ResizablePanel
-				className="border-r"
 				defaultSize={getListPanelSize(isTablet, isExtraLargeScreen)}
 				maxSize={PANEL_MAX_SIZE}
 				minSize={PANEL_MIN_SIZE}
@@ -179,7 +178,7 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 							items={items}
 							getItemKey={(item) => item.id}
 							estimateSize={estimateSize}
-							className="p-1"
+							className="px-1 py-0.5"
 							renderItem={renderItem}
 						/>
 					)}
