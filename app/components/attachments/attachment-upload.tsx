@@ -130,6 +130,11 @@ export function AttachmentUpload({
 		accept,
 		multiple: true,
 		onFilesAdded: (files) => {
+			setUploadEntries((prev) => {
+				const next = { ...prev };
+				delete next._errors;
+				return next;
+			});
 			void uploadFiles(files);
 		},
 		onError: (errors) => {

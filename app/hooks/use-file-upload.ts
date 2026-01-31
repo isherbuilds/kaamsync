@@ -253,6 +253,10 @@ export const useFileUpload = (
 						errors,
 					};
 				});
+
+				if (errors.length > 0) {
+					onError?.(errors);
+				}
 			} else if (errors.length > 0) {
 				onError?.(errors);
 				setState((prev) => ({
