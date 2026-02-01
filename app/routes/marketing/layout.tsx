@@ -197,21 +197,17 @@ export default function MarketingLayout() {
 							<h4 className="font-medium text-sm">Resources</h4>
 							<div className="v-stack gap-3">
 								<FooterLink to="/contact">Contact</FooterLink>
-								<ExternalFooterLink href="https://kaamsync.com/terms">
-									Terms
-								</ExternalFooterLink>
-								<ExternalFooterLink href="https://kaamsync.com/privacy">
-									Privacy
-								</ExternalFooterLink>
+								<FooterLink to="/terms">Terms</FooterLink>
+								<FooterLink to="/privacy">Privacy</FooterLink>
 							</div>
 						</div>
 						<div className="space-y-4">
 							<h4 className="font-medium text-sm">Connect</h4>
 							<div className="v-stack gap-3">
-								<ExternalFooterLink href="https://twitter.com/kaamsync">
+								<ExternalFooterLink href="https://x.com/kaamsync">
 									Twitter
 								</ExternalFooterLink>
-								<ExternalFooterLink href="https://linkedin.com/company/kaamsync">
+								<ExternalFooterLink href="https://www.linkedin.com/in/ishersingh">
 									LinkedIn
 								</ExternalFooterLink>
 							</div>
@@ -222,12 +218,8 @@ export default function MarketingLayout() {
 							© {new Date().getFullYear()} KaamSync. All rights reserved.
 						</p>
 						<div className="flex gap-6">
-							<ExternalFooterLink href="https://kaamsync.com/terms">
-								Terms
-							</ExternalFooterLink>
-							<ExternalFooterLink href="https://kaamsync.com/privacy">
-								Privacy
-							</ExternalFooterLink>
+							<FooterLink to="/terms">Terms</FooterLink>
+							<FooterLink to="/privacy">Privacy</FooterLink>
 						</div>
 					</div>
 				</div>

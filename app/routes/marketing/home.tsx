@@ -149,7 +149,7 @@ export default function HomePage() {
 
 				<div className="container relative z-10 px-4 text-center md:px-6">
 					<MarketingHeading as="h1" className="mx-auto mb-8 max-w-5xl">
-						Turn conversations into <br />
+						From conversations to <br />
 						<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
 							clear, trackable work.
 						</span>

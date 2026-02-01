@@ -328,7 +328,8 @@ export default function OrgMembersPage() {
 										<Button
 											variant="ghost"
 											size="icon"
-											className="size-7 opacity-0 transition-opacity group-hover:opacity-100"
+											aria-label={`Cancel invite for ${i.email}`}
+											className="size-7 opacity-100 transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
 											onClick={() => cancelInvite(i.id)}
 										>
 											<X className="size-4" />

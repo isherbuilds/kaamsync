@@ -1,6 +1,7 @@
 import { mustGetMutator } from "@rocicorp/zero";
 import { handleMutateRequest } from "@rocicorp/zero/server";
 import { zeroPostgresJS } from "@rocicorp/zero/server/adapters/postgresjs";
+import postgres from "postgres";
 import { mutators } from "zero/mutators";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth/server";
@@ -20,7 +21,7 @@ const pgURL = must(
 );
 
 // Use connection string to avoid cross-package postgres type mismatch
-const dbProvider = zeroPostgresJS(schema, pgURL);
+const dbProvider = zeroPostgresJS(schema, postgres(pgURL));
 
 export async function action({ request }: Route.ActionArgs) {
 	// Get session from Better Auth

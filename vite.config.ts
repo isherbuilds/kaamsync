@@ -1,5 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig } from "vite";
 import babel from "vite-plugin-babel";
 import { VitePWA } from "vite-plugin-pwa";
@@ -12,6 +13,7 @@ export default defineConfig({
 
 	build: {
 		outDir: "build/client",
+		minify: true,
 	},
 
 	plugins: [
@@ -27,6 +29,13 @@ export default defineConfig({
 			apply: "build",
 		},
 		reactRouter(),
+		visualizer({
+			filename: "bundle-stats.html",
+			gzipSize: true,
+			brotliSize: true,
+			template: "list",
+			emitFile: true,
+		}),
 		VitePWA({
 			registerType: "autoUpdate",
 			strategies: "injectManifest",
@@ -68,6 +77,7 @@ export default defineConfig({
 		}),
 		tsconfigPaths(),
 	],
+
 	optimizeDeps: {
 		include: [
 			"clsx",
@@ -75,6 +85,17 @@ export default defineConfig({
 			"react-router/dom",
 			"react-router/internal/react-server-client",
 			"tailwind-merge",
+			// Pre-bundle common Zero modules
+			"@rocicorp/zero/react",
+		],
+		// Explicitly exclude server-only deps
+		exclude: [
+			"@aws-sdk/client-s3",
+			"@aws-sdk/s3-request-presigner",
+			"@react-email/components",
+			"web-push",
+			"dodopayments",
+			"pg",
 		],
 	},
 });

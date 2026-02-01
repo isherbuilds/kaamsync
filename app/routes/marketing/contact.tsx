@@ -111,27 +111,45 @@ export default function ContactPage() {
 									icon: MessageSquare,
 									title: "Response Time",
 									description: "Under 2 hours",
-									href: "#",
 								},
-							].map(({ icon: Icon, title, description, href }) => (
-								<a
-									key={title}
-									href={href}
-									className="group flex items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
-								>
-									<div className="center flex size-10 shrink-0 bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
-										<Icon className="size-5" />
+							].map(({ icon: Icon, title, description, href }) =>
+								href ? (
+									<a
+										key={title}
+										href={href}
+										className="group flex items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
+									>
+										<div className="center flex size-10 shrink-0 bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
+											<Icon className="size-5" />
+										</div>
+										<div>
+											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
+												{title}
+											</h3>
+											<p className="font-medium text-foreground text-sm">
+												{description}
+											</p>
+										</div>
+									</a>
+								) : (
+									<div
+										key={title}
+										className="group flex items-start gap-4 border border-transparent p-4"
+									>
+										<div className="center flex size-10 shrink-0 bg-background text-muted-foreground shadow-sm">
+											<Icon className="size-5" />
+										</div>
+										<div>
+											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
+												{title}
+											</h3>
+											<p className="font-medium text-foreground text-sm">
+												{description}
+											</p>
+										</div>
 									</div>
-									<div>
-										<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
-											{title}
-										</h3>
-										<p className="font-medium text-foreground text-sm">
-											{description}
-										</p>
-									</div>
-								</a>
-							))}
+								),
+							)}
 
 							<div className="mt-12 border border-border bg-background p-6">
 								<h3 className="mb-2 font-bold text-sm">Status</h3>

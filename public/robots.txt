@@ -7,13 +7,6 @@ Allow: /
 
 Disallow: /join
 Disallow: /api/
-Disallow: /organization/
-
-# Planned routes - to be implemented
-# Disallow: /terms
-# Disallow: /privacy
-# Disallow: /twitter
-# Disallow: /linkedin
 
 # Sitemap location
 Sitemap: https://kaamsync.com/sitemap.xml
