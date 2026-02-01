@@ -19,45 +19,74 @@ import {
 import { cn } from "~/lib/utils";
 
 export const meta: MetaFunction = () => [
-	{ title: "Pricing - KaamSync" },
+	{
+		title: "KaamSync Pricing | Free for Small Teams, Scale as You Grow",
+	},
 	{
 		name: "description",
-		content: "Simple, transparent pricing. No hidden fees. Start for free.",
+		content:
+			"Start free with 3 team members forever. Growth plans from $29/month. No hidden fees. Cancel anytime. Non-profits get 50% off.",
+	},
+	{
+		tagName: "link",
+		rel: "canonical",
+		href: "https://kaamsync.com/pricing",
+	},
+	{
+		property: "og:title",
+		content: "KaamSync Pricing | Free for Small Teams",
+	},
+	{
+		property: "og:description",
+		content:
+			"Start free and scale as you grow. No hidden fees, cancel anytime.",
+	},
+	{ property: "og:type", content: "website" },
+	{ property: "og:url", content: "https://kaamsync.com/pricing" },
+	{
+		property: "og:image",
+		content: "https://kaamsync.com/static/kaamsync-logo.png",
+	},
+	{ name: "twitter:card", content: "summary_large_image" },
+	{ name: "twitter:title", content: "KaamSync Pricing Plans" },
+	{
+		name: "twitter:description",
+		content: "Free for 3 users. Simple pricing, no surprises.",
 	},
 ];
 
 const faqs = [
 	{
-		q: "Can I change my plan later?",
-		a: "Absolutely. You can upgrade or downgrade your plan at any time directly through your dashboard. If you upgrade, the new features are available immediately, and we'll pro-rate the difference. Downgrades take effect at the start of your next billing cycle.",
+		q: "Is the free plan really free?",
+		a: "Yes. Starter is free forever for up to 3 team members. No credit card required. No time limit. It's our way of letting small teams get organized without risk.",
 	},
 	{
-		q: "Is there really a free version?",
-		a: "Yes. Our Starter plan is genuinely free for small teams of up to 3 members. It's not a trial—it's a way for you to build your foundation without worry.",
+		q: "Can I change plans later?",
+		a: "Absolutely. Upgrade or downgrade anytime from your dashboard. Upgrades take effect immediately. Downgrades apply at your next billing cycle. We pro-rate everything fairly.",
+	},
+	{
+		q: "What counts as a 'team member'?",
+		a: "Anyone who needs to create, assign, or approve Matters. Viewers (people who just need to see status) don't count toward your limit. Most teams start with just their core operators.",
+	},
+	{
+		q: "Do you offer non-profit discounts?",
+		a: "Yes. Registered non-profits and educational institutions get 50% off all annual plans. Contact us with your registration documents and we'll apply the discount.",
+	},
+	{
+		q: "What happens to my data if I cancel?",
+		a: "Your data stays yours. If you cancel, you keep read-only access to all your Matters. You can export everything before you leave. We never hold your data hostage.",
+	},
+	{
+		q: "Can I pay yearly?",
+		a: "Yes—and you save about 17% (2 months free). Choose yearly at checkout or switch anytime from your billing settings.",
 	},
 	{
 		q: "What payment methods do you accept?",
-		a: "We accept all major credit cards (Visa, Mastercard, American Express) through our secure payment partner, Dodo Payments. For Enterprise customers, we also support bank transfers and custom invoicing.",
+		a: "All major credit cards through our secure payment processor. Enterprise customers can also pay via bank transfer or invoice.",
 	},
 	{
-		q: "How secure is my data?",
-		a: "Security is our top priority. Everything in KaamSync is designed to keep your work safe and secure. We force HTTPS for all connections and encrypt data in-transit with TLS 1.2+. For storage, we rely on best-in-class infrastructure partners who utilize industry-standard physical disk encryption to safeguard your data at rest.",
-	},
-	{
-		q: "What happens if I exceed my usage limits?",
-		a: "For Growth and Pro plans, we provide a generous base of inclusions. If you go over, you'll be charged at our standard metered rates at the end of the month. We'll always notify you when you reach 80% and 100% of your limits.",
-	},
-	{
-		q: "Do you offer discounts for non-profits?",
-		a: "We love supporting organizations that do good. Registered non-profits and educational institutions are eligible for a 50% discount on all annual plans. Reach out to our support team to get started.",
-	},
-	{
-		q: "Can I cancel my subscription at any time?",
-		a: "Yes, you can cancel your subscription whenever you like. You'll continue to have access to your paid features until the end of your current billing period, after which your account will revert to the Starter plan.",
-	},
-	{
-		q: "What kind of support can I expect?",
-		a: "All plans include access to our documentation and community forums. Growth and Pro plans include priority email support with a 24-hour response time, while Enterprise customers receive a dedicated account manager and 24/7 phone support.",
+		q: "How fast is support?",
+		a: "Starter plans get community and documentation support. Growth and Pro plans get priority email support with responses within 24 hours—usually much faster. Enterprise gets a dedicated account manager.",
 	},
 ];
 
@@ -69,11 +98,72 @@ const planIcons: Record<ProductKey, ReactNode> = {
 };
 
 const planDescriptions: Record<ProductKey, string> = {
-	starter: "For small teams getting started.",
-	growth: "For growing teams ready to scale.",
-	pro: "For established teams that need more control.",
-	enterprise: "For large organizations managing multiple sites.",
+	starter:
+		"Test with up to 3 people. Free forever. No credit card—just see if it works.",
+	growth:
+		"For teams done losing track of requests. One organized system where nothing gets buried.",
+	pro: "Multiple departments, complex workflows. Full picture with API access.",
+	enterprise:
+		"Custom integrations, SLAs, and dedicated support for your specific needs.",
 };
+
+const offerSchema = {
+	"@context": "https://schema.org",
+	"@type": "Product",
+	name: "KaamSync",
+	description: "People management and work tracking for operations teams",
+	brand: {
+		"@type": "Brand",
+		name: "KaamSync",
+	},
+	offers: [
+		{
+			"@type": "Offer",
+			name: "Starter",
+			description: "Free for up to 3 team members",
+			price: "0",
+			priceCurrency: "USD",
+			availability: "https://schema.org/InStock",
+		},
+		{
+			"@type": "Offer",
+			name: "Growth",
+			description: "For growing teams ready to scale",
+			price: "29",
+			priceCurrency: "USD",
+			availability: "https://schema.org/InStock",
+			priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+				.toISOString()
+				.split("T")[0],
+		},
+		{
+			"@type": "Offer",
+			name: "Pro",
+			description: "For established teams that need more control",
+			price: "79",
+			priceCurrency: "USD",
+			availability: "https://schema.org/InStock",
+			priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+				.toISOString()
+				.split("T")[0],
+		},
+	],
+};
+
+const faqPageSchema = {
+	"@context": "https://schema.org",
+	"@type": "FAQPage",
+	mainEntity: faqs.map((faq) => ({
+		"@type": "Question",
+		name: faq.q,
+		acceptedAnswer: {
+			"@type": "Answer",
+			text: faq.a,
+		},
+	})),
+};
+
+const structuredData = JSON.stringify([offerSchema, faqPageSchema]);
 
 export default function PricingPage() {
 	const [interval, setInterval] = useState<BillingInterval>("monthly");
@@ -90,20 +180,24 @@ export default function PricingPage() {
 
 	return (
 		<>
-			{/* Hero */}
+			<script type="application/ld+json">{structuredData}</script>
+
 			<section className="bg-background py-16 text-center">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
-						<MarketingHeading as="h2" className="mb-6" italic="pricing.">
-							Simple, transparent <br />{" "}
+						<MarketingHeading as="h2" className="mb-6">
+							Start free.
+							<br />
+							<span className="italic">Grow when it works.</span>
 						</MarketingHeading>
 						<p className="mb-10 text-muted-foreground text-xl">
-							No hidden fees. No surprises. Start for free and scale as you
-							grow.
+							Your first 3 team members are free forever. No credit card. No
+							time limit. Upgrade only when you're actually saving time and
+							wondering how you ever worked without it.
 						</p>
 
 						{/* Billing Toggle */}
-						<div className="center flex">
+						<div className="center flex flex-col items-center gap-4">
 							<Tabs
 								value={interval}
 								onValueChange={(value) => setInterval(value as BillingInterval)}
@@ -115,13 +209,18 @@ export default function PricingPage() {
 										Yearly
 										<Badge
 											variant="secondary"
-											className="rounded bg-primary/10 text-primary"
+											className="ml-2 rounded border-green-500/20 bg-green-500/10 text-green-600"
 										>
-											Discount
+											2 months free
 										</Badge>
 									</TabsTrigger>
 								</TabsList>
 							</Tabs>
+							{interval === "yearly" && (
+								<p className="font-medium text-green-600 text-sm">
+									You save ~17% with yearly billing
+								</p>
+							)}
 						</div>
 					</div>
 				</div>
@@ -256,20 +355,19 @@ export default function PricingPage() {
 			{/* FAQs */}
 			<MarketingContainer className="bg-muted/30">
 				<div className="mx-auto max-w-4xl">
-					<div className="mb-20">
+					<div className="mb-20 text-center">
 						<Badge
 							variant="outline"
-							className="mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
+							className="mx-auto mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
 						>
-							Support & FAQ
+							Questions
 						</Badge>
-						<MarketingHeading
-							className="text-5xl md:text-6xl"
-							italic="questions?"
-						>
-							Got <br />
-							We've got answers.
+						<MarketingHeading className="mb-4">
+							Still have questions?
 						</MarketingHeading>
+						<p className="text-muted-foreground">
+							Everything you need to know about pricing and getting started.
+						</p>
 					</div>
 					<FAQ items={faqs} />
 				</div>

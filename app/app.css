@@ -42,9 +42,9 @@ body {
 	}
 }
 
-/* Base Industrial Theme */
+/* Base Industrial Theme - Modernized */
 :root {
-	--radius: 0rem; /* Hard edges for industrial feel */
+	--radius: 0.375rem; /* Slightly rounded for modern feel while keeping industrial edge */
 
 	/* Colors - High Contrast Industrial */
 	--background: oklch(0.98 0 0); /* Stark White */

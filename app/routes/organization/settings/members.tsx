@@ -154,11 +154,13 @@ export default function OrgMembersPage() {
 	};
 
 	return (
-		<>
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="font-semibold text-lg md:text-2xl">Members</h1>
-					<p className="hidden text-muted-foreground text-xs md:block">
+		<div className="v-stack gap-6">
+			<div className="flex items-start justify-between gap-4 sm:items-center">
+				<div className="space-y-1">
+					<h1 className="font-semibold text-lg tracking-tight md:text-xl">
+						Members
+					</h1>
+					<p className="text-muted-foreground text-xs leading-relaxed md:text-sm">
 						Manage your organization's team and access levels.
 					</p>
 				</div>
@@ -166,9 +168,10 @@ export default function OrgMembersPage() {
 				{isAdminOrOwner && (
 					<Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
 						<DialogTrigger asChild>
-							<Button size="sm">
-								<UserPlus className="size-4" />
+							<Button size="sm" className="shrink-0">
+								<UserPlus className="mr-1.5 size-4" />
 								<span className="hidden sm:inline">Invite Member</span>
+								<span className="sm:hidden">Invite</span>
 							</Button>
 						</DialogTrigger>
 						<DialogContent className="sm:max-w-96">
@@ -216,10 +219,10 @@ export default function OrgMembersPage() {
 				)}
 			</div>
 
-			<div className="grid gap-4 lg:grid-cols-3">
+			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Members List - Takes 2 cols on desktop */}
-				<div className="overflow-hidden rounded-xl border bg-card shadow-sm lg:col-span-2">
-					<div className="divide-y divide-border/50">
+				<div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm ring-1 ring-black/5 lg:col-span-2 dark:ring-white/5">
+					<div className="divide-y divide-border/40">
 						{members?.map((m) => {
 							const isSelf = m.userId === currentUser.id;
 							const canEdit = isAdminOrOwner && !isSelf && m.role !== "owner";
@@ -227,13 +230,14 @@ export default function OrgMembersPage() {
 							return (
 								<div
 									key={m.id}
-									className="group flex items-center justify-between overflow-hidden p-4 transition-colors hover:bg-muted/30"
+									className="group flex items-center justify-between overflow-hidden p-4 transition-all duration-200 hover:bg-muted/40"
 								>
 									{/* Left: Avatar + Info */}
 									<div className="flex flex-1 items-center gap-3 overflow-hidden">
 										<CustomAvatar
 											avatar={m.usersTable?.image}
 											name={m.usersTable?.name}
+											className="ring-2 ring-background"
 										/>
 										<div className="truncate">
 											<span className="flex items-center gap-2 font-medium text-sm">
@@ -241,7 +245,7 @@ export default function OrgMembersPage() {
 												{isSelf && (
 													<Badge
 														variant="secondary"
-														className="h-4 px-1 text-[10px]"
+														className="h-5 px-1.5 font-medium text-[10px]"
 													>
 														You
 													</Badge>
@@ -257,7 +261,7 @@ export default function OrgMembersPage() {
 									<div className="ml-4 flex items-center gap-2">
 										<Badge
 											variant="outline"
-											className="hidden bg-muted/50 font-normal text-[10px] capitalize sm:flex"
+											className="hidden h-6 border-border/50 bg-muted/50 px-2 font-medium text-[11px] text-muted-foreground capitalize sm:flex"
 										>
 											{m.role === "admin" || m.role === "owner" ? (
 												<ShieldCheck className="mr-1 size-3" />
@@ -271,7 +275,7 @@ export default function OrgMembersPage() {
 													<Button
 														variant="ghost"
 														size="icon"
-														className="size-8"
+														className="size-8 opacity-60 transition-opacity group-hover:opacity-100"
 													>
 														<MoreVertical className="size-4" />
 													</Button>
@@ -306,52 +310,57 @@ export default function OrgMembersPage() {
 				</div>
 
 				{/* Invites Sidebar - Takes 1 col */}
-
-				<div className="space-y-2">
-					{invites?.map((i) => (
-						<div
-							key={i.id}
-							className="group v-stack relative rounded-xl border bg-muted/20 p-4 text-sm shadow-sm"
-						>
-							<div className="mb-2 flex items-start justify-between">
-								<div className="rounded-full border bg-background p-2">
-									<Mail className="size-4 text-muted-foreground" />
+				<div className="space-y-3">
+					<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
+						Pending Invites
+					</h3>
+					<div className="space-y-3">
+						{invites?.map((i) => (
+							<div
+								key={i.id}
+								className="group v-stack relative overflow-hidden rounded-xl border border-border/60 bg-muted/30 p-4 text-sm shadow-sm transition-all duration-200 hover:border-border/80 hover:bg-muted/50"
+							>
+								<div className="mb-3 flex items-start justify-between">
+									<div className="rounded-lg border border-border/50 bg-background p-2 shadow-sm">
+										<Mail className="size-4 text-muted-foreground" />
+									</div>
+									{isAdminOrOwner && (
+										<Button
+											variant="ghost"
+											size="icon"
+											aria-label={`Cancel invite for ${i.email}`}
+											className="size-7 opacity-100 transition-opacity focus-visible:opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+											onClick={() => cancelInvite(i.id)}
+										>
+											<X className="size-4" />
+										</Button>
+									)}
 								</div>
-								{isAdminOrOwner && (
-									<Button
-										variant="ghost"
-										size="icon"
-										className="size-6"
-										onClick={() => cancelInvite(i.id)}
+								<p className="mb-2 truncate font-medium text-sm">{i.email}</p>
+								<div className="flex items-center gap-2">
+									<Badge
+										variant="outline"
+										className="h-5 border-border/50 px-2 font-semibold text-[10px] uppercase tracking-wide"
 									>
-										<X className="size-4" />
-									</Button>
-								)}
+										{i.role}
+									</Badge>
+									<span className="text-[10px] text-muted-foreground/80">
+										Expires soon
+									</span>
+								</div>
 							</div>
-							<p className="mb-1 truncate font-medium">{i.email}</p>
-							<div className="flex items-center gap-2">
-								<Badge
-									variant="outline"
-									className="h-5 font-bold text-[10px] uppercase tracking-tighter"
-								>
-									{i.role}
-								</Badge>
-								<span className="text-[10px] text-muted-foreground">
-									Expires soon
-								</span>
+						))}
+						{invites?.length === 0 && (
+							<div className="rounded-xl border border-border/60 border-dashed bg-muted/20 p-8 text-center">
+								<p className="text-muted-foreground text-sm">
+									No pending invitations
+								</p>
 							</div>
-						</div>
-					))}
-					{invites?.length === 0 && (
-						<div className="rounded-xl border border-dashed p-8 text-center">
-							<p className="text-muted-foreground text-xs">
-								No pending invitations
-							</p>
-						</div>
-					)}
+						)}
+					</div>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }
 
@@ -359,12 +368,21 @@ export function ErrorBoundary() {
 	const error = useRouteError();
 
 	return (
-		<div className="v-stack center flex h-full gap-4 p-8">
-			<h2 className="font-semibold text-lg">Members Error</h2>
-			<p className="text-muted-foreground text-sm">
-				{error instanceof Error ? error.message : "Failed to load members"}
-			</p>
-			<Link to="." className="text-primary hover:underline" prefetch="intent">
+		<div className="v-stack center h-full gap-4 p-8">
+			<div className="rounded-full bg-destructive/10 p-3 ring-1 ring-destructive/20">
+				<ShieldCheck className="size-6 text-destructive" />
+			</div>
+			<div className="space-y-1 text-center">
+				<h2 className="font-semibold text-lg tracking-tight">Members Error</h2>
+				<p className="text-muted-foreground text-sm">
+					{error instanceof Error ? error.message : "Failed to load members"}
+				</p>
+			</div>
+			<Link
+				to="."
+				className="font-medium text-primary text-sm hover:underline"
+				prefetch="intent"
+			>
 				Try again
 			</Link>
 		</div>

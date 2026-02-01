@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
 	data,
 	Links,
@@ -11,8 +12,9 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { getToast } from "remix-toast";
-import { Toaster } from "sonner";
+import { ClientOnly } from "remix-utils/client-only";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
+import { Spinner } from "./components/ui/spinner.js";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -20,16 +22,16 @@ import {
 } from "./lib/color-scheme/components";
 import { parseColorScheme } from "./lib/color-scheme/server";
 
+const Toaster = lazy(() =>
+	import("sonner").then((module) => ({ default: module.Toaster })),
+);
+
 export const links: Route.LinksFunction = () => [
 	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
 	{
 		rel: "preconnect",
 		href: "https://fonts.gstatic.com",
 		crossOrigin: "anonymous",
-	},
-	{
-		rel: "stylesheet",
-		href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
 	},
 	{
 		rel: "stylesheet",
@@ -96,7 +98,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<html
 			lang="en"
-			className={`${colorScheme === "dark" ? "dark" : ""} touch-manipulation overflow-x-hidden`}
+			className={`${colorScheme === "dark" ? "dark" : ""} touch-manipulation overflow-hidden`}
 			suppressHydrationWarning
 		>
 			<head>
@@ -115,11 +117,21 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				)} */}
 				<Links />
 			</head>
-			<body className="min-h-screen overflow-y-auto">
+			<body className="h-dvh overflow-hidden">
 				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />
-				<Toaster closeButton position="bottom-right" theme={colorScheme} />
+				<ClientOnly>
+					{() => (
+						<Suspense fallback={null}>
+							<Toaster
+								closeButton
+								position="bottom-right"
+								theme={colorScheme}
+							/>
+						</Suspense>
+					)}
+				</ClientOnly>
 			</body>
 		</html>
 	);
@@ -127,11 +139,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function HydrateFallback() {
 	return (
-		<div className="center flex h-screen w-screen bg-background">
-			<div className="v-stack items-center gap-2">
-				<div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-				<p className="text-muted-foreground text-sm">Loading...</p>
-			</div>
+		<div className="center flex h-dvh w-full text-foreground">
+			<Spinner className="size-10 text-primary" />
 		</div>
 	);
 }

@@ -1,6 +1,5 @@
 import type { Row } from "@rocicorp/zero";
 import { useQuery, useZero } from "@rocicorp/zero/react";
-import BanIcon from "lucide-react/dist/esm/icons/ban";
 import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import InboxIcon from "lucide-react/dist/esm/icons/inbox";
@@ -198,7 +197,7 @@ export default function TeamTasksPage() {
 	if (!team) return null;
 
 	return (
-		<div className="flex h-full flex-col overflow-hidden bg-background">
+		<div className="v-stack h-full overflow-hidden bg-background">
 			<TeamPageHeader
 				name={team.name}
 				count={activeCount}
@@ -218,13 +217,13 @@ export default function TeamTasksPage() {
 					<EmptyStateCard
 						icon={InboxIcon}
 						title="This team has no tasks"
-						description="You can create new tasks to get started."
+						description="Create a task to get started with this team."
 					/>
 				) : (
 					<VirtualizedList
 						items={flatItems}
 						getItemKey={(item) => item.id}
-						estimateSize={44}
+						estimateSize={48}
 						stickyIndices={stickyIndices}
 						renderItem={renderItem}
 					/>
@@ -255,16 +254,20 @@ const TeamPageHeader = memo(
 		requestStatuses,
 		members,
 	}: TeamPageHeaderProps) => (
-		<div className="flex h-12 shrink-0 items-center justify-between border-b px-4">
-			<div className="flex min-w-0 items-center gap-2">
-				<SidebarTrigger className="-ml-1 lg:hidden" />
-				<h1 className="truncate font-semibold text-sm">{name}</h1>
-				<Badge
-					variant="secondary"
-					className="h-4 px-1.5 py-0 text-[10px] tabular-nums"
-				>
-					{count}
-				</Badge>
+		<div className="flex h-14 shrink-0 items-center justify-between border-border/80 border-b bg-background px-4">
+			<div className="flex min-w-0 items-center gap-3">
+				<SidebarTrigger className="-ml-1 h-8 w-8 lg:hidden" />
+				<div className="flex items-center gap-2">
+					<h1 className="truncate font-semibold text-sm tracking-tight">
+						{name}
+					</h1>
+					<Badge
+						variant="secondary"
+						className="h-5 px-2 py-0 font-medium text-[11px] tabular-nums ring-1 ring-border/50 ring-inset"
+					>
+						{count}
+					</Badge>
+				</div>
 			</div>
 			<div className="flex items-center gap-2">
 				{isManager && (
@@ -311,11 +314,11 @@ const StatusGroupHeader = memo(
 			<button
 				type="button"
 				onClick={() => onToggle(status.id)}
-				className="sticky top-0 z-20 flex h-11 w-full items-center gap-2 border-b bg-background px-4 transition-colors hover:bg-muted"
+				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/60 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/60"
 			>
 				<ChevronDown
 					className={cn(
-						"size-3.5 text-muted-foreground transition-transform",
+						"size-4 text-muted-foreground transition-transform duration-200",
 						!isExpanded && "-rotate-90",
 					)}
 				/>
@@ -328,7 +331,7 @@ const StatusGroupHeader = memo(
 				<span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">
 					{status.name}
 				</span>
-				<span className="ml-1 text-muted-foreground/40 text-xs tabular-nums">
+				<span className="ml-auto rounded-full bg-background/80 px-2 py-0.5 font-medium text-[10px] text-muted-foreground tabular-nums ring-1 ring-border/50">
 					{count}
 				</span>
 			</button>
@@ -386,10 +389,10 @@ const TaskListRow = memo(
 		);
 
 		return (
-			<div className="group relative flex h-11 items-center border-transparent border-b transition-colors hover:border-border/50 hover:bg-muted/30">
+			<div className="group relative flex h-[52px] items-center border-border/40 border-b px-4 transition-all duration-200 hover:bg-muted/60">
 				<StableLink to={link} className="absolute inset-0 z-10" />
 
-				<div className="relative flex w-full items-center gap-3 px-3">
+				<div className="relative flex w-full items-center gap-3">
 					<div className="flex shrink-0 items-center gap-3">
 						<PrioritySelect
 							value={task.priority as PriorityValue}
@@ -397,7 +400,7 @@ const TaskListRow = memo(
 							className="z-20 p-2"
 							align="start"
 						/>
-						<span className="hidden w-14 font-mono text-muted-foreground/40 text-xs md:inline">
+						<span className="hidden w-14 font-mono text-[11px] text-muted-foreground/50 md:inline">
 							{taskCode}
 						</span>
 					</div>
@@ -414,7 +417,7 @@ const TaskListRow = memo(
 					<div className="min-w-0 flex-1">
 						<span
 							className={cn(
-								"block truncate text-sm",
+								"block truncate text-sm leading-snug",
 								isCompleted && "text-muted-foreground line-through opacity-50",
 							)}
 						>
@@ -448,11 +451,13 @@ function TaskDueDateBadge({ date }: { date: number }) {
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1 text-xs",
-				isOverdue ? "text-priority-urgent" : "text-muted-foreground/60",
+				"flex items-center gap-1.5 font-medium text-[11px]",
+				isOverdue ? "text-priority-urgent" : "text-muted-foreground/70",
 			)}
 		>
-			<CalendarIcon className="size-3" />
+			<CalendarIcon
+				className={cn("size-3.5", isOverdue && "text-priority-urgent")}
+			/>
 			<span>{label}</span>
 		</div>
 	);

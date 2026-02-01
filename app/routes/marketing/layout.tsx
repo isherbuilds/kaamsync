@@ -41,6 +41,23 @@ const FooterLink = ({
 	</Link>
 );
 
+const ExternalFooterLink = ({
+	href,
+	children,
+}: {
+	href: string;
+	children: React.ReactNode;
+}) => (
+	<a
+		href={href}
+		target="_blank"
+		rel="noopener noreferrer"
+		className="text-muted-foreground/80 text-sm transition-colors duration-200 hover:text-foreground"
+	>
+		{children}
+	</a>
+);
+
 export default function MarketingLayout() {
 	const [open, setOpen] = useState(false);
 
@@ -187,21 +204,24 @@ export default function MarketingLayout() {
 						<div className="space-y-4">
 							<h4 className="font-medium text-sm">Connect</h4>
 							<div className="v-stack gap-3">
-								<FooterLink to="/twitter">Twitter</FooterLink>
-								<FooterLink to="/linkedin">LinkedIn</FooterLink>
+								<ExternalFooterLink href="https://x.com/kaamsync">
+									Twitter
+								</ExternalFooterLink>
+								<ExternalFooterLink href="https://www.linkedin.com/in/ishersingh">
+									LinkedIn
+								</ExternalFooterLink>
 							</div>
 						</div>
 					</div>
-					{/* <div className="mt-16 flex flex-col items-center justify-between gap-4 border-border/40 border-t pt-8 md:flex-row">
+					<div className="mt-16 flex flex-col items-center justify-between gap-4 border-border/40 border-t pt-8 md:flex-row">
 						<p className="text-muted-foreground/60 text-xs">
 							© {new Date().getFullYear()} KaamSync. All rights reserved.
 						</p>
-						<ColorSchemeToggle />
 						<div className="flex gap-6">
 							<FooterLink to="/terms">Terms</FooterLink>
 							<FooterLink to="/privacy">Privacy</FooterLink>
 						</div>
-					</div> */}
+					</div>
 				</div>
 			</footer>
 		</div>

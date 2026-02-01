@@ -66,17 +66,25 @@ export type Env = z.infer<typeof envSchema>;
 // Validation
 // ============================================================================
 
-const parseResult = envSchema.safeParse(process.env);
-
-if (!parseResult.success) {
-	console.error("❌ Environment validation failed:");
-	for (const issue of parseResult.error.issues) {
-		console.error(`  - ${issue.path.join(".")}: ${issue.message}`);
+function validateEnv(): Env {
+	if (typeof process === "undefined" || !process.env) {
+		return {} as Env;
 	}
-	process.exit(1);
+
+	const parseResult = envSchema.safeParse(process.env);
+
+	if (!parseResult.success) {
+		console.error("❌ Environment validation failed:");
+		for (const issue of parseResult.error.issues) {
+			console.error(`  - ${issue.path.join(".")}: ${issue.message}`);
+		}
+		process.exit(1);
+	}
+
+	return parseResult.data;
 }
 
-export const env: Env = parseResult.data;
+export const env: Env = validateEnv();
 
 // ============================================================================
 // Environment Helpers

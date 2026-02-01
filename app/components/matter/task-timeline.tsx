@@ -57,14 +57,20 @@ function renderActivityContent(
 ): React.ReactNode {
 	switch (entry.type) {
 		case "comment":
-			return <p className="text-sm">{entry.content}</p>;
+			return (
+				<p className="text-sm leading-relaxed sm:text-base">{entry.content}</p>
+			);
 
 		case "created":
-			return <p className="text-muted-foreground text-sm">created this task</p>;
+			return (
+				<p className="text-muted-foreground text-sm sm:text-base">
+					created this item
+				</p>
+			);
 
 		case "status_change":
 			return (
-				<p className="text-muted-foreground text-sm">
+				<p className="text-muted-foreground text-sm sm:text-base">
 					changed status from{" "}
 					<span className="font-medium text-foreground">
 						{resolveStatusName(entry.fromStatusId, statusLookup)}
@@ -77,18 +83,102 @@ function renderActivityContent(
 			);
 
 		case "assigned":
+		case "assignment": {
+			const toName = resolveMemberName(entry.toAssigneeId, memberLookup);
+			const fromName = resolveMemberName(entry.fromAssigneeId, memberLookup);
+			if (!entry.toAssigneeId) {
+				return (
+					<p className="text-muted-foreground text-sm sm:text-base">
+						unassigned{" "}
+						<span className="font-medium text-foreground">{fromName}</span>
+					</p>
+				);
+			}
+			if (!entry.fromAssigneeId) {
+				return (
+					<p className="text-muted-foreground text-sm sm:text-base">
+						assigned this to{" "}
+						<span className="font-medium text-foreground">{toName}</span>
+					</p>
+				);
+			}
 			return (
-				<p className="text-muted-foreground text-sm">
-					assigned this to{" "}
-					<span className="font-medium text-foreground">
-						{resolveMemberName(entry.toAssigneeId, memberLookup)}
-					</span>
+				<p className="text-muted-foreground text-sm sm:text-base">
+					reassigned this from{" "}
+					<span className="font-medium text-foreground">{fromName}</span> to{" "}
+					<span className="font-medium text-foreground">{toName}</span>
+				</p>
+			);
+		}
+
+		case "priority_change": {
+			const priorityLabels: Record<string, string> = {
+				"0": "Urgent",
+				"1": "High",
+				"2": "Medium",
+				"3": "Low",
+				"4": "None",
+			};
+			const fromPriority = priorityLabels[entry.fromValue ?? "4"] ?? "None";
+			const toPriority = priorityLabels[entry.toValue ?? "4"] ?? "None";
+			return (
+				<p className="text-muted-foreground text-sm sm:text-base">
+					changed priority from{" "}
+					<span className="font-medium text-foreground">{fromPriority}</span> to{" "}
+					<span className="font-medium text-primary">{toPriority}</span>
+				</p>
+			);
+		}
+
+		case "approval":
+			return (
+				<div className="space-y-1">
+					<p className="text-muted-foreground text-sm sm:text-base">
+						<span className="font-medium text-emerald-600">approved</span> this
+						request
+					</p>
+					{entry.content && (
+						<p className="text-muted-foreground text-sm italic">
+							&ldquo;{entry.content}&rdquo;
+						</p>
+					)}
+				</div>
+			);
+
+		case "rejection":
+			return (
+				<div className="space-y-1">
+					<p className="text-muted-foreground text-sm sm:text-base">
+						<span className="font-medium text-destructive">rejected</span> this
+						request
+					</p>
+					{entry.content && (
+						<p className="text-muted-foreground text-sm italic">
+							&ldquo;{entry.content}&rdquo;
+						</p>
+					)}
+				</div>
+			);
+
+		case "archive":
+			return (
+				<p className="text-muted-foreground text-sm sm:text-base">
+					<span className="font-medium text-foreground">archived</span> this
+					item
+				</p>
+			);
+
+		case "restore":
+			return (
+				<p className="text-muted-foreground text-sm sm:text-base">
+					<span className="font-medium text-foreground">restored</span> this
+					item
 				</p>
 			);
 
 		default:
 			return (
-				<p className="text-muted-foreground text-sm italic">
+				<p className="text-muted-foreground text-sm italic sm:text-base">
 					Unknown activity type
 				</p>
 			);
@@ -115,14 +205,14 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 	const content = renderActivityContent(entry, statusLookup, memberLookup);
 
 	return (
-		<div className="relative flex gap-3">
+		<div className="relative flex gap-3 sm:gap-4">
 			{/* Vertical connector line */}
 			{!isLastEntry && (
-				<div className="absolute top-8 bottom-0 left-4 w-px bg-border" />
+				<div className="absolute top-9 bottom-0 left-4 w-px bg-border sm:top-10 sm:left-5" />
 			)}
 
 			{/* Author avatar */}
-			<div className="center relative z-10 flex size-8 shrink-0 rounded-full bg-muted ring-2 ring-background">
+			<div className="center relative z-10 flex size-8 shrink-0 rounded-full bg-muted ring-2 ring-background sm:size-10">
 				{authorAvatar ? (
 					<img
 						src={authorAvatar}
@@ -130,23 +220,25 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 						className="size-full rounded-full object-cover"
 					/>
 				) : (
-					<span className="font-bold text-[10px]">
+					<span className="font-bold text-[10px] sm:text-xs">
 						{extractNameInitials(authorName)}
 					</span>
 				)}
 			</div>
 
 			{/* Entry content */}
-			<div className="flex-1 pb-4">
-				<div className="mb-1 flex items-center gap-2">
-					<span className="font-semibold text-sm">{authorName}</span>
-					<span className="text-muted-foreground text-xs">
+			<div className="flex-1 pb-5 sm:pb-6">
+				<div className="mb-1.5 flex flex-wrap items-center gap-1.5 sm:gap-2">
+					<span className="font-semibold text-sm sm:text-base">
+						{authorName}
+					</span>
+					<span className="text-muted-foreground text-xs sm:text-sm">
 						{formatActivityTimestamp(entry.createdAt)}
 					</span>
 				</div>
 				<div
 					className={cn(
-						"rounded-md border bg-muted/20 px-3 py-2",
+						"rounded-lg border bg-muted/20 px-3 py-2.5 sm:px-4 sm:py-3",
 						entry.type === "comment" && "bg-background shadow-sm",
 					)}
 				>
@@ -155,7 +247,7 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 				{entry.type === "comment" && commentAttachments.length > 0 && (
 					<AttachmentPreviewList
 						compact
-						className="mt-2"
+						className="mt-2 sm:mt-3"
 						attachments={commentAttachments.map((attachment) => ({
 							id: attachment.id,
 							fileName: attachment.fileName,
@@ -203,12 +295,19 @@ export function MatterActivityTimeline({
 
 	if (timelineEntries.length === 0) {
 		return (
-			<p className="text-muted-foreground text-sm italic">No activity yet</p>
+			<div className="rounded-lg border border-dashed bg-muted/20 py-8 text-center sm:py-10">
+				<p className="text-muted-foreground text-sm italic sm:text-base">
+					No activity yet
+				</p>
+				<p className="mt-1 text-muted-foreground/70 text-xs sm:text-sm">
+					Be the first to add a comment
+				</p>
+			</div>
 		);
 	}
 
 	return (
-		<div className="space-y-4">
+		<div className="space-y-5 sm:space-y-6">
 			{timelineEntries.map((entry, index) => (
 				<ActivityEntryItem
 					key={entry.id}

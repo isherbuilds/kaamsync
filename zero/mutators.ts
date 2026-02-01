@@ -183,7 +183,11 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
+				const { matter, canModify } = await checkMatterModifyAccess(
+					tx,
+					ctx,
+					args.id,
+				);
 				if (!canModify) {
 					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 				}
@@ -192,6 +196,20 @@ export const mutators = defineMutators({
 					...args,
 					updatedAt: now,
 				});
+
+				if (args.priority !== undefined && args.priority !== matter.priority) {
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "priority_change",
+						fromValue: matter.priority?.toString() ?? "4",
+						toValue: args.priority.toString(),
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
+				}
 			},
 		),
 

@@ -94,7 +94,6 @@ export const CreateMatterDialog = memo(
 			dialogAccentClass,
 			submitLabel,
 			submittingLabel,
-			Icon,
 			titlePlaceholder,
 			descriptionPlaceholder,
 			dialogDescription,
@@ -242,45 +241,53 @@ export const CreateMatterDialog = memo(
 						</Button>
 					)}
 				</DialogTrigger>
-				<DialogContent className="max-w-3xl overflow-hidden p-0 focus:outline-none">
+				<DialogContent className="max-w-2xl overflow-hidden p-0 focus:outline-none">
 					<DialogTitle className="sr-only">{dialogTitle}</DialogTitle>
 					<DialogDescription className="sr-only">
 						{dialogDescription}
 					</DialogDescription>
 
-					<form {...getFormProps(form)} className="v-stack bg-background">
-						<div className="space-y-4 p-6">
-							<div
-								className={`flex items-center gap-2 font-bold text-xs uppercase tracking-tight ${dialogAccentClass}`}
-							>
-								<Icon className="size-3.5" /> {teamCode} / {dialogTitle}
+					<form {...getFormProps(form)} className="flex flex-col bg-background">
+						<div className="flex items-center gap-2 border-b px-4 py-3 sm:px-6">
+							<div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+								<span className="font-medium">{teamCode}</span>
+								<span>/</span>
+								<span className={dialogAccentClass}>{dialogTitle}</span>
+							</div>
+						</div>
+
+						<div className="flex-1 space-y-4 p-4 sm:p-6">
+							<div className="space-y-1">
+								<input
+									{...getConformInputProps(fields.title, { type: "text" })}
+									key={fields.title.key}
+									autoFocus
+									autoComplete="off"
+									placeholder={titlePlaceholder}
+									className="w-full bg-transparent font-semibold text-lg leading-tight outline-none placeholder:text-muted-foreground/40 sm:text-xl"
+								/>
+								{fields.title.errors && (
+									<p className="font-medium text-destructive text-xs">
+										{fields.title.errors}
+									</p>
+								)}
 							</div>
 
-							<input
-								{...getConformInputProps(fields.title, { type: "text" })}
-								key={fields.title.key}
-								autoFocus
-								autoComplete="off"
-								placeholder={titlePlaceholder}
-								className="w-full bg-transparent font-semibold text-xl outline-none placeholder:text-muted-foreground/30"
-							/>
-							{fields.title.errors && (
-								<p className="font-medium text-destructive text-xs">
-									{fields.title.errors}
-								</p>
-							)}
-
-							<textarea
-								{...getConformInputProps(fields.description, { type: "text" })}
-								key={fields.description.key}
-								placeholder={descriptionPlaceholder}
-								className="min-h-32 w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground/30"
-							/>
-							{fields.description.errors && (
-								<p className="font-medium text-destructive text-xs">
-									{fields.description.errors}
-								</p>
-							)}
+							<div className="space-y-1">
+								<textarea
+									{...getConformInputProps(fields.description, {
+										type: "text",
+									})}
+									key={fields.description.key}
+									placeholder={descriptionPlaceholder}
+									className="min-h-[120px] w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/40 sm:min-h-[140px] sm:text-base"
+								/>
+								{fields.description.errors && (
+									<p className="font-medium text-destructive text-xs">
+										{fields.description.errors}
+									</p>
+								)}
+							</div>
 
 							<AttachmentUpload
 								maxFiles={normalizedMaxFiles}
@@ -291,8 +298,8 @@ export const CreateMatterDialog = memo(
 							/>
 						</div>
 
-						<div className="v-stack gap-3 border-t bg-muted/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-							<div className="flex flex-wrap items-center gap-1">
+						<div className="flex items-center justify-between gap-4 border-t bg-muted/30 px-4 py-3 sm:px-6">
+							<div className="flex flex-wrap items-center gap-2">
 								{!isRequest && (
 									<StatusSelect
 										name={fields.statusId.name}
@@ -302,7 +309,7 @@ export const CreateMatterDialog = memo(
 											form.update({ name: fields.statusId.name, value: v })
 										}
 										showLabel
-										className="h-7 border bg-background px-2"
+										className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/50"
 									/>
 								)}
 
@@ -316,7 +323,7 @@ export const CreateMatterDialog = memo(
 										})
 									}
 									showLabel
-									className="h-7 border bg-background px-2"
+									className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/50"
 								/>
 
 								<MemberSelect
@@ -330,31 +337,29 @@ export const CreateMatterDialog = memo(
 										})
 									}
 									showLabel
-									className="h-7 border bg-background px-2"
+									className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/50"
 								/>
 
 								<div className="relative">
 									<input
 										{...getConformInputProps(fields.dueDate, { type: "date" })}
 										key={fields.dueDate.key}
-										className="h-7 rounded border bg-background px-2 text-muted-foreground text-xs outline-none hover:bg-muted focus:ring-1 focus:ring-ring"
+										className="h-7 rounded-md border bg-background px-2 text-muted-foreground text-xs shadow-sm outline-none hover:bg-muted/50 focus:ring-1 focus:ring-ring"
 									/>
 								</div>
 							</div>
 
-							<div className="flex items-center justify-end gap-3">
-								<Button
-									type="submit"
-									size="sm"
-									className={cn(
-										"h-8 px-4 font-medium",
-										isRequest && "bg-brand-requests hover:bg-brand-requests/90",
-									)}
-									disabled={isCreating}
-								>
-									{isCreating ? submittingLabel : submitLabel}
-								</Button>
-							</div>
+							<Button
+								type="submit"
+								size="sm"
+								className={cn(
+									"h-8 px-5 font-medium shadow-sm",
+									isRequest && "bg-brand-requests hover:bg-brand-requests/90",
+								)}
+								disabled={isCreating}
+							>
+								{isCreating ? submittingLabel : submitLabel}
+							</Button>
 						</div>
 					</form>
 				</DialogContent>

@@ -112,14 +112,13 @@ export default function TeamMembersPage() {
 	};
 
 	return (
-		<>
-			<div className="flex items-center justify-between">
-				<div>
-					<h1 className="font-semibold text-lg md:text-2xl">
+		<div className="v-stack gap-6">
+			<div className="flex items-start justify-between gap-4 sm:items-center">
+				<div className="space-y-1">
+					<h1 className="font-semibold text-lg tracking-tight md:text-xl">
 						{team?.name} Members
 					</h1>
-
-					<p className="hidden text-muted-foreground text-xs md:block">
+					<p className="text-muted-foreground text-xs leading-relaxed md:text-sm">
 						Manage members who have access to this team.
 					</p>
 				</div>
@@ -127,8 +126,10 @@ export default function TeamMembersPage() {
 				{isManager && (
 					<Dialog open={open} onOpenChange={setOpen}>
 						<DialogTrigger asChild>
-							<Button size="sm">
-								<UserPlus className="size-4" /> Add Member
+							<Button size="sm" className="shrink-0">
+								<UserPlus className="mr-1.5 size-4" />
+								<span className="hidden sm:inline">Add Member</span>
+								<span className="sm:hidden">Add</span>
 							</Button>
 						</DialogTrigger>
 						<DialogContent>
@@ -177,17 +178,19 @@ export default function TeamMembersPage() {
 				)}
 			</div>
 
-			<br />
-
-			<section className="w-full flex-1 space-y-4 rounded-xl border">
-				<div className="divide-y divide-border/50">
+			<section className="w-full flex-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm ring-1 ring-black/5 dark:ring-white/5">
+				<div className="divide-y divide-border/40">
 					{memberships.map((m) => (
 						<div
 							key={m.id}
-							className="group flex items-center justify-between p-4 transition-colors hover:bg-muted/20"
+							className="group flex items-center justify-between p-4 transition-all duration-200 hover:bg-muted/40"
 						>
 							<div className="flex flex-1 items-center gap-3 overflow-hidden">
-								<CustomAvatar avatar={m.user?.image} name={m.user?.name} />
+								<CustomAvatar
+									avatar={m.user?.image}
+									name={m.user?.name}
+									className="ring-2 ring-background"
+								/>
 								<div className="truncate">
 									<p className="truncate font-medium text-sm">{m.user?.name}</p>
 									<p className="truncate text-muted-foreground text-xs">
@@ -196,10 +199,10 @@ export default function TeamMembersPage() {
 								</div>
 							</div>
 
-							<div className="flex items-center gap-4">
+							<div className="flex items-center gap-3">
 								<Badge
-									variant="secondary"
-									className="h-5 border-transparent bg-muted/50 px-2 font-normal text-[10px] text-muted-foreground uppercase"
+									variant="outline"
+									className="h-6 border-border/50 bg-muted/50 px-2 font-medium text-[11px] text-muted-foreground uppercase"
 								>
 									{m.role}
 								</Badge>
@@ -207,7 +210,11 @@ export default function TeamMembersPage() {
 								{isManager && m.userId !== authSession.user.id && (
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<Button variant="ghost" size="icon" className="size-6">
+											<Button
+												variant="ghost"
+												size="icon"
+												className="size-8 opacity-60 transition-opacity group-hover:opacity-100"
+											>
 												<MoreVertical className="size-4" />
 											</Button>
 										</DropdownMenuTrigger>
@@ -231,7 +238,7 @@ export default function TeamMembersPage() {
 											))}
 											<DropdownMenuSeparator />
 											<DropdownMenuItem
-												className="text-destructive"
+												className="text-destructive focus:bg-destructive/10 focus:text-destructive"
 												onClick={() =>
 													handleRemove({
 														userId: m.userId,
@@ -249,7 +256,7 @@ export default function TeamMembersPage() {
 					))}
 				</div>
 			</section>
-		</>
+		</div>
 	);
 }
 
@@ -257,12 +264,25 @@ export function ErrorBoundary() {
 	const error = useRouteError();
 
 	return (
-		<div className="center flex h-full flex-col gap-4 p-8">
-			<h2 className="font-semibold text-lg">Team Members Error</h2>
-			<p className="text-muted-foreground text-sm">
-				{error instanceof Error ? error.message : "Failed to load team members"}
-			</p>
-			<Link to="." className="text-primary hover:underline" prefetch="intent">
+		<div className="center h-full flex-col gap-4 p-8">
+			<div className="rounded-full bg-destructive/10 p-3 ring-1 ring-destructive/20">
+				<Trash2 className="size-6 text-destructive" />
+			</div>
+			<div className="space-y-1 text-center">
+				<h2 className="font-semibold text-lg tracking-tight">
+					Team Members Error
+				</h2>
+				<p className="text-muted-foreground text-sm">
+					{error instanceof Error
+						? error.message
+						: "Failed to load team members"}
+				</p>
+			</div>
+			<Link
+				to="."
+				className="font-medium text-primary text-sm hover:underline"
+				prefetch="intent"
+			>
 				Try again
 			</Link>
 		</div>

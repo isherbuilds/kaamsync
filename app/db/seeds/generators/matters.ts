@@ -31,6 +31,57 @@ type Matter = typeof mattersTable.$inferInsert;
 type MatterLabel = typeof matterLabelsTable.$inferInsert;
 type Timeline = typeof timelinesTable.$inferInsert;
 
+const demoMatters = [
+	{
+		title: "AC Unit Repair - Main Office",
+		type: "request",
+		priority: Priority.HIGH,
+		statusIndex: 6,
+		assigneeIndex: 0,
+		authorIndex: 1,
+	},
+	{
+		title: "Fix leaking pipe in Hall B",
+		type: "request",
+		priority: Priority.MEDIUM,
+		statusIndex: 7,
+		assigneeIndex: 2,
+		authorIndex: 0,
+	},
+	{
+		title: "Stationery supplies for Accounts",
+		type: "request",
+		priority: Priority.LOW,
+		statusIndex: 8,
+		assigneeIndex: 3,
+		authorIndex: 2,
+	},
+	{
+		title: "Monthly financial reports",
+		type: "task",
+		priority: Priority.HIGH,
+		statusIndex: 5,
+		assigneeIndex: 4,
+		authorIndex: 3,
+	},
+	{
+		title: "New chairs for conference room",
+		type: "request",
+		priority: Priority.MEDIUM,
+		statusIndex: 6,
+		assigneeIndex: 5,
+		authorIndex: 4,
+	},
+	{
+		title: "Transport for field visit tomorrow",
+		type: "request",
+		priority: Priority.HIGH,
+		statusIndex: 6,
+		assigneeIndex: 6,
+		authorIndex: 5,
+	},
+];
+
 export async function createMatters(team: TeamData, count: number) {
 	const now = new Date();
 	const oneYearAgo = new Date(
@@ -47,10 +98,7 @@ export async function createMatters(team: TeamData, count: number) {
 
 	let currentShortId = (maxResult?.maxShortId ?? 0) + 1;
 
-	// Assume first 6 are task statuses, rest request statuses (based on previous logic, but let's be robuster)
-	// We don't have the status objects here, just IDs.
-	// Optimization: We know from organization generator that we pushed task statuses then request statuses.
-	// 6 task statuses, 3 request statuses.
+	// Status structure: first 6 are task statuses, last 3 are request statuses
 	const taskStatuses = team.statusIds.slice(0, 6);
 	const requestStatuses = team.statusIds.slice(6);
 
@@ -60,7 +108,109 @@ export async function createMatters(team: TeamData, count: number) {
 
 	console.log(`    Creating ${count} matters for team ${team.code}...`);
 
-	for (let i = 0; i < count; i++) {
+	// Create demo matters first (for first 6 matters if available)
+	const demoCount = Math.min(6, count, demoMatters.length);
+	for (let i = 0; i < demoCount; i++) {
+		const demo = demoMatters[i];
+		const isRequest = demo.type === matterType.request;
+
+		// Map status index to actual status ID
+		let selectedStatusId: string;
+		if (isRequest) {
+			// For requests, use request statuses (indices 6-8 map to 0-2 in requestStatuses)
+			const reqIndex = Math.min(
+				demo.statusIndex - 6,
+				requestStatuses.length - 1,
+			);
+			selectedStatusId =
+				requestStatuses[Math.max(0, reqIndex)] ?? requestStatuses[0];
+		} else {
+			// For tasks, use task statuses
+			selectedStatusId =
+				taskStatuses[Math.min(demo.statusIndex, taskStatuses.length - 1)] ??
+				taskStatuses[0];
+		}
+
+		const author = team.memberIds[demo.authorIndex % team.memberIds.length];
+		const assignee = team.memberIds[demo.assigneeIndex % team.memberIds.length];
+
+		const createdAt = randomDate(oneYearAgo, now);
+
+		// Approval logic for requests
+		let approvedBy = null,
+			approvedAt = null,
+			rejectionReason = null;
+		if (isRequest && demo.statusIndex === 8) {
+			// Approved status
+			approvedBy = team.memberIds[0]; // Owner approves
+			approvedAt = randomDate(createdAt, now);
+		}
+
+		const matterId = uuid();
+		const description = `Sample ${demo.type}: ${demo.title}. Created for demonstration purposes.`;
+
+		mattersBatch.push({
+			id: matterId,
+			shortID: currentShortId++,
+			orgId: team.orgId,
+			teamId: team.id,
+			teamCode: team.code,
+			authorId: author,
+			assigneeId: assignee,
+			statusId: selectedStatusId,
+			title: demo.title,
+			description,
+			type: demo.type,
+			priority: demo.priority,
+			source: "seed",
+			approvedBy,
+			approvedAt,
+			rejectionReason,
+			dueDate:
+				Math.random() < 0.7
+					? randomDate(
+							createdAt,
+							new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+						)
+					: null,
+			startDate: Math.random() < 0.5 ? randomDate(createdAt, now) : null,
+			completedAt: demo.statusIndex === 5 ? randomDate(createdAt, now) : null,
+			estimatedHours:
+				Math.random() < 0.6 ? Math.floor(Math.random() * 20) + 1 : null,
+			actualHours: null,
+			archived: false,
+			archivedAt: null,
+			archivedBy: null,
+			createdAt,
+			updatedAt: randomDate(createdAt, now),
+			deletedAt: null,
+		});
+
+		// Add timeline event
+		timelinesBatch.push({
+			id: uuid(),
+			matterId,
+			userId: author,
+			type: timelineEventType.created,
+			content: `Created this ${demo.type}`,
+			fromStatusId: null,
+			toStatusId: selectedStatusId,
+			fromAssigneeId: null,
+			toAssigneeId: assignee,
+			labelId: null,
+			fromValue: null,
+			toValue: null,
+			mentions: null,
+			edited: false,
+			editedAt: null,
+			createdAt,
+			updatedAt: createdAt,
+			deletedAt: null,
+		});
+	}
+
+	// Create remaining matters randomly
+	for (let i = demoCount; i < count; i++) {
 		const isRequestType = Math.random() < 0.3; // 30% requests, 70% tasks
 		const type = isRequestType ? matterType.request : matterType.task;
 
@@ -87,7 +237,7 @@ export async function createMatters(team: TeamData, count: number) {
 
 		const createdAt = randomDate(oneYearAgo, now);
 
-		// Approval logic for requests (managed via statusId now)
+		// Approval logic for requests
 		let approvedBy = null,
 			approvedAt = null,
 			rejectionReason = null;
@@ -108,7 +258,7 @@ export async function createMatters(team: TeamData, count: number) {
 		}
 
 		const matterId = uuid();
-		const description = faker.lorem.paragraph(); // Longer description
+		const description = faker.lorem.paragraph();
 
 		mattersBatch.push({
 			id: matterId,
@@ -135,7 +285,7 @@ export async function createMatters(team: TeamData, count: number) {
 						)
 					: null,
 			startDate: Math.random() < 0.3 ? randomDate(createdAt, now) : null,
-			completedAt: null, // Simplified
+			completedAt: null,
 			estimatedHours:
 				Math.random() < 0.6 ? Math.floor(Math.random() * 40) + 1 : null,
 			actualHours: null,

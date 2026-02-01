@@ -116,7 +116,6 @@ export const auth = betterAuth({
 			enabled: true,
 			maxAge: 5 * 60, // 5 minutes - balance between DB hits and security
 			strategy: "compact",
-			refreshCache: true, // Enable stateless refresh
 		},
 	},
 	account: {
