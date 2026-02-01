@@ -89,13 +89,13 @@ export default defineConfig({
 			"@rocicorp/zero/react",
 		],
 		// Explicitly exclude server-only deps
-		exclude: [
-			"@aws-sdk/client-s3",
-			"@aws-sdk/s3-request-presigner",
-			"@react-email/components",
-			"web-push",
-			"dodopayments",
-			"pg",
-		],
+		// exclude: [
+		// 	"@aws-sdk/client-s3",
+		// 	"@aws-sdk/s3-request-presigner",
+		// 	"@react-email/components",
+		// 	"web-push",
+		// 	"dodopayments",
+		// 	"pg",
+		// ],
 	},
 });

@@ -252,7 +252,7 @@ const emojisTable = {
     },
     creatorId: {
       type: "string",
-      optional: true,
+      optional: false,
       customType: null as unknown as string,
       serverName: "creator_id",
     },

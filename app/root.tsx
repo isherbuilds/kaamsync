@@ -117,7 +117,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				)} */}
 				<Links />
 			</head>
-			<body className="h-dvh overflow-hidden">
+			<body className="h-dvh overflow-auto">
 				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />

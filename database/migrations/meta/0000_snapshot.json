@@ -1,5 +1,5 @@
 {
-  "id": "dffd2784-268f-444d-8ee5-d0267c911756",
+  "id": "ca285901-3273-4c8b-b84c-3dcdbf4ac47a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1100,7 +1100,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1148,7 +1148,7 @@
           "name": "creator_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "created": {
           "name": "created",

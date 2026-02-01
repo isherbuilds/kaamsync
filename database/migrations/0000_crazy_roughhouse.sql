@@ -116,7 +116,7 @@ CREATE TABLE "emojis" (
 	"annotation" varchar(100),
 	"subject_id" text NOT NULL,
 	"subject_type" varchar(50) NOT NULL,
-	"creator_id" text,
+	"creator_id" text NOT NULL,
 	"created" double precision NOT NULL,
 	CONSTRAINT "emojis_subject_creator_value_unique" UNIQUE("subject_id","creator_id","value")
 );
@@ -328,7 +328,7 @@ ALTER TABLE "sessions_table" ADD CONSTRAINT "sessions_table_user_id_users_table_
 ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_organization_id_organizations_table_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "comments" ADD CONSTRAINT "comments_org_id_organizations_table_id_fk" FOREIGN KEY ("org_id") REFERENCES "public"."organizations_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "comments" ADD CONSTRAINT "comments_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "comments" ADD CONSTRAINT "comments_creator_id_users_table_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users_table"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "comments" ADD CONSTRAINT "comments_creator_id_users_table_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "emojis" ADD CONSTRAINT "emojis_creator_id_users_table_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matter_notifications" ADD CONSTRAINT "matter_notifications_user_id_users_table_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users_table"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "matter_notifications" ADD CONSTRAINT "matter_notifications_matter_id_matters_id_fk" FOREIGN KEY ("matter_id") REFERENCES "public"."matters"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

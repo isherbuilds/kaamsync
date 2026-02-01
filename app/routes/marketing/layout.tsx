@@ -163,7 +163,7 @@ export default function MarketingLayout() {
 				</div>
 			</header>
 
-			<main className="py-14">
+			<main className="h-full overflow-y-auto">
 				<Outlet />
 			</main>
 
