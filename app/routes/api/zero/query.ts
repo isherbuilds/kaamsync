@@ -1,57 +1,85 @@
 import { mustGetQuery } from "@rocicorp/zero";
 import { handleQueryRequest } from "@rocicorp/zero/server";
-import { data } from "react-router";
 import { queries } from "zero/queries";
 import { schema } from "zero/schema";
 import { getServerSession } from "~/lib/auth/server";
-import {
-	assertAuthenticated,
-	ErrorFactory,
-	withErrorHandler,
-} from "~/lib/infra/errors";
+import { assertAuthenticated } from "~/lib/infra/errors";
 import { getActiveOrganizationId } from "~/lib/organization/service";
 
-export const action = withErrorHandler(
-	async ({ request }: { request: Request }) => {
-		const authSession = await getServerSession(request);
+import type { Route } from "./+types/query.ts";
 
-		// Use standardized authentication check
-		assertAuthenticated(
-			authSession?.user,
-			"Authentication required for Zero queries",
-		);
+export async function loader({ request }: Route.LoaderArgs) {
+	console.log("query loader called");
 
-		let activeOrgId = authSession.session.activeOrganizationId;
+	const authSession = await getServerSession(request);
 
-		// Get active organization if not in session
-		if (!authSession.session.activeOrganizationId) {
-			activeOrgId = await getActiveOrganizationId(authSession.user.id);
-		}
+	// Use standardized authentication check
+	assertAuthenticated(
+		authSession?.user,
+		"Authentication required for Zero queries",
+	);
 
-		if (!activeOrgId) {
-			throw new Error("No active organization found for user");
-		}
+	let activeOrgId = authSession.session.activeOrganizationId;
 
-		// Build context from session - this is passed to queries automatically
-		const ctx = {
-			userId: authSession.user.id,
-			activeOrganizationId: activeOrgId,
-		};
+	// Get active organization if not in session
+	if (!authSession.session.activeOrganizationId) {
+		activeOrgId = await getActiveOrganizationId(authSession.user.id);
+	}
 
-		try {
-			return data(
-				await handleQueryRequest(
-					(name, args) => {
-						const query = mustGetQuery(queries, name);
-						return query.fn({ ctx, args });
-					},
-					schema,
-					request,
-				),
-			);
-		} catch (error) {
-			console.error("❌ [zero.query] Query execution failed:", error);
-			throw ErrorFactory.internal("Query execution failed");
-		}
-	},
-);
+	if (!activeOrgId) {
+		throw new Error("No active organization found for user");
+	}
+
+	// Build context from session - this is passed to queries automatically
+	const ctx = {
+		userId: authSession.user.id,
+		activeOrganizationId: activeOrgId,
+	};
+
+	return await handleQueryRequest(
+		(name, args) => {
+			const query = mustGetQuery(queries, name);
+			return query.fn({ ctx, args });
+		},
+		schema,
+		request,
+	);
+}
+
+export async function action({ request }: Route.ActionArgs) {
+	console.log("query action called");
+
+	const authSession = await getServerSession(request);
+
+	// Use standardized authentication check
+	assertAuthenticated(
+		authSession?.user,
+		"Authentication required for Zero queries",
+	);
+
+	let activeOrgId = authSession.session.activeOrganizationId;
+
+	// Get active organization if not in session
+	if (!authSession.session.activeOrganizationId) {
+		activeOrgId = await getActiveOrganizationId(authSession.user.id);
+	}
+
+	if (!activeOrgId) {
+		throw new Error("No active organization found for user");
+	}
+
+	// Build context from session - this is passed to queries automatically
+	const ctx = {
+		userId: authSession.user.id,
+		activeOrganizationId: activeOrgId,
+	};
+
+	return await handleQueryRequest(
+		(name, args) => {
+			const query = mustGetQuery(queries, name);
+			return query.fn({ ctx, args });
+		},
+		schema,
+		request,
+	);
+}
