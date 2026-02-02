@@ -8,7 +8,6 @@ COPY ./package.json package-lock.json /app/
 WORKDIR /app
 RUN npm ci --omit=dev
 
-
 FROM node:24-alpine AS build-env
 COPY . /app/
 COPY --from=development-dependencies-env /app/node_modules /app/node_modules
