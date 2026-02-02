@@ -25,7 +25,7 @@ export function BasicLayout({
 				size="sm"
 				variant="ghost"
 			>
-				<Link reloadDocument to="/">
+				<Link to="/">
 					<ArrowLeftIcon className="size-4" /> Home
 				</Link>
 			</Button>

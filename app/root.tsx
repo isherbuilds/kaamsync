@@ -14,7 +14,6 @@ import "./app.css";
 import { getToast } from "remix-toast";
 import { ClientOnly } from "remix-utils/client-only";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
-import { Spinner } from "./components/ui/spinner.js";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -134,14 +133,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				</ClientOnly>
 			</body>
 		</html>
-	);
-}
-
-export function HydrateFallback() {
-	return (
-		<div className="center flex h-dvh w-full text-foreground">
-			<Spinner className="size-10 text-primary" />
-		</div>
 	);
 }
 

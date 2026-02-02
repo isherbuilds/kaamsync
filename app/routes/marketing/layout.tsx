@@ -79,7 +79,7 @@ export default function MarketingLayout() {
 					</div>
 
 					{/* Desktop nav */}
-					<div className="hidden gap-x-6 md:flex">
+					<div className="hidden gap-x-6 lg:flex">
 						{navLinks.map(({ to, label }) => (
 							<Link
 								key={to}
@@ -118,7 +118,7 @@ export default function MarketingLayout() {
 
 				{/* Mobile menu panel */}
 				<div
-					className={`fixed inset-0 z-40 bg-background transition-opacity duration-200 ease-in-out md:hidden ${
+					className={`fixed inset-0 z-40 bg-background transition-opacity duration-200 ease-in-out lg:hidden ${
 						open
 							? "pointer-events-auto opacity-100"
 							: "pointer-events-none opacity-0"

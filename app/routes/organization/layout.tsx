@@ -23,7 +23,7 @@ import { useServiceWorker } from "~/hooks/use-service-worker";
 import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
 import { getAuthSessionSWR } from "~/lib/auth/offline";
-import { getServerSession } from "~/lib/auth/server.js";
+import { getServerSession } from "~/lib/auth/server";
 import { getSubscriptionSWR } from "~/lib/billing/offline";
 import { fetchOrgSubscription } from "~/lib/billing/service";
 import { requireAuth } from "~/middlewares/auth-guard";
@@ -51,6 +51,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 		orgSlug: params.orgSlug,
 		authSession,
 	});
+}
+
+export function HydrateFallback() {
+	return (
+		<div className="center flex h-dvh w-full text-foreground">
+			<Spinner className="size-10 text-primary" />
+		</div>
+	);
 }
 
 // Track org state to avoid redundant server calls

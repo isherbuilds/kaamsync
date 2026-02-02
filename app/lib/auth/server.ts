@@ -40,7 +40,7 @@ import {
 	parseWebhookAddons,
 	resolveProductPlan,
 } from "~/lib/billing/service";
-import { env, isProduction } from "~/lib/infra/env";
+import { env, isDevelopment, isProduction } from "~/lib/infra/env";
 import {
 	findSubscriptionId,
 	getActiveOrganizationId,
@@ -60,7 +60,9 @@ export const auth = betterAuth({
 		schema,
 	}),
 
-	// trustedOrigins: ["https://kaamsync.gapple.in", "http://localhost:3000"],
+	trustedOrigins: isDevelopment
+		? ["http://localhost:3000"]
+		: ["https://kaamsync.com", "https://kaamsync.edernel.com"],
 
 	// Handles all /api/auth/* routes automatically
 	rateLimit: {
@@ -91,6 +93,7 @@ export const auth = betterAuth({
 		ipAddress: {
 			ipAddressHeaders: ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"],
 		},
+		useSecureCookies: isProduction,
 	},
 	emailAndPassword: {
 		enabled: true,
@@ -125,7 +128,6 @@ export const auth = betterAuth({
 			trustedProviders: ["google"],
 		},
 		storeStateStrategy: "database",
-		skipStateCookieCheck: true,
 	},
 	databaseHooks: {
 		session: {
