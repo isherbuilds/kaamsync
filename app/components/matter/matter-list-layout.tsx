@@ -74,7 +74,7 @@ const ListHeader = ({
 	isLoading: boolean;
 	Icon: LucideIcon;
 }) => (
-	<div className="flex h-12 items-center justify-between border-b bg-background px-4">
+	<div className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
 		<div className="flex items-center gap-2">
 			<SidebarTrigger className="lg:hidden" />
 			<Icon className={`size-4 ${colors.icon}`} />

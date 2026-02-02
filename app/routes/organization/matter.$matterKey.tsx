@@ -208,7 +208,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 	if (!matter) {
 		return (
 			<div className="flex h-full flex-col bg-background">
-				<header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+				<header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
 					<div className="h-4 w-16 animate-pulse rounded bg-muted" />
 					<div className="h-4 w-24 animate-pulse rounded bg-muted" />
 				</header>
@@ -228,7 +228,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 	return (
 		<div className="@container flex h-full flex-col bg-background">
-			<header className="flex h-12 shrink-0 items-center justify-between border-b px-3 md:px-4">
+			<header className="flex h-14 shrink-0 items-center justify-between border-b px-3 md:px-4">
 				<div className="flex min-w-0 items-center gap-2 text-muted-foreground">
 					<Button
 						variant="ghost"
@@ -385,7 +385,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 				</main>
 
 				{/* Desktop Sidebar */}
-				<aside className="@3xl:block hidden w-72 shrink-0 overflow-y-auto border-l bg-muted/5 p-4">
+				<aside className="@3xl:block hidden w-72 shrink-0 overflow-y-auto border-l bg-muted/10 p-4">
 					<div className="space-y-6">
 						<div className="space-y-2">
 							<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">

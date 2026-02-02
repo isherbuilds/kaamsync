@@ -8,7 +8,7 @@ interface PropertyProps {
 export function PropertyPill({ label, children }: PropertyProps) {
 	return (
 		<div className="flex shrink-0 items-center gap-2 rounded-full border bg-muted/50 px-3 py-1">
-			<span className="font-bold text-[10px] text-muted-foreground uppercase tracking-tight">
+			<span className="font-bold text-muted-foreground text-xs uppercase tracking-tight">
 				{label}
 			</span>
 			{children}
@@ -19,7 +19,7 @@ export function PropertyPill({ label, children }: PropertyProps) {
 export function PropertyRow({ label, children }: PropertyProps) {
 	return (
 		<div className="space-y-1">
-			<span className="ml-1 font-medium text-[11px] text-muted-foreground">
+			<span className="ml-1 font-medium text-muted-foreground text-xs">
 				{label}
 			</span>
 			<div className="flex-1">{children}</div>

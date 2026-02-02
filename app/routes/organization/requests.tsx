@@ -109,7 +109,7 @@ export default function OrganizationRequestsPage() {
 					}
 					className={({ isActive }: { isActive: boolean }) =>
 						cn(
-							"group my-0.5 block rounded-lg border p-4 transition-all duration-200",
+							"group my-0.5 block rounded-lg border p-4 transition-colors duration-200",
 							isActive
 								? "border-brand-requests/40 bg-brand-requests/5"
 								: "border-border bg-background/30 hover:border-brand-requests/20 hover:bg-brand-requests/5",
@@ -125,7 +125,7 @@ export default function OrganizationRequestsPage() {
 							{matter.priority != null && matter.priority !== Priority.NONE && (
 								<span
 									className={cn(
-										"inline-flex items-center rounded px-2 py-0.5 font-semibold text-[10px] uppercase tracking-wider",
+										"inline-flex items-center rounded px-2 py-0.5 font-semibold text-xs uppercase tracking-wider",
 										getPriorityBadgeClass(priority),
 									)}
 								>
@@ -136,7 +136,7 @@ export default function OrganizationRequestsPage() {
 						{matter.status && (
 							<span
 								className={cn(
-									"inline-flex items-center rounded border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wider",
+									"inline-flex items-center rounded border px-2 py-0.5 font-medium text-xs uppercase tracking-wider",
 									matter.status.type === "pending_approval" &&
 										"border-status-pending/30 bg-status-pending/10 text-status-pending",
 									matter.status.type === "rejected" &&
@@ -161,7 +161,7 @@ export default function OrganizationRequestsPage() {
 									name={assignee.usersTable?.name}
 									className="size-6"
 								/>
-								<span className="max-w-[100px] truncate">
+								<span className="max-w-24 truncate">
 									{assignee.usersTable?.name}
 								</span>
 							</div>

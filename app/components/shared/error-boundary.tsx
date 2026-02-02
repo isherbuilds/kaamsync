@@ -24,7 +24,7 @@ function DevErrorDisplay({
 				<p className="break-words text-base text-muted-foreground">{detail}</p>
 			</div>
 			{stack && (
-				<pre className="max-h-96 w-full overflow-x-auto overflow-y-auto rounded-lg bg-destructive/5 p-4 text-destructive text-sm">
+				<pre className="max-h-96 w-full overflow-x-auto overflow-y-auto rounded-lg bg-destructive/10 p-4 text-destructive text-sm">
 					<code>{stack}</code>
 				</pre>
 			)}
@@ -167,7 +167,7 @@ export function RouteErrorBoundary({
 					<h2 className="font-semibold text-lg">{message}</h2>
 					<p className="text-muted-foreground text-sm">{details}</p>
 				</div>
-				<pre className="max-h-48 w-full max-w-md overflow-auto rounded-lg bg-destructive/5 p-3 text-left text-destructive text-xs">
+				<pre className="max-h-48 w-full max-w-md overflow-auto rounded-lg bg-destructive/10 p-3 text-left text-destructive text-xs">
 					<code>{stack}</code>
 				</pre>
 				<Link

@@ -1,4 +1,6 @@
-import { Shield, Target, Zap } from "lucide-react";
+import Shield from "lucide-react/dist/esm/icons/shield";
+import Target from "lucide-react/dist/esm/icons/target";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import {
@@ -7,69 +9,33 @@ import {
 	MarketingHeading,
 } from "~/components/marketing/marketing-layout";
 import { Button } from "~/components/ui/button";
+import { marketingMeta } from "~/lib/seo/marketing-meta";
+import { createOrganizationSchema } from "~/lib/seo/schemas";
 
-const SITE_URL = "https://kaamsync.com";
-
-export const meta: MetaFunction = () => [
-	{
+export const meta: MetaFunction = () =>
+	marketingMeta({
 		title: "About KaamSync | Built for Operations Teams",
-	},
-	{
-		name: "description",
-		content:
+		description:
 			"Built by someone managing 50 people through scattered messages. Now sharing the system that finally worked.",
-	},
-	{
-		tagName: "link",
-		rel: "canonical",
-		href: "https://kaamsync.com/about",
-	},
-	{ property: "og:title", content: "About KaamSync | Our Story" },
-	{
-		property: "og:description",
-		content:
-			"Built by someone who lived the chaos. Now helping teams like yours.",
-	},
-	{ property: "og:type", content: "website" },
-	{ property: "og:url", content: "https://kaamsync.com/about" },
-	{
-		property: "og:image",
-		content: "https://kaamsync.com/static/kaamsync-logo.png",
-	},
-	{ name: "twitter:card", content: "summary_large_image" },
-	{ name: "twitter:title", content: "About KaamSync | Our Story" },
-	{
-		name: "twitter:description",
-		content: "Why we built a tool for operations teams drowning in messages.",
-	},
-];
+		path: "/about",
+		twitterDescription:
+			"Why we built a tool for operations teams drowning in messages.",
+	});
 
-const organizationSchema = {
-	"@context": "https://schema.org",
-	"@type": "Organization",
-	name: "KaamSync",
-	url: SITE_URL,
-	logo: `${SITE_URL}/static/kaamsync-logo.png`,
-	description: "Operations management for teams",
-	foundingDate: "2023",
-	knowsAbout: [
-		"Operations Management",
-		"Team Coordination",
-		"Offline-First Software",
-	],
-};
-
-const structuredData = JSON.stringify(organizationSchema);
+const structuredData = JSON.stringify(createOrganizationSchema());
 
 export default function AboutPage() {
 	return (
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<MarketingContainer className="text-center">
+			<MarketingContainer
+				variant="hero"
+				className="border-border/40 border-b text-center"
+			>
 				<div className="mx-auto max-w-4xl">
 					<MarketingBadge>Our Story</MarketingBadge>
-					<MarketingHeading as="h2" className="mb-8">
+					<MarketingHeading as="h2">
 						Built because nothing else worked.
 						<br />
 						<span className="italic">Shared because you're not alone.</span>
@@ -82,7 +48,7 @@ export default function AboutPage() {
 				</div>
 			</MarketingContainer>
 
-			<section className="border-border/40 border-y bg-muted/20 py-16">
+			<section className="border-border/40 border-b bg-muted/20">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto grid max-w-4xl grid-cols-2 gap-12 text-center md:grid-cols-4">
 						{[
@@ -104,15 +70,13 @@ export default function AboutPage() {
 				</div>
 			</section>
 
-			<MarketingContainer>
+			<MarketingContainer variant="default">
 				<div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-16 lg:grid-cols-2">
 					<div className="sticky top-24">
 						<div className="mb-6 font-mono text-destructive text-xs uppercase tracking-widest">
 							The Breaking Point
 						</div>
-						<MarketingHeading className="mb-6">
-							"Wait, did I approve that?"
-						</MarketingHeading>
+						<MarketingHeading>"Wait, did I approve that?"</MarketingHeading>
 						<p className="text-lg text-muted-foreground">
 							That question. Asked a dozen times a day.
 						</p>
@@ -166,9 +130,7 @@ export default function AboutPage() {
 			<section className="border-border border-t bg-foreground py-24 text-center text-background">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
-						<MarketingHeading className="mb-6">
-							Join the calm side.
-						</MarketingHeading>
+						<MarketingHeading>Join the calm side.</MarketingHeading>
 						<p className="mb-10 text-lg opacity-80">
 							Tired of work disappearing into messages? You're not alone.
 						</p>

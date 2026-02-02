@@ -24,7 +24,7 @@ export function FAQItem({ q, a }: FAQItemProps) {
 				</span>
 				<Plus
 					className={cn(
-						"h-5 w-5 shrink-0 transition-transform duration-300",
+						"size-5 shrink-0 transition-transform duration-300",
 						isOpen && "rotate-45",
 					)}
 				/>

@@ -92,7 +92,7 @@ export default function OrganizationTasksPage() {
 					}
 					className={({ isActive }: { isActive: boolean }) =>
 						cn(
-							"group my-0.5 block rounded-lg border p-4 transition-all duration-200",
+							"group my-0.5 block rounded-lg border p-4 transition-colors duration-200",
 							isActive
 								? "border-brand-tasks/40 bg-brand-tasks/5"
 								: "border-border bg-background/30 hover:border-brand-tasks/20 hover:bg-brand-tasks/5",
@@ -108,7 +108,7 @@ export default function OrganizationTasksPage() {
 							{matter.priority != null && matter.priority !== Priority.NONE && (
 								<span
 									className={cn(
-										"inline-flex items-center rounded px-2 py-0.5 font-semibold text-[10px] uppercase tracking-wider",
+										"inline-flex items-center rounded px-2 py-0.5 font-semibold text-xs uppercase tracking-wider",
 										getPriorityBadgeClass(priority),
 									)}
 								>
@@ -119,7 +119,7 @@ export default function OrganizationTasksPage() {
 						{matter.status && (
 							<span
 								className={cn(
-									"inline-flex items-center gap-1 rounded border px-2 py-0.5 font-medium text-[10px] uppercase tracking-wider",
+									"inline-flex items-center gap-1 rounded border px-2 py-0.5 font-medium text-xs uppercase tracking-wider",
 									STATUS_TYPE_COLORS[statusType],
 									statusType === "not_started" &&
 										"border-status-not-started/30 bg-status-not-started/10 text-status-not-started",
@@ -148,7 +148,7 @@ export default function OrganizationTasksPage() {
 									name={author.usersTable?.name}
 									className="size-6"
 								/>
-								<span className="max-w-[100px] truncate">
+								<span className="max-w-24 truncate">
 									{author.usersTable?.name}
 								</span>
 							</div>

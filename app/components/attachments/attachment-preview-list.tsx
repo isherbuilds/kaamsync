@@ -171,10 +171,10 @@ export function AttachmentPreviewList({
 							type="button"
 							variant="secondary"
 							size="icon"
-							className="absolute -top-3 -right-3 h-8 w-8 rounded-full border-2 border-white bg-white"
+							className="absolute -top-3 -right-3 size-8 rounded-full border-2 border-white bg-white"
 							onClick={() => setSelected(null)}
 						>
-							<XIcon className="h-4 w-4" />
+							<XIcon className="size-4" />
 						</Button>
 					</div>
 				</div>

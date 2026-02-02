@@ -12,55 +12,23 @@ import {
 } from "~/components/marketing/marketing-layout";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { marketingMeta } from "~/lib/seo/marketing-meta";
+import {
+	createFAQPageSchema,
+	createOrganizationSchema,
+	createSoftwareApplicationSchema,
+} from "~/lib/seo/schemas";
 
-const SITE_URL = "https://kaamsync.com";
-
-export const meta: MetaFunction = () => [
-	{
-		title: "KaamSync: Stop Losing Work in Messages | Free for 3 Users",
-	},
-	{
-		name: "description",
-		content:
+export const meta: MetaFunction = () =>
+	marketingMeta({
+		title: "KaamSync | Stop Losing Work in Messages",
+		description:
 			"Every request, approval, and task—in one place. Built for operations teams who manage people. Works offline. Free forever for 3 users.",
-	},
-	{
-		tagName: "link",
-		rel: "canonical",
-		href: "https://kaamsync.com/",
-	},
-	{
-		property: "og:title",
-		content: "KaamSync: Stop Losing Work in Messages",
-	},
-	{
-		property: "og:description",
-		content:
-			"Built for operations teams. Every request tracked. Nothing gets buried.",
-	},
-	{ property: "og:type", content: "website" },
-	{ property: "og:url", content: "https://kaamsync.com/" },
-	{
-		property: "og:image",
-		content: "https://kaamsync.com/static/kaamsync-logo.png",
-	},
-	{ property: "og:site_name", content: "KaamSync" },
-	{ property: "og:locale", content: "en_IN" },
-	{ name: "twitter:card", content: "summary_large_image" },
-	{
-		name: "twitter:title",
-		content: "KaamSync: Operations Management That Works",
-	},
-	{
-		name: "twitter:description",
-		content:
+		path: "/",
+		twitterTitle: "KaamSync: Operations Management That Works",
+		twitterDescription:
 			"Stop losing track of requests. Built for teams that manage people.",
-	},
-	{
-		name: "twitter:image",
-		content: "https://kaamsync.com/static/kaamsync-logo.png",
-	},
-];
+	});
 
 const FAQS = [
 	{
@@ -89,54 +57,10 @@ const FAQS = [
 	},
 ];
 
-const softwareApplicationSchema = {
-	"@context": "https://schema.org",
-	"@type": "SoftwareApplication",
-	name: "KaamSync",
-	applicationCategory: "BusinessApplication",
-	operatingSystem: "Web, iOS, Android",
-	offers: {
-		"@type": "Offer",
-		price: "0",
-		priceCurrency: "USD",
-		description: "Free for up to 3 team members",
-	},
-	description: "Operations management for teams",
-	featureList: [
-		"Offline mode",
-		"Request tracking",
-		"Approval workflows",
-		"Team coordination",
-	].join(", "),
-	softwareVersion: "1.0",
-};
-
-const organizationSchema = {
-	"@context": "https://schema.org",
-	"@type": "Organization",
-	name: "KaamSync",
-	url: SITE_URL,
-	logo: `${SITE_URL}/static/kaamsync-logo.png`,
-	description: "Operations management for teams",
-};
-
-const faqPageSchema = {
-	"@context": "https://schema.org",
-	"@type": "FAQPage",
-	mainEntity: FAQS.map((faq) => ({
-		"@type": "Question",
-		name: faq.q,
-		acceptedAnswer: {
-			"@type": "Answer",
-			text: faq.a,
-		},
-	})),
-};
-
 const structuredData = JSON.stringify([
-	softwareApplicationSchema,
-	organizationSchema,
-	faqPageSchema,
+	createSoftwareApplicationSchema(),
+	createOrganizationSchema(),
+	createFAQPageSchema(FAQS),
 ]);
 
 export default function HomePage() {
@@ -148,7 +72,7 @@ export default function HomePage() {
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
 				<div className="container relative z-10 px-4 text-center md:px-6">
-					<MarketingHeading as="h1" className="mx-auto mb-8 max-w-5xl">
+					<MarketingHeading as="h1" className="mx-auto max-w-5xl">
 						From conversations to <br />
 						<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
 							clear, trackable work.
@@ -190,7 +114,7 @@ export default function HomePage() {
 				<DashboardPreview />
 			</section>
 
-			<section className="bg-foreground py-28 text-background">
+			<section className="bg-foreground py-24 text-background">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="grid items-center gap-16 md:grid-cols-2">
 						<div>
@@ -240,21 +164,19 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			<MarketingContainer>
-				<div className="mb-10">
-					<MarketingHeading>Built for clarity.</MarketingHeading>
-					<div className="mt-4 h-1 w-24 bg-primary" />
+			<MarketingContainer variant="default">
+				<MarketingHeading>Built for clarity.</MarketingHeading>
+				<div className="mt-4 h-1 w-24 bg-primary" />
+				<div className="mt-8">
+					<FeaturesGrid />
 				</div>
-				<FeaturesGrid />
 			</MarketingContainer>
 
 			<section className="border-border/40 border-y bg-muted/20">
-				<MarketingContainer>
+				<MarketingContainer variant="default">
 					<div className="mx-auto max-w-4xl text-center">
-						<MarketingHeading className="mb-16">
-							Three steps to calm
-						</MarketingHeading>
-						<div className="grid gap-8 md:grid-cols-3">
+						<MarketingHeading>Three steps to calm</MarketingHeading>
+						<div className="mt-16 grid gap-8 md:grid-cols-3">
 							{[
 								{
 									step: "1",
@@ -285,8 +207,11 @@ export default function HomePage() {
 				</MarketingContainer>
 			</section>
 
-			<section className="border-border/40 border-y bg-muted/20 py-24">
-				<div className="container mx-auto max-w-3xl px-4 text-center">
+			<MarketingContainer
+				variant="compact"
+				className="border-border/40 border-y bg-muted/20"
+			>
+				<div className="mx-auto max-w-3xl text-center">
 					<MarketingHeading as="h3">
 						Built by someone who lived this.
 					</MarketingHeading>
@@ -305,9 +230,9 @@ export default function HomePage() {
 						<span>Zero missed requests</span>
 					</div>
 				</div>
-			</section>
+			</MarketingContainer>
 
-			<MarketingContainer className="py-32">
+			<MarketingContainer variant="default">
 				<div className="mx-auto max-w-4xl text-center">
 					<Badge
 						variant="outline"
@@ -315,8 +240,8 @@ export default function HomePage() {
 					>
 						FAQ
 					</Badge>
-					<MarketingHeading className="mb-4">Questions?</MarketingHeading>
-					<p className="mb-16 text-muted-foreground">
+					<MarketingHeading>Questions?</MarketingHeading>
+					<p className="mt-6 mb-16 text-muted-foreground">
 						Everything you need to get started.
 					</p>
 					<div className="text-left">
@@ -325,9 +250,9 @@ export default function HomePage() {
 				</div>
 			</MarketingContainer>
 
-			<MarketingContainer className="text-center">
+			<MarketingContainer variant="cta" className="text-center">
 				<div className="mx-auto max-w-4xl">
-					<MarketingHeading as="h2" className="mb-8">
+					<MarketingHeading as="h2">
 						Stop losing work in messages.
 					</MarketingHeading>
 					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">

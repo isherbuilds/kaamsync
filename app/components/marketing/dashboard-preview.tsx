@@ -7,11 +7,11 @@ export function DashboardPreview() {
 					<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
 					<div className="size-3 rounded-full border border-foreground/20 bg-transparent" />
 				</div>
-				<div className="flex-1 text-center font-mono text-[10px] text-muted-foreground uppercase tracking-widest">
+				<div className="flex-1 text-center font-mono text-muted-foreground text-xs uppercase tracking-widest">
 					dashboard • acme operations
 				</div>
 			</div>
-			<div className="grid min-h-[400px] grid-cols-12 bg-muted/5 md:min-h-[600px]">
+			<div className="grid min-h-[400px] grid-cols-12 bg-muted/10 md:min-h-[600px]">
 				{/* Sidebar */}
 				<div className="col-span-2 hidden flex-col gap-4 border-border border-r bg-background p-4 md:flex">
 					<div className="mb-4 flex items-center gap-2 border-border border-b pb-4">
@@ -61,7 +61,7 @@ export function DashboardPreview() {
 								key={stat.id}
 								className="group border border-border bg-background p-4 transition-colors hover:border-primary"
 							>
-								<div className="mb-2 font-mono text-[10px] text-muted-foreground uppercase group-hover:text-primary">
+								<div className="mb-2 font-mono text-muted-foreground text-xs uppercase group-hover:text-primary">
 									{stat.label}
 								</div>
 								<div className="font-bold font-sans text-3xl tracking-tighter">
@@ -74,7 +74,7 @@ export function DashboardPreview() {
 					{/* Matters List */}
 					<div className="border border-border bg-background">
 						{/* List Header */}
-						<div className="grid grid-cols-12 gap-4 border-border border-b bg-muted/30 px-4 py-3 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">
+						<div className="grid grid-cols-12 gap-4 border-border border-b bg-muted/30 px-4 py-3 font-mono text-muted-foreground text-xs uppercase tracking-wider">
 							<div className="col-span-2">ID</div>
 							<div className="col-span-5">Title</div>
 							<div className="col-span-2">Status</div>
@@ -147,7 +147,7 @@ export function DashboardPreview() {
 									<span className="font-mono text-primary text-sm">
 										{matter.id}
 									</span>
-									<span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+									<span className="rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground text-xs">
 										{matter.type}
 									</span>
 								</div>
@@ -161,7 +161,7 @@ export function DashboardPreview() {
 									<span className="text-sm">{matter.status}</span>
 								</div>
 								<div className="col-span-2 flex items-center gap-2">
-									<div className="center flex size-6 rounded-full bg-primary/10 font-bold text-[10px] text-primary">
+									<div className="center flex size-6 rounded-full bg-primary/10 font-bold text-primary text-xs">
 										{matter.assignee.charAt(0)}
 									</div>
 									<span className="text-muted-foreground text-sm">

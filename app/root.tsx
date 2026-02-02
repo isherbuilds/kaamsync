@@ -8,12 +8,11 @@ import {
 	ScrollRestoration,
 	type ShouldRevalidateFunctionArgs,
 } from "react-router";
-
-import type { Route } from "./+types/root";
 import "./app.css";
 import { getToast } from "remix-toast";
 import { ClientOnly } from "remix-utils/client-only";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
+import type { Route } from "./+types/root";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -26,15 +25,25 @@ const Toaster = lazy(() =>
 );
 
 export const links: Route.LinksFunction = () => [
-	{ rel: "preconnect", href: "https://fonts.googleapis.com" },
+	{
+		rel: "preconnect",
+		href: "https://fonts.googleapis.com",
+		crossOrigin: "anonymous",
+	},
 	{
 		rel: "preconnect",
 		href: "https://fonts.gstatic.com",
 		crossOrigin: "anonymous",
 	},
 	{
-		rel: "stylesheet",
-		href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap",
+		rel: "preconnect",
+		href: "https://zero.kaamsync.com",
+	},
+	{
+		rel: "icon",
+		type: "image/png",
+		href: "/favicon-32x32.png",
+		sizes: "32x32",
 	},
 	{
 		rel: "icon",
@@ -64,7 +73,7 @@ export const links: Route.LinksFunction = () => [
 
 export const meta: Route.MetaFunction = () => [
 	{
-		title: "KaamSync - Organize Your Work Seamlessly",
+		title: "KaamSync | Organize Your Work Seamlessly",
 	},
 	{
 		name: "description",
@@ -103,23 +112,32 @@ export function Layout({ children }: { children: React.ReactNode }) {
 			<head>
 				<meta charSet="utf-8" />
 				<meta
-					content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+					content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
 					name="viewport"
 				/>
-				<ColorSchemeScript nonce={nonce} />
 				<Meta />
+				<link
+					rel="preload"
+					as="style"
+					href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+				/>
+				<link
+					rel="stylesheet"
+					href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
+				/>
 				{/* {import.meta.env.DEV && (
 					<script
-						crossOrigin="anonymous"
-						src="//unpkg.com/react-scan/dist/auto.global"
+					crossOrigin="anonymous"
+					src="//unpkg.com/react-scan/dist/auto.global"
 					/>
-				)} */}
+					)} */}
 				<Links />
+				<ColorSchemeScript nonce={nonce} />
 			</head>
 			<body className="h-dvh overflow-auto">
-				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />
+				{children}
 				<ClientOnly>
 					{() => (
 						<Suspense fallback={null}>

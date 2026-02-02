@@ -230,7 +230,7 @@ export default function OrgMembersPage() {
 							return (
 								<div
 									key={m.id}
-									className="group flex items-center justify-between overflow-hidden p-4 transition-all duration-200 hover:bg-muted/40"
+									className="group flex items-center justify-between overflow-hidden p-4 transition-colors duration-200 hover:bg-muted/40"
 								>
 									{/* Left: Avatar + Info */}
 									<div className="flex flex-1 items-center gap-3 overflow-hidden">
@@ -261,7 +261,7 @@ export default function OrgMembersPage() {
 									<div className="ml-4 flex items-center gap-2">
 										<Badge
 											variant="outline"
-											className="hidden h-6 border-border/50 bg-muted/50 px-2 font-medium text-[11px] text-muted-foreground capitalize sm:flex"
+											className="hidden h-6 border-border/40 bg-muted/50 px-2 font-medium text-muted-foreground text-xs capitalize sm:flex"
 										>
 											{m.role === "admin" || m.role === "owner" ? (
 												<ShieldCheck className="mr-1 size-3" />
@@ -318,10 +318,10 @@ export default function OrgMembersPage() {
 						{invites?.map((i) => (
 							<div
 								key={i.id}
-								className="group v-stack relative overflow-hidden rounded-xl border border-border/60 bg-muted/30 p-4 text-sm shadow-sm transition-all duration-200 hover:border-border/80 hover:bg-muted/50"
+								className="group v-stack relative overflow-hidden rounded-xl border border-border/60 bg-muted/30 p-4 text-sm shadow-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/50"
 							>
 								<div className="mb-3 flex items-start justify-between">
-									<div className="rounded-lg border border-border/50 bg-background p-2 shadow-sm">
+									<div className="rounded-lg border border-border/40 bg-background p-2 shadow-sm">
 										<Mail className="size-4 text-muted-foreground" />
 									</div>
 									{isAdminOrOwner && (
@@ -340,11 +340,11 @@ export default function OrgMembersPage() {
 								<div className="flex items-center gap-2">
 									<Badge
 										variant="outline"
-										className="h-5 border-border/50 px-2 font-semibold text-[10px] uppercase tracking-wide"
+										className="h-5 border-border/40 px-2 font-semibold text-xs uppercase tracking-wide"
 									>
 										{i.role}
 									</Badge>
-									<span className="text-[10px] text-muted-foreground/80">
+									<span className="text-muted-foreground/80 text-xs">
 										Expires soon
 									</span>
 								</div>

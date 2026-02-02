@@ -163,7 +163,7 @@ export default function TeamMembersPage() {
 									}).map((props) => (
 										<label key={props.value} className="flex-1 cursor-pointer">
 											<input {...props} className="peer sr-only" />
-											<span className="block rounded-md py-1.5 text-center font-medium text-xs capitalize transition-all peer-checked:bg-background peer-checked:shadow-sm">
+											<span className="block rounded-md py-1.5 text-center font-medium text-xs capitalize transition-colors peer-checked:bg-background peer-checked:shadow-sm">
 												{props.value}
 											</span>
 										</label>
@@ -183,7 +183,7 @@ export default function TeamMembersPage() {
 					{memberships.map((m) => (
 						<div
 							key={m.id}
-							className="group flex items-center justify-between p-4 transition-all duration-200 hover:bg-muted/40"
+							className="group flex items-center justify-between p-4 transition-colors duration-200 hover:bg-muted/40"
 						>
 							<div className="flex flex-1 items-center gap-3 overflow-hidden">
 								<CustomAvatar
@@ -202,7 +202,7 @@ export default function TeamMembersPage() {
 							<div className="flex items-center gap-3">
 								<Badge
 									variant="outline"
-									className="h-6 border-border/50 bg-muted/50 px-2 font-medium text-[11px] text-muted-foreground uppercase"
+									className="h-6 border-border/40 bg-muted/50 px-2 font-medium text-muted-foreground text-xs uppercase"
 								>
 									{m.role}
 								</Badge>

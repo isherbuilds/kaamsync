@@ -1,7 +1,6 @@
 import Check from "lucide-react/dist/esm/icons/check";
 import Mail from "lucide-react/dist/esm/icons/mail";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square";
-
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { MarketingCTA } from "~/components/marketing/cta-section";
@@ -14,76 +13,29 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { marketingMeta } from "~/lib/seo/marketing-meta";
+import { createContactPageSchema } from "~/lib/seo/schemas";
 
-const SITE_URL = "https://kaamsync.com";
-
-export const meta: MetaFunction = () => [
-	{
+export const meta: MetaFunction = () =>
+	marketingMeta({
 		title: "Contact KaamSync | Questions & Enterprise",
-	},
-	{
-		name: "description",
-		content:
+		description:
 			"Real humans reply within 2 hours. No sales pressure, just honest answers.",
-	},
-	{
-		tagName: "link",
-		rel: "canonical",
-		href: "https://kaamsync.com/contact",
-	},
-	{
-		property: "og:title",
-		content: "Contact KaamSync",
-	},
-	{
-		property: "og:description",
-		content:
-			"Talk to our team about enterprise deployments and custom integrations.",
-	},
-	{ property: "og:type", content: "website" },
-	{ property: "og:url", content: "https://kaamsync.com/contact" },
-	{
-		property: "og:image",
-		content: "https://kaamsync.com/static/kaamsync-logo.png",
-	},
-	{ name: "twitter:card", content: "summary_large_image" },
-	{ name: "twitter:title", content: "Contact KaamSync" },
-	{
-		name: "twitter:description",
-		content: "Enterprise sales and support inquiries",
-	},
-];
+		path: "/contact",
+		twitterDescription: "Enterprise sales and support inquiries",
+	});
 
-const contactPageSchema = {
-	"@context": "https://schema.org",
-	"@type": "ContactPage",
-	name: "Contact KaamSync",
-	description: "Contact page for KaamSync",
-	url: `${SITE_URL}/contact`,
-	mainEntity: {
-		"@type": "Organization",
-		name: "KaamSync",
-		url: SITE_URL,
-		email: "hello@kaamsync.com",
-		contactPoint: {
-			"@type": "ContactPoint",
-			contactType: "Customer Support",
-			availableLanguage: "English",
-		},
-	},
-};
-
-const structuredData = JSON.stringify(contactPageSchema);
+const structuredData = JSON.stringify(createContactPageSchema());
 
 export default function ContactPage() {
 	return (
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<MarketingContainer>
-				<div className="mx-auto mb-16 max-w-3xl text-center">
+			<MarketingContainer variant="hero" className="border-border/40 border-b">
+				<div className="mx-auto max-w-3xl text-center">
 					<MarketingBadge>We're Here</MarketingBadge>
-					<MarketingHeading as="h2" className="mb-6">
+					<MarketingHeading as="h2">
 						Questions?
 						<br />
 						<span className="italic">Talk to a real person.</span>
@@ -171,19 +123,19 @@ export default function ContactPage() {
 							Tell us what you're dealing with
 						</MarketingHeading>
 
-						<div className="mb-8 rounded-sm border border-primary/10 bg-primary/5 p-4">
+						<div className="mb-8 rounded-sm border border-primary/10 bg-primary/10 p-4">
 							<h4 className="mb-2 font-medium text-sm">What happens next:</h4>
 							<ul className="space-y-2 text-muted-foreground text-sm">
 								<li className="flex items-center gap-2">
-									<Check className="h-4 w-4 shrink-0 text-primary" />
+									<Check className="size-4 shrink-0 text-primary" />
 									<span>A real human reads your message</span>
 								</li>
 								<li className="flex items-center gap-2">
-									<Check className="h-4 w-4 shrink-0 text-primary" />
+									<Check className="size-4 shrink-0 text-primary" />
 									<span>Reply within 2 hours</span>
 								</li>
 								<li className="flex items-center gap-2">
-									<Check className="h-4 w-4 shrink-0 text-primary" />
+									<Check className="size-4 shrink-0 text-primary" />
 									<span>No sales pressure—just help</span>
 								</li>
 							</ul>
@@ -248,7 +200,6 @@ export default function ContactPage() {
 			</MarketingContainer>
 
 			<MarketingCTA
-				className="py-32"
 				title={
 					<MarketingHeading as="h2" className="mb-8 leading-tight">
 						Complex operation? <br /> Let's talk custom.
@@ -258,7 +209,7 @@ export default function ContactPage() {
 				action={
 					<Button
 						size="lg"
-						className="mx-auto h-16 w-fit rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
+						className="mx-auto h-14 w-fit bg-primary px-10 font-bold text-lg text-white hover:bg-primary/90"
 						asChild
 					>
 						<Link to="/contact">Discuss Your Needs</Link>

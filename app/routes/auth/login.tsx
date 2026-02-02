@@ -59,9 +59,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 		case "google": {
 			const { provider } = submission.value;
+			const cachedSlug = localStorage.getItem("kaamsync:lastOrgSlug");
 			const { error } = await authClient.signIn.social({
 				provider,
-				callbackURL: "/",
+				callbackURL: cachedSlug ? `/${cachedSlug}/tasks` : "/join",
 			});
 			if (error) {
 				return toast.error(error.message || `${provider} sign in failed.`);
@@ -73,7 +74,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 			return toast.error("Invalid login method.");
 	}
 
-	return redirect("/");
+	const cachedSlug = localStorage.getItem("kaamsync:lastOrgSlug");
+	return redirect(cachedSlug ? `/${cachedSlug}/tasks` : "/join");
 }
 
 export default function SignInRoute() {
