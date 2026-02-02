@@ -1,133 +1,115 @@
+version: "3.8"
+
+networks:
+  coolify:
+    external: true
+
+volumes:
+  postgres_data:
+  zero_data:
+
 services:
+  # Main application (React Router v7)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - SITE_URL=${SERVICE_FQDN_APP}
+      # Database connection for Drizzle (pooled is fine here)
+      - PG_URL=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/kaamsync
+      - BETTER_AUTH_URL=${SERVICE_FQDN_APP}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:?}
+      - ZERO_UPSTREAM_DB=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/kaamsync
+      - ZERO_ADMIN_PASSWORD=${ZERO_ADMIN_PASSWORD:?}
+      - ZERO_MUTATE_FORWARD_COOKIES=true
+      - ZERO_MUTATE_URL=${SERVICE_FQDN_APP}/api/zero/mutate
+      - ZERO_QUERY_FORWARD_COOKIES=true
+      - ZERO_QUERY_URL=${SERVICE_FQDN_APP}/api/zero/query
+      - ZERO_LOG_LEVEL=${ZERO_LOG_LEVEL:-info}
+      - VITE_PUBLIC_ZERO_CACHE_URL=${SERVICE_FQDN_ZERO}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - DODO_PAYMENTS_API_KEY=${DODO_PAYMENTS_API_KEY:-}
+      - DODO_PAYMENTS_WEBHOOK_SECRET=${DODO_PAYMENTS_WEBHOOK_SECRET:-}
+      - DODO_PRODUCT_GROWTH_MONTHLY=${DODO_PRODUCT_GROWTH_MONTHLY:-}
+      - DODO_PRODUCT_GROWTH_YEARLY=${DODO_PRODUCT_GROWTH_YEARLY:-}
+      - DODO_PRODUCT_PROFESSIONAL_MONTHLY=${DODO_PRODUCT_PROFESSIONAL_MONTHLY:-}
+      - DODO_PRODUCT_PROFESSIONAL_YEARLY=${DODO_PRODUCT_PROFESSIONAL_YEARLY:-}
+      - COOKIE_DOMAIN=${COOKIE_DOMAIN:-}
+      - VAPID_PUBLIC_KEY=${VAPID_PUBLIC_KEY:-}
+      - VAPID_PRIVATE_KEY=${VAPID_PRIVATE_KEY:-}
+      - VAPID_SUBJECT=${VAPID_SUBJECT:-}
+      - STORAGE_PROVIDER=${STORAGE_PROVIDER:-r2}
+      - STORAGE_BUCKET_NAME=${STORAGE_BUCKET_NAME:-}
+      - STORAGE_ENDPOINT=${STORAGE_ENDPOINT:-}
+      - STORAGE_PUBLIC_URL=${STORAGE_PUBLIC_URL:-}
+      - STORAGE_ACCESS_KEY_ID=${STORAGE_ACCESS_KEY_ID:-}
+      - STORAGE_SECRET_ACCESS_KEY=${STORAGE_SECRET_ACCESS_KEY:-}
+      - STORAGE_REGION=${STORAGE_REGION:-auto}
+      - USESEND_SELF_HOSTED_URL=${USESEND_SELF_HOSTED_URL:-}
+      - USESEND_API_KEY=${USESEND_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - coolify
+
+  # Zero Cache Server
+  zero:
+    image: rocicorp/zero:0.25.11
+    environment:
+      # Replication from Postgres (must be direct, not pooled)
+      - ZERO_UPSTREAM_DB=postgres://postgres:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/kaamsync
+      - ZERO_ADMIN_PASSWORD=${ZERO_ADMIN_PASSWORD:?}
+      # Forward cookies for auth
+      - ZERO_MUTATE_FORWARD_COOKIES=true
+      - ZERO_MUTATE_URL=http://app:3000/api/zero/mutate
+      - ZERO_QUERY_FORWARD_COOKIES=true
+      - ZERO_QUERY_URL=http://app:3000/api/zero/query
+      - ZERO_LOG_LEVEL=${ZERO_LOG_LEVEL:-info}
+      # SQLite replica file path
+      - ZERO_REPLICA_FILE=/data/zero.db
+    volumes:
+      - zero_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4848/keepalive"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - coolify
+
+  # PostgreSQL Database
   postgres:
     image: postgres:18-alpine
-    shm_size: 1g
-    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_DB: postgres
-      POSTGRES_PASSWORD: ${DEV_PG_PASSWORD:-your_dev_password}
-    command: |
-      postgres
-      -c wal_level=logical
-      -c max_wal_senders=10
-      -c max_replication_slots=5
-      -c hot_standby=on
-      -c hot_standby_feedback=on
-    ports:
-      - "5432:5432"
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}
+      - POSTGRES_DB=kaamsync
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      # Database
-      ZERO_UPSTREAM_DB: postgres://postgres:${DEV_PG_PASSWORD:-your_dev_password}@postgres:5432/postgres
-
-      # Site URLs
-      SITE_URL: ${SITE_URL:-http://localhost:3000}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-
-      # Zero config - internal URLs for container-to-container communication
-      ZERO_MUTATE_URL: http://web:3000/api/zero/mutate
-      ZERO_QUERY_URL: http://web:3000/api/zero/query
-      ZERO_MUTATE_FORWARD_COOKIES: "true"
-      ZERO_QUERY_FORWARD_COOKIES: "true"
-
-      # Public Zero cache URL (exposed to browser)
-      VITE_PUBLIC_ZERO_CACHE_URL: ${VITE_PUBLIC_ZERO_CACHE_URL:-http://localhost:4848}
-
-      # Google OAuth
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-
-      # Dodo Payments
-      DODO_PAYMENTS_API_KEY: ${DODO_PAYMENTS_API_KEY}
-      DODO_PAYMENTS_WEBHOOK_SECRET: ${DODO_PAYMENTS_WEBHOOK_SECRET}
-      DODO_PRODUCT_GROWTH_MONTHLY: ${DODO_PRODUCT_GROWTH_MONTHLY}
-      DODO_PRODUCT_GROWTH_YEARLY: ${DODO_PRODUCT_GROWTH_YEARLY}
-      DODO_PRODUCT_PROFESSIONAL_MONTHLY: ${DODO_PRODUCT_PROFESSIONAL_MONTHLY}
-      DODO_PRODUCT_PROFESSIONAL_YEARLY: ${DODO_PRODUCT_PROFESSIONAL_YEARLY}
-      DODO_ADDON_SEAT_GROWTH: ${DODO_ADDON_SEAT_GROWTH}
-      DODO_ADDON_SEAT_PRO: ${DODO_ADDON_SEAT_PRO}
-      DODO_ADDON_STORAGE_GROWTH: ${DODO_ADDON_STORAGE_GROWTH}
-      DODO_ADDON_STORAGE_PRO: ${DODO_ADDON_STORAGE_PRO}
-
-      # Email
-      USESEND_SELF_HOSTED_URL: ${USESEND_SELF_HOSTED_URL}
-      USESEND_API_KEY: ${USESEND_API_KEY}
-
-      # VAPID Push Notifications
-      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
-      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
-      VAPID_SUBJECT: ${VAPID_SUBJECT}
-
-      # Storage
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-r2}
-      STORAGE_BUCKET_NAME: ${STORAGE_BUCKET_NAME}
-      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT}
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL}
-      STORAGE_ACCESS_KEY_ID: ${STORAGE_ACCESS_KEY_ID}
-      STORAGE_SECRET_ACCESS_KEY: ${STORAGE_SECRET_ACCESS_KEY}
-      STORAGE_REGION: ${STORAGE_REGION:-auto}
-
-      # Cookie domain
-      COOKIE_DOMAIN: ${COOKIE_DOMAIN}
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  zero-cache:
-    image: rocicorp/zero:0.25.11
-    restart: always
-    ports:
-      - "4848:4848"
-    environment:
-      # Upstream Postgres for replication
-      ZERO_UPSTREAM_DB: postgres://postgres:${DEV_PG_PASSWORD:-your_dev_password}@postgres:5432/postgres
-
-      # SQLite replica path
-      ZERO_REPLICA_FILE: /data/zero.db
-
-      # Admin access for inspector and /statz
-      ZERO_ADMIN_PASSWORD: ${ZERO_ADMIN_PASSWORD}
-
-      # Zero log level
-      ZERO_LOG_LEVEL: ${ZERO_LOG_LEVEL:-info}
-
-      # API endpoints (internal container URLs)
-      ZERO_QUERY_URL: http://web:3000/api/zero/query
-      ZERO_MUTATE_URL: http://web:3000/api/zero/mutate
-      ZERO_QUERY_FORWARD_COOKIES: "true"
-      ZERO_MUTATE_FORWARD_COOKIES: "true"
-    volumes:
-      - zero_cache_data:/data
-    depends_on:
-      postgres:
-        condition: service_healthy
-      web:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4848/keepalive"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d kaamsync"]
       interval: 5s
-      timeout: 3s
-      retries: 5
-
-volumes:
-  postgres_data:
-    driver: local
-  zero_cache_data:
-    driver: local
+      timeout: 5s
+      retries: 10
+    networks:
+      - coolify
