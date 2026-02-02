@@ -15,10 +15,6 @@ COPY --from=development-dependencies-env /app/node_modules /app/node_modules
 WORKDIR /app
 RUN npm run build
 
-RUN npx drizzle-kit generate
-RUN npx drizzle-kit migrate
-RUN npx drizzle-zero generate -f -o /app/zero/schema.ts
-
 FROM node:24-alpine
 COPY ./package.json package-lock.json /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
