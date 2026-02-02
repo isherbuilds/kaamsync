@@ -71,7 +71,7 @@
 		"concurrently": "^9.2.1",
 		"dotenv-expand": "^12.0.3",
 		"drizzle-kit": "^0.31.8",
-		"knip": "^5.82.1",
+		"knip": "^5.83.0",
 		"react-email": "^5.2.5",
 		"rollup-plugin-visualizer": "^6.0.5",
 		"tailwindcss": "^4.1.18",

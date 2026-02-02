@@ -47,7 +47,7 @@ export default function MarketingLayout() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div className="min-h-screen bg-background text-foreground">
+		<div className="min-h-screen">
 			<header className="fixed inset-x-0 top-0 z-50">
 				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
