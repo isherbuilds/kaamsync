@@ -13,7 +13,11 @@ export async function loader() {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+	console.log(request);
+
 	const authSession = await getServerSession(request);
+
+	console.log(authSession);
 
 	// Use standardized authentication check
 	assertAuthenticated(

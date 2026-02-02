@@ -93,7 +93,10 @@ export const auth = betterAuth({
 		ipAddress: {
 			ipAddressHeaders: ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"],
 		},
-		useSecureCookies: isProduction,
+		crossSubDomainCookies: {
+			enabled: true,
+			domain: "kaamsync.com", // your domain
+		},
 	},
 	emailAndPassword: {
 		enabled: true,
