@@ -1,4 +1,23 @@
+# Dependencies
+node_modules
+
+# Build outputs
 .react-router
 build
-node_modules
-README.md
+
+# Dev files
+.git
+.vscode
+.env*
+*.md
+*.log
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+*.db-wal2
+
+# Misc
+.DS_Store
+.gitignore
