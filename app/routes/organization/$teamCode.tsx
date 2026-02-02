@@ -263,7 +263,7 @@ const TeamPageHeader = memo(
 					</h1>
 					<Badge
 						variant="secondary"
-						className="h-5 px-2 py-0 font-medium text-[11px] tabular-nums ring-1 ring-border/50 ring-inset"
+						className="h-5 px-2 py-0 font-medium text-xs tabular-nums ring-1 ring-border/50 ring-inset"
 					>
 						{count}
 					</Badge>
@@ -314,7 +314,7 @@ const StatusGroupHeader = memo(
 			<button
 				type="button"
 				onClick={() => onToggle(status.id)}
-				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/40 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/60"
+				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/40 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/50"
 			>
 				<ChevronDown
 					className={cn(
@@ -389,7 +389,7 @@ const TaskListRow = memo(
 		);
 
 		return (
-			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/60">
+			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/50">
 				<StableLink to={link} className="absolute inset-0 z-10" />
 
 				<div className="relative flex w-full items-center gap-3">
@@ -400,7 +400,7 @@ const TaskListRow = memo(
 							className="z-20 p-2"
 							align="start"
 						/>
-						<span className="hidden w-14 font-mono text-[11px] text-muted-foreground/50 md:inline">
+						<span className="hidden w-14 font-mono text-muted-foreground/50 text-xs md:inline">
 							{taskCode}
 						</span>
 					</div>
@@ -451,7 +451,7 @@ function TaskDueDateBadge({ date }: { date: number }) {
 	return (
 		<div
 			className={cn(
-				"flex items-center gap-1.5 font-medium text-[11px]",
+				"flex items-center gap-1.5 font-medium text-xs",
 				isOverdue ? "text-priority-urgent" : "text-muted-foreground/70",
 			)}
 		>

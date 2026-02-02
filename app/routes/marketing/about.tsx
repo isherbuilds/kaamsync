@@ -42,8 +42,7 @@ export default function AboutPage() {
 					</MarketingHeading>
 					<p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
 						I tried project tools and spreadsheets. None understood that
-						managing people isn't like managing code. So I built what I actually
-						needed.
+						managing people isn't like managing code.
 					</p>
 				</div>
 			</MarketingContainer>
@@ -86,7 +85,7 @@ export default function AboutPage() {
 							forgotten. I'd spend mornings calling people just to find out what
 							was happening.
 						</p>
-						<p className="mt-4 border-primary border-l-4 pl-4 font-medium text-foreground text-xl italic">
+						<p className="mt-4 border-primary border-l-4 pl-4 font-medium text-xl italic">
 							"I needed one place where every request lived. Where nothing could
 							get buried."
 						</p>

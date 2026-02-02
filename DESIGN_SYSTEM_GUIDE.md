@@ -268,6 +268,25 @@ Cards: grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
 List: grid-cols-1 gap-4
 ```
 
+### 2.4 Utility Simplification (Keep the Same Look)
+
+**Goal:** Reduce unique Tailwind classes without altering visuals.
+
+**Rules:**
+- **Prefer `size-*` for square elements** instead of `h-* w-*` pairs.
+- **Remove redundant text color classes** when the parent already defines the color (e.g. drop `text-foreground` on text inside default foreground sections).
+- **Avoid redundant background utilities** when the parent already sets the background (e.g. drop `bg-background` on nested wrappers unless needed for contrast).
+- **Avoid unnecessary spacing utilities** on elements that already inherit layout spacing (e.g. duplicated `mt-*` or `pl-*` where parent or component provides spacing).
+
+**Examples:**
+```tsx
+// Before
+<Users className="h-5 w-5" />
+
+// After
+<Users className="size-5" />
+```
+
 ---
 
 ## 3. Inconsistencies Found

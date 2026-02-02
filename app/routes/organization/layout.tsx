@@ -55,7 +55,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export function HydrateFallback() {
 	return (
-		<div className="center flex h-dvh w-full text-foreground">
+		<div className="center flex h-dvh w-full">
 			<Spinner className="size-10 text-primary" />
 		</div>
 	);

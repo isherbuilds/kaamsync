@@ -136,7 +136,7 @@ export default function OrganizationTasksPage() {
 					</div>
 
 					{/* Title */}
-					<h3 className="mb-3 line-clamp-2 font-medium text-foreground text-sm leading-relaxed">
+					<h3 className="mb-3 line-clamp-2 font-medium text-sm leading-relaxed">
 						{matter.title}
 					</h3>
 

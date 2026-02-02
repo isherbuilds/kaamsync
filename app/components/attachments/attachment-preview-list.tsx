@@ -81,12 +81,7 @@ export function AttachmentPreviewList({
 											)}
 										/>
 									</div>
-									<span
-										className={cn(
-											"font-medium text-muted-foreground",
-											c ? "text-[10px]" : "text-xs",
-										)}
-									>
+									<span className="font-medium text-muted-foreground text-xs">
 										{ext(a.fileName)}
 									</span>
 								</div>
@@ -132,11 +127,11 @@ export function AttachmentPreviewList({
 									)}
 								</div>
 								<div className="space-y-0.5">
-									<p className="truncate font-medium text-[10px] text-white">
+									<p className="truncate font-medium text-white text-xs">
 										{a.fileName}
 									</p>
 									{!c && (
-										<p className="text-[10px] text-white/70">
+										<p className="text-white/70 text-xs">
 											{formatBytes(a.fileSize)}
 										</p>
 									)}

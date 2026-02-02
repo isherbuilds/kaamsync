@@ -46,7 +46,7 @@ export default function ContactPage() {
 					</p>
 				</div>
 
-				<div className="mx-auto grid max-w-6xl gap-0 overflow-hidden border border-border bg-background shadow-lg lg:grid-cols-12">
+				<div className="mx-auto my-14 grid max-w-6xl gap-0 overflow-hidden border border-border bg-background shadow-lg lg:grid-cols-12">
 					<div className="border-border border-b bg-muted/20 p-8 md:p-12 lg:col-span-5 lg:border-r lg:border-b-0">
 						<MarketingHeading as="h3" className="mb-8 font-bold">
 							Direct Lines
@@ -78,9 +78,7 @@ export default function ContactPage() {
 											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
 												{title}
 											</h3>
-											<p className="font-medium text-foreground text-sm">
-												{description}
-											</p>
+											<p className="font-medium text-sm">{description}</p>
 										</div>
 									</a>
 								) : (
@@ -95,9 +93,7 @@ export default function ContactPage() {
 											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
 												{title}
 											</h3>
-											<p className="font-medium text-foreground text-sm">
-												{description}
-											</p>
+											<p className="font-medium text-sm">{description}</p>
 										</div>
 									</div>
 								),

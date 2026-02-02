@@ -20,7 +20,7 @@ export function ChatSimulator() {
 						<div className="size-8 shrink-0 rounded-full bg-orange-500" />
 						<div className="rounded-xl rounded-tl-none bg-white/10 p-3 text-white/90">
 							Where is the updated invoice for the cement?
-							<div className="mt-1 text-[10px] text-white/40">10:42 AM</div>
+							<div className="mt-1 text-white/40 text-xs">10:42 AM</div>
 						</div>
 					</div>
 
@@ -28,7 +28,7 @@ export function ChatSimulator() {
 						<div className="size-8 shrink-0 rounded-full bg-blue-500" />
 						<div className="rounded-xl rounded-tr-none bg-primary/20 p-3 text-white/90">
 							I sent it yesterday. Check the files.
-							<div className="mt-1 text-right text-[10px] text-white/40">
+							<div className="mt-1 text-right text-white/40 text-xs">
 								10:45 AM
 							</div>
 						</div>
@@ -38,7 +38,7 @@ export function ChatSimulator() {
 						<div className="size-8 shrink-0 rounded-full bg-orange-500" />
 						<div className="rounded-xl rounded-tl-none bg-white/10 p-3 text-white/90">
 							I can't find it. Can you send it again?
-							<div className="mt-1 text-[10px] text-white/40">10:48 AM</div>
+							<div className="mt-1 text-white/40 text-xs">10:48 AM</div>
 						</div>
 					</div>
 
@@ -53,7 +53,7 @@ export function ChatSimulator() {
 						<div className="rounded-xl rounded-tl-none bg-white/10 p-3 text-white/90">
 							<span className="font-bold text-destructive">@Team</span> Why is
 							the site closed today??
-							<div className="mt-1 text-[10px] text-white/40">11:02 AM</div>
+							<div className="mt-1 text-white/40 text-xs">11:02 AM</div>
 						</div>
 					</div>
 				</div>

@@ -221,7 +221,7 @@ export default function OrgMembersPage() {
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Members List - Takes 2 cols on desktop */}
-				<div className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm ring-1 ring-black/5 lg:col-span-2 dark:ring-white/5">
+				<div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm ring-1 ring-black/5 lg:col-span-2 dark:ring-white/5">
 					<div className="divide-y divide-border/40">
 						{members?.map((m) => {
 							const isSelf = m.userId === currentUser.id;
@@ -245,7 +245,7 @@ export default function OrgMembersPage() {
 												{isSelf && (
 													<Badge
 														variant="secondary"
-														className="h-5 px-1.5 font-medium text-[10px]"
+														className="h-5 px-1.5 font-medium text-xs"
 													>
 														You
 													</Badge>
@@ -318,7 +318,7 @@ export default function OrgMembersPage() {
 						{invites?.map((i) => (
 							<div
 								key={i.id}
-								className="group v-stack relative overflow-hidden rounded-xl border border-border/60 bg-muted/30 p-4 text-sm shadow-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/50"
+								className="group v-stack relative overflow-hidden rounded-lg border border-border/60 bg-muted/30 p-4 text-sm shadow-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
 							>
 								<div className="mb-3 flex items-start justify-between">
 									<div className="rounded-lg border border-border/40 bg-background p-2 shadow-sm">
@@ -351,7 +351,7 @@ export default function OrgMembersPage() {
 							</div>
 						))}
 						{invites?.length === 0 && (
-							<div className="rounded-xl border border-border/60 border-dashed bg-muted/20 p-8 text-center">
+							<div className="rounded-lg border border-border/60 border-dashed bg-muted/20 p-8 text-center">
 								<p className="text-muted-foreground text-sm">
 									No pending invitations
 								</p>

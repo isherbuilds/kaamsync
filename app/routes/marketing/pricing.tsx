@@ -70,10 +70,10 @@ const faqs = [
 ];
 
 const planIcons: Record<ProductKey, ReactNode> = {
-	starter: <Users className="h-5 w-5" />,
-	growth: <Zap className="h-5 w-5" />,
-	pro: <ShieldCheck className="h-5 w-5" />,
-	enterprise: <Building2 className="h-5 w-5" />,
+	starter: <Users className="size-5" />,
+	growth: <Zap className="size-5" />,
+	pro: <ShieldCheck className="size-5" />,
+	enterprise: <Building2 className="size-5" />,
 };
 
 const planDescriptions: Record<ProductKey, string> = {

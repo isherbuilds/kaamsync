@@ -65,7 +65,7 @@ const structuredData = JSON.stringify([
 
 export default function HomePage() {
 	return (
-		<div className="v-stack bg-background text-foreground">
+		<div className="v-stack bg-background">
 			<script type="application/ld+json">{structuredData}</script>
 
 			<section className="v-stack center relative border-border/40 border-b pt-24 pb-32">
@@ -195,7 +195,7 @@ export default function HomePage() {
 								},
 							].map((item) => (
 								<div key={item.step} className="text-center">
-									<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
+									<div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
 										{item.step}
 									</div>
 									<h3 className="mb-2 font-bold text-lg">{item.title}</h3>

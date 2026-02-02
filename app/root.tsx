@@ -135,9 +135,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<ColorSchemeScript nonce={nonce} />
 			</head>
 			<body className="h-dvh overflow-auto">
+				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />
-				{children}
 				<ClientOnly>
 					{() => (
 						<Suspense fallback={null}>

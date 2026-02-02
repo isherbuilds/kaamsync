@@ -162,7 +162,7 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 					isLoading={isLoading}
 					Icon={Icon}
 				/>
-				<div className="h-[calc(100%-48px)]">
+				<div className="h-[calc(100%-56px)]">
 					{isLoading ? (
 						<ListLoadingSkeleton />
 					) : itemCount === 0 ? (
