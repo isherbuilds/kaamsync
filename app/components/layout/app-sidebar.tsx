@@ -131,7 +131,7 @@ export function AppSidebar({
 					<NavTeams teams={teams} orgSlug={selectedOrg.slug} />
 				) : null}
 			</SidebarContent>
-			<SidebarFooter className="flex-row items-center">
+			<SidebarFooter className="h-stack items-center">
 				<NavUser user={authUser} />
 				<ColorSchemeToggle />
 			</SidebarFooter>

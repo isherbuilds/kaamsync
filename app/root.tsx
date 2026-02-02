@@ -26,20 +26,6 @@ const Toaster = lazy(() =>
 
 export const links: Route.LinksFunction = () => [
 	{
-		rel: "preconnect",
-		href: "https://fonts.googleapis.com",
-		crossOrigin: "anonymous",
-	},
-	{
-		rel: "preconnect",
-		href: "https://fonts.gstatic.com",
-		crossOrigin: "anonymous",
-	},
-	{
-		rel: "preconnect",
-		href: "https://zero.kaamsync.com",
-	},
-	{
 		rel: "icon",
 		type: "image/png",
 		href: "/favicon-32x32.png",
@@ -73,7 +59,7 @@ export const links: Route.LinksFunction = () => [
 
 export const meta: Route.MetaFunction = () => [
 	{
-		title: "KaamSync | Organize Your Work Seamlessly",
+		title: "KaamSync | Clear, Trackable Work",
 	},
 	{
 		name: "description",
@@ -114,6 +100,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
 				<Meta />
 				<link
+					rel="preconnect"
+					href="https://fonts.googleapis.com"
+					crossOrigin="anonymous"
+				/>
+				<link
+					rel="preconnect"
+					href="https://fonts.gstatic.com"
+					crossOrigin="anonymous"
+				/>
+				<link
 					rel="preload"
 					as="style"
 					href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
@@ -122,6 +118,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 					rel="stylesheet"
 					href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
 				/>
+				<link rel="preconnect" href="https://zero.kaamsync.com" />
 				{/* {import.meta.env.DEV && (
 					<script
 					crossOrigin="anonymous"

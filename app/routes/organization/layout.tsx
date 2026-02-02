@@ -87,13 +87,13 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 		if (orgAlreadyMatches) {
 			lastOrgSlug = orgSlug;
 			hasInitializedOrg = true;
-			if (orgSlug) localStorage.setItem("kaamsync:lastOrgSlug", orgSlug);
 		} else if (needsOrgUpdate) {
 			try {
 				await authClient.organization.setActive({ organizationSlug: orgSlug });
+
 				lastOrgSlug = orgSlug;
 				hasInitializedOrg = true;
-				if (orgSlug) localStorage.setItem("kaamsync:lastOrgSlug", orgSlug);
+
 				finalSession =
 					(await getAuthSessionSWR(() => authClient.getSession(), {
 						forceNetwork: true,

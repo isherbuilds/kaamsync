@@ -95,7 +95,7 @@ export const auth = betterAuth({
 		},
 		crossSubDomainCookies: {
 			enabled: true,
-			domain: isDevelopment ? "localhost:3000" : "kaamsync.com", // your domain
+			domain: isDevelopment ? "localhost" : "kaamsync.com", // your domain
 		},
 	},
 	emailAndPassword: {

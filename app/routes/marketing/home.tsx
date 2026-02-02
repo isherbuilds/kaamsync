@@ -1,7 +1,7 @@
 import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
 import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 import type { MetaFunction } from "react-router";
-import { Link } from "react-router";
+import { Link, redirect } from "react-router";
 import { ChatSimulator } from "~/components/marketing/chat-simulator";
 import { DashboardPreview } from "~/components/marketing/dashboard-preview";
 import { FAQ } from "~/components/marketing/faq";
@@ -12,12 +12,14 @@ import {
 } from "~/components/marketing/marketing-layout";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
+import { authClient } from "~/lib/auth/client";
 import { marketingMeta } from "~/lib/seo/marketing-meta";
 import {
 	createFAQPageSchema,
 	createOrganizationSchema,
 	createSoftwareApplicationSchema,
 } from "~/lib/seo/schemas";
+import type { Route } from "./+types/home";
 
 export const meta: MetaFunction = () =>
 	marketingMeta({
@@ -29,6 +31,24 @@ export const meta: MetaFunction = () =>
 		twitterDescription:
 			"Stop losing track of requests. Built for teams that manage people.",
 	});
+
+export async function clientLoader({ request }: Route.ClientLoaderArgs) {
+	const url = new URL(request.url);
+
+	if (url.pathname !== "/") return null;
+
+	const session = await authClient.getSession();
+
+	if (!session?.data) return null;
+
+	// Sequential: prevents 401 from organization.list() crashing loader
+	const orgs = await authClient.organization.list();
+	const slug = orgs.data?.[0]?.slug;
+
+	return redirect(slug ? `/${slug}/tasks` : "/join");
+}
+
+clientLoader.hydrate = true as const;
 
 const FAQS = [
 	{
