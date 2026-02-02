@@ -220,7 +220,7 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 						className="size-full rounded-full object-cover"
 					/>
 				) : (
-					<span className="font-bold text-[10px] sm:text-xs">
+					<span className="font-bold text-xs">
 						{extractNameInitials(authorName)}
 					</span>
 				)}

@@ -1,23 +1,8 @@
 import Menu from "lucide-react/dist/esm/icons/menu";
 import X from "lucide-react/dist/esm/icons/x";
 import { useState } from "react";
-import { Link, Outlet, redirect } from "react-router";
-// import { ColorSchemeToggle } from "~/components/layout/color-scheme-toggle";
+import { Link, Outlet } from "react-router";
 import { Button } from "~/components/ui/button";
-import { authClient } from "~/lib/auth/client";
-
-export async function clientLoader() {
-	const session = await authClient.getSession();
-
-	if (!session?.data) return null;
-
-	// Sequential: prevents 401 from organization.list() crashing loader
-	const orgs = await authClient.organization.list();
-
-	return orgs.data?.length
-		? redirect(`/${orgs.data[0]?.slug}/tasks`)
-		: redirect("/join");
-}
 
 const navLinks = [
 	{ to: "/", label: "Home" },
@@ -62,16 +47,20 @@ export default function MarketingLayout() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div className="min-h-screen bg-background text-foreground">
+		<div className="min-h-screen">
 			<header className="fixed inset-x-0 top-0 z-50">
 				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
 						<Link to="/" className="flex items-center gap-1">
 							<div className="center flex size-7 bg-white">
 								<img
-									src="/static/kaamsync-logo.png"
+									src="/static/kaamsync-logo-48.png"
 									alt="KaamSync"
+									width="24"
+									height="24"
 									className="size-6 invert"
+									loading="eager"
+									fetchPriority="high"
 								/>
 							</div>
 							<span className="font-bold text-lg tracking-tight">KaamSync</span>
@@ -123,7 +112,7 @@ export default function MarketingLayout() {
 							? "pointer-events-auto opacity-100"
 							: "pointer-events-none opacity-0"
 					}`}
-					style={{ top: "60px" }} // Approximate header height offset to ensure it doesn't overlap weirdly if z-index fails, but mainly relying on padding
+					style={{ top: "60px" }}
 				>
 					<div className="flex h-full w-full flex-col p-4">
 						<div className="flex-1 overflow-y-auto">
@@ -174,9 +163,12 @@ export default function MarketingLayout() {
 							<Link to="/" className="flex items-center gap-2.5">
 								<div className="center flex size-7 bg-white">
 									<img
-										src="/static/kaamsync-logo.png"
+										src="/static/kaamsync-logo-48.png"
 										alt="KaamSync"
+										width="24"
+										height="24"
 										className="size-6 invert"
+										loading="lazy"
 									/>
 								</div>
 								<span className="font-semibold">KaamSync</span>

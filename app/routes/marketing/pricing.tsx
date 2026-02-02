@@ -1,4 +1,8 @@
-import { Building2, Check, ShieldCheck, Users, Zap } from "lucide-react";
+import Building2 from "lucide-react/dist/esm/icons/building-2";
+import Check from "lucide-react/dist/esm/icons/check";
+import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
+import Users from "lucide-react/dist/esm/icons/users";
+import Zap from "lucide-react/dist/esm/icons/zap";
 import { type ReactNode, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
@@ -16,44 +20,19 @@ import {
 	type ProductKey,
 	products,
 } from "~/config/billing";
+import { marketingMeta } from "~/lib/seo/marketing-meta";
+import { createFAQPageSchema } from "~/lib/seo/schemas";
 import { cn } from "~/lib/utils";
 
-export const meta: MetaFunction = () => [
-	{
+export const meta: MetaFunction = () =>
+	marketingMeta({
 		title: "KaamSync Pricing | Free for Small Teams, Scale as You Grow",
-	},
-	{
-		name: "description",
-		content:
+		description:
 			"Start free with 3 team members forever. Growth plans from $29/month. No hidden fees. Cancel anytime. Non-profits get 50% off.",
-	},
-	{
-		tagName: "link",
-		rel: "canonical",
-		href: "https://kaamsync.com/pricing",
-	},
-	{
-		property: "og:title",
-		content: "KaamSync Pricing | Free for Small Teams",
-	},
-	{
-		property: "og:description",
-		content:
-			"Start free and scale as you grow. No hidden fees, cancel anytime.",
-	},
-	{ property: "og:type", content: "website" },
-	{ property: "og:url", content: "https://kaamsync.com/pricing" },
-	{
-		property: "og:image",
-		content: "https://kaamsync.com/static/kaamsync-logo.png",
-	},
-	{ name: "twitter:card", content: "summary_large_image" },
-	{ name: "twitter:title", content: "KaamSync Pricing Plans" },
-	{
-		name: "twitter:description",
-		content: "Free for 3 users. Simple pricing, no surprises.",
-	},
-];
+		path: "/pricing",
+		twitterTitle: "KaamSync Pricing Plans",
+		twitterDescription: "Free for 3 users. Simple pricing, no surprises.",
+	});
 
 const faqs = [
 	{
@@ -91,10 +70,10 @@ const faqs = [
 ];
 
 const planIcons: Record<ProductKey, ReactNode> = {
-	starter: <Users className="h-5 w-5" />,
-	growth: <Zap className="h-5 w-5" />,
-	pro: <ShieldCheck className="h-5 w-5" />,
-	enterprise: <Building2 className="h-5 w-5" />,
+	starter: <Users className="size-5" />,
+	growth: <Zap className="size-5" />,
+	pro: <ShieldCheck className="size-5" />,
+	enterprise: <Building2 className="size-5" />,
 };
 
 const planDescriptions: Record<ProductKey, string> = {
@@ -150,20 +129,7 @@ const offerSchema = {
 	],
 };
 
-const faqPageSchema = {
-	"@context": "https://schema.org",
-	"@type": "FAQPage",
-	mainEntity: faqs.map((faq) => ({
-		"@type": "Question",
-		name: faq.q,
-		acceptedAnswer: {
-			"@type": "Answer",
-			text: faq.a,
-		},
-	})),
-};
-
-const structuredData = JSON.stringify([offerSchema, faqPageSchema]);
+const structuredData = JSON.stringify([offerSchema, createFAQPageSchema(faqs)]);
 
 export default function PricingPage() {
 	const [interval, setInterval] = useState<BillingInterval>("monthly");
@@ -182,7 +148,7 @@ export default function PricingPage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<section className="bg-background py-16 text-center">
+			<section className="relative border-border/40 border-b bg-background pt-24 pb-16 text-center">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
 						<MarketingHeading as="h2" className="mb-6">
@@ -191,9 +157,7 @@ export default function PricingPage() {
 							<span className="italic">Grow when it works.</span>
 						</MarketingHeading>
 						<p className="mb-10 text-muted-foreground text-xl">
-							Your first 3 team members are free forever. No credit card. No
-							time limit. Upgrade only when you're actually saving time and
-							wondering how you ever worked without it.
+							Start Free. No credit card. No time limit.
 						</p>
 
 						{/* Billing Toggle */}
@@ -227,7 +191,7 @@ export default function PricingPage() {
 			</section>
 
 			{/* Plans */}
-			<section className="relative bg-background pb-24">
+			<section className="relative bg-background">
 				<div className="container relative z-10 mx-auto px-4 md:px-6">
 					<div className="mx-auto grid max-w-7xl grid-cols-1 gap-px border border-border bg-border md:grid-cols-2 xl:grid-cols-4">
 						{planKeys.map((key) => {
@@ -253,7 +217,7 @@ export default function PricingPage() {
 								>
 									{isPopular && (
 										<div className="absolute top-0 left-1/2 -mt-3 w-max -translate-x-1/2">
-											<span className="bg-primary px-3 py-1 font-bold font-mono text-[10px] text-primary-foreground uppercase tracking-widest shadow-sm">
+											<span className="bg-primary px-3 py-1 font-bold font-mono text-primary-foreground text-xs uppercase tracking-widest shadow-sm">
 												Recommended
 											</span>
 										</div>
@@ -307,7 +271,7 @@ export default function PricingPage() {
 
 									{hasUsage && "addonsDescription" in plan && (
 										<div className="mb-6 rounded bg-muted/50 p-3">
-											<p className="mb-1 font-bold font-mono text-[10px] uppercase tracking-wider">
+											<p className="mb-1 font-bold font-mono text-xs uppercase tracking-wider">
 												Base inclusions +
 											</p>
 											<p className="text-muted-foreground text-xs italic">
@@ -353,14 +317,14 @@ export default function PricingPage() {
 			</section>
 
 			{/* FAQs */}
-			<MarketingContainer className="bg-muted/30">
+			<MarketingContainer className="border-border/40 border-y bg-muted/20 py-24">
 				<div className="mx-auto max-w-4xl">
-					<div className="mb-20 text-center">
+					<div className="mb-16 text-center">
 						<Badge
 							variant="outline"
 							className="mx-auto mb-4 rounded-full border-primary/30 px-4 py-1.5 font-bold font-mono text-primary text-xs uppercase tracking-widest"
 						>
-							Questions
+							FAQ
 						</Badge>
 						<MarketingHeading className="mb-4">
 							Still have questions?

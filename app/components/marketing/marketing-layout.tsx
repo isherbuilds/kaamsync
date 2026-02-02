@@ -4,15 +4,27 @@ interface MarketingContainerProps {
 	children: React.ReactNode;
 	className?: string;
 	id?: string;
+	variant?: "default" | "hero" | "compact" | "cta";
 }
+
+const containerVariants = {
+	default: "py-24",
+	hero: "pt-24 pb-32",
+	compact: "py-16",
+	cta: "py-20",
+};
 
 export function MarketingContainer({
 	children,
 	className,
 	id,
+	variant = "default",
 }: MarketingContainerProps) {
 	return (
-		<section id={id} className={cn("overflow-hidden py-16", className)}>
+		<section
+			id={id}
+			className={cn("overflow-hidden", containerVariants[variant], className)}
+		>
 			<div className="container mx-auto px-4 md:px-6">{children}</div>
 		</section>
 	);
@@ -25,6 +37,21 @@ interface MarketingHeadingProps {
 	italic?: string;
 }
 
+const headingStyles = {
+	h1: {
+		size: "text-5xl md:text-7xl lg:text-8xl leading-[1.1]",
+		margin: "mb-8",
+	},
+	h2: {
+		size: "text-4xl md:text-5xl lg:text-6xl",
+		margin: "mb-6",
+	},
+	h3: {
+		size: "text-2xl md:text-3xl",
+		margin: "mb-4",
+	},
+};
+
 export function MarketingHeading({
 	children,
 	className,
@@ -32,14 +59,12 @@ export function MarketingHeading({
 	italic,
 }: MarketingHeadingProps) {
 	const baseStyles = "font-medium font-serif tracking-tight";
-	const variantStyles = {
-		h1: "text-5xl md:text-7xl lg:text-8xl leading-[1.1]",
-		h2: "text-4xl md:text-5xl lg:text-6xl",
-		h3: "text-2xl md:text-3xl",
-	};
+	const styles = headingStyles[Component];
 
 	return (
-		<Component className={cn(baseStyles, variantStyles[Component], className)}>
+		<Component
+			className={cn(baseStyles, styles.size, styles.margin, className)}
+		>
 			{children}
 			{italic ? (
 				<span className="text-muted-foreground italic">{italic}</span>

@@ -81,12 +81,7 @@ export function AttachmentPreviewList({
 											)}
 										/>
 									</div>
-									<span
-										className={cn(
-											"font-medium text-muted-foreground",
-											c ? "text-[10px]" : "text-xs",
-										)}
-									>
+									<span className="font-medium text-muted-foreground text-xs">
 										{ext(a.fileName)}
 									</span>
 								</div>
@@ -132,11 +127,11 @@ export function AttachmentPreviewList({
 									)}
 								</div>
 								<div className="space-y-0.5">
-									<p className="truncate font-medium text-[10px] text-white">
+									<p className="truncate font-medium text-white text-xs">
 										{a.fileName}
 									</p>
 									{!c && (
-										<p className="text-[10px] text-white/70">
+										<p className="text-white/70 text-xs">
 											{formatBytes(a.fileSize)}
 										</p>
 									)}
@@ -171,10 +166,10 @@ export function AttachmentPreviewList({
 							type="button"
 							variant="secondary"
 							size="icon"
-							className="absolute -top-3 -right-3 h-8 w-8 rounded-full border-2 border-white bg-white"
+							className="absolute -top-3 -right-3 size-8 rounded-full border-2 border-white bg-white"
 							onClick={() => setSelected(null)}
 						>
-							<XIcon className="h-4 w-4" />
+							<XIcon className="size-4" />
 						</Button>
 					</div>
 				</div>

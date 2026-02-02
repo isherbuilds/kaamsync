@@ -55,7 +55,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export function HydrateFallback() {
 	return (
-		<div className="center flex h-dvh w-full text-foreground">
+		<div className="center flex h-dvh w-full">
 			<Spinner className="size-10 text-primary" />
 		</div>
 	);
@@ -87,11 +87,13 @@ export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 		if (orgAlreadyMatches) {
 			lastOrgSlug = orgSlug;
 			hasInitializedOrg = true;
+			if (orgSlug) localStorage.setItem("kaamsync:lastOrgSlug", orgSlug);
 		} else if (needsOrgUpdate) {
 			try {
 				await authClient.organization.setActive({ organizationSlug: orgSlug });
 				lastOrgSlug = orgSlug;
 				hasInitializedOrg = true;
+				if (orgSlug) localStorage.setItem("kaamsync:lastOrgSlug", orgSlug);
 				finalSession =
 					(await getAuthSessionSWR(() => authClient.getSession(), {
 						forceNetwork: true,
@@ -222,7 +224,7 @@ function Layout({
 					/>
 				)}
 			</ClientOnly>
-			<div className="h-dvh w-full">
+			<div className="h-dvh w-full bg-card">
 				<Outlet />
 			</div>
 		</SidebarProvider>
@@ -252,7 +254,7 @@ export function ErrorBoundary() {
 					</p>
 				</div>
 				{isDev && error instanceof Error && error.stack && (
-					<pre className="max-h-48 w-full overflow-auto rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-left text-destructive text-xs">
+					<pre className="max-h-48 w-full overflow-auto rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-left text-destructive text-xs">
 						<code>{error.stack}</code>
 					</pre>
 				)}

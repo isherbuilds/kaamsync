@@ -59,9 +59,10 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 
 		case "google": {
 			const { provider } = submission.value;
+			const cachedSlug = localStorage.getItem("kaamsync:lastOrgSlug");
 			const { error } = await authClient.signIn.social({
 				provider,
-				callbackURL: "/",
+				callbackURL: cachedSlug ? `/${cachedSlug}/tasks` : "/join",
 			});
 			if (error) {
 				return toast.error(error.message || `${provider} sign in failed.`);
@@ -73,7 +74,8 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 			return toast.error("Invalid login method.");
 	}
 
-	return redirect("/");
+	const cachedSlug = localStorage.getItem("kaamsync:lastOrgSlug");
+	return redirect(cachedSlug ? `/${cachedSlug}/tasks` : "/join");
 }
 
 export default function SignInRoute() {
@@ -149,7 +151,7 @@ export default function SignInRoute() {
 					isPending={isSignInPending}
 				/>
 				{/* {lastMethod === "email" && (
-						<span className="absolute top-0 right-0 rounded-bl-md bg-blue-400 px-2 py-0.5 text-[10px] text-white capitalize">
+						<span className="absolute top-0 right-0 rounded-bl-md bg-blue-400 px-2 py-0.5 text-xs text-white capitalize">
 							Last used
 						</span>
 					)}
@@ -179,7 +181,7 @@ export default function SignInRoute() {
 								</span>
 
 								{/* {lastMethod === config.id && (
-									<span className="absolute top-0 right-0 rounded-bl-md bg-blue-50 px-2 py-0.5 text-[10px] text-blue-500 capitalize dark:bg-muted dark:text-white">
+									<span className="absolute top-0 right-0 rounded-bl-md bg-blue-50 px-2 py-0.5 text-xs text-blue-500 capitalize dark:bg-muted dark:text-white">
 										Last used
 									</span>
 								)} */}
