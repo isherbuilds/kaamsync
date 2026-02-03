@@ -28,10 +28,10 @@ export const meta: MetaFunction = () =>
 	marketingMeta({
 		title: "KaamSync Pricing | Free for Small Teams, Scale as You Grow",
 		description:
-			"Start free with 3 team members forever. Growth plans from $29/month. No hidden fees. Cancel anytime. Non-profits get 50% off.",
+			"Start free. Growth plans from $29/month. No hidden fees. Cancel anytime. Non-profits get 50% off.",
 		path: "/pricing",
 		twitterTitle: "KaamSync Pricing Plans",
-		twitterDescription: "Free for 3 users. Simple pricing, no surprises.",
+		twitterDescription: "Start free. Simple pricing, no surprises.",
 	});
 
 const faqs = [

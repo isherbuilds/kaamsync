@@ -100,6 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<meta charSet="utf-8" />
 				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
 				<Meta />
+				<Links />
 				<link
 					rel="preconnect"
 					href="https://fonts.googleapis.com"
@@ -126,7 +127,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 					src="//unpkg.com/react-scan/dist/auto.global"
 					/>
 					)} */}
-				<Links />
 				<ColorSchemeScript nonce={nonce} />
 			</head>
 			<body className="h-dvh overflow-auto bg-background text-foreground">
