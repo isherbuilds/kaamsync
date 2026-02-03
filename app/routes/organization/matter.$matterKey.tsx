@@ -372,7 +372,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 									members={members}
 									statuses={statuses}
 								/>
-								<div className="rounded-lg border bg-card/50 p-3 sm:p-4">
+								<div className="rounded border bg-muted p-3">
 									<CommentComposer matterId={matter.id} />
 								</div>
 							</div>

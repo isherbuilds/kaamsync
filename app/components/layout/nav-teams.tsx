@@ -7,7 +7,7 @@ import FolderOpen from "lucide-react/dist/esm/icons/folder-open";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Users2Icon from "lucide-react/dist/esm/icons/users-2";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Link, useParams } from "react-router";
 import { preloadTeam } from "zero/preload";
 import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
@@ -47,13 +47,6 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 	const activeCode = params.teamCode;
 	const z = useZero();
 
-	const handleTeamHover = useCallback(
-		(teamId: string) => {
-			preloadTeam(z, teamId);
-		},
-		[z],
-	);
-
 	return (
 		<>
 			<SidebarGroup>
@@ -73,8 +66,8 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 									<Link
 										to={`/${orgSlug}/${team.code}`}
 										prefetch="intent"
-										onMouseEnter={() => handleTeamHover(team.id)}
-										onFocus={() => handleTeamHover(team.id)}
+										onMouseEnter={() => preloadTeam(z, team.id)}
+										onFocus={() => preloadTeam(z, team.id)}
 										onClick={
 											isMobile
 												? () => setTimeout(() => setOpenMobile(false), 50)

@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import { useCallback } from "react";
 import { Link, useLocation } from "react-router";
 import {
 	SidebarGroup,
@@ -13,10 +12,6 @@ interface NavItem {
 	title: string;
 	url: string;
 	icon?: LucideIcon;
-	items?: {
-		title: string;
-		url: string;
-	}[];
 }
 
 interface NavMainProps {
@@ -28,11 +23,6 @@ export function NavMain({ items, orgSlug }: NavMainProps) {
 	const location = useLocation();
 	const { setOpenMobile } = useSidebar();
 
-	const handleLinkClick = useCallback(() => {
-		const timeoutId = setTimeout(() => setOpenMobile(false), 50);
-		return () => clearTimeout(timeoutId);
-	}, [setOpenMobile]);
-
 	return (
 		<SidebarGroup>
 			<SidebarMenu>
@@ -40,13 +30,12 @@ export function NavMain({ items, orgSlug }: NavMainProps) {
 					<SidebarMenuItem key={item.title}>
 						<SidebarMenuButton
 							asChild
-							tooltip={item.title}
 							isActive={location.pathname === `/${orgSlug}${item.url}`}
 						>
 							<Link
 								prefetch="viewport"
 								to={`/${orgSlug}${item.url}`}
-								onClick={handleLinkClick}
+								onClick={() => setTimeout(() => setOpenMobile(false), 50)}
 							>
 								{item.icon ? <item.icon /> : null}
 								<span>{item.title}</span>

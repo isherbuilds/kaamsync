@@ -121,12 +121,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 					href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
 				/>
 				<link rel="preconnect" href="https://zero.kaamsync.com" />
-				{/* {import.meta.env.DEV && (
+				{import.meta.env.DEV && (
 					<script
-					crossOrigin="anonymous"
-					src="//unpkg.com/react-scan/dist/auto.global"
+						crossOrigin="anonymous"
+						src="//unpkg.com/react-scan/dist/auto.global"
 					/>
-					)} */}
+				)}
 				<ColorSchemeScript nonce={nonce} />
 			</head>
 			<body className="h-dvh overflow-auto bg-background text-foreground">
