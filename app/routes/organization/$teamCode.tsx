@@ -394,7 +394,11 @@ const TaskListRow = memo(
 
 		return (
 			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/50">
-				<Link to={link} className="absolute inset-0 z-10" />
+				<Link
+					to={link}
+					className="absolute inset-0 z-10"
+					aria-label={`Open ${task.title} details`}
+				/>
 
 				<div className="relative flex w-full items-center gap-3">
 					<div className="flex shrink-0 items-center gap-3">

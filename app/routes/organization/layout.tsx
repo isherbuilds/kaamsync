@@ -119,8 +119,17 @@ export async function clientLoader({
 			async () => serverData.subscription,
 			orgSlug,
 		);
-	} catch {
-		subscription = getSubscription(orgSlug);
+	} catch (err) {
+		// If the error is a Response (redirect/401/etc), rethrow so router can handle it.
+		if (err instanceof Response) throw err;
+
+		// Only fall back to the local cached subscription when we're offline.
+		if (isOffline()) {
+			subscription = getSubscription(orgSlug);
+		} else {
+			// Re-throw non-offline errors so they surface properly.
+			throw err;
+		}
 	}
 
 	if (!authSession || !subscription) {
