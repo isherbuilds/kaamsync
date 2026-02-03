@@ -13,6 +13,7 @@ import { getToast } from "remix-toast";
 import { ClientOnly } from "remix-utils/client-only";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
 import type { Route } from "./+types/root";
+import { Spinner } from "./components/ui/spinner";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -150,6 +151,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 	return <Outlet />;
+}
+
+export function HydrateFallback() {
+	return (
+		<div className="center flex h-dvh w-full">
+			<Spinner className="size-10 text-primary" />
+		</div>
+	);
 }
 
 export function ErrorBoundary() {

@@ -3,9 +3,13 @@ import { eq, max } from "drizzle-orm";
 import { v7 as uuid } from "uuid";
 import { Priority } from "~/config/matter";
 import { db } from "~/db";
-import { matterType, timelineEventType } from "~/db/helpers";
-import { matterLabelsTable, mattersTable } from "~/db/schema/matters";
-import { teamsTable } from "~/db/schema/teams";
+import { matterType, statusType, timelineEventType } from "~/db/helpers";
+import {
+	labelsTable,
+	matterLabelsTable,
+	mattersTable,
+} from "~/db/schema/matters";
+import { statusesTable, teamsTable } from "~/db/schema/teams";
 import { timelinesTable } from "~/db/schema/timelines";
 import {
 	batchInsert,
@@ -30,6 +34,22 @@ type TeamData = {
 type Matter = typeof mattersTable.$inferInsert;
 type MatterLabel = typeof matterLabelsTable.$inferInsert;
 type Timeline = typeof timelinesTable.$inferInsert;
+
+export type ShowcaseMatterInput = {
+	title: string;
+	description?: string;
+	type: typeof matterType.task | typeof matterType.request;
+	priority: number;
+	statusType: (typeof statusType)[keyof typeof statusType];
+	assigneeIndex?: number;
+	authorIndex?: number;
+	dueInDays?: number;
+	startInDays?: number;
+	completedInDays?: number;
+	estimatedHours?: number;
+	labels?: string[];
+	rejectionReason?: string;
+};
 
 const demoMatters = [
 	{
@@ -342,6 +362,166 @@ export async function createMatters(team: TeamData, count: number) {
 		await batchInsert(timelinesTable, timelinesBatch, 500);
 
 	// Update nextShortId
+	await db
+		.update(teamsTable)
+		.set({ nextShortId: currentShortId })
+		.where(eq(teamsTable.id, team.id));
+}
+
+export async function createShowcaseMatters(
+	team: TeamData,
+	showcaseMatters: ShowcaseMatterInput[],
+) {
+	if (!showcaseMatters.length) return;
+
+	const now = new Date();
+	const dayMs = 24 * 60 * 60 * 1000;
+
+	const [maxResult] = await db
+		.select({ maxShortId: max(mattersTable.shortID) })
+		.from(mattersTable)
+		.where(eq(mattersTable.teamId, team.id));
+
+	let currentShortId = (maxResult?.maxShortId ?? 0) + 1;
+
+	const statuses = await db
+		.select({ id: statusesTable.id, type: statusesTable.type })
+		.from(statusesTable)
+		.where(eq(statusesTable.teamId, team.id));
+
+	const statusIdByType = new Map(
+		statuses.map((status) => [status.type, status.id]),
+	);
+
+	const labels = await db
+		.select({ id: labelsTable.id, name: labelsTable.name })
+		.from(labelsTable)
+		.where(eq(labelsTable.orgId, team.orgId));
+
+	const labelIdByName = new Map(labels.map((label) => [label.name, label.id]));
+
+	const mattersBatch: Matter[] = [];
+	const matterLabelsBatch: MatterLabel[] = [];
+	const timelinesBatch: Timeline[] = [];
+
+	for (const [index, matter] of showcaseMatters.entries()) {
+		const statusId = statusIdByType.get(matter.statusType) ?? team.statusIds[0];
+		const author =
+			team.memberIds[(matter.authorIndex ?? 0) % team.memberIds.length];
+		const assignee =
+			team.memberIds[(matter.assigneeIndex ?? 0) % team.memberIds.length];
+		const createdAt = new Date(
+			now.getTime() - (showcaseMatters.length - index) * 6 * 60 * 60 * 1000,
+		);
+
+		let approvedBy = null;
+		let approvedAt = null;
+		let rejectionReason = null;
+		if (matter.type === matterType.request) {
+			if (matter.statusType === statusType.approved) {
+				approvedBy = team.memberIds[0];
+				approvedAt = new Date(createdAt.getTime() + 2 * 60 * 60 * 1000);
+			}
+			if (matter.statusType === statusType.rejected) {
+				approvedBy = team.memberIds[0];
+				approvedAt = new Date(createdAt.getTime() + 2 * 60 * 60 * 1000);
+				rejectionReason =
+					matter.rejectionReason ?? "Budget owner requested more context.";
+			}
+		}
+
+		const dueDate =
+			matter.dueInDays != null
+				? new Date(now.getTime() + matter.dueInDays * dayMs)
+				: null;
+		const startDate =
+			matter.startInDays != null
+				? new Date(createdAt.getTime() + matter.startInDays * dayMs)
+				: null;
+		const completedAt =
+			matter.statusType === statusType.completed
+				? new Date(
+						matter.completedInDays != null
+							? now.getTime() + matter.completedInDays * dayMs
+							: createdAt.getTime() + 2 * 60 * 60 * 1000,
+					)
+				: null;
+
+		const matterId = uuid();
+
+		mattersBatch.push({
+			id: matterId,
+			shortID: currentShortId++,
+			orgId: team.orgId,
+			teamId: team.id,
+			teamCode: team.code,
+			authorId: author,
+			assigneeId: assignee,
+			statusId,
+			title: matter.title,
+			description:
+				matter.description ?? "Generated showcase item for marketing preview.",
+			type: matter.type,
+			priority: matter.priority,
+			source: "seed",
+			approvedBy,
+			approvedAt,
+			rejectionReason,
+			dueDate,
+			startDate,
+			completedAt,
+			estimatedHours: matter.estimatedHours ?? null,
+			actualHours: null,
+			archived: false,
+			archivedAt: null,
+			archivedBy: null,
+			createdAt,
+			updatedAt: new Date(createdAt.getTime() + 30 * 60 * 1000),
+			deletedAt: null,
+		});
+
+		if (matter.labels?.length) {
+			for (const labelName of matter.labels) {
+				const labelId = labelIdByName.get(labelName);
+				if (!labelId) continue;
+				matterLabelsBatch.push({
+					matterId,
+					labelId,
+					createdAt: now,
+					updatedAt: now,
+					deletedAt: null,
+				});
+			}
+		}
+
+		timelinesBatch.push({
+			id: uuid(),
+			matterId,
+			userId: author,
+			type: timelineEventType.created,
+			content: `Created this ${matter.type}`,
+			fromStatusId: null,
+			toStatusId: statusId,
+			fromAssigneeId: null,
+			toAssigneeId: assignee,
+			labelId: null,
+			fromValue: null,
+			toValue: null,
+			mentions: null,
+			edited: false,
+			editedAt: null,
+			createdAt,
+			updatedAt: createdAt,
+			deletedAt: null,
+		});
+	}
+
+	await batchInsert(mattersTable, mattersBatch, 200);
+	if (matterLabelsBatch.length)
+		await batchInsert(matterLabelsTable, matterLabelsBatch, 200);
+	if (timelinesBatch.length)
+		await batchInsert(timelinesTable, timelinesBatch, 200);
+
 	await db
 		.update(teamsTable)
 		.set({ nextShortId: currentShortId })

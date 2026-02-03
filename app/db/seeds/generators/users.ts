@@ -50,7 +50,7 @@ export async function createAdminUser() {
 			body: {
 				email,
 				password: "password", // Known password
-				name: "System Admin",
+				name: "Avery Patel (Platform Admin)",
 				image: `https://i.pravatar.cc/150?u=${email}`,
 			},
 		})

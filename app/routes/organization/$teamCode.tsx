@@ -7,7 +7,7 @@ import { lazy, memo, useCallback, useMemo } from "react";
 import { useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
-import { CACHE_NAV } from "zero/query-cache-policy";
+import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import {
 	MemberSelect,
 	PrioritySelect,
@@ -98,14 +98,16 @@ export default function TeamTasksPage() {
 		...CACHE_NAV,
 	});
 
+	const [teamMemberships] = useQuery(queries.getTeamMembers({ teamId }), {
+		enabled: !!teamId,
+		...CACHE_LONG,
+	});
+
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
 		useTasksByStatusGroup(matters as Matter[], statuses);
 
-	const { isManager, canCreateRequests } = usePermissions(
-		teamId,
-		team?.memberships,
-	);
+	const { isManager, canCreateRequests } = usePermissions(teamId, teamMemberships);
 
 	const handlePriorityChange = useCallback(
 		(id: string, priority: PriorityValue) =>
@@ -176,7 +178,7 @@ export default function TeamTasksPage() {
 				<TaskListRow
 					item={item}
 					orgSlug={orgSlug}
-					members={team?.memberships ?? []}
+					members={teamMemberships}
 					statuses={taskStatuses}
 					onPriorityChange={handlePriorityChange}
 					onStatusChange={handleStatusChange}
@@ -186,7 +188,7 @@ export default function TeamTasksPage() {
 		[
 			toggleGroup,
 			orgSlug,
-			team?.memberships,
+			teamMemberships,
 			taskStatuses,
 			handlePriorityChange,
 			handleStatusChange,
@@ -209,7 +211,7 @@ export default function TeamTasksPage() {
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
 				}
-				members={team.memberships ?? []}
+				members={teamMemberships}
 			/>
 
 			<div className="min-h-0 flex-1">

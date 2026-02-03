@@ -44,6 +44,8 @@ interface MatterListWithDetailPanelProps<T extends MatterWithStatus> {
 	estimateSize?: number;
 	/** Render function for each item */
 	renderItem: (item: T) => React.ReactNode;
+	/** Optional extra content to render in header (e.g., tabs, filters) */
+	headerExtra?: React.ReactNode;
 }
 
 const ACCENT_COLOR_CLASSES = {
@@ -67,19 +69,22 @@ const ListHeader = ({
 	itemCount,
 	isLoading,
 	Icon,
+	headerExtra,
 }: {
 	title: string;
 	colors: (typeof ACCENT_COLOR_CLASSES)["blue" | "amber"];
 	itemCount: number;
 	isLoading: boolean;
 	Icon: LucideIcon;
+	headerExtra?: React.ReactNode;
 }) => (
-	<div className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
+	<div className="flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-background px-4">
 		<div className="flex items-center gap-2">
 			<SidebarTrigger className="lg:hidden" />
 			<Icon className={`size-4 ${colors.icon}`} />
 			<h5 className="font-semibold">{title}</h5>
 		</div>
+		{headerExtra}
 		<div className="flex items-center gap-2">
 			{isLoading ? (
 				<div className="h-5 w-8 animate-pulse rounded-full bg-muted" />
@@ -142,6 +147,7 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 	emptyState,
 	estimateSize = 60,
 	renderItem,
+	headerExtra,
 }: MatterListWithDetailPanelProps<T>) {
 	const { isMobile, isTablet, isExtraLargeScreen } = useBreakpoints();
 
@@ -161,6 +167,7 @@ function MatterListWithDetailPanelInner<T extends MatterWithStatus>({
 					itemCount={itemCount}
 					isLoading={isLoading}
 					Icon={Icon}
+					headerExtra={headerExtra}
 				/>
 				<div className="h-[calc(100%-56px)]">
 					{isLoading ? (

@@ -82,10 +82,6 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 		queries.getTeamStatuses({ teamId: matter?.teamId || "" }),
 		{ enabled: !!matter?.teamId, ...CACHE_LONG },
 	);
-	const [matterAttachments] = useQuery(
-		queries.getMatterAttachments({ matterId: matter?.id || "" }),
-		{ enabled: !!matter?.id, ...CACHE_NAV },
-	);
 
 	// 2. Permissions
 	const perms = usePermissions(matter?.teamId, teamMemberships);
@@ -354,9 +350,9 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								)}
 							</div>
 
-							{matterAttachments.length > 0 && (
+							{matter.attachments && matter.attachments.length > 0 && (
 								<AttachmentPreviewList
-									attachments={matterAttachments.map((attachment) => ({
+									attachments={matter.attachments.map((attachment) => ({
 										id: attachment.id,
 										fileName: attachment.fileName,
 										fileType: attachment.fileType,

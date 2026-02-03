@@ -42,7 +42,9 @@ export const queries = defineQueries({
 	// TEAM QUERIES
 	getTeamsList: defineQuery(({ ctx }) =>
 		filterByOrganization(zql.teamsTable, ctx)
-			.related("memberships", (q) => excludeDeleted(q).related("user"))
+			.whereExists("memberships", (m) =>
+				m.where("userId", ctx.userId).where("deletedAt", "IS", null),
+			)
 			.orderBy("createdAt", "desc")
 			.limit(DEFAULT_LIMIT),
 	),
@@ -60,7 +62,6 @@ export const queries = defineQueries({
 		filterByOrganization(zql.teamMembershipsTable, ctx)
 			.where("userId", ctx.userId)
 			.related("team", (q) => excludeDeleted(q))
-			.related("user")
 			.limit(DEFAULT_LIMIT),
 	),
 
@@ -70,19 +71,9 @@ export const queries = defineQueries({
 		({ ctx, args: { id } }) =>
 			filterByOrganization(zql.mattersTable, ctx)
 				.where("id", id)
-				.related("author")
-				.related("assignee")
 				.related("status")
-				.related("team")
-				.related("organization")
 				.related("attachments")
 				.related("labels", (q) => q.related("label"))
-				.related("timelines", (q) =>
-					excludeDeleted(q)
-						.related("user")
-						.orderBy("createdAt", "asc")
-						.limit(TIMELINE_LIMIT),
-				)
 				.one(),
 	),
 
@@ -92,19 +83,9 @@ export const queries = defineQueries({
 			filterByOrganization(zql.mattersTable, ctx)
 				.where("teamCode", code)
 				.where("shortID", shortID)
-				.related("team")
-				.related("author")
-				.related("assignee")
 				.related("status")
-				.related("organization")
 				.related("attachments")
 				.related("labels", (q) => q.related("label"))
-				.related("timelines", (q) =>
-					excludeDeleted(q)
-						.related("user")
-						.orderBy("createdAt", "asc")
-						.limit(TIMELINE_LIMIT),
-				)
 				.one(),
 	),
 
@@ -145,8 +126,6 @@ export const queries = defineQueries({
 			.whereExists("status", (w) =>
 				w.where("type", "IN", [statusType.notStarted, statusType.started]),
 			)
-			.related("author")
-			.related("assignee")
 			.related("status")
 			.related("labels")
 			.orderBy("createdAt", "desc")
@@ -161,7 +140,6 @@ export const queries = defineQueries({
 			.whereExists("status", (w) =>
 				w.where("type", "IN", [statusType.pendingApproval]),
 			)
-			.related("assignee")
 			.related("status")
 			.orderBy("createdAt", "desc")
 			.limit(DEFAULT_LIMIT),
@@ -175,11 +153,28 @@ export const queries = defineQueries({
 				.whereExists("status", (w) =>
 					w.where("type", statusType.pendingApproval),
 				)
-				.related("author")
-				.related("assignee")
 				.related("status")
 				.orderBy("createdAt", "asc")
 				.limit(DEFAULT_LIMIT),
+	),
+
+	// Requests pending approval in teams the user is a member of (excludes user's own requests)
+	getRequestsToApprove: defineQuery(({ ctx }) =>
+		filterByOrganization(zql.mattersTable, ctx)
+			.where("type", matterType.request)
+			.where("authorId", "!=", ctx.userId) // Exclude own requests
+			.whereExists("status", (w) => w.where("type", statusType.pendingApproval))
+			.whereExists("team", (w) =>
+				w.whereExists("memberships", (m) =>
+					m
+						.where("userId", ctx.userId)
+						.where("canApproveRequests", true)
+						.where("deletedAt", "IS", null),
+				),
+			)
+			.related("status")
+			.orderBy("createdAt", "asc")
+			.limit(DEFAULT_LIMIT),
 	),
 
 	getWatchedMatters: defineQuery(
@@ -187,8 +182,6 @@ export const queries = defineQueries({
 		({ ctx, args: { teamId } }) => {
 			let q = filterByOrganization(zql.mattersTable, ctx)
 				.whereExists("watchers", (w) => w.where("userId", ctx.userId))
-				.related("author")
-				.related("assignee")
 				.related("status")
 				.related("team");
 			if (teamId) q = q.where("teamId", teamId);
@@ -239,8 +232,7 @@ export const queries = defineQueries({
 		z.object({ teamId: z.string() }),
 		({ ctx, args: { teamId } }) =>
 			filterByTeamWithMembershipCheck(zql.teamMembershipsTable, ctx, teamId)
-				.related("user")
-				.related("team")
+				.related("user") // Needed for member selectors (name, avatar)
 				.orderBy("createdAt", "asc")
 				.limit(DEFAULT_LIMIT),
 	),

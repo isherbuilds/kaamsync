@@ -18,7 +18,6 @@ import { AppSidebar } from "~/components/layout/app-sidebar";
 import { ZeroInit } from "~/components/providers/zero-init";
 import { Button } from "~/components/ui/button";
 import { SidebarProvider } from "~/components/ui/sidebar";
-import { Spinner } from "~/components/ui/spinner";
 import { useServiceWorker } from "~/hooks/use-service-worker";
 import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
@@ -55,14 +54,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 		orgSlug: params.orgSlug,
 		authSession,
 	});
-}
-
-export function HydrateFallback() {
-	return (
-		<div className="center flex h-dvh w-full">
-			<Spinner className="size-10 text-primary" />
-		</div>
-	);
 }
 
 // Track org state to avoid redundant server calls

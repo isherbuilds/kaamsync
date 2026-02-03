@@ -12,11 +12,16 @@ export const StableLink = memo(
 	},
 	(prev, next) => {
 		// Compare cheap scalar props; skip children deep compare (assume stable element structure).
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const prevData = (prev as Record<string, unknown>)["data-active"];
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const nextData = (next as Record<string, unknown>)["data-active"];
 		return (
 			prev.to === next.to &&
 			prev.className === next.className &&
 			prev.prefetch === next.prefetch &&
-			prev.reloadDocument === next.reloadDocument
+			prev.reloadDocument === next.reloadDocument &&
+			prevData === nextData
 		);
 	},
 );
