@@ -168,7 +168,7 @@ export function CreateMatterDialog({
 					assigneeId: assigneeId ?? undefined,
 					priority: Number(priority),
 					dueDate: dueDate
-						? new Date(dueDate).getTime()
+						? new Date(`${dueDate}T00:00:00`).getTime()
 						: isRequest
 							? Date.now() + 7 * 24 * 60 * 60 * 1000
 							: undefined,

@@ -30,8 +30,13 @@ const THEME_SCRIPT = `
 
 function getThemeFromStorage(): ColorScheme {
 	if (typeof window === "undefined") return "system";
-	const stored = localStorage.getItem("theme") as ColorScheme | null;
-	return stored || "system";
+	try {
+		const stored = localStorage.getItem("theme") as ColorScheme | null;
+		return stored || "system";
+	} catch (e) {
+		// localStorage access may be restricted in iframe or private contexts
+		return "system";
+	}
 }
 
 function subscribeToThemeChanges(callback: () => void) {
@@ -62,7 +67,12 @@ export function useSetColorScheme() {
 	return (colorScheme: ColorScheme) => {
 		if (typeof window === "undefined") return;
 
-		localStorage.setItem("theme", colorScheme);
+		try {
+			localStorage.setItem("theme", colorScheme);
+		} catch (e) {
+			// localStorage access may be restricted in iframe or private contexts
+			console.debug("Failed to persist color scheme to localStorage", e);
+		}
 
 		const isDark =
 			colorScheme === "dark" ||
@@ -128,6 +138,7 @@ export function ColorSchemeScript({ nonce }: { nonce: string }) {
 			/>
 			<script
 				nonce={nonce}
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: <explanation>
 				dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }}
 			/>
 		</>
