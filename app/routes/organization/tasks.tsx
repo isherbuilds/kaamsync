@@ -146,6 +146,7 @@ export default function OrganizationTasksPage() {
 							<div className="flex items-center gap-1.5">
 								<CustomAvatar
 									name={author.usersTable?.name}
+									// avatar={author.usersTable?.image}
 									className="size-6"
 								/>
 								<span className="max-w-24 truncate">

@@ -1,11 +1,8 @@
 import ArrowRight from "lucide-react/dist/esm/icons/arrow-right";
 import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
+import { lazy, Suspense } from "react";
 import type { MetaFunction } from "react-router";
 import { Link, redirect } from "react-router";
-import { ChatSimulator } from "~/components/marketing/chat-simulator";
-import { DashboardPreview } from "~/components/marketing/dashboard-preview";
-import { FAQ } from "~/components/marketing/faq";
-import { FeaturesGrid } from "~/components/marketing/features-grid";
 import {
 	MarketingContainer,
 	MarketingHeading,
@@ -20,6 +17,39 @@ import {
 	createSoftwareApplicationSchema,
 } from "~/lib/seo/schemas";
 import type { Route } from "./+types/home";
+
+// Preload LCP images for both color schemes
+export const links: Route.LinksFunction = () => [
+	{
+		rel: "preload",
+		as: "image",
+		href: "/static/marketing/dashboard-preview-light.avif",
+		type: "image/avif",
+		media: "(prefers-color-scheme: light)",
+	},
+	{
+		rel: "preload",
+		as: "image",
+		href: "/static/marketing/dashboard-preview-dark.avif",
+		type: "image/avif",
+		media: "(prefers-color-scheme: dark)",
+	},
+];
+
+const LazyChatSimulator = lazy(async () => {
+	const module = await import("~/components/marketing/chat-simulator");
+	return { default: module.ChatSimulator };
+});
+
+const LazyFeaturesGrid = lazy(async () => {
+	const module = await import("~/components/marketing/features-grid");
+	return { default: module.FeaturesGrid };
+});
+
+const LazyFAQ = lazy(async () => {
+	const module = await import("~/components/marketing/faq");
+	return { default: module.FAQ };
+});
 
 export const meta: MetaFunction = () =>
 	marketingMeta({
@@ -77,6 +107,39 @@ const FAQS = [
 	},
 ];
 
+const PAIN_POINTS = [
+	{
+		title: "Important requests vanish",
+		desc: "Urgent approvals buried under hundreds of messages. Your team resends. You still miss them.",
+	},
+	{
+		title: "No record of decisions",
+		desc: "Did you approve that expense? When? For how much? Now you're scrolling through weeks of history.",
+	},
+	{
+		title: "Your team works blind",
+		desc: "No visibility without internet. You don't know what's done until someone calls you—or doesn't.",
+	},
+];
+
+const CALM_STEPS = [
+	{
+		step: "1",
+		title: "Create your workspace",
+		desc: "2 minutes. Add your teams. Invite your people.",
+	},
+	{
+		step: "2",
+		title: "Log your first Matter",
+		desc: "Instead of sending a request to chat, create a Matter. Everyone sees it.",
+	},
+	{
+		step: "3",
+		title: "Let the system work",
+		desc: "Your team updates status. You see everything at a glance.",
+	},
+];
+
 const structuredData = JSON.stringify([
 	createSoftwareApplicationSchema(),
 	createOrganizationSchema(),
@@ -88,7 +151,7 @@ export default function HomePage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<section className="v-stack center relative border-border/40 border-b pt-24 pb-32">
+			<section className="v-stack center relative border-border/40 border-b pt-24 pb-12">
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
 				<div className="container relative z-10 px-4 text-center md:px-6">
@@ -107,10 +170,10 @@ export default function HomePage() {
 					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
 						<Button
 							size="lg"
-							className="h-14 w-full rounded-none bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground hover:shadow-none md:max-w-2xs"
+							className="h-14 w-full rounded-sm bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground hover:shadow-none md:max-w-2xs"
 							asChild
 						>
-							<Link to="/signup">
+							<Link to="/signup" prefetch="intent">
 								Get Started <ArrowRight className="size-5" />
 							</Link>
 						</Button>
@@ -120,18 +183,65 @@ export default function HomePage() {
 							className="h-14 px-8 font-medium text-foreground text-lg hover:bg-muted"
 							asChild
 						>
-							<Link to="/contact">Talk to Us</Link>
+							<Link to="/contact" prefetch="intent">
+								Talk to Us
+							</Link>
 						</Button>
 					</div>
-
-					<p className="mt-6 font-mono text-muted-foreground text-xs uppercase tracking-wide">
-						Start free • No credit card • 2 minute setup
-					</p>
 				</div>
-			</section>
+				{/* </section> */}
 
-			<section className="container relative z-20 mx-auto -mt-20 px-4 md:px-6">
-				<DashboardPreview />
+				{/* <section className="z-20 mx-auto max-w-7xl bg-background px-4 md:px-6"> */}
+				<div className="mx-4 mt-6 max-w-7xl rounded border border-foreground/10">
+					<picture>
+						{/* Dark mode AVIF */}
+						<source
+							srcSet="/static/marketing/dashboard-preview-dark.avif"
+							type="image/avif"
+							media="(prefers-color-scheme: dark)"
+						/>
+						{/* Dark mode PNG fallback */}
+						<source
+							srcSet="/static/marketing/dashboard-preview-dark.png"
+							type="image/png"
+							media="(prefers-color-scheme: dark)"
+						/>
+						{/* Light mode AVIF */}
+						<source
+							srcSet="/static/marketing/dashboard-preview-light.avif"
+							type="image/avif"
+							media="(prefers-color-scheme: light)"
+						/>
+						{/* Light mode PNG fallback */}
+						<source
+							srcSet="/static/marketing/dashboard-preview-light.png"
+							type="image/png"
+							media="(prefers-color-scheme: light)"
+						/>
+						{/* Default light mode fallback */}
+						<img
+							src="/static/marketing/dashboard-preview-light.png"
+							alt="KaamSync dashboard interface showing task management and team coordination"
+							width="1440"
+							height="900"
+							className="h-auto w-full transition-all duration-700 ease-out"
+							style={{
+								filter: "blur(40px)",
+								transform: "scale(1.02)",
+							}}
+							onLoad={(e) => {
+								e.currentTarget.style.filter = "blur(0px)";
+								e.currentTarget.style.transform = "scale(1)";
+							}}
+							loading="eager"
+							decoding="async"
+							fetchPriority="high"
+						/>
+					</picture>
+				</div>
+				<p className="mt-6 font-mono text-xs uppercase tracking-wide">
+					Start free • No credit card • 2 minute setup
+				</p>
 			</section>
 
 			<section className="bg-foreground py-24 text-background">
@@ -150,20 +260,7 @@ export default function HomePage() {
 							</p>
 
 							<div className="mt-12 grid gap-6">
-								{[
-									{
-										title: "Important requests vanish",
-										desc: "Urgent approvals buried under hundreds of messages. Your team resends. You still miss them.",
-									},
-									{
-										title: "No record of decisions",
-										desc: "Did you approve that expense? When? For how much? Now you're scrolling through weeks of history.",
-									},
-									{
-										title: "Your team works blind",
-										desc: "No visibility without internet. You don't know what's done until someone calls you—or doesn't.",
-									},
-								].map((item) => (
+								{PAIN_POINTS.map((item) => (
 									<div key={item.title} className="flex items-start gap-4">
 										<div className="center mt-1 flex size-6 shrink-0 rounded-full border border-destructive text-destructive">
 											<span className="font-bold text-sm">×</span>
@@ -179,7 +276,28 @@ export default function HomePage() {
 							</div>
 						</div>
 
-						<ChatSimulator />
+						<Suspense
+							fallback={
+								<div className="h-full min-h-[360px] rounded-3xl border border-border/40 bg-background/5" />
+							}
+						>
+							<LazyChatSimulator />
+							{/*
+								When the chat simulator image is ready, replace with:
+								<picture>
+									<source srcSet="/static/marketing/chat-simulator.avif" type="image/avif" />
+									<source srcSet="/static/marketing/chat-simulator.webp" type="image/webp" />
+									<img
+										src="/static/marketing/chat-simulator.png"
+										alt="KaamSync chat simulator"
+										width="1200"
+										height="720"
+										loading="lazy"
+										decoding="async"
+									/>
+								</picture>
+							*/}
+						</Suspense>
 					</div>
 				</div>
 			</section>
@@ -188,7 +306,20 @@ export default function HomePage() {
 				<MarketingHeading>Built for clarity.</MarketingHeading>
 				<div className="mt-4 h-1 w-24 bg-primary" />
 				<div className="mt-8">
-					<FeaturesGrid />
+					<Suspense
+						fallback={
+							<div className="grid gap-6 md:grid-cols-3">
+								{[1, 2, 3].map((item) => (
+									<div
+										key={item}
+										className="h-40 rounded-2xl border border-border/40 bg-muted/30"
+									/>
+								))}
+							</div>
+						}
+					>
+						<LazyFeaturesGrid />
+					</Suspense>
 				</div>
 			</MarketingContainer>
 
@@ -197,23 +328,7 @@ export default function HomePage() {
 					<div className="mx-auto max-w-4xl text-center">
 						<MarketingHeading>Three steps to calm</MarketingHeading>
 						<div className="mt-16 grid gap-8 md:grid-cols-3">
-							{[
-								{
-									step: "1",
-									title: "Create your workspace",
-									desc: "2 minutes. Add your teams. Invite your people.",
-								},
-								{
-									step: "2",
-									title: "Log your first Matter",
-									desc: "Instead of sending a request to chat, create a Matter. Everyone sees it.",
-								},
-								{
-									step: "3",
-									title: "Let the system work",
-									desc: "Your team updates status. You see everything at a glance.",
-								},
-							].map((item) => (
+							{CALM_STEPS.map((item) => (
 								<div key={item.step} className="text-center">
 									<div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-primary font-bold text-primary-foreground">
 										{item.step}
@@ -265,7 +380,20 @@ export default function HomePage() {
 						Everything you need to get started.
 					</p>
 					<div className="text-left">
-						<FAQ items={FAQS} />
+						<Suspense
+							fallback={
+								<div className="space-y-4">
+									{[1, 2, 3].map((item) => (
+										<div
+											key={item}
+											className="h-16 rounded-xl border border-border/40 bg-muted/30"
+										/>
+									))}
+								</div>
+							}
+						>
+							<LazyFAQ items={FAQS} />
+						</Suspense>
 					</div>
 				</div>
 			</MarketingContainer>
@@ -275,18 +403,17 @@ export default function HomePage() {
 					<MarketingHeading as="h2">
 						Stop losing work in messages.
 					</MarketingHeading>
-					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">
-						Join teams who replaced chaos with calm.
-						<br />
-						Start free • No credit card
+					<p className="text-muted-foreground text-xl">
+						Switch chaos with <s>Calm</s> Kaam Sync.
 					</p>
+					<br />
 					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
 						<Button
 							asChild
 							size="lg"
 							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/90"
 						>
-							<Link to="/signup">
+							<Link to="/signup" prefetch="intent">
 								Start For Free
 								<ChevronRight className="size-5" />
 							</Link>
@@ -297,7 +424,9 @@ export default function HomePage() {
 							size="lg"
 							className="h-16 min-w-60 rounded-none px-8 font-bold text-lg"
 						>
-							<Link to="/contact">Ask Us Anything</Link>
+							<Link to="/contact" prefetch="intent">
+								Ask Us Anything
+							</Link>
 						</Button>
 					</div>
 					<p className="mt-6 text-muted-foreground text-sm">

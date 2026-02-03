@@ -3,11 +3,9 @@ import Check from "lucide-react/dist/esm/icons/check";
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
 import Users from "lucide-react/dist/esm/icons/users";
 import Zap from "lucide-react/dist/esm/icons/zap";
-import { type ReactNode, useState } from "react";
+import { lazy, type ReactNode, Suspense, useState } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
-import { MarketingCTA } from "~/components/marketing/cta-section";
-import { FAQ } from "~/components/marketing/faq";
 import {
 	MarketingContainer,
 	MarketingHeading,
@@ -24,9 +22,19 @@ import { marketingMeta } from "~/lib/seo/marketing-meta";
 import { createFAQPageSchema } from "~/lib/seo/schemas";
 import { cn } from "~/lib/utils";
 
+const LazyFAQ = lazy(async () => {
+	const module = await import("~/components/marketing/faq");
+	return { default: module.FAQ };
+});
+
+const LazyMarketingCTA = lazy(async () => {
+	const module = await import("~/components/marketing/cta-section");
+	return { default: module.MarketingCTA };
+});
+
 export const meta: MetaFunction = () =>
 	marketingMeta({
-		title: "KaamSync Pricing | Free for Small Teams, Scale as You Grow",
+		title: "KaamSync | Pricing | Free for Small Teams, Scale as You Grow",
 		description:
 			"Start free. Growth plans from $29/month. No hidden fees. Cancel anytime. Non-profits get 50% off.",
 		path: "/pricing",
@@ -75,6 +83,8 @@ const planIcons: Record<ProductKey, ReactNode> = {
 	pro: <ShieldCheck className="size-5" />,
 	enterprise: <Building2 className="size-5" />,
 };
+
+const planKeys: ProductKey[] = ["starter", "growth", "pro", "enterprise"];
 
 const planDescriptions: Record<ProductKey, string> = {
 	starter:
@@ -133,7 +143,6 @@ const structuredData = JSON.stringify([offerSchema, createFAQPageSchema(faqs)]);
 
 export default function PricingPage() {
 	const [interval, setInterval] = useState<BillingInterval>("monthly");
-	const planKeys: ProductKey[] = ["starter", "growth", "pro", "enterprise"];
 
 	const formatPrice = (cents: number) => {
 		return new Intl.NumberFormat("en-US", {
@@ -333,11 +342,34 @@ export default function PricingPage() {
 							Everything you need to know about pricing and getting started.
 						</p>
 					</div>
-					<FAQ items={faqs} />
+					<Suspense
+						fallback={
+							<div className="space-y-4">
+								{[1, 2, 3].map((item) => (
+									<div
+										key={item}
+										className="h-16 rounded-xl border border-border/40 bg-muted/30"
+									/>
+								))}
+							</div>
+						}
+					>
+						<LazyFAQ items={faqs} />
+					</Suspense>
 				</div>
 			</MarketingContainer>
 
-			<MarketingCTA />
+			<Suspense
+				fallback={
+					<section className="border-border/40 border-t bg-background py-20">
+						<div className="container mx-auto px-4 md:px-6">
+							<div className="mx-auto h-40 max-w-4xl rounded-3xl border border-border/40 bg-muted/30" />
+						</div>
+					</section>
+				}
+			>
+				<LazyMarketingCTA />
+			</Suspense>
 		</>
 	);
 }

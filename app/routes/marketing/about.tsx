@@ -14,7 +14,7 @@ import { createOrganizationSchema } from "~/lib/seo/schemas";
 
 export const meta: MetaFunction = () =>
 	marketingMeta({
-		title: "About KaamSync | Built for Operations Teams",
+		title: "KaamSync | About",
 		description:
 			"Built by someone managing 50 people through scattered messages. Now sharing the system that finally worked.",
 		path: "/about",
@@ -29,10 +29,7 @@ export default function AboutPage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<MarketingContainer
-				variant="hero"
-				className="border-border/40 border-b text-center"
-			>
+			<MarketingContainer variant="hero" className="text-center">
 				<div className="mx-auto max-w-4xl">
 					<MarketingBadge>Our Story</MarketingBadge>
 					<MarketingHeading as="h2">
@@ -47,7 +44,7 @@ export default function AboutPage() {
 				</div>
 			</MarketingContainer>
 
-			<section className="border-border/40 border-b bg-muted/20">
+			<section className="">
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="mx-auto grid max-w-4xl grid-cols-2 gap-12 text-center md:grid-cols-4">
 						{[
@@ -139,7 +136,9 @@ export default function AboutPage() {
 								className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
 								asChild
 							>
-								<Link to="/signup">Start For Free</Link>
+								<Link to="/signup" prefetch="intent">
+									Start For Free
+								</Link>
 							</Button>
 							<Button
 								size="lg"
@@ -147,7 +146,9 @@ export default function AboutPage() {
 								className="h-16 rounded-none border-background/30 bg-transparent px-8 font-bold text-background text-lg hover:bg-background/10"
 								asChild
 							>
-								<Link to="/contact">Ask Us Anything</Link>
+								<Link to="/contact" prefetch="intent">
+									Ask Us Anything
+								</Link>
 							</Button>
 						</div>
 						<p className="mt-6 text-background/60 text-sm">

@@ -4,21 +4,27 @@ import { db } from "~/db";
 import { usersTable } from "~/db/schema/auth";
 import { auth } from "~/lib/auth/server";
 
+function getAvatarUrl(seed: string): string {
+	const styles = ["glass", "notionists"];
+	const style = styles[Math.floor(Math.random() * styles.length)];
+	return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&radius=50`;
+}
+
 export async function createUser(name?: string, suffix?: string) {
 	// ... (createUser remains same)
 	const firstName = faker.person.firstName();
 	const lastName = faker.person.lastName();
 	const email = faker.internet.email({ firstName, lastName }).toLowerCase();
 
-	let displayName = name || `${firstName} ${lastName}`;
-	if (suffix) displayName += ` (${suffix})`;
+	// Keep names short and professional for hero section mock screenshots
+	const displayName = name || `${firstName} ${lastName}`;
 
 	const r = await auth.api.signUpEmail({
 		body: {
 			email,
 			password: "password",
 			name: displayName,
-			image: `https://i.pravatar.cc/150?u=${email}`,
+			image: getAvatarUrl(email),
 		},
 	});
 
@@ -50,8 +56,8 @@ export async function createAdminUser() {
 			body: {
 				email,
 				password: "password", // Known password
-				name: "Avery Patel (Platform Admin)",
-				image: `https://i.pravatar.cc/150?u=${email}`,
+				name: "You",
+				image: getAvatarUrl(email),
 			},
 		})
 		.catch((e) => {

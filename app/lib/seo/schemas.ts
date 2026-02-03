@@ -12,7 +12,7 @@ export function createOrganizationSchema() {
 		name: "KaamSync",
 		url: SITE_URL,
 		logo: `${SITE_URL}/static/kaamsync-logo.png`,
-		description: "Operations management for teams",
+		description: "Clear, trackable work.",
 	};
 }
 

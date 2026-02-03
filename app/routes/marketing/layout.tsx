@@ -47,32 +47,38 @@ export default function MarketingLayout() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<>
+		<div>
 			<header className="fixed inset-x-0 top-0 z-50">
 				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
 						<Link to="/" className="flex items-center gap-1">
-							<div className="center flex size-7 bg-white">
-								<img
-									src="/static/kaamsync-logo-48.png"
-									alt="KaamSync"
-									width="24"
-									height="24"
-									className="size-6 invert"
-									loading="eager"
-									fetchPriority="high"
-								/>
+							<div className="center flex size-7 rounded-sm bg-black">
+								<picture>
+									<source
+										srcSet="/static/kaamsync-logo.avif"
+										type="image/avif"
+									/>
+									<img
+										src="/static/kaamsync-logo-48.png"
+										alt="KaamSync Logo"
+										width="24"
+										height="24"
+										loading="eager"
+										fetchPriority="high"
+									/>
+								</picture>
 							</div>
 							<span className="font-bold text-lg tracking-tight">KaamSync</span>
 						</Link>
 					</div>
 
 					{/* Desktop nav */}
-					<div className="hidden gap-x-6 lg:flex">
+					<div className="hidden gap-4 lg:flex">
 						{navLinks.map(({ to, label }) => (
 							<Link
 								key={to}
 								to={to}
+								prefetch={to === "/" ? "none" : "intent"}
 								className="px-4 font-medium text-muted-foreground text-sm transition-colors hover:text-foreground"
 							>
 								{label}
@@ -97,7 +103,7 @@ export default function MarketingLayout() {
 					</div>
 
 					{/* Mobile menu button */}
-					<div className="flex md:hidden">
+					<div className="flex lg:hidden">
 						<button type="button" onClick={() => setOpen((o) => !o)}>
 							<span className="sr-only">Toggle menu</span>
 							{open ? <X className="size-5" /> : <Menu className="size-5" />}
@@ -121,6 +127,7 @@ export default function MarketingLayout() {
 									<Link
 										key={to}
 										to={to}
+										prefetch={to === "/" ? "none" : "intent"}
 										onClick={() => setOpen(false)}
 										className="p-2 text-2xl text-foreground transition-colors hover:bg-muted/50"
 									>
@@ -152,7 +159,7 @@ export default function MarketingLayout() {
 				</div>
 			</header>
 
-			<main className="h-full overflow-y-auto">
+			<main className="h-full overflow-y-auto bg-background">
 				<Outlet />
 			</main>
 
@@ -161,15 +168,21 @@ export default function MarketingLayout() {
 					<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
 						<div className="space-y-4 lg:col-span-2">
 							<Link to="/" className="flex items-center gap-2.5">
-								<div className="center flex size-7 bg-white">
-									<img
-										src="/static/kaamsync-logo-48.png"
-										alt="KaamSync"
-										width="24"
-										height="24"
-										className="size-6 invert"
-										loading="lazy"
-									/>
+								<div className="center flex size-7 rounded-sm bg-black">
+									<picture>
+										<source
+											srcSet="/static/kaamsync-logo.avif"
+											type="image/avif"
+										/>
+										<img
+											src="/static/kaamsync-logo-48.png"
+											alt="KaamSync Logo"
+											width="24"
+											height="24"
+											loading="lazy"
+											fetchPriority="low"
+										/>
+									</picture>
 								</div>
 								<span className="font-semibold">KaamSync</span>
 							</Link>
@@ -216,6 +229,6 @@ export default function MarketingLayout() {
 					</div>
 				</div>
 			</footer>
-		</>
+		</div>
 	);
 }

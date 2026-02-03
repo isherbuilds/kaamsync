@@ -1,9 +1,9 @@
 import Check from "lucide-react/dist/esm/icons/check";
 import Mail from "lucide-react/dist/esm/icons/mail";
 import MessageSquare from "lucide-react/dist/esm/icons/message-square";
+import { lazy, Suspense } from "react";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
-import { MarketingCTA } from "~/components/marketing/cta-section";
 import {
 	MarketingBadge,
 	MarketingContainer,
@@ -16,9 +16,14 @@ import { Textarea } from "~/components/ui/textarea";
 import { marketingMeta } from "~/lib/seo/marketing-meta";
 import { createContactPageSchema } from "~/lib/seo/schemas";
 
+const LazyMarketingCTA = lazy(async () => {
+	const module = await import("~/components/marketing/cta-section");
+	return { default: module.MarketingCTA };
+});
+
 export const meta: MetaFunction = () =>
 	marketingMeta({
-		title: "Contact KaamSync | Questions & Enterprise",
+		title: "KaamSync | Contact",
 		description:
 			"Real humans reply within 2 hours. No sales pressure, just honest answers.",
 		path: "/contact",
@@ -195,23 +200,35 @@ export default function ContactPage() {
 				</div>
 			</MarketingContainer>
 
-			<MarketingCTA
-				title={
-					<MarketingHeading as="h2" className="mb-8 leading-tight">
-						Complex operation? <br /> Let's talk custom.
-					</MarketingHeading>
+			<Suspense
+				fallback={
+					<section className="border-border/40 border-t bg-background py-20">
+						<div className="container mx-auto px-4 md:px-6">
+							<div className="mx-auto h-40 max-w-4xl rounded-3xl border border-border/40 bg-muted/30" />
+						</div>
+					</section>
 				}
-				description="Need specific integrations or custom workflows? We build enterprise solutions that match how you actually work."
-				action={
-					<Button
-						size="lg"
-						className="mx-auto h-14 w-fit bg-primary px-10 font-bold text-lg text-white hover:bg-primary/90"
-						asChild
-					>
-						<Link to="/contact">Discuss Your Needs</Link>
-					</Button>
-				}
-			/>
+			>
+				<LazyMarketingCTA
+					title={
+						<MarketingHeading as="h2" className="mb-8 leading-tight">
+							Complex operation? <br /> Let's talk custom.
+						</MarketingHeading>
+					}
+					description="Need specific integrations or custom workflows? We build enterprise solutions that match how you actually work."
+					action={
+						<Button
+							size="lg"
+							className="mx-auto h-14 w-fit bg-primary px-10 font-bold text-lg text-white hover:bg-primary/90"
+							asChild
+						>
+							<Link to="/contact" prefetch="intent">
+								Discuss Your Needs
+							</Link>
+						</Button>
+					}
+				/>
+			</Suspense>
 		</>
 	);
 }

@@ -36,7 +36,7 @@ interface AuthUserInfo {
 	id: string;
 	name: string;
 	email: string;
-	avatar?: string;
+	image?: string;
 }
 
 interface TeamInfo {

@@ -365,7 +365,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 							<Separator className="my-6" />
 
-							<div className="space-y-5">
+							<div className="space-y-4">
 								<h2 className="font-semibold text-base sm:text-lg">Activity</h2>
 								<TaskTimeline
 									matterId={matter.id}

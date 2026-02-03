@@ -27,7 +27,7 @@ interface UserInfo {
 	id: string;
 	name: string;
 	email: string;
-	avatar?: string;
+	image?: string;
 }
 
 interface NavUserProps {
@@ -46,7 +46,7 @@ export function NavUser({ user }: NavUserProps) {
 							className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 							size="lg"
 						>
-							<CustomAvatar name={user.name} avatar={user.avatar} />
+							<CustomAvatar name={user.name} avatar={user.image} />
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">{user.name}</span>
 								<span className="truncate text-xs">{user.email}</span>
@@ -62,7 +62,7 @@ export function NavUser({ user }: NavUserProps) {
 					>
 						<DropdownMenuLabel className="p-0 font-normal">
 							<div className="flex items-center gap-2 p-2 text-sm">
-								<CustomAvatar name={user.name} />
+								<CustomAvatar name={user.name} avatar={user.image} />
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-medium">{user.name}</span>
 									<span className="truncate text-xs">{user.email}</span>

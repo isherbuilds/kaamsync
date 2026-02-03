@@ -64,7 +64,7 @@ function renderActivityContent(
 		case "created":
 			return (
 				<p className="text-muted-foreground text-sm sm:text-base">
-					created this item
+					Matter created
 				</p>
 			);
 
@@ -89,7 +89,7 @@ function renderActivityContent(
 			if (!entry.toAssigneeId) {
 				return (
 					<p className="text-muted-foreground text-sm sm:text-base">
-						unassigned{" "}
+						Unassigned{" "}
 						<span className="font-medium text-foreground">{fromName}</span>
 					</p>
 				);
@@ -97,14 +97,14 @@ function renderActivityContent(
 			if (!entry.fromAssigneeId) {
 				return (
 					<p className="text-muted-foreground text-sm sm:text-base">
-						assigned this to{" "}
+						Assigned this to{" "}
 						<span className="font-medium text-foreground">{toName}</span>
 					</p>
 				);
 			}
 			return (
 				<p className="text-muted-foreground text-sm sm:text-base">
-					reassigned this from{" "}
+					Reassigned this from{" "}
 					<span className="font-medium text-foreground">{fromName}</span> to{" "}
 					<span className="font-medium text-foreground">{toName}</span>
 				</p>
@@ -123,7 +123,7 @@ function renderActivityContent(
 			const toPriority = priorityLabels[entry.toValue ?? "4"] ?? "None";
 			return (
 				<p className="text-muted-foreground text-sm sm:text-base">
-					changed priority from{" "}
+					Changed priority from{" "}
 					<span className="font-medium text-foreground">{fromPriority}</span> to{" "}
 					<span className="font-medium text-primary">{toPriority}</span>
 				</p>
@@ -134,8 +134,8 @@ function renderActivityContent(
 			return (
 				<div className="space-y-1">
 					<p className="text-muted-foreground text-sm sm:text-base">
-						<span className="font-medium text-emerald-600">approved</span> this
-						request
+						<span className="font-medium text-emerald-600">APPROVED</span> this
+						Request
 					</p>
 					{entry.content && (
 						<p className="text-muted-foreground text-sm italic">
@@ -149,7 +149,7 @@ function renderActivityContent(
 			return (
 				<div className="space-y-1">
 					<p className="text-muted-foreground text-sm sm:text-base">
-						<span className="font-medium text-destructive">rejected</span> this
+						<span className="font-medium text-destructive">Rejected</span> this
 						request
 					</p>
 					{entry.content && (
@@ -307,7 +307,7 @@ export function MatterActivityTimeline({
 	}
 
 	return (
-		<div className="space-y-5 sm:space-y-6">
+		<>
 			{timelineEntries.map((entry, index) => (
 				<ActivityEntryItem
 					key={entry.id}
@@ -317,7 +317,7 @@ export function MatterActivityTimeline({
 					memberLookup={memberLookup}
 				/>
 			))}
-		</div>
+		</>
 	);
 }
 
