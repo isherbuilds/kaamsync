@@ -93,10 +93,10 @@ export const auth = betterAuth({
 		ipAddress: {
 			ipAddressHeaders: ["x-forwarded-for", "x-real-ip", "cf-connecting-ip"],
 		},
-		crossSubDomainCookies: {
-			enabled: true,
-			domain: isDevelopment ? "localhost" : "kaamsync.com", // your domain
-		},
+		// crossSubDomainCookies: {
+		// 	enabled: isProduction,
+		// 	domain: "kaamsync.com", // your domain
+		// },
 	},
 	emailAndPassword: {
 		enabled: true,
@@ -116,12 +116,15 @@ export const auth = betterAuth({
 	},
 	session: {
 		modelName: "sessionsTable",
-		expiresIn: 60 * 60 * 24 * 30, // 30 days (reduced from 1 year for security)
+		expiresIn: 60 * 60 * 24 * 30, // 30 days
 		updateAge: 60 * 60 * 24, // 1 day - refresh session daily
 		cookieCache: {
 			enabled: true,
-			maxAge: 5 * 60, // 5 minutes - balance between DB hits and security
-			strategy: "compact",
+			maxAge: 60 * 60 * 24 * 7, // 7 days - long-lived for offline support
+			strategy: "jwe", // encrypted JWT for better security with longer cache
+			// refreshCache: {
+			// 	updateAge: 60 * 60 * 24, // Refresh when 1 day remains (stateless refresh)
+			// },
 		},
 	},
 	account: {
@@ -130,7 +133,8 @@ export const auth = betterAuth({
 			enabled: true,
 			trustedProviders: ["google"],
 		},
-		storeStateStrategy: "database",
+		storeStateStrategy: "cookie",
+		// skipStateCookieCheck: true,
 	},
 	databaseHooks: {
 		session: {

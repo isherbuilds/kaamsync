@@ -22,9 +22,13 @@ import { Spinner } from "~/components/ui/spinner";
 import { useServiceWorker } from "~/hooks/use-service-worker";
 import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
-import { getAuthSessionSWR } from "~/lib/auth/offline";
+import {
+	getAuthSessionSWR,
+	isOffline,
+	saveAuthSession,
+} from "~/lib/auth/offline";
 import { getServerSession } from "~/lib/auth/server";
-import { getSubscriptionSWR } from "~/lib/billing/offline";
+import { getSubscription, getSubscriptionSWR } from "~/lib/billing/offline";
 import { fetchOrgSubscription } from "~/lib/billing/service";
 import { requireAuth } from "~/middlewares/auth-guard";
 import type { Route } from "./+types/layout";
@@ -68,43 +72,42 @@ let hasInitializedOrg = false;
 export const clientMiddleware: Route.ClientMiddlewareFunction[] = [
 	async ({ context, params }, next) => {
 		const orgSlug = params.orgSlug;
+		const offline = isOffline();
 
-		// Get session with SWR caching
-		const baseSession = await getAuthSessionSWR(() => authClient.getSession(), {
-			refreshMaxAgeMs: 60_000,
-			blockOnEmpty: true,
-		});
+		const baseSession = await getAuthSessionSWR(() => authClient.getSession());
 
-		if (!baseSession?.session) throw redirect("/login");
+		if (!baseSession?.session) {
+			if (offline) {
+				throw new Response("Offline with no cached session", { status: 503 });
+			}
+			throw redirect("/login");
+		}
 
 		let finalSession = baseSession;
 		const needsOrgUpdate = orgSlug && orgSlug !== lastOrgSlug;
-		const orgAlreadyMatches =
+
+		if (
 			baseSession.session.activeOrganizationId &&
 			!needsOrgUpdate &&
-			!hasInitializedOrg;
-
-		if (orgAlreadyMatches) {
+			!hasInitializedOrg
+		) {
 			lastOrgSlug = orgSlug;
 			hasInitializedOrg = true;
-		} else if (needsOrgUpdate) {
+		} else if (needsOrgUpdate && !offline) {
 			try {
 				await authClient.organization.setActive({ organizationSlug: orgSlug });
-
 				lastOrgSlug = orgSlug;
 				hasInitializedOrg = true;
-
 				finalSession =
 					(await getAuthSessionSWR(() => authClient.getSession(), {
 						forceNetwork: true,
-						blockOnEmpty: true,
 					})) ?? baseSession;
 			} catch {
-				// Offline fallback - use cached session
 				finalSession = baseSession;
 			}
 		}
 
+		saveAuthSession(finalSession);
 		context.set(clientAuthContext, finalSession);
 		await next();
 	},
@@ -118,21 +121,25 @@ export async function clientLoader({
 	const authSession = context.get(clientAuthContext);
 	const orgSlug = params.orgSlug as string;
 
-	const serverData = await serverLoader();
-
-	const subscription = await getSubscriptionSWR(async () => {
-		return serverData.subscription;
-	}, orgSlug);
-
-	if (!authSession || !subscription) {
-		throw new Response("Failed to load application data", { status: 503 });
+	let subscription = null as Awaited<ReturnType<typeof getSubscriptionSWR>>;
+	try {
+		const serverData = await serverLoader();
+		subscription = await getSubscriptionSWR(
+			async () => serverData.subscription,
+			orgSlug,
+		);
+	} catch {
+		subscription = getSubscription(orgSlug);
 	}
 
-	return {
-		authSession,
-		orgSlug,
-		subscription,
-	};
+	if (!authSession || !subscription) {
+		throw new Response(
+			isOffline() ? "Offline with no cached data" : "Failed to load data",
+			{ status: 503 },
+		);
+	}
+
+	return { authSession, orgSlug, subscription };
 }
 
 clientLoader.hydrate = true as const; // `as const` for type inference
