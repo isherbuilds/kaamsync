@@ -120,7 +120,7 @@ export const auth = betterAuth({
 		updateAge: 60 * 60 * 24, // 1 day - refresh session daily
 		cookieCache: {
 			enabled: true,
-			maxAge: 60 * 60 * 24 * 7, // 7 days - long-lived for offline support
+			maxAge: 60 * 60 * 12, // 7 days - long-lived for offline support
 			strategy: "jwe", // encrypted JWT for better security with longer cache
 			// refreshCache: {
 			// 	updateAge: 60 * 60 * 24, // Refresh when 1 day remains (stateless refresh)

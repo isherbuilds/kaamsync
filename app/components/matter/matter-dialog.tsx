@@ -162,8 +162,8 @@ export function CreateMatterDialog({
 					type: isRequest ? matterType.request : matterType.task,
 					statusId:
 						statusId ||
-						statuses.find((s) => s.isDefault)?.id ||
-						statuses[0]?.id ||
+						(statuses || []).find((s) => s.isDefault)?.id ||
+						statuses?.[0]?.id ||
 						"",
 					assigneeId: assigneeId ?? undefined,
 					priority: Number(priority),

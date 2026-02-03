@@ -122,7 +122,7 @@ export function ColorSchemeScript({ nonce }: { nonce: string }) {
 				content={colorScheme === "dark" ? "#09090b" : "#ffffff"}
 			/>
 			<meta
-				name="theme-theme"
+				name="theme-color"
 				media="(prefers-color-scheme: dark)"
 				content={colorScheme === "light" ? "#ffffff" : "#09090b"}
 			/>
