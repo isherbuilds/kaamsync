@@ -231,7 +231,7 @@ function Layout({
 					/>
 				)}
 			</ClientOnly>
-			<div className="h-dvh w-full bg-card">
+			<div className="relative h-dvh w-full overflow-hidden">
 				<Outlet />
 			</div>
 		</SidebarProvider>

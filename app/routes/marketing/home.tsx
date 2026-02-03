@@ -248,7 +248,7 @@ export default function HomePage() {
 				<div className="container mx-auto px-4 md:px-6">
 					<div className="grid items-center gap-16 md:grid-cols-2">
 						<div>
-							<h2 className="mb-6 max-w-xl font-bold font-serif text-4xl tracking-tight md:text-5xl">
+							<h2 className="mb-6 max-w-xl font-semibold text-4xl tracking-tight md:text-5xl">
 								<span className="text-destructive decoration-destructive">
 									Requests get buried.
 								</span>

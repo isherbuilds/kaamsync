@@ -90,16 +90,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const colorScheme = useColorScheme();
 	const nonce = useNonce();
 
+	console.log("Color Scheme:", nonce);
+
 	return (
 		<html
 			lang="en"
-			className={`${colorScheme === "dark" ? "dark" : ""} touch-manipulation overflow-hidden`}
+			className={`${colorScheme === "dark" ? "dark" : ""} touch-manipulation bg-background text-foreground`}
 			suppressHydrationWarning
 		>
 			<head>
+				<Meta />
 				<meta charSet="utf-8" />
 				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
-				<Meta />
 				<Links />
 				<link
 					rel="preconnect"
@@ -134,7 +136,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				)} */}
 				<ColorSchemeScript nonce={nonce} />
 			</head>
-			<body className="h-dvh overflow-auto bg-background text-foreground">
+			<body className="h-full w-full">
 				{children}
 				<ScrollRestoration nonce={nonce} />
 				<Scripts nonce={nonce} />

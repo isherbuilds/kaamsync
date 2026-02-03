@@ -47,7 +47,7 @@ export default function MarketingLayout() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<div>
+		<>
 			<header className="fixed inset-x-0 top-0 z-50">
 				<nav className="flex items-center justify-between gap-4 border-border/40 border-b bg-background p-4 md:px-6">
 					<div className="flex md:flex-1">
@@ -159,9 +159,7 @@ export default function MarketingLayout() {
 				</div>
 			</header>
 
-			<main className="h-full overflow-y-auto bg-background">
-				<Outlet />
-			</main>
+			<Outlet />
 
 			<footer className="mt-24 border-border/40 border-t">
 				<div className="container mx-auto px-4 py-16 md:px-6">
@@ -229,6 +227,6 @@ export default function MarketingLayout() {
 					</div>
 				</div>
 			</footer>
-		</div>
+		</>
 	);
 }
