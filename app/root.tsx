@@ -90,8 +90,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	const colorScheme = useColorScheme();
 	const nonce = useNonce();
 
-	console.log("Color Scheme:", nonce);
-
 	return (
 		<html
 			lang="en"
