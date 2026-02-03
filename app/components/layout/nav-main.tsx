@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { useCallback } from "react";
-import { useLocation } from "react-router";
-import { StableLink } from "~/components/shared/stable-link";
+import { Link, useLocation } from "react-router";
 import {
 	SidebarGroup,
 	SidebarMenu,
@@ -44,14 +43,14 @@ export function NavMain({ items, orgSlug }: NavMainProps) {
 							tooltip={item.title}
 							isActive={location.pathname === `/${orgSlug}${item.url}`}
 						>
-							<StableLink
+							<Link
 								prefetch="viewport"
 								to={`/${orgSlug}${item.url}`}
 								onClick={handleLinkClick}
 							>
 								{item.icon ? <item.icon /> : null}
 								<span>{item.title}</span>
-							</StableLink>
+							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				))}

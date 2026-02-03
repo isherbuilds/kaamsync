@@ -8,9 +8,8 @@ import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
 import Plus from "lucide-react/dist/esm/icons/plus";
 import Users2Icon from "lucide-react/dist/esm/icons/users-2";
 import { useCallback, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { preloadTeam } from "zero/preload";
-import { StableLink } from "~/components/shared/stable-link";
 import { CreateTeamDialog } from "~/components/teams/create-team-dialog";
 import {
 	DropdownMenu,
@@ -71,7 +70,7 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 						return (
 							<SidebarMenuItem key={team.id}>
 								<SidebarMenuButton isActive={isActive} asChild>
-									<StableLink
+									<Link
 										to={`/${orgSlug}/${team.code}`}
 										prefetch="intent"
 										onMouseEnter={() => handleTeamHover(team.id)}
@@ -88,7 +87,7 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 											<Folder className="size-4" />
 										)}
 										{team.name}
-									</StableLink>
+									</Link>
 								</SidebarMenuButton>
 
 								<DropdownMenu>
@@ -106,25 +105,25 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 										<DropdownMenuLabel>{team.name}</DropdownMenuLabel>
 										<hr />
 										<DropdownMenuItem asChild>
-											<StableLink
+											<Link
 												to={`/${orgSlug}/settings/teams/${team.code}/members`}
 												prefetch="intent"
 												className="flex w-full items-center"
 											>
 												<Users2Icon className="text-muted-foreground" />
 												<span>Members</span>
-											</StableLink>
+											</Link>
 										</DropdownMenuItem>
 
 										<DropdownMenuItem asChild>
-											<StableLink
+											<Link
 												to={`/${orgSlug}/settings/teams/${team.code}`}
 												prefetch="intent"
 												className="flex w-full items-center"
 											>
 												<Cog className="text-muted-foreground" />
 												<span>Settings</span>
-											</StableLink>
+											</Link>
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>

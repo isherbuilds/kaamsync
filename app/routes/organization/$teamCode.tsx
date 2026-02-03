@@ -4,7 +4,7 @@ import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import InboxIcon from "lucide-react/dist/esm/icons/inbox";
 import { lazy, memo, useCallback, useMemo } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
@@ -14,7 +14,6 @@ import {
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
 import { RouteErrorBoundary } from "~/components/shared/error-boundary";
-import { StableLink } from "~/components/shared/stable-link";
 import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { Badge } from "~/components/ui/badge";
 import { EmptyStateCard } from "~/components/ui/empty-state";
@@ -107,7 +106,10 @@ export default function TeamTasksPage() {
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
 		useTasksByStatusGroup(matters as Matter[], statuses);
 
-	const { isManager, canCreateRequests } = usePermissions(teamId, teamMemberships);
+	const { isManager, canCreateRequests } = usePermissions(
+		teamId,
+		teamMemberships ?? [],
+	);
 
 	const handlePriorityChange = useCallback(
 		(id: string, priority: PriorityValue) =>
@@ -178,7 +180,7 @@ export default function TeamTasksPage() {
 				<TaskListRow
 					item={item}
 					orgSlug={orgSlug}
-					members={teamMemberships}
+										members={teamMemberships ?? []}
 					statuses={taskStatuses}
 					onPriorityChange={handlePriorityChange}
 					onStatusChange={handleStatusChange}
@@ -211,7 +213,7 @@ export default function TeamTasksPage() {
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
 				}
-				members={teamMemberships}
+										members={teamMemberships ?? []}
 			/>
 
 			<div className="min-h-0 flex-1">
@@ -392,7 +394,7 @@ const TaskListRow = memo(
 
 		return (
 			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/50">
-				<StableLink to={link} className="absolute inset-0 z-10" />
+				<Link to={link} className="absolute inset-0 z-10" />
 
 				<div className="relative flex w-full items-center gap-3">
 					<div className="flex shrink-0 items-center gap-3">
