@@ -180,7 +180,7 @@ export default function TeamTasksPage() {
 				<TaskListRow
 					item={item}
 					orgSlug={orgSlug}
-										members={teamMemberships ?? []}
+					members={teamMemberships ?? []}
 					statuses={taskStatuses}
 					onPriorityChange={handlePriorityChange}
 					onStatusChange={handleStatusChange}
@@ -213,7 +213,7 @@ export default function TeamTasksPage() {
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
 				}
-										members={teamMemberships ?? []}
+				members={teamMemberships ?? []}
 			/>
 
 			<div className="min-h-0 flex-1">
