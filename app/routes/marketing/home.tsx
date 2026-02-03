@@ -23,11 +23,11 @@ import type { Route } from "./+types/home";
 
 export const meta: MetaFunction = () =>
 	marketingMeta({
-		title: "KaamSync | Stop Losing Work in Messages",
+		title: "KaamSync | Clear, Trackable Work",
 		description:
-			"Every request, approval, and task—in one place. Built for operations teams who manage people. Works offline. Free forever for 3 users.",
+			"Every request, approval, and task—in one place. Built for operations teams who manage people. Works offline.",
 		path: "/",
-		twitterTitle: "KaamSync: Operations Management That Works",
+		twitterTitle: "KaamSync | Stop Losing Work in Messages",
 		twitterDescription:
 			"Stop losing track of requests. Built for teams that manage people.",
 	});
@@ -85,7 +85,7 @@ const structuredData = JSON.stringify([
 
 export default function HomePage() {
 	return (
-		<div className="v-stack bg-background">
+		<>
 			<script type="application/ld+json">{structuredData}</script>
 
 			<section className="v-stack center relative border-border/40 border-b pt-24 pb-32">
@@ -125,7 +125,7 @@ export default function HomePage() {
 					</div>
 
 					<p className="mt-6 font-mono text-muted-foreground text-xs uppercase tracking-wide">
-						Free for 3 users • No credit card • 2-minute setup
+						Start free • No credit card • 2 minute setup
 					</p>
 				</div>
 			</section>
@@ -278,7 +278,7 @@ export default function HomePage() {
 					<p className="mx-auto mb-12 max-w-xl font-light text-muted-foreground text-xl">
 						Join teams who replaced chaos with calm.
 						<br />
-						First 3 users free forever.
+						Start free • No credit card
 					</p>
 					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
 						<Button
@@ -301,10 +301,10 @@ export default function HomePage() {
 						</Button>
 					</div>
 					<p className="mt-6 text-muted-foreground text-sm">
-						Free for 3 users • No credit card • Setup in 2 minutes
+						Start free • No credit card • 2 minute setup
 					</p>
 				</div>
 			</MarketingContainer>
-		</div>
+		</>
 	);
 }

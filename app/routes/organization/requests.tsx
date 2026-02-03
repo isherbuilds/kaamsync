@@ -19,7 +19,6 @@ import {
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { useIsMobile } from "~/hooks/use-mobile";
 import { cn, formatDueDateLabel } from "~/lib/utils";
-
 import type { Route } from "./+types/requests";
 
 // --------------------------------------------------------------------------
@@ -51,10 +50,14 @@ export default function OrganizationRequestsPage() {
 	const isMobile = useIsMobile();
 
 	// --------------------------------------------------------------------------
-	// Data Fetching
+	// Data Fetching - Both queries run in parallel, cached independently
 	// --------------------------------------------------------------------------
 
-	const [requests] = useQuery(queries.getUserAuthoredMatters(), {
+	const [authoredRequests] = useQuery(queries.getUserAuthoredMatters(), {
+		...CACHE_LONG,
+	});
+
+	const [requestsToApprove] = useQuery(queries.getRequestsToApprove(), {
 		...CACHE_LONG,
 	});
 
@@ -66,12 +69,24 @@ export default function OrganizationRequestsPage() {
 	// Memoized Values
 	// --------------------------------------------------------------------------
 
-	const sortedRequestsByStatus = useMemo(() => {
-		if (!requests) return [];
-		return [...requests].sort((a, b) =>
+	const sortedAuthoredRequests = useMemo(() => {
+		if (!authoredRequests) return [];
+		return [...authoredRequests].sort((a, b) =>
 			sortStatusComparator(a.status || {}, b.status || {}),
 		);
-	}, [requests]);
+	}, [authoredRequests]);
+
+	const sortedRequestsToApprove = useMemo(() => {
+		if (!requestsToApprove) return [];
+		return [...requestsToApprove].sort((a, b) =>
+			sortStatusComparator(a.status || {}, b.status || {}),
+		);
+	}, [requestsToApprove]);
+
+	const combinedRequests = useMemo(
+		() => [...sortedRequestsToApprove, ...sortedAuthoredRequests],
+		[sortedAuthoredRequests, sortedRequestsToApprove],
+	);
 
 	const membersByUserId = useMemo(() => {
 		const map = new Map();
@@ -99,95 +114,98 @@ export default function OrganizationRequestsPage() {
 				: null;
 
 			return (
-				<NavLink
-					key={matter.id}
-					prefetch="viewport"
-					to={
-						isMobile
-							? `/${orgSlug}/matter/${matter.teamCode}-${matter.shortID}`
-							: `/${orgSlug}/requests/matter/${matter.teamCode}-${matter.shortID}`
-					}
-					className={({ isActive }: { isActive: boolean }) =>
-						cn(
-							"group my-0.5 block rounded-lg border p-4 transition-colors duration-200",
-							isActive
-								? "border-brand-requests/40 bg-brand-requests/5"
-								: "border-border bg-background/30 hover:border-brand-requests/20 hover:bg-brand-requests/5",
-						)
-					}
-				>
-					{/* Header Row: ID, Status, Priority */}
-					<div className="mb-3 flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<span className="font-mono text-muted-foreground text-xs">
-								{matter.teamCode}-{matter.shortID}
-							</span>
-							{matter.priority != null && matter.priority !== Priority.NONE && (
+				<div key={matter.id} className="my-0.5">
+					<NavLink
+						prefetch="viewport"
+						to={
+							isMobile
+								? `/${orgSlug}/matter/${matter.teamCode}-${matter.shortID}`
+								: `/${orgSlug}/requests/matter/${matter.teamCode}-${matter.shortID}`
+						}
+						className={({ isActive }: { isActive: boolean }) =>
+							cn(
+								"group block rounded-lg border p-4 transition-colors duration-200",
+								isActive
+									? "border-brand-requests/40 bg-brand-requests/5"
+									: "border-border bg-background/30 hover:border-brand-requests/20 hover:bg-brand-requests/5",
+							)
+						}
+					>
+						{/* Header Row: ID, Status, Priority */}
+						<div className="mb-3 flex items-center justify-between">
+							<div className="flex items-center gap-2">
+								<span className="font-mono text-muted-foreground text-xs">
+									{matter.teamCode}-{matter.shortID}
+								</span>
+
+								{matter.priority != null &&
+									matter.priority !== Priority.NONE && (
+										<span
+											className={cn(
+												"inline-flex items-center rounded px-2 py-0.5 font-semibold text-xs uppercase tracking-wider",
+												getPriorityBadgeClass(priority),
+											)}
+										>
+											{getPriorityDisplayLabel(priority)}
+										</span>
+									)}
+							</div>
+							{matter.status && (
 								<span
 									className={cn(
-										"inline-flex items-center rounded px-2 py-0.5 font-semibold text-xs uppercase tracking-wider",
-										getPriorityBadgeClass(priority),
+										"inline-flex items-center rounded border px-2 py-0.5 font-medium text-xs uppercase tracking-wider",
+										matter.status.type === "pending_approval" &&
+											"border-status-pending/30 bg-status-pending/10 text-status-pending",
+										matter.status.type === "rejected" &&
+											"border-status-rejected/30 bg-status-rejected/10 text-status-rejected",
 									)}
 								>
-									{getPriorityDisplayLabel(priority)}
+									{matter.status.name.split(" ")[0]}
 								</span>
 							)}
 						</div>
-						{matter.status && (
-							<span
-								className={cn(
-									"inline-flex items-center rounded border px-2 py-0.5 font-medium text-xs uppercase tracking-wider",
-									matter.status.type === "pending_approval" &&
-										"border-status-pending/30 bg-status-pending/10 text-status-pending",
-									matter.status.type === "rejected" &&
-										"border-status-rejected/30 bg-status-rejected/10 text-status-rejected",
+
+						{/* Title */}
+						<h3 className="mb-3 line-clamp-2 font-medium text-sm leading-relaxed">
+							{matter.title}
+						</h3>
+
+						{/* Footer Row: Assignee, Due Date, Created */}
+						<div className="flex items-center justify-between gap-4 text-muted-foreground text-xs">
+							{assignee && (
+								<div className="flex items-center gap-1.5">
+									<CustomAvatar
+										name={assignee.usersTable?.name}
+										className="size-6"
+									/>
+									<span className="max-w-24 truncate">
+										{assignee.usersTable?.name}
+									</span>
+								</div>
+							)}
+
+							<div className="flex gap-2">
+								{matter.dueDate && (
+									<div
+										className={cn(
+											"flex items-center gap-1",
+											matter.dueDate < now && "text-priority-urgent",
+										)}
+									>
+										<CalendarIcon className="size-3.5" />
+										<span>{formatDueDateLabel(matter.dueDate)}</span>
+									</div>
 								)}
-							>
-								{matter.status.name}
-							</span>
-						)}
-					</div>
-
-					{/* Title */}
-					<h3 className="mb-3 line-clamp-2 font-medium text-sm leading-relaxed">
-						{matter.title}
-					</h3>
-
-					{/* Footer Row: Assignee, Due Date, Created */}
-					<div className="flex items-center justify-between gap-4 text-muted-foreground text-xs">
-						{assignee && (
-							<div className="flex items-center gap-1.5">
-								<CustomAvatar
-									name={assignee.usersTable?.name}
-									className="size-6"
-								/>
-								<span className="max-w-24 truncate">
-									{assignee.usersTable?.name}
-								</span>
+								{createdDate && (
+									<div className="flex items-center gap-1">
+										<Clock className="size-3.5" />
+										<span>{createdDate}</span>
+									</div>
+								)}
 							</div>
-						)}
-
-						<div className="flex gap-2">
-							{matter.dueDate && (
-								<div
-									className={cn(
-										"flex items-center gap-1",
-										matter.dueDate < now && "text-priority-urgent",
-									)}
-								>
-									<CalendarIcon className="size-3.5" />
-									<span>{formatDueDateLabel(matter.dueDate)}</span>
-								</div>
-							)}
-							{createdDate && (
-								<div className="flex items-center gap-1">
-									<Clock className="size-3.5" />
-									<span>{createdDate}</span>
-								</div>
-							)}
 						</div>
-					</div>
-				</NavLink>
+					</NavLink>
+				</div>
 			);
 		},
 		[orgSlug, isMobile, membersByUserId],
@@ -197,17 +215,19 @@ export default function OrganizationRequestsPage() {
 	// Render
 	// --------------------------------------------------------------------------
 
+	const emptyState = {
+		title: "No requests yet",
+		description: "Create a request or wait for approvals to appear here.",
+	};
+
 	return (
 		<MatterListWithDetailPanel
 			title="Requests"
 			icon={Send}
 			accentColor="amber"
-			items={sortedRequestsByStatus}
-			isLoading={!requests}
-			emptyState={{
-				title: "No requests created",
-				description: "Requests you create will appear here",
-			}}
+			items={combinedRequests}
+			isLoading={!authoredRequests || !requestsToApprove}
+			emptyState={emptyState}
 			estimateSize={140}
 			renderItem={handleRenderRequestItem}
 		/>

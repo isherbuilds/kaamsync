@@ -13,6 +13,7 @@ import { getToast } from "remix-toast";
 import { ClientOnly } from "remix-utils/client-only";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
 import type { Route } from "./+types/root";
+import { Spinner } from "./components/ui/spinner";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -99,6 +100,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 				<meta charSet="utf-8" />
 				<meta content="width=device-width, initial-scale=1.0" name="viewport" />
 				<Meta />
+				<Links />
 				<link
 					rel="preconnect"
 					href="https://fonts.googleapis.com"
@@ -119,13 +121,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 					href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:wght@400;500;700&display=swap"
 				/>
 				<link rel="preconnect" href="https://zero.kaamsync.com" />
-				{/* {import.meta.env.DEV && (
+				{import.meta.env.DEV && (
 					<script
-					crossOrigin="anonymous"
-					src="//unpkg.com/react-scan/dist/auto.global"
+						crossOrigin="anonymous"
+						src="//unpkg.com/react-scan/dist/auto.global"
 					/>
-					)} */}
-				<Links />
+				)}
 				<ColorSchemeScript nonce={nonce} />
 			</head>
 			<body className="h-dvh overflow-auto bg-background text-foreground">
@@ -150,6 +151,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
 	return <Outlet />;
+}
+
+export function HydrateFallback() {
+	return (
+		<div className="center flex h-dvh w-full">
+			<Spinner className="size-10 text-primary" />
+		</div>
+	);
 }
 
 export function ErrorBoundary() {

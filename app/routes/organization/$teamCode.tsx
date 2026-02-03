@@ -4,17 +4,16 @@ import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import InboxIcon from "lucide-react/dist/esm/icons/inbox";
 import { lazy, memo, useCallback, useMemo } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
-import { CACHE_NAV } from "zero/query-cache-policy";
+import { CACHE_LONG, CACHE_NAV } from "zero/query-cache-policy";
 import {
 	MemberSelect,
 	PrioritySelect,
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
 import { RouteErrorBoundary } from "~/components/shared/error-boundary";
-import { StableLink } from "~/components/shared/stable-link";
 import { VirtualizedList } from "~/components/shared/virtualized-list";
 import { Badge } from "~/components/ui/badge";
 import { EmptyStateCard } from "~/components/ui/empty-state";
@@ -98,13 +97,18 @@ export default function TeamTasksPage() {
 		...CACHE_NAV,
 	});
 
+	const [teamMemberships] = useQuery(queries.getTeamMembers({ teamId }), {
+		enabled: !!teamId,
+		...CACHE_LONG,
+	});
+
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
 		useTasksByStatusGroup(matters as Matter[], statuses);
 
 	const { isManager, canCreateRequests } = usePermissions(
 		teamId,
-		team?.memberships,
+		teamMemberships ?? [],
 	);
 
 	const handlePriorityChange = useCallback(
@@ -176,7 +180,7 @@ export default function TeamTasksPage() {
 				<TaskListRow
 					item={item}
 					orgSlug={orgSlug}
-					members={team?.memberships ?? []}
+					members={teamMemberships ?? []}
 					statuses={taskStatuses}
 					onPriorityChange={handlePriorityChange}
 					onStatusChange={handleStatusChange}
@@ -186,7 +190,7 @@ export default function TeamTasksPage() {
 		[
 			toggleGroup,
 			orgSlug,
-			team?.memberships,
+			teamMemberships,
 			taskStatuses,
 			handlePriorityChange,
 			handleStatusChange,
@@ -209,7 +213,7 @@ export default function TeamTasksPage() {
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
 				}
-				members={team.memberships ?? []}
+				members={teamMemberships ?? []}
 			/>
 
 			<div className="min-h-0 flex-1">
@@ -390,7 +394,11 @@ const TaskListRow = memo(
 
 		return (
 			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/50">
-				<StableLink to={link} className="absolute inset-0 z-10" />
+				<Link
+					to={link}
+					className="absolute inset-0 z-10"
+					aria-label={`Open ${task.title} details`}
+				/>
 
 				<div className="relative flex w-full items-center gap-3">
 					<div className="flex shrink-0 items-center gap-3">

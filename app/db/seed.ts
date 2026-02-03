@@ -3,8 +3,12 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { db } from "~/db";
 import { teamsTable } from "~/db/schema/teams";
+import { heroIndustry, heroShowcaseMatters } from "./seeds/data/hero";
 import { industries } from "./seeds/data/industries";
-import { createMatters } from "./seeds/generators/matters";
+import {
+	createMatters,
+	createShowcaseMatters,
+} from "./seeds/generators/matters";
 import { createOrganization } from "./seeds/generators/organizations";
 import { createAdminUser, createUsers } from "./seeds/generators/users";
 
@@ -13,6 +17,7 @@ const MATTERS_PER_INDUSTRY = 1500; // Reduced to prevent timeouts
 export async function seed() {
 	console.log("🌱 Starting modular database seed...");
 	const startTime = Date.now();
+	const seedPreset = process.env.SEED_PRESET ?? "full";
 
 	// 0. Create Admin User (Fixed login)
 	const adminUser = await createAdminUser();
@@ -38,6 +43,28 @@ export async function seed() {
 	console.log(`🔍 Found ${globalUsedCodes.size} existing team codes`);
 
 	let totalMatters = 0;
+
+	if (seedPreset === "hero") {
+		console.log("🎯 Seeding hero showcase data...");
+		const { teams } = await createOrganization(
+			heroIndustry,
+			sharedUsers as any[],
+			globalUsedCodes,
+		);
+
+		for (const team of teams) {
+			const showcaseMatters = heroShowcaseMatters[team.code] ?? [];
+			if (showcaseMatters.length) {
+				await createShowcaseMatters(team, showcaseMatters);
+			} else {
+				await createMatters(team, 12);
+			}
+		}
+
+		const duration = (Date.now() - startTime) / 1000;
+		console.log(`\n🎉 Hero seed completed in ${duration.toFixed(2)}s`);
+		return;
+	}
 
 	// 2. Loop through Industries
 	for (const industryConfig of industries) {
