@@ -179,7 +179,9 @@ export const mutators = defineMutators({
 				}
 
 				// Invalidate cache (server-only effect)
-				clearOrganizationUsageCache(ctx, orgId, "matters");
+				if (tx.location === "server") {
+					clearOrganizationUsageCache(ctx, baseInsert.orgId, "matters");
+				}
 			},
 		),
 

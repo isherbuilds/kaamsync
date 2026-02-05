@@ -61,8 +61,8 @@ export const auth = betterAuth({
 	}),
 
 	trustedOrigins: isDevelopment
-		? ["http://localhost:3000"]
-		: ["https://kaamsync.com", "https://kaamsync.edernel.com"],
+		? ["http://localhost:3000", "https://kaamsync.gapple.in"]
+		: ["https://kaamsync.com", "https://zero.kaamsync.com"],
 
 	// Handles all /api/auth/* routes automatically
 	rateLimit: {

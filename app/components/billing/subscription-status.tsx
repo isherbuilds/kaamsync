@@ -92,6 +92,14 @@ export function SubscriptionStatus({
 						Upgrade to unlock additional members, unlimited teams, and more
 						storage for your growing business.
 					</p>
+					<Form method="POST" className="mt-4">
+						<input type="hidden" name="intent" value="checkout" />
+						<input type="hidden" name="plan" value="growth" />
+						<input type="hidden" name="interval" value="monthly" />
+						<Button type="submit" size="lg">
+							Upgrade
+						</Button>
+					</Form>
 				</div>
 			</div>
 		);
@@ -150,7 +158,7 @@ export function SubscriptionStatus({
 					)}
 				</div>
 			</div>
-			<div className="mt-4 gap-2 border-t pt-4">
+			<div className="mt-4 border-t pt-4">
 				<Form method="POST">
 					<input type="hidden" name="intent" value="portal" />
 					<Button type="submit" variant="outline" disabled={loading}>

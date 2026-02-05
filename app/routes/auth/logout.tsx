@@ -12,18 +12,43 @@ export function loader() {
 export async function clientAction() {
 	await authClient.signOut();
 
+	const deleteIndexedDb = async (name: string) =>
+		new Promise<void>((resolve, reject) => {
+			const request = window.indexedDB.deleteDatabase(name);
+			request.onsuccess = () => resolve();
+			request.onerror = () => reject(request.error);
+			request.onblocked = () => resolve();
+		});
+
+	try {
+		await clearAuthSession();
+	} catch (e) {
+		warn("[Logout] Failed to clear Auth Session", e);
+	}
+
+	try {
+		await clearSubscriptionCache();
+	} catch (e) {
+		warn("[Logout] Failed to clear Subscription Cache", e);
+	}
+
+	try {
+		localStorage.clear();
+	} catch (e) {
+		warn("[Logout] Failed to clear LocalStorage", e);
+	}
+
 	const cleanups = [
-		{ name: "Auth Session", fn: clearAuthSession },
-		{ name: "Subscription Cache", fn: clearSubscriptionCache },
-		{ name: "LocalStorage", fn: () => localStorage.clear() },
 		{
 			name: "IndexedDB",
 			fn: async () => {
 				await dropAllDatabases();
 				const dbs = await window.indexedDB.databases();
-				for (const db of dbs) {
-					if (db.name) window.indexedDB.deleteDatabase(db.name);
-				}
+				await Promise.all(
+					dbs
+						.filter((db) => Boolean(db.name))
+						.map((db) => deleteIndexedDb(db.name as string)),
+				);
 			},
 		},
 		{

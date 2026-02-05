@@ -19,7 +19,7 @@ export function ZeroInit({
 	children: React.ReactNode;
 	authSession?: AuthSession;
 }) {
-	// Use passed session, fallback to cached for offline
+	// Use passed session, fallback to anon/null when missing
 	const userID = authSession?.user.id ?? "anon";
 	const activeOrganizationId =
 		authSession?.session.activeOrganizationId ?? null;

@@ -5,7 +5,7 @@ import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
 import Star from "lucide-react/dist/esm/icons/star";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2";
-import { useCallback, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
@@ -21,7 +21,13 @@ import {
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
 import { PropertyPill, PropertyRow } from "~/components/matter/properties";
-import { TaskTimeline } from "~/components/matter/task-timeline";
+
+// Lazy load heavy timeline component for faster initial paint
+const TaskTimeline = lazy(() =>
+	import("~/components/matter/task-timeline").then((m) => ({
+		default: m.TaskTimeline,
+	})),
+);
 import { RouteErrorBoundary } from "~/components/shared/error-boundary";
 import { Button } from "~/components/ui/button";
 import {
@@ -103,6 +109,20 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 			return isRequest ? isRequestStatus : !isRequestStatus;
 		});
 	}, [matterType, statuses]);
+
+	// Memoize attachments to prevent re-renders on unrelated state changes
+	const attachmentItems = useMemo(
+		() =>
+			(matter?.attachments ?? []).map((a) => ({
+				id: a.id,
+				fileName: a.fileName,
+				fileType: a.fileType,
+				fileSize: a.fileSize,
+				storageKey: a.storageKey,
+				publicUrl: a.publicUrl,
+			})),
+		[matter?.attachments],
+	);
 
 	// 3. State & Loading
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -350,28 +370,32 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								)}
 							</div>
 
-							{matter.attachments && matter.attachments.length > 0 && (
-								<AttachmentPreviewList
-									attachments={matter.attachments.map((attachment) => ({
-										id: attachment.id,
-										fileName: attachment.fileName,
-										fileType: attachment.fileType,
-										fileSize: attachment.fileSize,
-										storageKey: attachment.storageKey,
-										publicUrl: attachment.publicUrl,
-									}))}
-								/>
+							{attachmentItems.length > 0 && (
+								<AttachmentPreviewList attachments={attachmentItems} />
 							)}
 
 							<Separator className="my-6" />
 
 							<div className="v-stack gap-4">
 								<h2 className="font-semibold text-base sm:text-lg">Activity</h2>
-								<TaskTimeline
-									matterId={matter.id}
-									members={members}
-									statuses={statuses}
-								/>
+								<Suspense
+									fallback={
+										<div className="v-stack gap-3">
+											{[1, 2, 3].map((i) => (
+												<div
+													key={i}
+													className="h-16 animate-pulse rounded bg-muted"
+												/>
+											))}
+										</div>
+									}
+								>
+									<TaskTimeline
+										matterId={matter.id}
+										members={members}
+										statuses={statuses}
+									/>
+								</Suspense>
 								<div className="rounded border bg-muted p-3">
 									<CommentComposer matterId={matter.id} />
 								</div>

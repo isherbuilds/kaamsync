@@ -19,7 +19,7 @@ export async function clientLoader() {
 	const { data: orgs } = await authClient.organization.list();
 	if (orgs?.[0]) {
 		const firstOrg = orgs[0];
-		authClient.organization.setActive({ organizationId: firstOrg.id });
+		await authClient.organization.setActive({ organizationId: firstOrg.id });
 		return redirect(`/${firstOrg.slug}/tasks`);
 	}
 

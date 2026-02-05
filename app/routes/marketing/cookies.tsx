@@ -87,8 +87,8 @@ export default function CookiesPage() {
 								</thead>
 								<tbody className="text-muted-foreground">
 									<tr className="border-border/50 border-b">
-										<td className="py-4 font-mono text-sm">Session Cookie</td>
-										<td className="py-4">Authentication & Security</td>
+										<td className="py-4 font-mono text-sm">Auth Cookie</td>
+										<td className="py-4">Authentication & Session</td>
 										<td className="py-4">30 Days</td>
 									</tr>
 									<tr className="border-border/50 border-b">

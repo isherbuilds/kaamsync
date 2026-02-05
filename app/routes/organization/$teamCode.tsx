@@ -3,7 +3,7 @@ import { useQuery, useZero } from "@rocicorp/zero/react";
 import CalendarIcon from "lucide-react/dist/esm/icons/calendar";
 import ChevronDown from "lucide-react/dist/esm/icons/chevron-down";
 import InboxIcon from "lucide-react/dist/esm/icons/inbox";
-import { lazy, memo, useCallback, useMemo } from "react";
+import { lazy, memo, Suspense, useCallback, useMemo } from "react";
 import { Link, useParams } from "react-router";
 import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
@@ -38,12 +38,14 @@ import { safeError } from "~/lib/utils/logger";
 
 import type { Route } from "./+types/$teamCode";
 
-// Lazy load heavy dialog component
 const CreateMatterDialog = lazy(() =>
 	import("~/components/matter/matter-dialog").then((module) => ({
 		default: module.CreateMatterDialog,
 	})),
 );
+
+// Stable empty arrays to prevent unnecessary re-renders
+const EMPTY_MEMBERS: readonly Row["teamMembershipsTable"][] = [];
 
 // ============================================================================
 // Route Meta
@@ -93,7 +95,7 @@ export default function TeamTasksPage() {
 
 	const [statuses] = useQuery(queries.getTeamStatuses({ teamId }), {
 		enabled: !!teamId,
-		...CACHE_NAV,
+		...CACHE_LONG, // Statuses change rarely, use longer cache
 	});
 
 	const [teamMemberships] = useQuery(queries.getTeamMembers({ teamId }), {
@@ -171,6 +173,9 @@ export default function TeamTasksPage() {
 		[statuses],
 	);
 
+	// Stable references to prevent re-renders
+	const stableMembers = teamMemberships ?? EMPTY_MEMBERS;
+
 	const renderItem = useCallback(
 		(item: StatusGroupListItem) =>
 			item.type === "header" ? (
@@ -179,7 +184,7 @@ export default function TeamTasksPage() {
 				<TaskListRow
 					item={item}
 					orgSlug={orgSlug}
-					members={teamMemberships ?? []}
+					members={stableMembers}
 					statuses={taskStatuses}
 					onPriorityChange={handlePriorityChange}
 					onStatusChange={handleStatusChange}
@@ -189,7 +194,7 @@ export default function TeamTasksPage() {
 		[
 			toggleGroup,
 			orgSlug,
-			teamMemberships,
+			stableMembers,
 			taskStatuses,
 			handlePriorityChange,
 			handleStatusChange,
@@ -212,7 +217,7 @@ export default function TeamTasksPage() {
 				requestStatuses={
 					requestStatuses.length > 0 ? requestStatuses : taskStatuses
 				}
-				members={teamMemberships ?? []}
+				members={stableMembers}
 			/>
 
 			<div className="min-h-0 flex-1">
@@ -273,24 +278,32 @@ const TeamPageHeader = memo(
 				</div>
 			</div>
 			<div className="flex items-center gap-2">
-				{isManager && (
-					<CreateMatterDialog
-						type="task"
-						teamId={teamId}
-						teamCode={teamCode}
-						statuses={taskStatuses}
-						teamMembers={members}
-					/>
-				)}
-				{canRequest && (
-					<CreateMatterDialog
-						type="request"
-						teamId={teamId}
-						teamCode={teamCode}
-						statuses={requestStatuses}
-						teamMembers={members}
-					/>
-				)}
+				<Suspense
+					fallback={
+						<div className="flex gap-2">
+							<div className="h-8 w-24 animate-pulse rounded bg-muted" />
+						</div>
+					}
+				>
+					{isManager && (
+						<CreateMatterDialog
+							type="task"
+							teamId={teamId}
+							teamCode={teamCode}
+							statuses={taskStatuses}
+							teamMembers={members}
+						/>
+					)}
+					{canRequest && (
+						<CreateMatterDialog
+							type="request"
+							teamId={teamId}
+							teamCode={teamCode}
+							statuses={requestStatuses}
+							teamMembers={members}
+						/>
+					)}
+				</Suspense>
 			</div>
 		</div>
 	),
@@ -452,8 +465,12 @@ const TaskListRow = memo(
 // Due Date Badge Component
 // ============================================================================
 
-function TaskDueDateBadge({ date }: { date: number }) {
-	const label = formatDueDateLabel(date);
+const TaskDueDateBadge = memo(function TaskDueDateBadge({
+	date,
+}: {
+	date: number;
+}) {
+	const label = useMemo(() => formatDueDateLabel(date), [date]);
 	const isOverdue = label === "Overdue";
 	return (
 		<div
@@ -468,7 +485,7 @@ function TaskDueDateBadge({ date }: { date: number }) {
 			<span>{label}</span>
 		</div>
 	);
-}
+});
 
 export function ErrorBoundary() {
 	return (
