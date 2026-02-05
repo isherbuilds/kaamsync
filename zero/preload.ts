@@ -6,28 +6,10 @@ import { CACHE_LONG, CACHE_NAV, CACHE_PRELOAD } from "./query-cache-policy";
 const preloadedTeams = new WeakMap<Zero, Set<string>>();
 const preloadedInstances = new WeakSet<Zero>();
 
-/**
- * Preloads essential data for the app.
- * Context is automatically provided by Zero - no manual passing needed.
- */
 export function preloadAll(z: Zero) {
 	if (preloadedInstances.has(z)) return;
-
 	preloadedInstances.add(z);
-	// No global clear; per-instance cache is handled by WeakMap
 
-	if (typeof window !== "undefined") {
-		const conn = "connection" in navigator ? navigator.connection : null;
-		const prefersReducedData =
-			conn &&
-			typeof conn === "object" &&
-			(("saveData" in conn && conn.saveData) ||
-				("effectiveType" in conn &&
-					(conn.effectiveType === "2g" || conn.effectiveType === "slow-2g")));
-		if (prefersReducedData) return;
-	}
-
-	// Essential navigation data - context comes from ZeroProvider
 	z.preload(queries.getOrganizationList(), CACHE_PRELOAD);
 	z.preload(queries.getTeamsList(), CACHE_PRELOAD);
 	z.preload(queries.getUserAssignedMatters(), CACHE_PRELOAD);
