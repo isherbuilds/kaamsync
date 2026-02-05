@@ -7,7 +7,7 @@ interface PropertyProps {
 
 export function PropertyPill({ label, children }: PropertyProps) {
 	return (
-		<div className="flex shrink-0 items-center gap-2 rounded-full border bg-muted/50 px-3 py-1">
+		<div className="flex shrink-0 items-center gap-2 rounded-full border bg-muted/40 px-3 py-1">
 			<span className="font-bold text-muted-foreground text-xs uppercase tracking-tight">
 				{label}
 			</span>

@@ -157,8 +157,8 @@ export default function PricingPage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<section className="relative pt-24 pb-16 text-center">
-				<div className="container mx-auto mb-10 px-4 md:px-6">
+			<MarketingContainer variant="hero" className="relative pb-24 text-center">
+				<div className="mb-10 text-center">
 					<div className="mx-auto max-w-3xl">
 						<MarketingHeading as="h2" className="mb-6">
 							Start free.
@@ -277,7 +277,7 @@ export default function PricingPage() {
 									</div>
 
 									{hasUsage && "addonsDescription" in plan && (
-										<div className="mb-6 rounded bg-muted/50 p-3">
+									<div className="mb-6 rounded bg-muted/40 p-3">
 											<p className="mb-1 font-bold font-mono text-xs uppercase tracking-wider">
 												Base inclusions +
 											</p>
@@ -304,7 +304,7 @@ export default function PricingPage() {
 									<Button
 										asChild
 										variant={isPopular ? "default" : "outline"}
-										className="h-12 font-bold"
+										className="h-12 rounded-none font-bold"
 									>
 										<Link
 											to={
@@ -321,7 +321,7 @@ export default function PricingPage() {
 						})}
 					</div>
 				</div>
-			</section>
+			</MarketingContainer>
 
 			{/* FAQs */}
 			<MarketingContainer className="border-border/40 border-y bg-muted/20 py-24">
@@ -346,7 +346,7 @@ export default function PricingPage() {
 								{[1, 2, 3].map((item) => (
 									<div
 										key={item}
-										className="h-16 rounded-xl border border-border/40 bg-muted/30"
+										className="h-16 rounded-xl border border-border/40 bg-muted/20"
 									/>
 								))}
 							</div>
@@ -361,7 +361,7 @@ export default function PricingPage() {
 				fallback={
 					<section className="border-border/40 border-t bg-background py-20">
 						<div className="container mx-auto px-4 md:px-6">
-							<div className="mx-auto h-40 max-w-4xl rounded-3xl border border-border/40 bg-muted/30" />
+						<div className="mx-auto h-40 max-w-4xl rounded-3xl border border-border/40 bg-muted/20" />
 						</div>
 					</section>
 				}

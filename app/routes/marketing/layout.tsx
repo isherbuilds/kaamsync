@@ -96,7 +96,7 @@ export default function MarketingLayout() {
 						<Button
 							asChild
 							size="sm"
-							className="h-8 rounded-md bg-primary px-4 font-bold text-white text-xs hover:bg-primary/90"
+					className="h-8 rounded-md bg-primary px-4 font-bold text-white text-xs hover:bg-primary/80"
 						>
 							<Link to="/signup">Sign Up</Link>
 						</Button>
@@ -129,7 +129,7 @@ export default function MarketingLayout() {
 										to={to}
 										prefetch={to === "/" ? "none" : "intent"}
 										onClick={() => setOpen(false)}
-										className="p-2 text-2xl text-foreground transition-colors hover:bg-muted/50"
+					className="p-2 text-2xl text-foreground transition-colors hover:bg-muted/40"
 									>
 										{label}
 									</Link>
@@ -141,7 +141,7 @@ export default function MarketingLayout() {
 									<Link
 										to="/login"
 										onClick={() => setOpen(false)}
-										className="center flex rounded-xl bg-muted/50 px-3 py-3 font-medium text-base text-foreground transition-colors hover:bg-muted"
+					className="center flex rounded-xl bg-muted/40 px-3 py-3 font-medium text-base text-foreground transition-colors hover:bg-muted"
 									>
 										Log In
 									</Link>

@@ -37,7 +37,7 @@ export default function ContactPage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<MarketingContainer variant="hero" className="border-border/40 border-b">
+			<MarketingContainer variant="hero" className="border-border/40 border-b pb-24">
 				<div className="mx-auto max-w-3xl text-center">
 					<MarketingBadge>We're Here</MarketingBadge>
 					<MarketingHeading as="h2">
@@ -51,7 +51,7 @@ export default function ContactPage() {
 					</p>
 				</div>
 
-				<div className="mx-auto my-14 grid max-w-6xl gap-0 overflow-hidden border border-border bg-background shadow-lg lg:grid-cols-12">
+				<div className="mx-auto my-16 grid max-w-6xl gap-0 overflow-hidden border border-border bg-background shadow-lg lg:grid-cols-12">
 					<div className="border-border border-b bg-muted/20 p-8 md:p-12 lg:col-span-5 lg:border-r lg:border-b-0">
 						<MarketingHeading as="h3" className="mb-8 font-bold">
 							Direct Lines
@@ -185,7 +185,7 @@ export default function ContactPage() {
 								<Textarea
 									id="message"
 									placeholder="How are you managing requests now? The more we understand, the better we can help."
-									className="min-h-[120px] resize-none rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
+									className="min-h-32 resize-none rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 								/>
 							</div>
 							<Button size="lg" className="w-full rounded-none font-bold">
@@ -204,14 +204,14 @@ export default function ContactPage() {
 				fallback={
 					<section className="border-border/40 border-t bg-background py-20">
 						<div className="container mx-auto px-4 md:px-6">
-							<div className="mx-auto h-40 max-w-4xl rounded-3xl border border-border/40 bg-muted/30" />
+						<div className="mx-auto h-40 max-w-4xl rounded-3xl border border-border/40 bg-muted/20" />
 						</div>
 					</section>
 				}
 			>
 				<LazyMarketingCTA
 					title={
-						<MarketingHeading as="h2" className="mb-8 leading-tight">
+						<MarketingHeading as="h2" className="leading-tight">
 							Complex operation? <br /> Let's talk custom.
 						</MarketingHeading>
 					}
@@ -219,7 +219,7 @@ export default function ContactPage() {
 					action={
 						<Button
 							size="lg"
-							className="mx-auto h-14 w-fit bg-primary px-10 font-bold text-lg text-white hover:bg-primary/90"
+							className="mx-auto h-14 w-fit bg-primary px-10 font-bold text-lg text-white hover:bg-primary/80"
 							asChild
 						>
 							<Link to="/contact" prefetch="intent">

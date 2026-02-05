@@ -254,6 +254,17 @@ export const queries = defineQueries({
 				.limit(DEFAULT_LIMIT),
 	),
 
+	getCommentAttachmentsBatch: defineQuery(
+		z.object({ commentIds: z.array(z.string()) }),
+		({ ctx, args: { commentIds } }) =>
+			zql.attachmentsTable
+				.where("subjectType", "comment")
+				.where("subjectId", "IN", commentIds.length > 0 ? commentIds : [""])
+				.where("orgId", ctx.activeOrganizationId ?? "")
+				.orderBy("created", "desc")
+				.limit(Math.min(200, Math.max(DEFAULT_LIMIT, commentIds.length * 10))),
+	),
+
 	// LABEL & STATUS QUERIES
 	getOrganizationLabels: defineQuery(({ ctx }) =>
 		filterByOrganization(zql.labelsTable, ctx)

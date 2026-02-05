@@ -142,10 +142,13 @@ export default function HomePage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<section className="v-stack center relative border-border/40 border-b pt-24 pb-12">
+			<MarketingContainer
+				variant="hero"
+				className="v-stack center relative border-border/40 border-b pb-16 text-center"
+			>
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
-				<div className="container relative z-10 px-4 text-center md:px-6">
+				<div className="relative z-10">
 					<MarketingHeading as="h1" className="mx-auto max-w-5xl">
 						From conversations to <br />
 						<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -183,7 +186,7 @@ export default function HomePage() {
 				{/* </section> */}
 
 				{/* <section className="z-20 mx-auto max-w-7xl bg-background px-4 md:px-6"> */}
-				<div className="mx-4 mt-6 max-w-7xl rounded border border-foreground/10">
+				<div className="mx-auto mt-6 max-w-7xl rounded border border-foreground/10">
 					<picture>
 						{/* Dark mode AVIF */}
 						<source
@@ -230,68 +233,69 @@ export default function HomePage() {
 						/>
 					</picture>
 				</div>
-				<p className="mt-6 font-mono text-xs uppercase tracking-wide">
+				<p className="mt-12 font-mono text-xs uppercase tracking-wide">
 					Start free • No credit card • 2 minute setup
 				</p>
-			</section>
+			</MarketingContainer>
 
-			<section className="bg-foreground py-24 text-background">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="grid items-center gap-16 md:grid-cols-2">
-						<div>
-							<h2 className="mb-6 max-w-xl font-semibold text-4xl tracking-tight md:text-5xl">
-								<span className="text-destructive decoration-destructive">
-									Requests get buried.
-								</span>
-							</h2>
-							<p className="border-primary/50 border-l-2 pl-4 text-background/80 text-xl leading-relaxed">
-								"Managing people across departments. Approvals, requests,
-								everything came through scattered messages. I'd spend mornings
-								calling people just to find out what was actually getting done."
-							</p>
+			<MarketingContainer
+				variant="default"
+				className="bg-foreground text-background"
+			>
+				<div className="grid items-center gap-16 md:grid-cols-2">
+					<div>
+						<h2 className="mb-6 max-w-xl font-semibold text-4xl tracking-tight md:text-5xl">
+							<span className="text-destructive decoration-destructive">
+								Requests get buried.
+							</span>
+						</h2>
+						<p className="border-primary/50 border-l-2 pl-4 text-background/80 text-xl leading-relaxed">
+							"Managing people across departments. Approvals, requests,
+							everything came through scattered messages. I'd spend mornings
+							calling people just to find out what was actually getting done."
+						</p>
 
-							<div className="mt-12 grid gap-6">
-								{PAIN_POINTS.map((item) => (
-									<div key={item.title} className="flex items-start gap-4">
-										<div className="center mt-1 flex size-6 shrink-0 rounded-full border border-destructive text-destructive">
-											<span className="font-bold text-sm">×</span>
-										</div>
-										<div>
-											<div className="font-bold text-lg">{item.title}</div>
-											<div className="text-background/60 text-sm">
-												{item.desc}
-											</div>
+						<div className="mt-12 grid gap-6">
+							{PAIN_POINTS.map((item) => (
+								<div key={item.title} className="flex items-start gap-4">
+									<div className="center mt-1 flex size-6 shrink-0 rounded-full border border-destructive text-destructive">
+										<span className="font-bold text-sm">×</span>
+									</div>
+									<div>
+										<div className="font-bold text-lg">{item.title}</div>
+										<div className="text-background/60 text-sm">
+											{item.desc}
 										</div>
 									</div>
-								))}
-							</div>
+								</div>
+							))}
 						</div>
-
-						<Suspense
-							fallback={
-								<div className="h-full min-h-[360px] rounded-3xl border border-border/40 bg-background/5" />
-							}
-						>
-							<LazyChatSimulator />
-							{/*
-								When the chat simulator image is ready, replace with:
-								<picture>
-									<source srcSet="/static/marketing/chat-simulator.avif" type="image/avif" />
-									<source srcSet="/static/marketing/chat-simulator.webp" type="image/webp" />
-									<img
-										src="/static/marketing/chat-simulator.png"
-										alt="KaamSync chat simulator"
-										width="1200"
-										height="720"
-										loading="lazy"
-										decoding="async"
-									/>
-								</picture>
-							*/}
-						</Suspense>
 					</div>
+
+					<Suspense
+						fallback={
+							<div className="h-full min-h-[360px] rounded-3xl border border-border/40 bg-background/5" />
+						}
+					>
+						<LazyChatSimulator />
+						{/*
+							When the chat simulator image is ready, replace with:
+							<picture>
+								<source srcSet="/static/marketing/chat-simulator.avif" type="image/avif" />
+								<source srcSet="/static/marketing/chat-simulator.webp" type="image/webp" />
+								<img
+									src="/static/marketing/chat-simulator.png"
+									alt="KaamSync chat simulator"
+									width="1200"
+									height="720"
+									loading="lazy"
+									decoding="async"
+								/>
+							</picture>
+						*/}
+					</Suspense>
 				</div>
-			</section>
+			</MarketingContainer>
 
 			<MarketingContainer variant="default">
 				<MarketingHeading>Built for clarity.</MarketingHeading>
@@ -303,7 +307,7 @@ export default function HomePage() {
 								{[1, 2, 3].map((item) => (
 									<div
 										key={item}
-										className="h-40 rounded-2xl border border-border/40 bg-muted/30"
+										className="h-40 rounded-2xl border border-border/40 bg-muted/20"
 									/>
 								))}
 							</div>
@@ -377,7 +381,7 @@ export default function HomePage() {
 									{[1, 2, 3].map((item) => (
 										<div
 											key={item}
-											className="h-16 rounded-xl border border-border/40 bg-muted/30"
+											className="h-16 rounded-xl border border-border/40 bg-muted/20"
 										/>
 									))}
 								</div>
@@ -402,7 +406,7 @@ export default function HomePage() {
 						<Button
 							asChild
 							size="lg"
-							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/90"
+							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/80"
 						>
 							<Link to="/signup" prefetch="intent">
 								Start For Free

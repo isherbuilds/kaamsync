@@ -206,7 +206,7 @@ export default function OrgMembersPage() {
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Members List - Takes 2 cols on desktop */}
-				<div className="overflow-hidden rounded-lg border border-border/60 bg-card lg:col-span-2">
+				<div className="overflow-hidden rounded-lg border border-border/40 bg-card lg:col-span-2">
 					<div className="divide-y divide-border/40">
 						{members?.map((m) => {
 							const isSelf = m.userId === currentUser.id;
@@ -246,7 +246,7 @@ export default function OrgMembersPage() {
 									<div className="ml-4 flex items-center gap-2">
 										<Badge
 											variant="outline"
-											className="hidden h-6 border-border/40 bg-muted/50 px-2 font-medium text-muted-foreground text-xs capitalize sm:flex"
+					className="hidden h-6 border-border/40 bg-muted/40 px-2 font-medium text-muted-foreground text-xs capitalize sm:flex"
 										>
 											{m.role === "admin" || m.role === "owner" ? (
 												<ShieldCheck className="mr-1 size-3" />
@@ -303,7 +303,7 @@ export default function OrgMembersPage() {
 						{invites?.map((i) => (
 							<div
 								key={i.id}
-								className="group v-stack relative overflow-hidden rounded-lg border border-border/60 bg-muted/30 p-4 text-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
+					className="group v-stack relative overflow-hidden rounded-lg border border-border/40 bg-muted/20 p-4 text-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
 							>
 								<div className="mb-3 flex items-start justify-between">
 									<div className="rounded-lg border border-border/40 bg-background p-2">
@@ -336,7 +336,7 @@ export default function OrgMembersPage() {
 							</div>
 						))}
 						{invites?.length === 0 && (
-							<div className="rounded-lg border border-border/60 border-dashed bg-muted/20 p-8 text-center">
+				<div className="rounded-lg border border-border/40 border-dashed bg-muted/20 p-8 text-center">
 								<p className="text-muted-foreground text-sm">
 									No pending invitations
 								</p>

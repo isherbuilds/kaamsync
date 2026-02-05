@@ -1,5 +1,5 @@
 declare module "lucide-react/dist/esm/icons/*" {
-	import type { Icon } from "lucide-react";
-	const icon: Icon;
+	import type { LucideIcon } from "lucide-react/dist/lucide-react";
+	const icon: LucideIcon;
 	export default icon;
 }

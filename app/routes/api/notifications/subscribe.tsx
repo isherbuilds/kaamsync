@@ -32,9 +32,15 @@ export async function loader(_args: Route.LoaderArgs) {
 }
 
 // POST: Save a push subscription for the authenticated user
+// DELETE: Remove a push subscription (unsubscribe)
 export async function action({ request }: Route.ActionArgs) {
 	const session = await requireSession(request, "notification.subscribe");
 	const user = session.user;
+
+	// Handle DELETE request for unsubscribing
+	if (request.method === "DELETE") {
+		return handleUnsubscribe(request, user.id);
+	}
 
 	let body: unknown;
 	try {
@@ -232,4 +238,90 @@ export async function action({ request }: Route.ActionArgs) {
 		// If we didn't handle it, rethrow
 		throw err;
 	}
+}
+
+async function handleUnsubscribe(request: Request, userId: string) {
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		auditLog({
+			action: "notification.unsubscribe",
+			actorId: userId,
+			outcome: "error",
+			reason: "Malformed JSON body",
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+		return data({ error: "Invalid JSON body" }, { status: 400 });
+	}
+
+	const result = subscriptionSchema.safeParse(body);
+	if (!result.success) {
+		auditLog({
+			action: "notification.unsubscribe",
+			actorId: userId,
+			outcome: "error",
+			reason: "Invalid subscription data",
+			metadata: { errors: result.error.issues },
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+		return data({ error: "Invalid subscription data" }, { status: 400 });
+	}
+
+	const { endpoint } = result.data;
+
+	const existing = await db
+		.select({
+			id: pushSubscriptionsTable.id,
+			userId: pushSubscriptionsTable.userId,
+		})
+		.from(pushSubscriptionsTable)
+		.where(eq(pushSubscriptionsTable.endpoint, endpoint))
+		.limit(1);
+
+	if (existing.length === 0) {
+		return { success: true, deleted: false, reason: "Subscription not found" };
+	}
+
+	const existingRow = existing[0];
+
+	if (existingRow.userId !== userId) {
+		auditLog({
+			action: "notification.unsubscribe",
+			actorId: userId,
+			targetId: existingRow.userId,
+			outcome: "denied",
+			reason: "Attempted to delete subscription owned by another user",
+			metadata: {
+				subscriptionId: existingRow.id,
+				endpoint: endpoint.substring(0, 50),
+			},
+			ip: getRequestIP(request),
+			userAgent: getRequestUserAgent(request),
+		});
+		return data(
+			{ error: "Subscription belongs to another user" },
+			{ status: 403 },
+		);
+	}
+
+	await db
+		.delete(pushSubscriptionsTable)
+		.where(eq(pushSubscriptionsTable.id, existingRow.id));
+
+	auditLog({
+		action: "notification.unsubscribe",
+		actorId: userId,
+		outcome: "success",
+		metadata: {
+			subscriptionId: existingRow.id,
+			endpoint: endpoint.substring(0, 50),
+		},
+		ip: getRequestIP(request),
+		userAgent: getRequestUserAgent(request),
+	});
+
+	return { success: true, deleted: true };
 }

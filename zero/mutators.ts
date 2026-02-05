@@ -19,6 +19,13 @@ import {
 import { zql } from "./schema";
 
 // ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Time window (ms) for coalescing rapid timeline changes into a single entry */
+const TIMELINE_COALESCE_WINDOW_MS = 5 * 60 * 1000;
+
+// ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
 
@@ -199,39 +206,65 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
 
-				// Update immediately for optimistic UI
+				let oldPriority: number | null = null;
+				let canModify = true;
+
+				if (tx.location === "server") {
+					const accessResult = await checkMatterModifyAccess(tx, ctx, args.id);
+					canModify = accessResult.canModify;
+					if (!canModify) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+					if (args.priority !== undefined) {
+						oldPriority = accessResult.matter.priority ?? null;
+					}
+				}
+
 				await tx.mutate.mattersTable.update({
 					...args,
 					updatedAt: now,
 				});
 
-				// Server-only: permission check and timeline entry
-				if (tx.location === "server") {
-					const { matter, canModify } = await checkMatterModifyAccess(
-						tx,
-						ctx,
-						args.id,
-					);
-					if (!canModify) {
-						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-					}
+				// Timeline tracking is server-only
+				if (tx.location !== "server") return;
+				if (args.priority === undefined || args.priority === oldPriority)
+					return;
 
-					if (
-						args.priority !== undefined &&
-						args.priority !== matter.priority
-					) {
-						tx.mutate.timelinesTable.insert({
-							id: uuid(),
-							matterId: args.id,
-							userId: ctx.userId,
-							type: "priority_change",
-							fromValue: matter.priority?.toString() ?? "4",
+				const lastEntry = await tx.run(
+					zql.timelinesTable
+						.where("matterId", args.id)
+						.where("userId", ctx.userId)
+						.where("type", "priority_change")
+						.orderBy("createdAt", "desc")
+						.limit(1)
+						.one(),
+				);
+
+				if (
+					lastEntry &&
+					now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS
+				) {
+					if (lastEntry.fromValue === args.priority.toString()) {
+						await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
+					} else {
+						await tx.mutate.timelinesTable.update({
+							id: lastEntry.id,
 							toValue: args.priority.toString(),
-							edited: false,
-							createdAt: now,
 							updatedAt: now,
 						});
 					}
+				} else {
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "priority_change",
+						fromValue: oldPriority?.toString() ?? "4",
+						toValue: args.priority.toString(),
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
 				}
 			},
 		),
@@ -241,20 +274,14 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
 
-				// Update immediately for optimistic UI
-				await tx.mutate.mattersTable.update({
-					id: args.id,
-					statusId: args.statusId,
-					updatedAt: now,
-				});
-
-				// Server-only: permission check and timeline entry
+				let oldStatusId: string | null = null;
 				if (tx.location === "server") {
 					const { matter, membership } = await checkMatterModifyAccess(
 						tx,
 						ctx,
 						args.id,
 					);
+					oldStatusId = matter.statusId;
 
 					if (
 						matter.assigneeId !== ctx.userId &&
@@ -262,13 +289,46 @@ export const mutators = defineMutators({
 					) {
 						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 					}
+				}
 
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					statusId: args.statusId,
+					updatedAt: now,
+				});
+
+				if (tx.location !== "server") return;
+
+				const lastEntry = await tx.run(
+					zql.timelinesTable
+						.where("matterId", args.id)
+						.where("userId", ctx.userId)
+						.where("type", "status_change")
+						.orderBy("createdAt", "desc")
+						.limit(1)
+						.one(),
+				);
+
+				if (
+					lastEntry &&
+					now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS
+				) {
+					if (lastEntry.fromStatusId === args.statusId) {
+						await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
+					} else {
+						await tx.mutate.timelinesTable.update({
+							id: lastEntry.id,
+							toStatusId: args.statusId,
+							updatedAt: now,
+						});
+					}
+				} else {
 					tx.mutate.timelinesTable.insert({
 						id: uuid(),
 						matterId: args.id,
 						userId: ctx.userId,
 						type: "status_change",
-						fromStatusId: matter.statusId,
+						fromStatusId: oldStatusId,
 						toStatusId: args.statusId,
 						edited: false,
 						createdAt: now,
@@ -283,20 +343,14 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
 
-				// Update immediately for optimistic UI
-				await tx.mutate.mattersTable.update({
-					id: args.id,
-					assigneeId: args.assigneeId,
-					updatedAt: now,
-				});
-
-				// Server-only: permission check and timeline entry
+				let oldAssigneeId: string | null = null;
 				if (tx.location === "server") {
 					const { matter, membership } = await checkMatterModifyAccess(
 						tx,
 						ctx,
 						args.id,
 					);
+					oldAssigneeId = matter.assigneeId ?? null;
 
 					const isManager = membership.role === teamRole.manager;
 					const isSelfAssignment =
@@ -305,13 +359,46 @@ export const mutators = defineMutators({
 					if (!isManager && !isSelfAssignment) {
 						throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
 					}
+				}
 
+				await tx.mutate.mattersTable.update({
+					id: args.id,
+					assigneeId: args.assigneeId,
+					updatedAt: now,
+				});
+
+				if (tx.location !== "server") return;
+
+				const lastEntry = await tx.run(
+					zql.timelinesTable
+						.where("matterId", args.id)
+						.where("userId", ctx.userId)
+						.where("type", "assignment")
+						.orderBy("createdAt", "desc")
+						.limit(1)
+						.one(),
+				);
+
+				if (
+					lastEntry &&
+					now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS
+				) {
+					if (lastEntry.fromAssigneeId === args.assigneeId) {
+						await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
+					} else {
+						await tx.mutate.timelinesTable.update({
+							id: lastEntry.id,
+							toAssigneeId: args.assigneeId ?? null,
+							updatedAt: now,
+						});
+					}
+				} else {
 					tx.mutate.timelinesTable.insert({
 						id: uuid(),
 						matterId: args.id,
 						userId: ctx.userId,
 						type: "assignment",
-						fromAssigneeId: matter.assigneeId ?? null,
+						fromAssigneeId: oldAssigneeId,
 						toAssigneeId: args.assigneeId ?? null,
 						edited: false,
 						createdAt: now,

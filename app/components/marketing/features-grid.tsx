@@ -44,7 +44,7 @@ export function FeaturesGrid() {
 			{features.map((feature) => (
 				<div
 					key={feature.title}
-					className="group relative border-foreground/10 border-r border-b p-10 transition-colors hover:bg-muted/30"
+					className="group relative border-foreground/10 border-r border-b p-10 transition-colors hover:bg-muted/20"
 				>
 					<feature.icon className="mb-6 size-8 stroke-1 text-foreground transition-transform group-hover:scale-110" />
 					<h3 className="mb-3 font-medium font-serif text-2xl">

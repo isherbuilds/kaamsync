@@ -248,7 +248,7 @@ export function AttachmentUpload({
 											"FILE"}
 									</div>
 								)}
-								<div className="flex-1">
+								<div className="min-w-0 flex-1">
 									<p className="truncate font-medium text-sm">
 										{fileItem.file.name}
 									</p>

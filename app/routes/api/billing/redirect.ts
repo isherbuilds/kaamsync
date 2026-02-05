@@ -28,6 +28,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 		if (session?.session?.activeOrganizationId) {
 			const orgId = session.session.activeOrganizationId;
+			const orgSlug = session.session.activeOrganizationSlug;
 
 			// Clear caches on successful checkout to ensure fresh data
 			if (success === "true") {
@@ -35,9 +36,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				clearUsageCache(orgId, "all");
 			}
 
-			// Get the organization details to find the slug
-			const org = await getOrganizationById(orgId);
+			if (orgSlug) {
+				const redirectUrl = `/${orgSlug}/settings/billing${queryString ? `?${queryString}` : ""}`;
+				return redirect(redirectUrl);
+			}
 
+			const org = await getOrganizationById(orgId);
 			if (org?.slug) {
 				const redirectUrl = `/${org.slug}/settings/billing${queryString ? `?${queryString}` : ""}`;
 				return redirect(redirectUrl);

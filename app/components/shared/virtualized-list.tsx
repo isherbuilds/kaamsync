@@ -68,11 +68,11 @@ export const VirtualizedList = memo(function VirtualizedList<T>({
 	const rangeExtractor = useCallback(
 		(range: Range) => {
 			activeStickyIndexRef.current =
-				reversedSticky.find((i) => range.startIndex >= i) ?? 0;
-			const next = new Set([
-				activeStickyIndexRef.current,
-				...defaultRangeExtractor(range),
-			]);
+				reversedSticky.find((i) => range.startIndex >= i) ?? -1;
+			const next = new Set(defaultRangeExtractor(range));
+			if (activeStickyIndexRef.current >= 0) {
+				next.add(activeStickyIndexRef.current);
+			}
 			return [...next].sort((a, b) => a - b);
 		},
 		[reversedSticky],
@@ -111,12 +111,19 @@ export const VirtualizedList = memo(function VirtualizedList<T>({
 			if (!onEndReached) return;
 			const el = parentRef.current;
 			if (!el) return;
+			let pending = false;
 			const onScroll = () => {
+				if (pending) return;
 				if (
 					el.scrollHeight - el.scrollTop - el.clientHeight <
 					onEndReachedThreshold
-				)
+				) {
+					pending = true;
 					onEndReached();
+					requestAnimationFrame(() => {
+						pending = false;
+					});
+				}
 			};
 			el.addEventListener("scroll", onScroll, { passive: true });
 			return function cleanupEndReachedScrollListener() {
@@ -147,7 +154,7 @@ export const VirtualizedList = memo(function VirtualizedList<T>({
 				{vItems.map((v) => {
 					const isSticky = stickySet.has(v.index);
 					const isActiveSticky =
-						isSticky && activeStickyIndexRef.current === v.index;
+						isSticky && activeStickyIndexRef.current === v.index && v.index >= 0;
 
 					return (
 						<div

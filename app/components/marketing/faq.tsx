@@ -13,7 +13,7 @@ export function FAQItem({ q, a }: FAQItemProps) {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<div className="group border-border/60 border-b last:border-0">
+				<div className="group border-border/40 border-b last:border-0">
 			<button
 				type="button"
 				onClick={() => setIsOpen((o) => !o)}
@@ -53,7 +53,7 @@ interface FAQProps {
 
 export function FAQ({ items }: FAQProps) {
 	return (
-		<div className="border-border/60 border-t">
+			<div className="border-border/40 border-t">
 			{items.map((faq) => (
 				<FAQItem key={faq.q} {...faq} />
 			))}

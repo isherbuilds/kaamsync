@@ -8,8 +8,8 @@ interface MarketingContainerProps {
 }
 
 const containerVariants = {
-	default: "py-20",
-	hero: "py-24",
+	default: "py-24",
+	hero: "pt-24 pb-32",
 	compact: "py-16",
 	cta: "py-20",
 };
@@ -75,7 +75,7 @@ export function MarketingHeading({
 
 export function MarketingBadge({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="mb-6 inline-flex border border-border bg-muted/50 px-3 py-1 font-mono text-muted-foreground text-xs uppercase tracking-widest">
+		<div className="mb-6 inline-flex border border-border bg-muted/40 px-3 py-1 font-mono text-muted-foreground text-xs uppercase tracking-widest">
 			{children}
 		</div>
 	);

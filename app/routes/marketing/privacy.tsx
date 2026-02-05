@@ -98,7 +98,7 @@ export default function PrivacyPage() {
 						</ul>
 					</section>
 
-					<section className="border-destructive border-l-4 bg-muted/30 p-8">
+			<section className="border-destructive border-l-4 bg-muted/20 p-8">
 						<h3 className="font-bold font-serif text-2xl">
 							3. Workplace Monitoring Disclosure
 						</h3>
