@@ -330,7 +330,7 @@ const StatusGroupHeader = memo(
 			<button
 				type="button"
 				onClick={() => onToggle(status.id)}
-				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/40 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/40"
+				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/40 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/60"
 			>
 				<ChevronDown
 					className={cn(

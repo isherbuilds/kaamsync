@@ -146,7 +146,7 @@ export function usePushNotifications() {
 			const subscription = await registration.pushManager.getSubscription();
 
 			if (subscription) {
-				await withTimeout(
+				const response = await withTimeout(
 					fetch("/api/notifications/subscribe", {
 						method: "DELETE",
 						headers: { "Content-Type": "application/json" },
@@ -155,6 +155,10 @@ export function usePushNotifications() {
 					FETCH_TIMEOUT,
 					"Delete subscription",
 				);
+
+				if (!response.ok) {
+					throw new Error("Failed to delete subscription from server");
+				}
 
 				await subscription.unsubscribe();
 			}

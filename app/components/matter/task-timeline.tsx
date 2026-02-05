@@ -6,7 +6,7 @@ import FlagIcon from "lucide-react/dist/esm/icons/flag";
 import MessageSquareIcon from "lucide-react/dist/esm/icons/message-square";
 import UserIcon from "lucide-react/dist/esm/icons/user";
 import XCircleIcon from "lucide-react/dist/esm/icons/x-circle";
-import { Suspense, lazy, memo, useMemo } from "react";
+import { lazy, memo, Suspense, useMemo } from "react";
 import { queries } from "zero/queries";
 import { CACHE_NAV } from "zero/query-cache-policy";
 import type { AttachmentItem } from "~/components/attachments/attachment-preview-list";
@@ -387,10 +387,7 @@ export function MatterActivityTimeline({
 	);
 
 	const commentIds = useMemo(
-		() =>
-			timelineEntries
-				.filter((e) => e.type === "comment")
-				.map((e) => e.id),
+		() => timelineEntries.filter((e) => e.type === "comment").map((e) => e.id),
 		[timelineEntries],
 	);
 
@@ -481,6 +478,18 @@ export function MatterActivityTimeline({
 		[members],
 	);
 
+	// Pre-compute entry indices for safe render
+	const entryIndices = useMemo(() => {
+		const indices = new Map<string, number>();
+		let idx = 0;
+		for (const group of groups) {
+			for (const entry of group.entries) {
+				indices.set(entry.id, idx++);
+			}
+		}
+		return { indices, total: idx };
+	}, [groups]);
+
 	if (filteredEntries.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center rounded-lg border border-dashed bg-muted/10 py-12 text-center">
@@ -497,9 +506,6 @@ export function MatterActivityTimeline({
 		);
 	}
 
-	let entryIndex = 0;
-	const totalEntries = filteredEntries.length;
-
 	return (
 		<div className="pl-1">
 			{groups.map((group, groupIndex) => (
@@ -508,8 +514,8 @@ export function MatterActivityTimeline({
 					className={cn("space-y-1", groupIndex > 0 && "pt-1")}
 				>
 					{group.entries.map((entry, idx) => {
-						const isLastEntry = entryIndex === totalEntries - 1;
-						entryIndex++;
+						const entryIdx = entryIndices.indices.get(entry.id) ?? 0;
+						const isLastEntry = entryIdx === entryIndices.total - 1;
 						const showMeta = idx === 0;
 						const isGroupContinuation = idx > 0;
 						const authorName = entry.user?.name || "User";

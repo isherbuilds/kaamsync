@@ -91,13 +91,13 @@ export function isPushSupported(): boolean {
 
 export function getBrowserHelpUrl(): string | null {
 	const ua = navigator.userAgent.toLowerCase();
+	if (ua.includes("edg"))
+		return "https://support.microsoft.com/en-us/microsoft-edge";
 	if (ua.includes("chrome"))
 		return "https://support.google.com/chrome/answer/3220216";
 	if (ua.includes("firefox"))
 		return "https://support.mozilla.org/en-US/kb/push-notifications-firefox";
 	if (ua.includes("safari"))
 		return "https://support.apple.com/guide/safari/sfri40734";
-	if (ua.includes("edg"))
-		return "https://support.microsoft.com/en-us/microsoft-edge";
 	return null;
 }

@@ -225,44 +225,46 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
-				if (
-					tx.location === "server" &&
-					args.priority !== undefined &&
-					args.priority !== oldPriority
-				) {
-					const lastEntry = await tx.run(
-						zql.timelinesTable
-							.where("matterId", args.id)
-							.where("userId", ctx.userId)
-							.where("type", "priority_change")
-							.orderBy("createdAt", "desc")
-							.limit(1)
-							.one(),
-					);
+				// Timeline tracking is server-only
+				if (tx.location !== "server") return;
+				if (args.priority === undefined || args.priority === oldPriority)
+					return;
 
-					if (lastEntry && now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS) {
-						if (lastEntry.fromValue === args.priority.toString()) {
-							await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
-						} else {
-							await tx.mutate.timelinesTable.update({
-								id: lastEntry.id,
-								toValue: args.priority.toString(),
-								updatedAt: now,
-							});
-						}
+				const lastEntry = await tx.run(
+					zql.timelinesTable
+						.where("matterId", args.id)
+						.where("userId", ctx.userId)
+						.where("type", "priority_change")
+						.orderBy("createdAt", "desc")
+						.limit(1)
+						.one(),
+				);
+
+				if (
+					lastEntry &&
+					now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS
+				) {
+					if (lastEntry.fromValue === args.priority.toString()) {
+						await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
 					} else {
-						tx.mutate.timelinesTable.insert({
-							id: uuid(),
-							matterId: args.id,
-							userId: ctx.userId,
-							type: "priority_change",
-							fromValue: oldPriority?.toString() ?? "4",
+						await tx.mutate.timelinesTable.update({
+							id: lastEntry.id,
 							toValue: args.priority.toString(),
-							edited: false,
-							createdAt: now,
 							updatedAt: now,
 						});
 					}
+				} else {
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "priority_change",
+						fromValue: oldPriority?.toString() ?? "4",
+						toValue: args.priority.toString(),
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
 				}
 			},
 		),
@@ -295,40 +297,43 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
-				if (tx.location === "server") {
-					const lastEntry = await tx.run(
-						zql.timelinesTable
-							.where("matterId", args.id)
-							.where("userId", ctx.userId)
-							.where("type", "status_change")
-							.orderBy("createdAt", "desc")
-							.limit(1)
-							.one(),
-					);
+				if (tx.location !== "server") return;
 
-					if (lastEntry && now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS) {
-						if (lastEntry.fromStatusId === args.statusId) {
-							await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
-						} else {
-							await tx.mutate.timelinesTable.update({
-								id: lastEntry.id,
-								toStatusId: args.statusId,
-								updatedAt: now,
-							});
-						}
+				const lastEntry = await tx.run(
+					zql.timelinesTable
+						.where("matterId", args.id)
+						.where("userId", ctx.userId)
+						.where("type", "status_change")
+						.orderBy("createdAt", "desc")
+						.limit(1)
+						.one(),
+				);
+
+				if (
+					lastEntry &&
+					now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS
+				) {
+					if (lastEntry.fromStatusId === args.statusId) {
+						await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
 					} else {
-						tx.mutate.timelinesTable.insert({
-							id: uuid(),
-							matterId: args.id,
-							userId: ctx.userId,
-							type: "status_change",
-							fromStatusId: oldStatusId,
+						await tx.mutate.timelinesTable.update({
+							id: lastEntry.id,
 							toStatusId: args.statusId,
-							edited: false,
-							createdAt: now,
 							updatedAt: now,
 						});
 					}
+				} else {
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "status_change",
+						fromStatusId: oldStatusId,
+						toStatusId: args.statusId,
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
 				}
 			},
 		),
@@ -362,40 +367,43 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
-				if (tx.location === "server") {
-					const lastEntry = await tx.run(
-						zql.timelinesTable
-							.where("matterId", args.id)
-							.where("userId", ctx.userId)
-							.where("type", "assignment")
-							.orderBy("createdAt", "desc")
-							.limit(1)
-							.one(),
-					);
+				if (tx.location !== "server") return;
 
-					if (lastEntry && now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS) {
-						if (lastEntry.fromAssigneeId === args.assigneeId) {
-							await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
-						} else {
-							await tx.mutate.timelinesTable.update({
-								id: lastEntry.id,
-								toAssigneeId: args.assigneeId ?? null,
-								updatedAt: now,
-							});
-						}
+				const lastEntry = await tx.run(
+					zql.timelinesTable
+						.where("matterId", args.id)
+						.where("userId", ctx.userId)
+						.where("type", "assignment")
+						.orderBy("createdAt", "desc")
+						.limit(1)
+						.one(),
+				);
+
+				if (
+					lastEntry &&
+					now - lastEntry.createdAt < TIMELINE_COALESCE_WINDOW_MS
+				) {
+					if (lastEntry.fromAssigneeId === args.assigneeId) {
+						await tx.mutate.timelinesTable.delete({ id: lastEntry.id });
 					} else {
-						tx.mutate.timelinesTable.insert({
-							id: uuid(),
-							matterId: args.id,
-							userId: ctx.userId,
-							type: "assignment",
-							fromAssigneeId: oldAssigneeId,
+						await tx.mutate.timelinesTable.update({
+							id: lastEntry.id,
 							toAssigneeId: args.assigneeId ?? null,
-							edited: false,
-							createdAt: now,
 							updatedAt: now,
 						});
 					}
+				} else {
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "assignment",
+						fromAssigneeId: oldAssigneeId,
+						toAssigneeId: args.assigneeId ?? null,
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
 				}
 			},
 		),

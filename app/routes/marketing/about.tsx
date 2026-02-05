@@ -155,7 +155,7 @@ export default function AboutPage() {
 							</Link>
 						</Button>
 					</div>
-					<p className="mt-6 text-background/60 text-sm">
+					<p className="mt-6 text-background text-sm">
 						Free for 3 team members • No credit card required
 					</p>
 				</div>

@@ -160,11 +160,14 @@ export default function App() {
 export function HydrateFallback() {
 	return (
 		<div className="flex h-dvh w-full items-center justify-center bg-background">
-			<img
-				src="/static/kaamsync-logo.avif"
-				alt=""
-				className="size-16 -translate-y-8 animate-pulse"
-			/>
+			<div className="flex h-dvh w-full items-center justify-center bg-background">
+				<img
+					src="/static/kaamsync-logo.avif"
+					alt="Loading KaamSync"
+					className="size-16 -translate-y-8 animate-pulse"
+				/>
+				<span className="sr-only">Loading application...</span>
+			</div>
 		</div>
 	);
 }

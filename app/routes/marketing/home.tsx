@@ -144,11 +144,11 @@ export default function HomePage() {
 
 			<MarketingContainer
 				variant="hero"
-				className="v-stack center relative border-border/40 border-b pb-0"
+				className="v-stack center relative border-border/40 border-b pb-16 text-center"
 			>
 				<div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-background to-transparent" />
 
-				<div className="relative z-10 text-center">
+				<div className="relative z-10">
 					<MarketingHeading as="h1" className="mx-auto max-w-5xl">
 						From conversations to <br />
 						<span className="bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
@@ -233,7 +233,7 @@ export default function HomePage() {
 						/>
 					</picture>
 				</div>
-				<p className="mt-6 font-mono text-xs uppercase tracking-wide">
+				<p className="mt-12 font-mono text-xs uppercase tracking-wide">
 					Start free • No credit card • 2 minute setup
 				</p>
 			</MarketingContainer>
@@ -381,7 +381,7 @@ export default function HomePage() {
 									{[1, 2, 3].map((item) => (
 										<div
 											key={item}
-										className="h-16 rounded-xl border border-border/40 bg-muted/20"
+											className="h-16 rounded-xl border border-border/40 bg-muted/20"
 										/>
 									))}
 								</div>
@@ -406,7 +406,7 @@ export default function HomePage() {
 						<Button
 							asChild
 							size="lg"
-						className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/80"
+							className="h-16 min-w-60 rounded-none bg-primary px-8 font-bold text-lg text-white transition-all hover:scale-105 hover:bg-primary/80"
 						>
 							<Link to="/signup" prefetch="intent">
 								Start For Free

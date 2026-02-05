@@ -97,7 +97,7 @@ export async function clientLoader({
 	} catch (err) {
 		if (err instanceof Response) throw err;
 
-		if (offline || (authSession && !subscription)) {
+		if (authSession && !subscription) {
 			subscription = getSubscription(orgSlug);
 
 			if (authSession && subscription) {
