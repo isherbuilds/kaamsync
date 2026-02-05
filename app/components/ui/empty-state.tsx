@@ -1,4 +1,4 @@
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react/dist/lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "~/lib/utils";
 
@@ -71,7 +71,7 @@ export function EmptyStateCard({
 	return (
 		<div
 			className={cn(
-				"center m-4 flex h-full flex-col rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/30 p-8 text-center",
+		"center m-4 flex h-full flex-col rounded-lg border-2 border-muted-foreground/20 border-dashed bg-muted/20 p-8 text-center",
 				className,
 			)}
 		>

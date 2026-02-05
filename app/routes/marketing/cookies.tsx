@@ -74,41 +74,7 @@ export default function CookiesPage() {
 
 					<section>
 						<h3 className="font-bold font-serif text-3xl">
-							3. Types of Technologies
-						</h3>
-						<div className="overflow-x-auto">
-							<table className="w-full border-collapse text-left">
-								<thead>
-									<tr className="border-border border-b">
-										<th className="py-4 font-bold">Technology</th>
-										<th className="py-4 font-bold">Purpose</th>
-										<th className="py-4 font-bold">Duration</th>
-									</tr>
-								</thead>
-								<tbody className="text-muted-foreground">
-									<tr className="border-border/50 border-b">
-										<td className="py-4 font-mono text-sm">Auth Cookie</td>
-										<td className="py-4">Authentication & Session</td>
-										<td className="py-4">30 Days</td>
-									</tr>
-									<tr className="border-border/50 border-b">
-										<td className="py-4 font-mono text-sm">IndexedDB</td>
-										<td className="py-4">Offline Data Cache</td>
-										<td className="py-4">Persistent</td>
-									</tr>
-									<tr className="border-border/50 border-b">
-										<td className="py-4 font-mono text-sm">Local Storage</td>
-										<td className="py-4">UI Preferences</td>
-										<td className="py-4">Persistent</td>
-									</tr>
-								</tbody>
-							</table>
-						</div>
-					</section>
-
-					<section>
-						<h3 className="font-bold font-serif text-3xl">
-							4. Managing Your Choices
+							3. Managing Your Choices
 						</h3>
 						<p className="text-lg text-muted-foreground leading-relaxed">
 							You can clear your browser's cookies and local data at any time

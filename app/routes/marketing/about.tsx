@@ -29,7 +29,7 @@ export default function AboutPage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<MarketingContainer variant="hero" className="text-center">
+			<MarketingContainer variant="hero" className="pb-16 text-center">
 				<div className="mx-auto max-w-4xl">
 					<MarketingBadge>Our Story</MarketingBadge>
 					<MarketingHeading as="h2">
@@ -44,31 +44,32 @@ export default function AboutPage() {
 				</div>
 			</MarketingContainer>
 
-			<section className="">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto grid max-w-4xl grid-cols-2 gap-12 text-center md:grid-cols-4">
-						{[
-							{ value: "50+", label: "People Coordinated" },
-							{ value: "Zero", label: "Missed Requests" },
-							{ value: "100%", label: "Works Offline" },
-							{ value: "2min", label: "To First Matter" },
-						].map(({ value, label }) => (
-							<div key={label} className="v-stack items-center">
-								<div className="mb-2 font-bold font-mono text-4xl text-primary md:text-5xl">
-									{value}
-								</div>
-								<div className="font-mono text-muted-foreground text-xs uppercase tracking-widest">
-									{label}
-								</div>
+			<MarketingContainer
+				variant="default"
+				className="border-border/40 border-y bg-muted/20"
+			>
+				<div className="mx-auto grid max-w-4xl grid-cols-2 gap-12 text-center md:grid-cols-4">
+					{[
+						{ value: "50+", label: "People Coordinated" },
+						{ value: "Zero", label: "Missed Requests" },
+						{ value: "100%", label: "Works Offline" },
+						{ value: "2min", label: "To First Matter" },
+					].map(({ value, label }) => (
+						<div key={label} className="v-stack items-center">
+							<div className="mb-2 font-bold font-mono text-4xl text-primary md:text-5xl">
+								{value}
 							</div>
-						))}
-					</div>
+							<div className="font-mono text-muted-foreground text-xs uppercase tracking-widest">
+								{label}
+							</div>
+						</div>
+					))}
 				</div>
-			</section>
+			</MarketingContainer>
 
 			<MarketingContainer variant="default">
-				<div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-16 lg:grid-cols-2">
-					<div className="sticky top-24">
+				<div className="v-stack mx-auto max-w-5xl gap-8">
+					<div>
 						<div className="mb-6 font-mono text-destructive text-xs uppercase tracking-widest">
 							The Breaking Point
 						</div>
@@ -87,8 +88,9 @@ export default function AboutPage() {
 							get buried."
 						</p>
 					</div>
+					<br />
 
-					<div className="space-y-8">
+					<div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
 						{[
 							{
 								icon: Target,
@@ -123,40 +125,41 @@ export default function AboutPage() {
 				</div>
 			</MarketingContainer>
 
-			<section className="border-border border-t bg-foreground py-24 text-center text-background">
-				<div className="container mx-auto px-4 md:px-6">
-					<div className="mx-auto max-w-3xl">
-						<MarketingHeading>Join the calm side.</MarketingHeading>
-						<p className="mb-10 text-lg opacity-80">
-							Tired of work disappearing into messages? You're not alone.
-						</p>
-						<div className="flex flex-col justify-center gap-4 sm:flex-row">
-							<Button
-								size="lg"
-								className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/90"
-								asChild
-							>
-								<Link to="/signup" prefetch="intent">
-									Start For Free
-								</Link>
-							</Button>
-							<Button
-								size="lg"
-								variant="outline"
-								className="h-16 rounded-none border-background/30 bg-transparent px-8 font-bold text-background text-lg hover:bg-background/10"
-								asChild
-							>
-								<Link to="/contact" prefetch="intent">
-									Ask Us Anything
-								</Link>
-							</Button>
-						</div>
-						<p className="mt-6 text-background/60 text-sm">
-							Free for 3 team members • No credit card required
-						</p>
+			<MarketingContainer
+				variant="default"
+				className="border-border border-t bg-foreground text-center text-background"
+			>
+				<div className="mx-auto max-w-3xl">
+					<MarketingHeading>Join the calm side.</MarketingHeading>
+					<p className="mb-10 text-lg opacity-80">
+						Tired of work disappearing into messages? You're not alone.
+					</p>
+					<div className="flex flex-col justify-center gap-4 sm:flex-row">
+						<Button
+							size="lg"
+							className="h-16 rounded-none bg-primary px-8 font-bold text-lg text-primary-foreground hover:bg-primary/80"
+							asChild
+						>
+							<Link to="/signup" prefetch="intent">
+								Start For Free
+							</Link>
+						</Button>
+						<Button
+							size="lg"
+							variant="outline"
+							className="h-16 rounded-none border-background/30 bg-transparent px-8 font-bold text-background text-lg hover:bg-background/10"
+							asChild
+						>
+							<Link to="/contact" prefetch="intent">
+								Ask Us Anything
+							</Link>
+						</Button>
 					</div>
+					<p className="mt-6 text-background/60 text-sm">
+						Free for 3 team members • No credit card required
+					</p>
 				</div>
-			</section>
+			</MarketingContainer>
 		</>
 	);
 }

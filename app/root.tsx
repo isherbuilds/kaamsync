@@ -13,7 +13,6 @@ import { getToast } from "remix-toast";
 import { ClientOnly } from "remix-utils/client-only";
 import { GeneralErrorBoundary } from "~/components/shared/error-boundary";
 import type { Route } from "./+types/root";
-import { Spinner } from "./components/ui/spinner";
 import { useNonce } from "./hooks/use-nonce";
 import {
 	ColorSchemeScript,
@@ -160,8 +159,12 @@ export default function App() {
 
 export function HydrateFallback() {
 	return (
-		<div className="center flex h-dvh w-full">
-			<Spinner className="size-10 text-primary" />
+		<div className="flex h-dvh w-full items-center justify-center bg-background">
+			<img
+				src="/static/kaamsync-logo.avif"
+				alt=""
+				className="size-16 -translate-y-8 animate-pulse"
+			/>
 		</div>
 	);
 }

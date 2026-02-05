@@ -160,6 +160,16 @@ export const auth = betterAuth({
 			update: {
 				before: async (session) => {
 					const orgId = session.activeOrganizationId as string | undefined;
+					// Clear stale slug if org is removed
+					if (!orgId && session.activeOrganizationSlug) {
+						return {
+							data: {
+								...session,
+								activeOrganizationSlug: null,
+							},
+						};
+					}
+					// Populate slug if org exists but slug is missing
 					if (orgId && !session.activeOrganizationSlug) {
 						const org = await db.query.organizationsTable.findFirst({
 							where: eq(schema.organizationsTable.id, orgId),

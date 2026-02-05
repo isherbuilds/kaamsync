@@ -330,7 +330,7 @@ const StatusGroupHeader = memo(
 			<button
 				type="button"
 				onClick={() => onToggle(status.id)}
-				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/40 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/50"
+				className="sticky top-0 z-20 flex h-12 w-full items-center gap-3 border-border/40 border-b bg-muted/40 px-4 backdrop-blur-sm transition-colors hover:bg-muted/40"
 			>
 				<ChevronDown
 					className={cn(
@@ -405,7 +405,7 @@ const TaskListRow = memo(
 		);
 
 		return (
-			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/50">
+			<div className="group relative flex h-14 items-center border-border/40 border-b px-4 transition-colors duration-200 hover:bg-muted/40">
 				<Link
 					to={link}
 					className="absolute inset-0 z-10"

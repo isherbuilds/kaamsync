@@ -2,6 +2,7 @@
 
 import ExternalLink from "lucide-react/dist/esm/icons/external-link";
 import FileIcon from "lucide-react/dist/esm/icons/file";
+import Loader2Icon from "lucide-react/dist/esm/icons/loader-2";
 import XIcon from "lucide-react/dist/esm/icons/x";
 import ZoomInIcon from "lucide-react/dist/esm/icons/zoom-in";
 import { useState } from "react";
@@ -33,12 +34,19 @@ export function AttachmentPreviewList({
 	compact,
 }: AttachmentPreviewListProps) {
 	const [selected, setSelected] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
+
 	if (!attachments.length) return null;
+
+	const handleSelect = (url: string) => {
+		setSelected(url);
+		setIsLoading(true);
+	};
 
 	const c = compact;
 	const gridClass = c
-		? "grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2"
-		: "grid-cols-4 md:grid-cols-5 gap-3";
+		? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
+		: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3";
 
 	return (
 		<div className={cn(c ? "space-y-2" : "space-y-3", className)}>
@@ -50,61 +58,56 @@ export function AttachmentPreviewList({
 						<div
 							key={a.id}
 							className={cn(
-								"group relative overflow-hidden rounded border bg-background hover:shadow-md",
-								c ? "aspect-[4/3]" : "aspect-square",
+								"group relative overflow-hidden rounded-md border bg-background transition-all hover:shadow-sm",
+								c ? "aspect-square" : "aspect-video sm:aspect-[4/3]",
 							)}
 						>
 							{isImg && url ? (
 								<img
 									src={url}
 									alt={a.fileName}
-									className="h-full w-full object-cover transition-transform group-hover:scale-105"
+									className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
 									loading="lazy"
 								/>
 							) : (
 								<div
 									className={cn(
-										"center flex h-full w-full flex-col bg-muted/50",
-										c ? "gap-1 p-2" : "gap-2 p-4",
+					"center flex h-full w-full flex-col bg-muted/20 p-3",
+										c ? "gap-1.5" : "gap-3",
 									)}
 								>
 									<div
 										className={cn(
-											"center flex rounded-lg bg-muted",
-											c ? "h-6 w-6" : "h-12 w-12",
+					"center flex rounded-lg bg-muted/40",
+											c ? "size-8" : "size-12",
 										)}
 									>
 										<FileIcon
 											className={cn(
-												"text-muted-foreground",
-												c ? "h-3 w-3" : "h-6 w-6",
+												"text-muted-foreground/70",
+												c ? "size-4" : "size-6",
 											)}
 										/>
 									</div>
-									<span className="font-medium text-muted-foreground text-xs">
+									<span className="max-w-full truncate font-medium text-muted-foreground text-xs uppercase tracking-wider">
 										{ext(a.fileName)}
 									</span>
 								</div>
 							)}
-							<div
-								className={cn(
-									"v-stack absolute inset-0 justify-between bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 transition-opacity group-hover:opacity-100",
-									c ? "p-1.5" : "p-3",
-								)}
-							>
-								<div className="flex justify-end gap-1">
+
+							<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+							<div className="absolute inset-x-0 bottom-0 flex flex-col justify-end p-2.5">
+								<div className="mb-2 flex justify-end gap-2">
 									{isImg && url && (
 										<Button
 											type="button"
 											variant="secondary"
 											size="icon"
-											className={cn(
-												"bg-white/90 hover:bg-white",
-												c ? "h-5 w-5" : "h-7 w-7",
-											)}
-											onClick={() => setSelected(url)}
+											className="size-8 rounded-full bg-background/90 shadow-sm hover:bg-background sm:size-9"
+											onClick={() => handleSelect(url)}
 										>
-											<ZoomInIcon className={c ? "h-3 w-3" : "h-3.5 w-3.5"} />
+											<ZoomInIcon className="size-4 sm:size-5" />
 										</Button>
 									)}
 									{url && (
@@ -112,26 +115,21 @@ export function AttachmentPreviewList({
 											type="button"
 											variant="secondary"
 											size="icon"
-											className={cn(
-												"bg-white/90 hover:bg-white",
-												c ? "h-5 w-5" : "h-7 w-7",
-											)}
+											className="size-8 rounded-full bg-background/90 shadow-sm hover:bg-background sm:size-9"
 											asChild
 										>
 											<a href={url} target="_blank" rel="noreferrer">
-												<ExternalLink
-													className={c ? "h-3 w-3" : "h-3.5 w-3.5"}
-												/>
+												<ExternalLink className="size-4 sm:size-5" />
 											</a>
 										</Button>
 									)}
 								</div>
-								<div className="space-y-0.5">
-									<p className="truncate font-medium text-white text-xs">
+								<div className="min-w-0">
+									<p className="truncate font-medium text-white text-xs drop-shadow-sm sm:text-sm">
 										{a.fileName}
 									</p>
 									{!c && (
-										<p className="text-white/70 text-xs">
+										<p className="text-white/80 text-xs drop-shadow-sm">
 											{formatBytes(a.fileSize)}
 										</p>
 									)}
@@ -154,13 +152,22 @@ export function AttachmentPreviewList({
 						}
 					}}
 				>
-					<div className="relative max-h-[90vh] max-w-[90vw]">
+					<div className="relative flex max-h-[90vh] max-w-[90vw] items-center justify-center">
+						{isLoading && (
+							<div className="absolute inset-0 flex items-center justify-center">
+								<Loader2Icon className="size-8 animate-spin text-white/50" />
+							</div>
+						)}
 						<img
 							src={selected}
 							alt="Preview"
-							className="max-h-[85vh] max-w-[85vw] rounded-lg shadow-2xl"
+							className={cn(
+								"max-h-[85vh] max-w-[85vw] rounded-lg shadow-2xl transition-opacity duration-300",
+								isLoading ? "opacity-0" : "opacity-100",
+							)}
 							onClick={(e) => e.stopPropagation()}
 							onKeyDown={(e) => e.stopPropagation()}
+							onLoad={() => setIsLoading(false)}
 						/>
 						<Button
 							type="button"

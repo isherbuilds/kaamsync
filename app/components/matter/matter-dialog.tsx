@@ -261,7 +261,7 @@ export function CreateMatterDialog({
 								autoFocus={!isMobile}
 								autoComplete="off"
 								placeholder={titlePlaceholder}
-								className="w-full bg-transparent font-semibold text-lg leading-tight outline-none placeholder:text-muted-foreground/40 sm:text-xl"
+								className="w-full bg-transparent font-semibold text-foreground text-lg leading-tight outline-none placeholder:text-muted-foreground/50 sm:text-xl"
 							/>
 							{fields.title.errors && (
 								<p className="font-medium text-destructive text-xs">
@@ -277,7 +277,7 @@ export function CreateMatterDialog({
 								})}
 								key={fields.description.key}
 								placeholder={descriptionPlaceholder}
-								className="min-h-[120px] w-full resize-none bg-transparent text-sm leading-relaxed outline-none placeholder:text-muted-foreground/40 sm:min-h-[140px] sm:text-base"
+								className="min-h-[120px] w-full resize-none bg-transparent text-foreground text-sm leading-relaxed outline-none placeholder:text-muted-foreground/50 sm:min-h-[140px] sm:text-base"
 							/>
 							{fields.description.errors && (
 								<p className="font-medium text-destructive text-xs">
@@ -295,7 +295,7 @@ export function CreateMatterDialog({
 						/>
 					</div>
 
-					<div className="flex items-center justify-between gap-4 border-t bg-muted/30 px-4 py-3 sm:px-6">
+			<div className="flex items-center justify-between gap-4 border-t bg-muted/20 px-4 py-3 sm:px-6">
 						<div className="flex flex-wrap items-center gap-2">
 							{!isRequest && (
 								<StatusSelect
@@ -306,7 +306,7 @@ export function CreateMatterDialog({
 										form.update({ name: fields.statusId.name, value: v })
 									}
 									showLabel
-									className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/50"
+				className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/40"
 								/>
 							)}
 
@@ -320,7 +320,7 @@ export function CreateMatterDialog({
 									})
 								}
 								showLabel
-								className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/50"
+				className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/40"
 							/>
 
 							<MemberSelect
@@ -334,14 +334,14 @@ export function CreateMatterDialog({
 									})
 								}
 								showLabel
-								className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/50"
+				className="h-7 rounded-md border bg-background px-2 text-xs shadow-sm hover:bg-muted/40"
 							/>
 
 							<div className="relative">
 								<input
 									{...getConformInputProps(fields.dueDate, { type: "date" })}
 									key={fields.dueDate.key}
-									className="h-7 rounded-md border bg-background px-2 text-muted-foreground text-xs shadow-sm outline-none hover:bg-muted/50 focus:ring-1 focus:ring-ring"
+				className="h-7 rounded-md border bg-background px-2 text-foreground text-xs shadow-sm outline-none hover:bg-muted/40 focus:ring-1 focus:ring-ring"
 								/>
 							</div>
 						</div>

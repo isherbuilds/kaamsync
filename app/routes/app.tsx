@@ -3,10 +3,7 @@ import { type AuthSession, authClient } from "~/lib/auth/client";
 import { getAuthSession, isOffline, saveAuthSession } from "~/lib/auth/offline";
 
 function getActiveOrganizationSlug(session: AuthSession | null) {
-	return (
-		(session?.session as { activeOrganizationSlug?: string | null } | undefined)
-			?.activeOrganizationSlug ?? null
-	);
+	return session?.session?.activeOrganizationSlug ?? null;
 }
 
 export async function clientLoader() {

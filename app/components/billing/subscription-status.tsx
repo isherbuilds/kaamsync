@@ -119,7 +119,7 @@ export function SubscriptionStatus({
 							{status?.label ?? subscription.status}
 						</Badge>
 					</div>
-					<StatusIcon className={`h-5 w-5 ${status?.color ?? ""}`} />
+					<StatusIcon className={`size-5 ${status?.color ?? ""}`} />
 				</div>
 				<div className="mt-1 text-muted-foreground text-sm">
 					Your current subscription

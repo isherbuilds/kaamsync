@@ -2,6 +2,7 @@
 
 import { CacheableResponsePlugin } from "workbox-cacheable-response";
 import { setCacheNameDetails } from "workbox-core";
+import { ExpirationPlugin } from "workbox-expiration";
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching";
 import { registerRoute, setCatchHandler } from "workbox-routing";
 import { NetworkFirst, StaleWhileRevalidate } from "workbox-strategies";
@@ -19,29 +20,18 @@ interface SyncEvent extends Event {
 
 const SHELL_CACHE = "KaamSync-shell";
 const STATIC_CACHE = "KaamSync-static";
-const SHELL_URLS = ["/offline.html"];
+const OFFLINE_URL = "/offline.html";
 
-// Immediately take control
 self.addEventListener("install", (event) => {
 	event.waitUntil(
 		Promise.all([
 			self.skipWaiting(),
 			caches.open(SHELL_CACHE).then((cache) =>
-				Promise.all(
-					SHELL_URLS.map((url) =>
-						fetch(url, { cache: "reload" })
-							.then((r) => {
-								if (!r.ok) {
-									throw new Error(`Failed to fetch ${url}: ${r.status}`);
-								}
-								return cache.put(url, r);
-							})
-							.catch((e) => {
-								console.error(`[SW] Precache failed for ${url}`, e);
-								throw e; // Fail installation if critical shell resources can't be cached
-							}),
-					),
-				),
+				fetch(OFFLINE_URL, { cache: "reload" }).then((r) => {
+					if (!r.ok)
+						throw new Error(`Failed to fetch ${OFFLINE_URL}: ${r.status}`);
+					return cache.put(OFFLINE_URL, r);
+				}),
 			),
 		]),
 	);
@@ -52,7 +42,9 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("message", (event) => {
-	if (event.data === "SKIP_WAITING") void self.skipWaiting();
+	if (event.data === "SKIP_WAITING") {
+		void self.skipWaiting();
+	}
 });
 
 setCacheNameDetails({ prefix: "KaamSync" });
@@ -60,38 +52,21 @@ precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
 registerRoute(
-	({ request }) => {
-		if (request.mode !== "navigate") return false;
-		const url = new URL(request.url);
-		return (
-			url.pathname === "/app" ||
-			/^\/[^/]+\/(tasks|requests|matter|settings)/.test(url.pathname) ||
-			/^\/[^/]+\/[^/]+$/.test(url.pathname)
-		);
-	},
-	async ({ request }) => {
-		const cache = await caches.open(SHELL_CACHE);
-		const cached = await cache.match(request);
-
-		if (cached) {
-			return cached;
-		}
-
-		try {
-			const networkResponse = await fetch(request);
-			if (networkResponse.ok) {
-				await cache.put(request, networkResponse.clone());
-			}
-			return networkResponse;
-		} catch {
-			const offlinePage = await cache.match("/offline.html");
-			if (offlinePage) return offlinePage;
-			return Response.error();
-		}
-	},
+	({ request }) => request.mode === "navigate",
+	new NetworkFirst({
+		cacheName: SHELL_CACHE,
+		networkTimeoutSeconds: 3,
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [0, 200] }),
+			new ExpirationPlugin({
+				maxEntries: 50,
+				maxAgeSeconds: 7 * 24 * 60 * 60,
+			}),
+		],
+	}),
 );
 
-// Static assets: stale-while-revalidate
+// Static assets: stale-while-revalidate with expiration
 registerRoute(
 	({ request }) =>
 		request.destination === "script" ||
@@ -99,27 +74,25 @@ registerRoute(
 		request.destination === "font",
 	new StaleWhileRevalidate({
 		cacheName: STATIC_CACHE,
-		plugins: [new CacheableResponsePlugin({ statuses: [0, 200] })],
+		plugins: [
+			new CacheableResponsePlugin({ statuses: [0, 200] }),
+			new ExpirationPlugin({
+				maxEntries: 200,
+				maxAgeSeconds: 30 * 24 * 60 * 60,
+			}),
+		],
 	}),
 );
 
 // Fallback for failed navigations
 setCatchHandler(async ({ request }) => {
 	if (request.mode === "navigate") {
-		// Try to serve the app shell first
-		for (const url of SHELL_URLS) {
-			const cached = await caches.match(url);
-			if (cached) return cached;
-		}
-
-		// If shell is missing/fails, try offline.html
-		const offlineCache = await caches.match("/offline.html");
-		if (offlineCache) return offlineCache;
+		const cached = await caches.match(OFFLINE_URL);
+		if (cached) return cached;
 	}
 	return Response.error();
 });
 
-// Push Notifications
 self.addEventListener("push", (event) => {
 	try {
 		const data = event.data ? event.data.json() : {};
@@ -132,9 +105,7 @@ self.addEventListener("push", (event) => {
 			data: data.data || {},
 		};
 		event.waitUntil(self.registration.showNotification(title, options));
-	} catch (error) {
-		console.error("[SW] Push event error:", error);
-		// Show a generic notification even if parsing fails
+	} catch {
 		event.waitUntil(
 			self.registration.showNotification("KaamSync Update", {
 				body: "You have a new notification",
@@ -146,32 +117,28 @@ self.addEventListener("push", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
 	event.notification.close();
-	const urlToOpen = event.notification.data?.url || "/";
+	const urlToOpen = new URL(
+		event.notification.data?.url || "/",
+		self.location.origin,
+	).href;
 
 	event.waitUntil(
 		self.clients
-			.matchAll({
-				type: "window",
-				includeUncontrolled: true,
-			})
+			.matchAll({ type: "window", includeUncontrolled: true })
 			.then((windowClients) => {
 				const matchingClient = windowClients.find(
-					(client) => client.url === urlToOpen,
+					(client) =>
+						new URL(client.url, self.location.origin).href === urlToOpen,
 				);
-				if (matchingClient) {
-					return matchingClient.focus();
-				}
+				if (matchingClient) return matchingClient.focus();
 				return self.clients.openWindow(urlToOpen);
 			}),
 	);
 });
 
-// Background Sync
 self.addEventListener("sync", (event) => {
 	const syncEvent = event as SyncEvent;
 	if (syncEvent.tag === "sync-data") {
-		// Implement your sync logic here or import it
-		// e.g., event.waitUntil(syncData());
-		console.log("Background sync triggered");
+		syncEvent.waitUntil(Promise.resolve());
 	}
 });

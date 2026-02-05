@@ -55,6 +55,13 @@ export async function clientLoader({
 	const offline = isOffline();
 
 	let authSession = getAuthSession();
+	if (offline) {
+		const cachedSubscription = getSubscription(orgSlug);
+		if (authSession && cachedSubscription) {
+			return { authSession, orgSlug, subscription: cachedSubscription };
+		}
+		throw new Response("Offline with no cached data", { status: 503 });
+	}
 
 	const needsOrgUpdate = orgSlug && orgSlug !== lastOrgSlug;
 	if (
@@ -90,7 +97,7 @@ export async function clientLoader({
 	} catch (err) {
 		if (err instanceof Response) throw err;
 
-		if (isOffline() || (authSession && !subscription)) {
+		if (offline || (authSession && !subscription)) {
 			subscription = getSubscription(orgSlug);
 
 			if (authSession && subscription) {

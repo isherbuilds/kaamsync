@@ -153,7 +153,7 @@ export default function TeamMembersPage() {
 												value: val ?? undefined,
 											})
 										}
-										className="w-full rounded-md border bg-muted/50 p-2"
+				className="w-full rounded-md border bg-muted/40 p-2"
 										name={fields.userId.name}
 										showLabel
 									/>
@@ -181,7 +181,7 @@ export default function TeamMembersPage() {
 				)}
 			</div>
 
-			<section className="w-full flex-1 overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm ring-1 ring-black/5 dark:ring-white/5">
+		<section className="w-full flex-1 overflow-hidden rounded-xl border border-border/40 bg-card shadow-sm ring-1 ring-black/5 dark:ring-white/5">
 				<div className="divide-y divide-border/40">
 					{memberships.map((m) => (
 						<div
@@ -205,7 +205,7 @@ export default function TeamMembersPage() {
 							<div className="flex items-center gap-3">
 								<Badge
 									variant="outline"
-									className="h-6 border-border/40 bg-muted/50 px-2 font-medium text-muted-foreground text-xs uppercase"
+				className="h-6 border-border/40 bg-muted/40 px-2 font-medium text-muted-foreground text-xs uppercase"
 								>
 									{m.role}
 								</Badge>

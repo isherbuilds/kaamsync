@@ -1,5 +1,5 @@
 import type { Row } from "@rocicorp/zero";
-import type { LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react/dist/lucide-react";
 import { memo } from "react";
 import { Outlet } from "react-router";
 import { VirtualizedList } from "~/components/shared/virtualized-list";

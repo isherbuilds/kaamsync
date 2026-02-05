@@ -27,10 +27,10 @@ const planDescriptions: Record<ProductKey, string> = {
 };
 
 const planIcons: Record<ProductKey, React.ReactNode> = {
-	starter: <Users className="h-5 w-5" />,
-	growth: <Zap className="h-5 w-5" />,
-	pro: <Sparkles className="h-5 w-5" />,
-	enterprise: <Mail className="h-5 w-5" />,
+	starter: <Users className="size-5" />,
+	growth: <Zap className="size-5" />,
+	pro: <Sparkles className="size-5" />,
+	enterprise: <Mail className="size-5" />,
 };
 
 interface PlanCardProps {
@@ -157,7 +157,7 @@ function PlanCard({ plan, interval, currentPlan, loading }: PlanCardProps) {
 				<ul className="space-y-2.5">
 					{product.features.map((feature) => (
 						<li key={feature} className="flex items-start gap-2.5 text-sm">
-							<Check className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+							<Check className="mt-0.5 size-4 shrink-0 text-green-500" />
 							<span>{feature}</span>
 						</li>
 					))}
