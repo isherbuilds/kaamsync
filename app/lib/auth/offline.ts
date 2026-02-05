@@ -1,4 +1,4 @@
-import { ClientCache, fetchWithSWR, type SWROptions } from "~/lib/cache/client";
+import { ClientCache } from "~/lib/cache/client";
 import type { AuthSession } from "./client";
 
 const CACHE_KEY = "KaamSync:auth-session";
@@ -26,21 +26,4 @@ export function getAuthSession(): AuthSession | null {
 
 export function clearAuthSession() {
 	authCache.remove("current");
-}
-
-// Aliases for backwards compatibility
-
-export async function getAuthSessionSWR(
-	getSessionFn: () => Promise<{ data: AuthSession | null }>,
-	options: Omit<SWROptions, "blockOnEmpty"> = {},
-): Promise<AuthSession | null> {
-	return fetchWithSWR(
-		authCache,
-		"current",
-		async () => {
-			const res = await getSessionFn();
-			return res.data;
-		},
-		{ ...options, blockOnEmpty: !isOffline() },
-	);
 }

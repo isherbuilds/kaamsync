@@ -155,7 +155,7 @@ export function CreateMatterDialog({
 			const clientShortID = consumeNextShortId(teamId);
 
 			setIsCreating(true);
-			z.mutate(
+			const result = z.mutate(
 				mutators.matter.create({
 					teamId,
 					teamCode,
@@ -177,18 +177,24 @@ export function CreateMatterDialog({
 					attachmentIds: attachments.map((attachment) => attachment.id),
 					clientShortID,
 				}),
-			)
-				.server.then(() => {
-					toast.success(
-						isRequest
-							? "Request submitted for approval"
-							: `${teamCode}-${clientShortID} created`,
-					);
-					setOpen(false);
-					setAttachments([]);
-					setResetSignal((value) => value + 1);
-					form.reset();
+			);
 
+			// Instant optimistic feedback - Zero handles client-side insert immediately
+			toast.success(
+				isRequest
+					? "Request submitted for approval"
+					: `${teamCode}-${clientShortID} created`,
+			);
+			setOpen(false);
+			setAttachments([]);
+			setResetSignal((value) => value + 1);
+			// form.reset();
+			setIsCreating(false);
+
+			// Handle server confirmation/error asynchronously
+			result.server
+				.then(() => {
+					// Send notifications only after server confirms creation
 					if (assigneeId) {
 						import("~/hooks/use-push-notifications").then(
 							({ sendNotificationToUser }) => {
@@ -203,14 +209,14 @@ export function CreateMatterDialog({
 					}
 				})
 				.catch((e) => {
+					// Zero auto-rollbacks the optimistic insert on server failure
 					console.error(`Failed to create ${type}:`, e);
 					toast.error(
 						e instanceof Error
 							? e.message
 							: `Failed to create ${type}. Please try again.`,
 					);
-				})
-				.finally(() => setIsCreating(false));
+				});
 		},
 	});
 
