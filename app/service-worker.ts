@@ -19,7 +19,7 @@ interface SyncEvent extends Event {
 
 const SHELL_CACHE = "KaamSync-shell";
 const STATIC_CACHE = "KaamSync-static";
-const SHELL_URLS = ["/", "/offline.html"];
+const SHELL_URLS = ["/offline.html"];
 
 // Immediately take control
 self.addEventListener("install", (event) => {
@@ -59,14 +59,36 @@ setCacheNameDetails({ prefix: "KaamSync" });
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
 
-// Navigation: network-first with shell fallback
 registerRoute(
-	({ request }) => request.mode === "navigate",
-	new NetworkFirst({
-		cacheName: SHELL_CACHE,
-		networkTimeoutSeconds: 3,
-		plugins: [new CacheableResponsePlugin({ statuses: [0, 200] })],
-	}),
+	({ request }) => {
+		if (request.mode !== "navigate") return false;
+		const url = new URL(request.url);
+		return (
+			url.pathname === "/app" ||
+			/^\/[^/]+\/(tasks|requests|matter|settings)/.test(url.pathname) ||
+			/^\/[^/]+\/[^/]+$/.test(url.pathname)
+		);
+	},
+	async ({ request }) => {
+		const cache = await caches.open(SHELL_CACHE);
+		const cached = await cache.match(request);
+
+		if (cached) {
+			return cached;
+		}
+
+		try {
+			const networkResponse = await fetch(request);
+			if (networkResponse.ok) {
+				await cache.put(request, networkResponse.clone());
+			}
+			return networkResponse;
+		} catch {
+			const offlinePage = await cache.match("/offline.html");
+			if (offlinePage) return offlinePage;
+			return Response.error();
+		}
+	},
 );
 
 // Static assets: stale-while-revalidate

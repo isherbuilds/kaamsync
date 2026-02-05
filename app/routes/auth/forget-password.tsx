@@ -51,7 +51,6 @@ export default function ForgetPasswordRoute({
 			return parseWithZod(formData, { schema: forgetPasswordSchema });
 		},
 		constraint: getZodConstraint(forgetPasswordSchema),
-		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 

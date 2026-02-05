@@ -111,7 +111,7 @@ export function consumeNextShortId(teamId: string): number {
 	const key = buildCacheKey(teamId);
 	const current = parsePositiveInt(localStorage.getItem(key)) ?? 1;
 	localStorage.setItem(key, String(current + 1));
-	pruneExcessTeamCaches();
+	// Pruning moved to initializeShortIdCache only - avoid hot-path localStorage scans
 	return current;
 }
 

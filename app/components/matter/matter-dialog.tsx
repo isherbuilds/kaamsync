@@ -16,6 +16,7 @@ import { AttachmentUpload } from "~/components/attachments/attachment-upload";
 import { planLimits } from "~/config/billing";
 import { Priority, type PriorityValue } from "~/config/matter";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { useTeamShortIdCache } from "~/hooks/use-short-id";
 import { consumeNextShortId } from "~/lib/cache/short-id";
 import { matterCreateFormSchema } from "~/lib/matter/validations";
@@ -77,6 +78,7 @@ export function CreateMatterDialog({
 	triggerButton,
 }: CreateMatterDialogProps) {
 	const z = useZero();
+	const isMobile = useIsMobile();
 	const [open, setOpen] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
 	const [attachments, setAttachments] = useState<{ id: string }[]>([]);
@@ -250,7 +252,7 @@ export function CreateMatterDialog({
 							<input
 								{...getConformInputProps(fields.title, { type: "text" })}
 								key={fields.title.key}
-								autoFocus
+								autoFocus={!isMobile}
 								autoComplete="off"
 								placeholder={titlePlaceholder}
 								className="w-full bg-transparent font-semibold text-lg leading-tight outline-none placeholder:text-muted-foreground/40 sm:text-xl"

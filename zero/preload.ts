@@ -16,6 +16,17 @@ export function preloadAll(z: Zero) {
 	preloadedInstances.add(z);
 	// No global clear; per-instance cache is handled by WeakMap
 
+	if (typeof window !== "undefined") {
+		const conn = "connection" in navigator ? navigator.connection : null;
+		const prefersReducedData =
+			conn &&
+			typeof conn === "object" &&
+			(("saveData" in conn && conn.saveData) ||
+				("effectiveType" in conn &&
+					(conn.effectiveType === "2g" || conn.effectiveType === "slow-2g")));
+		if (prefersReducedData) return;
+	}
+
 	// Essential navigation data - context comes from ZeroProvider
 	z.preload(queries.getOrganizationList(), CACHE_PRELOAD);
 	z.preload(queries.getTeamsList(), CACHE_PRELOAD);

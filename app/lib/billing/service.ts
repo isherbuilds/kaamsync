@@ -120,7 +120,12 @@ function getCached<T>(
 	key: string,
 ): T | null {
 	const entry = store.get(key);
-	return entry && entry.exp > Date.now() ? entry.data : null;
+	if (!entry) return null;
+	if (entry.exp <= Date.now()) {
+		store.delete(key);
+		return null;
+	}
+	return entry.data;
 }
 
 function setCache<T>(

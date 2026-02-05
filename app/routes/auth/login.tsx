@@ -87,7 +87,6 @@ export default function SignInRoute({ actionData }: Route.ComponentProps) {
 			return parseWithZod(formData, { schema: signInSchema });
 		},
 		constraint: getZodConstraint(signInSchema),
-		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 

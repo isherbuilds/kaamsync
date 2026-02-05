@@ -7,9 +7,9 @@ import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-	// server: {
-	// 	allowedHosts: ["kaamsync.gapple.in"],
-	// },
+	server: {
+		allowedHosts: ["kaamsync.gapple.in"],
+	},
 
 	build: {
 		outDir: "build/client",

@@ -76,7 +76,7 @@ const TaskRow = memo(function TaskRow({
 
 	return (
 		<NavLink
-			prefetch="intent"
+			prefetch={isMobile ? "none" : "intent"}
 			to={linkTo}
 			className={({ isActive }: { isActive: boolean }) =>
 				cn(

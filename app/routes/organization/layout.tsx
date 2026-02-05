@@ -19,12 +19,7 @@ import { SidebarProvider } from "~/components/ui/sidebar";
 import { useServiceWorker } from "~/hooks/use-service-worker";
 import type { AuthSession } from "~/lib/auth/client";
 import { authClient } from "~/lib/auth/client";
-import {
-	getAuthSession,
-	isOffline,
-	saveAuthSession,
-	setLastOrgSlug,
-} from "~/lib/auth/offline";
+import { getAuthSession, isOffline, saveAuthSession } from "~/lib/auth/offline";
 import { getServerSession } from "~/lib/auth/server";
 import { getSubscription, getSubscriptionSWR } from "~/lib/billing/offline";
 import { fetchOrgSubscription } from "~/lib/billing/service";
@@ -69,13 +64,11 @@ export async function clientLoader({
 	) {
 		lastOrgSlug = orgSlug;
 		hasInitializedOrg = true;
-		setLastOrgSlug(orgSlug);
 	} else if (needsOrgUpdate && !offline) {
 		try {
 			await authClient.organization.setActive({ organizationSlug: orgSlug });
 			lastOrgSlug = orgSlug;
 			hasInitializedOrg = true;
-			setLastOrgSlug(orgSlug);
 		} catch (error) {
 			console.error("Failed to set active organization", error);
 			if (!isOffline()) throw error;

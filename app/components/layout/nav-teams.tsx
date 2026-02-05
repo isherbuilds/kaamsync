@@ -65,9 +65,15 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 								<SidebarMenuButton isActive={isActive} asChild>
 									<Link
 										to={`/${orgSlug}/${team.code}`}
-										prefetch="intent"
-										onMouseEnter={() => preloadTeam(z, team.id)}
-										onFocus={() => preloadTeam(z, team.id)}
+										prefetch={isMobile ? "none" : "intent"}
+										onMouseEnter={() => {
+											if (isMobile) return;
+											preloadTeam(z, team.id);
+										}}
+										onFocus={() => {
+											if (isMobile) return;
+											preloadTeam(z, team.id);
+										}}
 										onClick={
 											isMobile
 												? () => setTimeout(() => setOpenMobile(false), 50)
@@ -100,7 +106,7 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 										<DropdownMenuItem asChild>
 											<Link
 												to={`/${orgSlug}/settings/teams/${team.code}/members`}
-												prefetch="intent"
+												prefetch={isMobile ? "none" : "intent"}
 												className="flex w-full items-center"
 											>
 												<Users2Icon className="text-muted-foreground" />
@@ -111,7 +117,7 @@ export function NavTeams({ teams, orgSlug }: NavTeamsProps) {
 										<DropdownMenuItem asChild>
 											<Link
 												to={`/${orgSlug}/settings/teams/${team.code}`}
-												prefetch="intent"
+												prefetch={isMobile ? "none" : "intent"}
 												className="flex w-full items-center"
 											>
 												<Cog className="text-muted-foreground" />

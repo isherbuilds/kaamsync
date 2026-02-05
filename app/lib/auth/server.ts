@@ -43,7 +43,7 @@ import {
 import { env, isDevelopment, isProduction } from "~/lib/infra/env";
 import {
 	findSubscriptionId,
-	getActiveOrganizationId,
+	getActiveOrganization,
 } from "~/lib/organization/service";
 
 // =============================================================================
@@ -120,11 +120,18 @@ export const auth = betterAuth({
 		updateAge: 60 * 60 * 24, // 1 day - refresh session daily
 		cookieCache: {
 			enabled: true,
-			maxAge: 60 * 60 * 12, // 7 days - long-lived for offline support
+			maxAge: 60 * 60 * 12, // 12 hours - long-lived for offline support
 			strategy: "jwe", // encrypted JWT for better security with longer cache
 			// refreshCache: {
 			// 	updateAge: 60 * 60 * 24, // Refresh when 1 day remains (stateless refresh)
 			// },
+		},
+		additionalFields: {
+			activeOrganizationSlug: {
+				type: "string",
+				required: false,
+				defaultValue: null,
+			},
 		},
 	},
 	account: {
@@ -140,15 +147,34 @@ export const auth = betterAuth({
 		session: {
 			create: {
 				before: async (session) => {
-					const activeOrganizationId = await getActiveOrganizationId(
-						session.userId,
-					);
+					const activeOrg = await getActiveOrganization(session.userId);
 					return {
 						data: {
 							...session,
-							activeOrganizationId,
+							activeOrganizationId: activeOrg?.id,
+							activeOrganizationSlug: activeOrg?.slug,
 						},
 					};
+				},
+			},
+			update: {
+				before: async (session) => {
+					const orgId = session.activeOrganizationId as string | undefined;
+					if (orgId && !session.activeOrganizationSlug) {
+						const org = await db.query.organizationsTable.findFirst({
+							where: eq(schema.organizationsTable.id, orgId),
+							columns: { slug: true },
+						});
+						if (org) {
+							return {
+								data: {
+									...session,
+									activeOrganizationSlug: org.slug,
+								},
+							};
+						}
+					}
+					return { data: session };
 				},
 			},
 		},

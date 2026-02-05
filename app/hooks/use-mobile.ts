@@ -80,14 +80,27 @@ const MEDIA_QUERIES = {
 } as const;
 
 let cachedSnapshot: BreakpointState | null = null;
+let mediaQueryLists: Record<keyof typeof MEDIA_QUERIES, MediaQueryList> | null =
+	null;
+
+function getMediaQueryLists() {
+	if (mediaQueryLists) return mediaQueryLists;
+	mediaQueryLists = {
+		isMobile: window.matchMedia(MEDIA_QUERIES.isMobile),
+		isTablet: window.matchMedia(MEDIA_QUERIES.isTablet),
+		isLargeScreen: window.matchMedia(MEDIA_QUERIES.isLargeScreen),
+		isExtraLargeScreen: window.matchMedia(MEDIA_QUERIES.isExtraLargeScreen),
+	};
+	return mediaQueryLists;
+}
 
 function getSnapshot(): BreakpointState {
+	const mqls = getMediaQueryLists();
 	const currentState: BreakpointState = {
-		isMobile: window.matchMedia(MEDIA_QUERIES.isMobile).matches,
-		isTablet: window.matchMedia(MEDIA_QUERIES.isTablet).matches,
-		isLargeScreen: window.matchMedia(MEDIA_QUERIES.isLargeScreen).matches,
-		isExtraLargeScreen: window.matchMedia(MEDIA_QUERIES.isExtraLargeScreen)
-			.matches,
+		isMobile: mqls.isMobile.matches,
+		isTablet: mqls.isTablet.matches,
+		isLargeScreen: mqls.isLargeScreen.matches,
+		isExtraLargeScreen: mqls.isExtraLargeScreen.matches,
 	};
 
 	const hasChanged =
@@ -116,16 +129,15 @@ function getServerSnapshot(): BreakpointState {
 }
 
 function subscribeToAllBreakpoints(onStoreChange: () => void): () => void {
-	const mediaQueryLists = Object.values(MEDIA_QUERIES).map((query) =>
-		window.matchMedia(query),
-	);
+	const mqls = getMediaQueryLists();
+	const lists = Object.values(mqls);
 
-	for (const mql of mediaQueryLists) {
+	for (const mql of lists) {
 		mql.addEventListener("change", onStoreChange);
 	}
 
 	return () => {
-		for (const mql of mediaQueryLists) {
+		for (const mql of lists) {
 			mql.removeEventListener("change", onStoreChange);
 		}
 	};

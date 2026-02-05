@@ -147,6 +147,21 @@ export async function getActiveOrganizationId(
 	return result[0]?.organizationId;
 }
 
+export async function getActiveOrganization(
+	userId: string,
+): Promise<{ id: string; slug: string } | undefined> {
+	const result = await getUserOrganizationMembership.execute({ userId });
+	const membership = result[0];
+	if (!membership) return undefined;
+
+	const org = await getOrgByIdPrepared.execute({
+		organizationId: membership.organizationId,
+	});
+	if (!org[0]) return undefined;
+
+	return { id: org[0].id, slug: org[0].slug };
+}
+
 /**
  * Get a user's role in an organization.
  */

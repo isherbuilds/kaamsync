@@ -1,5 +1,5 @@
 {
-  "id": "ca285901-3273-4c8b-b84c-3dcdbf4ac47a",
+  "id": "288e8ab2-45ab-4ecf-9e32-b45034085f3f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -433,7 +433,15 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "organizations_table_slug_unique": {
+          "name": "organizations_table_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -494,6 +502,12 @@
         },
         "active_organization_id": {
           "name": "active_organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active_organization_slug": {
+          "name": "active_organization_slug",
           "type": "text",
           "primaryKey": false,
           "notNull": false
