@@ -42,6 +42,12 @@ async function validateAttachmentIds(
 > {
 	if (!attachmentIds.length) return [];
 
+	// Skip validation on client - attachments are uploaded via REST API
+	// and may not be synced to Zero cache yet. Server will validate.
+	if (tx.location !== "server") {
+		return [];
+	}
+
 	// Query attachments by IDs
 	const attachments = await tx.run(
 		zql.attachmentsTable.where("id", "IN", attachmentIds),
@@ -99,50 +105,55 @@ export const mutators = defineMutators({
 				clientShortID: z.number().optional(),
 			}),
 			async ({ tx, ctx, args }) => {
-				const membership = await findTeamMembership(tx, ctx, args.teamId);
-
-				if (!membership) {
-					throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
-				}
-
-				// Check billing limits
-				enforceMatterCreationPermission(ctx, membership.role, args.type);
-
 				const id = uuid();
 				const now = Date.now();
+				let orgId = ctx.activeOrganizationId ?? "";
 
 				const baseInsert = {
 					id,
 					teamId: args.teamId,
 					teamCode: args.teamCode,
-					orgId: membership.orgId,
+					orgId,
 					authorId: ctx.userId,
 					statusId: args.statusId,
 					title: args.title,
 					type: args.type,
 					assigneeId: args.assigneeId,
 					description: args.description,
-					priority: args.priority ?? 4, // Default to none (4)
+					priority: args.priority ?? 4,
 					dueDate: args.dueDate,
 					archived: false,
 					createdAt: now,
 					updatedAt: now,
 				};
 
-				// If request, override statusId with pending_approval status
-				if (args.type === matterType.request) {
-					const pendingStatus = await tx.run(
-						zql.statusesTable
-							.where("teamId", args.teamId)
-							.where("type", "pending_approval")
-							.one(),
-					);
-					if (pendingStatus) {
-						baseInsert.statusId = pendingStatus.id;
+				// Server-only: permission checks and request status override
+				if (tx.location === "server") {
+					const membership = await findTeamMembership(tx, ctx, args.teamId);
+					if (!membership) {
+						throw new Error(PERMISSION_ERRORS.NOT_TEAM_MEMBER);
+					}
+					enforceMatterCreationPermission(ctx, membership.role, args.type);
+					baseInsert.orgId = membership.orgId;
+					// Ensure server-side orgId variable matches the validated membership
+					// so subsequent validation/updates use the correct organization.
+					orgId = membership.orgId;
+
+					// Override statusId for requests
+					if (args.type === matterType.request) {
+						const pendingStatus = await tx.run(
+							zql.statusesTable
+								.where("teamId", args.teamId)
+								.where("type", "pending_approval")
+								.one(),
+						);
+						if (pendingStatus) {
+							baseInsert.statusId = pendingStatus.id;
+						}
 					}
 				}
 
-				// Allocate short ID (handles both client and server logic)
+				// Insert matter immediately (optimistic on client)
 				await assignMatterShortId(
 					tx,
 					args.teamId,
@@ -150,26 +161,30 @@ export const mutators = defineMutators({
 					args.clientShortID,
 				);
 
-				// Validate and link attachments
+				// Validate and link attachments (server-only validation, parallel updates)
 				if (args.attachmentIds && args.attachmentIds.length > 0) {
 					await validateAttachmentIds(
 						tx,
 						args.attachmentIds,
-						membership.orgId,
+						orgId,
 						ctx.userId,
 					);
 
-					for (const attachmentId of args.attachmentIds) {
-						await tx.mutate.attachmentsTable.update({
-							id: attachmentId,
-							subjectId: baseInsert.id,
-							subjectType: "matter",
-						});
-					}
+					await Promise.all(
+						args.attachmentIds.map((attachmentId) =>
+							tx.mutate.attachmentsTable.update({
+								id: attachmentId,
+								subjectId: id,
+								subjectType: "matter",
+							}),
+						),
+					);
 				}
 
-				// Invalidate only matter count cache after matter creation
-				clearOrganizationUsageCache(ctx, membership.orgId, "matters");
+				// Invalidate cache (server-only effect)
+				if (tx.location === "server") {
+					clearOrganizationUsageCache(ctx, baseInsert.orgId, "matters");
+				}
 			},
 		),
 
@@ -183,32 +198,40 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { matter, canModify } = await checkMatterModifyAccess(
-					tx,
-					ctx,
-					args.id,
-				);
-				if (!canModify) {
-					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-				}
 
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					...args,
 					updatedAt: now,
 				});
 
-				if (args.priority !== undefined && args.priority !== matter.priority) {
-					tx.mutate.timelinesTable.insert({
-						id: uuid(),
-						matterId: args.id,
-						userId: ctx.userId,
-						type: "priority_change",
-						fromValue: matter.priority?.toString() ?? "4",
-						toValue: args.priority.toString(),
-						edited: false,
-						createdAt: now,
-						updatedAt: now,
-					});
+				// Server-only: permission check and timeline entry
+				if (tx.location === "server") {
+					const { matter, canModify } = await checkMatterModifyAccess(
+						tx,
+						ctx,
+						args.id,
+					);
+					if (!canModify) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+
+					if (
+						args.priority !== undefined &&
+						args.priority !== matter.priority
+					) {
+						tx.mutate.timelinesTable.insert({
+							id: uuid(),
+							matterId: args.id,
+							userId: ctx.userId,
+							type: "priority_change",
+							fromValue: matter.priority?.toString() ?? "4",
+							toValue: args.priority.toString(),
+							edited: false,
+							createdAt: now,
+							updatedAt: now,
+						});
+					}
 				}
 			},
 		),
@@ -217,37 +240,41 @@ export const mutators = defineMutators({
 			z.object({ id: z.string(), statusId: z.string() }),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { matter, membership } = await checkMatterModifyAccess(
-					tx,
-					ctx,
-					args.id,
-				);
 
-				// Permission: Only assignee or manager can change status
-				if (
-					matter.assigneeId !== ctx.userId &&
-					membership.role !== teamRole.manager
-				) {
-					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-				}
-
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					statusId: args.statusId,
 					updatedAt: now,
 				});
 
-				tx.mutate.timelinesTable.insert({
-					id: uuid(),
-					matterId: args.id,
-					userId: ctx.userId,
-					type: "status_change",
-					fromStatusId: matter.statusId,
-					toStatusId: args.statusId,
-					edited: false,
-					createdAt: now,
-					updatedAt: now,
-				});
+				// Server-only: permission check and timeline entry
+				if (tx.location === "server") {
+					const { matter, membership } = await checkMatterModifyAccess(
+						tx,
+						ctx,
+						args.id,
+					);
+
+					if (
+						matter.assigneeId !== ctx.userId &&
+						membership.role !== teamRole.manager
+					) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "status_change",
+						fromStatusId: matter.statusId,
+						toStatusId: args.statusId,
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
+				}
 			},
 		),
 
@@ -255,38 +282,42 @@ export const mutators = defineMutators({
 			z.object({ id: z.string(), assigneeId: z.string().nullable() }),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { matter, membership } = await checkMatterModifyAccess(
-					tx,
-					ctx,
-					args.id,
-				);
 
-				// Permission: Managers can assign, or users can (un)assign themselves
-				const isManager = membership.role === teamRole.manager;
-				const isSelfAssignment =
-					args.assigneeId === ctx.userId || matter.assigneeId === ctx.userId;
-
-				if (!isManager && !isSelfAssignment) {
-					throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
-				}
-
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					assigneeId: args.assigneeId,
 					updatedAt: now,
 				});
 
-				tx.mutate.timelinesTable.insert({
-					id: uuid(),
-					matterId: args.id,
-					userId: ctx.userId,
-					type: "assignment",
-					fromAssigneeId: matter.assigneeId ?? null,
-					toAssigneeId: args.assigneeId ?? null,
-					edited: false,
-					createdAt: now,
-					updatedAt: now,
-				});
+				// Server-only: permission check and timeline entry
+				if (tx.location === "server") {
+					const { matter, membership } = await checkMatterModifyAccess(
+						tx,
+						ctx,
+						args.id,
+					);
+
+					const isManager = membership.role === teamRole.manager;
+					const isSelfAssignment =
+						args.assigneeId === ctx.userId || matter.assigneeId === ctx.userId;
+
+					if (!isManager && !isSelfAssignment) {
+						throw new Error(PERMISSION_ERRORS.MANAGER_REQUIRED);
+					}
+
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "assignment",
+						fromAssigneeId: matter.assigneeId ?? null,
+						toAssigneeId: args.assigneeId ?? null,
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
+				}
 			},
 		),
 
@@ -294,16 +325,21 @@ export const mutators = defineMutators({
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
-				if (!canModify) {
-					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-				}
 
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					deletedAt: now,
 					updatedAt: now,
 				});
+
+				// Server-only: permission check
+				if (tx.location === "server") {
+					const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
+					if (!canModify) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+				}
 			},
 		),
 
@@ -311,28 +347,38 @@ export const mutators = defineMutators({
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id, {
-					deleted: true,
-				});
-				if (!canModify) {
-					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-				}
 
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					deletedAt: null,
 					updatedAt: now,
 				});
 
-				tx.mutate.timelinesTable.insert({
-					id: uuid(),
-					matterId: args.id,
-					userId: ctx.userId,
-					type: "restore",
-					edited: false,
-					createdAt: now,
-					updatedAt: now,
-				});
+				// Server-only: permission check and timeline entry
+				if (tx.location === "server") {
+					const { canModify } = await checkMatterModifyAccess(
+						tx,
+						ctx,
+						args.id,
+						{
+							deleted: true,
+						},
+					);
+					if (!canModify) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "restore",
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
+				}
 			},
 		),
 
@@ -340,11 +386,8 @@ export const mutators = defineMutators({
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
-				if (!canModify) {
-					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-				}
 
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					archived: true,
@@ -353,15 +396,23 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
-				tx.mutate.timelinesTable.insert({
-					id: uuid(),
-					matterId: args.id,
-					userId: ctx.userId,
-					type: "archive",
-					edited: false,
-					createdAt: now,
-					updatedAt: now,
-				});
+				// Server-only: permission check and timeline entry
+				if (tx.location === "server") {
+					const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
+					if (!canModify) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+
+					tx.mutate.timelinesTable.insert({
+						id: uuid(),
+						matterId: args.id,
+						userId: ctx.userId,
+						type: "archive",
+						edited: false,
+						createdAt: now,
+						updatedAt: now,
+					});
+				}
 			},
 		),
 
@@ -369,11 +420,8 @@ export const mutators = defineMutators({
 			z.object({ id: z.string() }),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
-				if (!canModify) {
-					throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
-				}
 
+				// Update immediately for optimistic UI
 				await tx.mutate.mattersTable.update({
 					id: args.id,
 					archived: false,
@@ -381,6 +429,14 @@ export const mutators = defineMutators({
 					archivedBy: null,
 					updatedAt: now,
 				});
+
+				// Server-only: permission check
+				if (tx.location === "server") {
+					const { canModify } = await checkMatterModifyAccess(tx, ctx, args.id);
+					if (!canModify) {
+						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
+					}
+				}
 			},
 		),
 
@@ -512,11 +568,10 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				const now = Date.now();
-				// Permission: Ensure user can access the matter
-				await checkMatterModifyAccess(tx, ctx, args.matterId);
-
 				const id = uuid();
+				const orgId = ctx.activeOrganizationId ?? "";
 
+				// Insert comment immediately for optimistic UI
 				await tx.mutate.timelinesTable.insert({
 					id,
 					matterId: args.matterId,
@@ -528,13 +583,13 @@ export const mutators = defineMutators({
 					updatedAt: now,
 				});
 
-				// Validate and link attachments
-				if (args.attachmentIds && args.attachmentIds.length > 0) {
-					const orgId = ctx.activeOrganizationId;
-					if (!orgId) {
-						throw new Error("No active organization");
-					}
+				// Server-only: permission check (after insert for faster optimistic UI)
+				if (tx.location === "server") {
+					await checkMatterModifyAccess(tx, ctx, args.matterId);
+				}
 
+				// Validate and link attachments (parallel updates)
+				if (args.attachmentIds && args.attachmentIds.length > 0) {
 					await validateAttachmentIds(
 						tx,
 						args.attachmentIds,
@@ -542,13 +597,15 @@ export const mutators = defineMutators({
 						ctx.userId,
 					);
 
-					for (const attachmentId of args.attachmentIds) {
-						await tx.mutate.attachmentsTable.update({
-							id: attachmentId,
-							subjectId: id,
-							subjectType: "comment",
-						});
-					}
+					await Promise.all(
+						args.attachmentIds.map((attachmentId) =>
+							tx.mutate.attachmentsTable.update({
+								id: attachmentId,
+								subjectId: id,
+								subjectType: "comment",
+							}),
+						),
+					);
 				}
 			},
 		),
@@ -800,11 +857,10 @@ export const mutators = defineMutators({
 				position: z.number(),
 			}),
 			async ({ tx, ctx, args }) => {
-				// Permission: Only managers can create statuses
-				await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
-
 				const statusId = uuid();
 				const now = Date.now();
+
+				// Insert immediately for optimistic UI
 				await tx.mutate.statusesTable.insert({
 					id: statusId,
 					teamId: args.teamId,
@@ -817,6 +873,11 @@ export const mutators = defineMutators({
 					createdAt: now,
 					updatedAt: now,
 				});
+
+				// Server-only: permission check
+				if (tx.location === "server") {
+					await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
+				}
 			},
 		),
 	},

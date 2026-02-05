@@ -157,8 +157,8 @@ export default function PricingPage() {
 		<>
 			<script type="application/ld+json">{structuredData}</script>
 
-			<section className="relative border-border/40 border-b bg-background pt-24 pb-16 text-center">
-				<div className="container mx-auto px-4 md:px-6">
+			<section className="relative pt-24 pb-16 text-center">
+				<div className="container mx-auto mb-10 px-4 md:px-6">
 					<div className="mx-auto max-w-3xl">
 						<MarketingHeading as="h2" className="mb-6">
 							Start free.
@@ -197,12 +197,10 @@ export default function PricingPage() {
 						</div>
 					</div>
 				</div>
-			</section>
 
-			{/* Plans */}
-			<section className="relative bg-background">
+				{/* Plans */}
 				<div className="container relative z-10 mx-auto px-4 md:px-6">
-					<div className="mx-auto grid max-w-7xl grid-cols-1 gap-px border border-border bg-border md:grid-cols-2 xl:grid-cols-4">
+					<div className="mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
 						{planKeys.map((key) => {
 							const plan = products[key];
 							const monthlyPrice = plan.monthlyPrice;
@@ -220,7 +218,7 @@ export default function PricingPage() {
 								<div
 									key={key}
 									className={cn(
-										"v-stack relative bg-background p-8 transition-all duration-300",
+										"v-stack relative border bg-card p-8",
 										isPopular && "z-10 ring-2 ring-primary",
 									)}
 								>

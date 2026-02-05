@@ -2,7 +2,6 @@ import AlertTriangle from "lucide-react/dist/esm/icons/alert-triangle";
 import HardDrive from "lucide-react/dist/esm/icons/hard-drive";
 import Layers from "lucide-react/dist/esm/icons/layers";
 import Users from "lucide-react/dist/esm/icons/users";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Progress } from "~/components/ui/progress";
 import {
 	Tooltip,
@@ -64,7 +63,7 @@ function UsageItem({
 			: limit.toString();
 
 	return (
-		<div className="space-y-2">
+		<div className="v-stack gap-2">
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<Icon
@@ -172,16 +171,16 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 		usage.matters && limits.matters !== -1 && usage.matters >= limits.matters;
 
 	return (
-		<Card>
-			<CardHeader className="pb-3">
-				<CardTitle className="flex items-center justify-between text-base">
+		<div className="rounded-xl border bg-card p-6 shadow-sm">
+			<div className="mb-4">
+				<div className="flex items-center justify-between font-semibold text-lg">
 					<span>Current Usage</span>
 					<span className="font-normal text-muted-foreground text-sm">
 						{product.name} Plan
 					</span>
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-4">
+				</div>
+			</div>
+			<div className="space-y-4">
 				{(isFrozen || isMattersFrozen) && (
 					<div className="rounded-md bg-destructive/15 p-3 font-medium text-destructive text-sm">
 						<div className="flex items-center gap-2">
@@ -230,7 +229,7 @@ export function UsageDisplay({ usage, currentPlan }: UsageDisplayProps) {
 
 				{/* Show addon pricing info for plans with add-ons */}
 				{product.hasAddons ? <AddonPricingInfo planKey={planKey} /> : null}
-			</CardContent>
-		</Card>
+			</div>
+		</div>
 	);
 }

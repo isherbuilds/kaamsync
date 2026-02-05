@@ -44,6 +44,8 @@ export const CreateTeamDialog = memo(
 			constraint: getZodConstraint(createTeamSchema),
 			onValidate: ({ formData }) =>
 				parseWithZod(formData, { schema: createTeamSchema }),
+			shouldValidate: "onBlur",
+			shouldRevalidate: "onInput",
 			onSubmit: async (event, { submission }) => {
 				event.preventDefault();
 				if (submission?.status !== "success") return;

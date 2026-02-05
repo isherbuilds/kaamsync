@@ -79,23 +79,6 @@ export interface AddonConfig {
 	storageGbPriceCents: number;
 }
 
-export const getAddonConfig = (plan: ProductKey): AddonConfig | null => {
-	if (plan === "starter" || plan === "enterprise") return null;
-	const pricing = addonPricing[plan];
-	return {
-		seatAddonId:
-			plan === "growth"
-				? process.env.DODO_ADDON_SEAT_GROWTH
-				: process.env.DODO_ADDON_SEAT_PRO,
-		storageAddonId:
-			plan === "growth"
-				? process.env.DODO_ADDON_STORAGE_GROWTH
-				: process.env.DODO_ADDON_STORAGE_PRO,
-		seatPriceCents: pricing.seatCents,
-		storageGbPriceCents: pricing.storageGbCents,
-	};
-};
-
 export const getEffectiveMemberLimit = (
 	plan: ProductKey,
 	purchasedSeats: number,

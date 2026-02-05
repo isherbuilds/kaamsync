@@ -6,7 +6,8 @@ import {
 	type StatusType,
 } from "~/config/matter";
 
-type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
+type Matter = Row["mattersTable"];
+type MatterWithStatus = Matter & { status: Row["statusesTable"] | null };
 type Status = Row["statusesTable"];
 
 export type StatusGroupHeader = {
@@ -20,7 +21,7 @@ export type StatusGroupHeader = {
 export type TaskListItem = {
 	type: "task";
 	id: string;
-	task: Matter;
+	task: MatterWithStatus;
 	isCompleted: boolean;
 };
 
@@ -30,6 +31,7 @@ const DEFAULT_COLLAPSED_STATUS_TYPES = new Set<string>(COMPLETED_STATUS_TYPES);
 
 /**
  * Hook to group and flatten tasks by status for virtualized lists.
+ * Performs client-side join between matters and statuses for efficiency.
  * Always rebuilds groups from matters for correctness; the operation is O(n).
  */
 export type UseTasksByStatusGroupResult = {
@@ -67,16 +69,19 @@ export function useTasksByStatusGroup(
 			return { flatItems: [], activeCount: 0, stickyIndices: [], toggleGroup };
 		}
 
+		// Build status lookup map for O(1) access
+		const statusMap = new Map(statuses.map((s) => [s.id, s]));
+
 		// Always rebuild groups from scratch for correctness and simplicity
 		const groups = new Map<
 			string,
-			{ status: Status; tasks: Matter[]; order: number }
+			{ status: Status; tasks: MatterWithStatus[]; order: number }
 		>();
 		let activeCount = 0;
 
-		// First pass: group tasks by status
+		// First pass: group tasks by status (client-side join)
 		for (const matter of matters) {
-			const status = matter.status;
+			const status = statusMap.get(matter.statusId);
 			if (!status) continue;
 
 			let group = groups.get(status.id);
@@ -89,7 +94,7 @@ export function useTasksByStatusGroup(
 				};
 				groups.set(status.id, group);
 			}
-			group.tasks.push(matter);
+			group.tasks.push({ ...matter, status });
 
 			if (!DEFAULT_COLLAPSED_STATUS_TYPES.has(status.type as string)) {
 				activeCount++;

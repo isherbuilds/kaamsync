@@ -1,5 +1,5 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod/v4";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useQuery } from "@rocicorp/zero/react";
 import Mail from "lucide-react/dist/esm/icons/mail";
 import MoreVertical from "lucide-react/dist/esm/icons/more-vertical";
@@ -36,31 +36,13 @@ import {
 import { orgRole } from "~/db/helpers";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { authClient } from "~/lib/auth/client";
-import { getServerSession } from "~/lib/auth/server";
-import { checkMemberLimit } from "~/lib/billing/service";
 
-import type { Route } from "./+types/members";
 import type { loader as settingsLoader } from "./layout";
 
 const inviteSchema = z.object({
 	email: z.email("Please enter a valid email"),
 	role: z.enum(orgRole),
 });
-
-export async function action({ request }: Route.ActionArgs) {
-	const session = await getServerSession(request);
-	if (!session?.session?.activeOrganizationId) {
-		return data({ error: "No active organization" }, { status: 401 });
-	}
-	const result = await checkMemberLimit(session.session.activeOrganizationId);
-	if (!result.allowed) {
-		return data(
-			{ error: result.reason ?? "Member limit reached" },
-			{ status: 403 },
-		);
-	}
-	return data({ success: true });
-}
 
 export default function OrgMembersPage() {
 	const { authSession } = useOrganizationLoaderData();
@@ -82,8 +64,11 @@ export default function OrgMembersPage() {
 	const [form, fields] = useForm({
 		id: "org-invite-member",
 		defaultValue: { role: "member" },
+		constraint: getZodConstraint(inviteSchema),
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: inviteSchema }),
+		shouldValidate: "onBlur",
+		shouldRevalidate: "onInput",
 		onSubmit: async (event, { submission }) => {
 			event.preventDefault();
 			if (submission?.status !== "success") return;
@@ -156,7 +141,7 @@ export default function OrgMembersPage() {
 	return (
 		<div className="v-stack gap-6">
 			<div className="flex items-start justify-between gap-4 sm:items-center">
-				<div className="space-y-1">
+				<div className="v-stack gap-1">
 					<h1 className="font-semibold text-lg tracking-tight md:text-xl">
 						Members
 					</h1>
@@ -221,7 +206,7 @@ export default function OrgMembersPage() {
 
 			<div className="grid gap-6 lg:grid-cols-3">
 				{/* Members List - Takes 2 cols on desktop */}
-				<div className="overflow-hidden rounded-lg border border-border/60 bg-card shadow-sm ring-1 ring-black/5 lg:col-span-2 dark:ring-white/5">
+				<div className="overflow-hidden rounded-lg border border-border/60 bg-card lg:col-span-2">
 					<div className="divide-y divide-border/40">
 						{members?.map((m) => {
 							const isSelf = m.userId === currentUser.id;
@@ -318,10 +303,10 @@ export default function OrgMembersPage() {
 						{invites?.map((i) => (
 							<div
 								key={i.id}
-								className="group v-stack relative overflow-hidden rounded-lg border border-border/60 bg-muted/30 p-4 text-sm shadow-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
+								className="group v-stack relative overflow-hidden rounded-lg border border-border/60 bg-muted/30 p-4 text-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
 							>
 								<div className="mb-3 flex items-start justify-between">
-									<div className="rounded-lg border border-border/40 bg-background p-2 shadow-sm">
+									<div className="rounded-lg border border-border/40 bg-background p-2">
 										<Mail className="size-4 text-muted-foreground" />
 									</div>
 									{isAdminOrOwner && (

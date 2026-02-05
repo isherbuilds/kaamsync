@@ -1,4 +1,9 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import {
+	getFormProps,
+	getInputProps,
+	type SubmissionResult,
+	useForm,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { Form, Link, redirect, useNavigation } from "react-router";
 import { toast } from "sonner";
@@ -11,7 +16,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { AppInfo, SOCIAL_PROVIDER_CONFIGS } from "~/config/app";
 import { type AuthSession, authClient } from "~/lib/auth/client";
-import { saveAuthSessionToLocalStorage } from "~/lib/auth/offline";
+import { saveAuthSession } from "~/lib/auth/offline";
 import { signInSchema } from "~/lib/auth/validations";
 import { safeError } from "~/lib/utils/logger";
 import type { Route } from "./+types/login";
@@ -42,17 +47,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 			// Cache session immediately for faster middleware lookup
 			// The signIn response already contains session data
 			if (data && "session" in data) {
-				saveAuthSessionToLocalStorage(data as unknown as AuthSession);
+				saveAuthSession(data as unknown as AuthSession);
 			} else {
 				// Fallback: fetch session if not in response
-				try {
-					const session = await authClient.getSession();
-					if (session.data) {
-						saveAuthSessionToLocalStorage(session.data);
-					}
-				} catch (e) {
-					safeError(e, "Failed to cache session");
-				}
+				authClient
+					.getSession()
+					.then((res) => {
+						if (res.data) saveAuthSession(res.data);
+					})
+					.catch((e) => safeError(e, "Failed to cache session"));
 			}
 			break;
 		}
@@ -61,7 +64,7 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 			const { provider } = submission.value;
 			const { error } = await authClient.signIn.social({
 				provider,
-				callbackURL: "/",
+				callbackURL: "/app",
 			});
 			if (error) {
 				return toast.error(error.message || `${provider} sign in failed.`);
@@ -73,15 +76,18 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 			return toast.error("Invalid login method.");
 	}
 
-	return redirect("/");
+	return redirect("/app");
 }
 
-export default function SignInRoute() {
+export default function SignInRoute({ actionData }: Route.ComponentProps) {
+	const lastResult = actionData as SubmissionResult<string[]> | undefined;
 	const [form, fields] = useForm({
+		lastResult,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: signInSchema });
 		},
 		constraint: getZodConstraint(signInSchema),
+		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 

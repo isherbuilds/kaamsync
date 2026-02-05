@@ -228,7 +228,7 @@ export type SelectProps = {
 	items: Array<{ name: string; value: string }>;
 	placeholder: string;
 	defaultValue?: string;
-	["aria-describedby"]?: string;
+	"aria-describedby"?: string;
 	errors?: ListOfErrors;
 	labelProps?: React.LabelHTMLAttributes<HTMLLabelElement>;
 	className?: string;

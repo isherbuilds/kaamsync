@@ -28,10 +28,27 @@ export function clearAuthSession() {
 	authCache.remove("current");
 }
 
+const LAST_ORG_SLUG_KEY = "KaamSync:last-org-slug";
+
+export function getLastOrgSlug(): string | null {
+	if (typeof localStorage === "undefined") return null;
+	try {
+		return localStorage.getItem(LAST_ORG_SLUG_KEY);
+	} catch {
+		return null;
+	}
+}
+
+export function setLastOrgSlug(slug: string) {
+	if (typeof localStorage === "undefined") return;
+	try {
+		localStorage.setItem(LAST_ORG_SLUG_KEY, slug);
+	} catch (e) {
+		console.warn("Failed to set last org slug in localStorage", e);
+	}
+}
+
 // Aliases for backwards compatibility
-export const saveAuthSessionToLocalStorage = saveAuthSession;
-export const getAuthSessionFromLocalStorage = getAuthSession;
-export const clearAuthSessionFromLocalStorage = clearAuthSession;
 
 export async function getAuthSessionSWR(
 	getSessionFn: () => Promise<{ data: AuthSession | null }>,

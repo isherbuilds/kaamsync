@@ -2,16 +2,9 @@ import AlertCircle from "lucide-react/dist/esm/icons/alert-circle";
 import CheckCircle from "lucide-react/dist/esm/icons/check-circle";
 import Clock from "lucide-react/dist/esm/icons/clock";
 import XCircle from "lucide-react/dist/esm/icons/x-circle";
+import { Form } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "~/components/ui/card";
 import { type ProductKey, products } from "~/config/billing";
 
 interface Subscription {
@@ -27,8 +20,6 @@ interface Subscription {
 interface SubscriptionStatusProps {
 	subscription: Subscription | null;
 	currentPlan: ProductKey | null;
-	onManage: () => void;
-	onUpgrade: () => void;
 	loading?: boolean;
 }
 
@@ -85,29 +76,32 @@ function formatAmount(amount: number | null): string {
 export function SubscriptionStatus({
 	subscription,
 	currentPlan,
-	onManage,
-	onUpgrade,
 	loading,
 }: SubscriptionStatusProps) {
 	if (!subscription) {
 		return (
-			<Card>
-				<CardHeader>
-					<CardTitle>Subscription</CardTitle>
-					<CardDescription>You're currently on the Free Plan</CardDescription>
-				</CardHeader>
-				<CardContent>
+			<div className="rounded border bg-card p-6">
+				<div className="mb-4">
+					<div className="font-semibold text-lg">Subscription</div>
+					<div className="mt-1 text-muted-foreground text-sm">
+						You're currently on the Free Plan
+					</div>
+				</div>
+				<div>
 					<p className="text-muted-foreground text-sm">
 						Upgrade to unlock additional members, unlimited teams, and more
 						storage for your growing business.
 					</p>
-				</CardContent>
-				<CardFooter>
-					<Button onClick={onUpgrade} disabled={loading}>
-						View Plans
-					</Button>
-				</CardFooter>
-			</Card>
+					<Form method="POST" className="mt-4">
+						<input type="hidden" name="intent" value="checkout" />
+						<input type="hidden" name="plan" value="growth" />
+						<input type="hidden" name="interval" value="monthly" />
+						<Button type="submit" size="lg">
+							Upgrade
+						</Button>
+					</Form>
+				</div>
+			</div>
 		);
 	}
 
@@ -116,20 +110,22 @@ export function SubscriptionStatus({
 	const planName = currentPlan ? products[currentPlan].name : "Unknown Plan";
 
 	return (
-		<Card>
-			<CardHeader>
+		<div className="rounded border bg-card p-6">
+			<div className="mb-4">
 				<div className="flex items-center justify-between">
-					<CardTitle className="flex items-center gap-2">
+					<div className="flex items-center gap-2 font-semibold text-lg">
 						{planName}
 						<Badge variant={status?.badge ?? "outline"}>
 							{status?.label ?? subscription.status}
 						</Badge>
-					</CardTitle>
+					</div>
 					<StatusIcon className={`h-5 w-5 ${status?.color ?? ""}`} />
 				</div>
-				<CardDescription>Your current subscription</CardDescription>
-			</CardHeader>
-			<CardContent className="space-y-4">
+				<div className="mt-1 text-muted-foreground text-sm">
+					Your current subscription
+				</div>
+			</div>
+			<div className="space-y-4">
 				<div className="grid gap-2 text-sm">
 					<div className="flex justify-between">
 						<span className="text-muted-foreground">Amount</span>
@@ -161,17 +157,15 @@ export function SubscriptionStatus({
 						</div>
 					)}
 				</div>
-			</CardContent>
-			<CardFooter className="gap-2">
-				<Button variant="outline" onClick={onManage} disabled={loading}>
-					Manage Subscription
-				</Button>
-				{/* {subscription.status === "active" && ( */}
-				<Button variant="secondary" onClick={onUpgrade} disabled={loading}>
-					Change Plan
-				</Button>
-				{/* )} */}
-			</CardFooter>
-		</Card>
+			</div>
+			<div className="mt-4 border-t pt-4">
+				<Form method="POST">
+					<input type="hidden" name="intent" value="portal" />
+					<Button type="submit" variant="outline" disabled={loading}>
+						{loading ? "Loading..." : "Manage Subscription"}
+					</Button>
+				</Form>
+			</div>
+		</div>
 	);
 }

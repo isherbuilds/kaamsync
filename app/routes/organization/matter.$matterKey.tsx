@@ -5,7 +5,7 @@ import ChevronRight from "lucide-react/dist/esm/icons/chevron-right";
 import MoreHorizontal from "lucide-react/dist/esm/icons/more-horizontal";
 import Star from "lucide-react/dist/esm/icons/star";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2";
-import { useCallback, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { mutators } from "zero/mutators";
@@ -21,7 +21,13 @@ import {
 	StatusSelect,
 } from "~/components/matter/matter-field-selectors";
 import { PropertyPill, PropertyRow } from "~/components/matter/properties";
-import { TaskTimeline } from "~/components/matter/task-timeline";
+
+// Lazy load heavy timeline component for faster initial paint
+const TaskTimeline = lazy(() =>
+	import("~/components/matter/task-timeline").then((m) => ({
+		default: m.TaskTimeline,
+	})),
+);
 import { RouteErrorBoundary } from "~/components/shared/error-boundary";
 import { Button } from "~/components/ui/button";
 import {
@@ -103,6 +109,20 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 			return isRequest ? isRequestStatus : !isRequestStatus;
 		});
 	}, [matterType, statuses]);
+
+	// Memoize attachments to prevent re-renders on unrelated state changes
+	const attachmentItems = useMemo(
+		() =>
+			(matter?.attachments ?? []).map((a) => ({
+				id: a.id,
+				fileName: a.fileName,
+				fileType: a.fileType,
+				fileSize: a.fileSize,
+				storageKey: a.storageKey,
+				publicUrl: a.publicUrl,
+			})),
+		[matter?.attachments],
+	);
 
 	// 3. State & Loading
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -209,9 +229,9 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 					<div className="h-4 w-24 animate-pulse rounded bg-muted" />
 				</header>
 				<div className="flex-1 p-8">
-					<div className="mx-auto max-w-3xl space-y-6">
+					<div className="v-stack mx-auto max-w-3xl gap-6">
 						<div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
-						<div className="space-y-2">
+						<div className="v-stack gap-2">
 							<div className="h-4 w-full animate-pulse rounded bg-muted" />
 							<div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
 							<div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
@@ -276,7 +296,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 			<div className="flex min-h-0 flex-1 @3xl:flex-row flex-col overflow-hidden">
 				<main className="flex-1 overflow-y-auto">
 					<div className="mx-auto max-w-3xl @3xl:px-8 px-4 @3xl:py-8 py-6">
-						<div className="@3xl:space-y-6 space-y-5 pb-8">
+						<div className="@3xl:v-stack v-stack @3xl:gap-6 gap-5 pb-8">
 							{matter.archived && (
 								<div className="mb-4 flex items-center justify-between rounded-lg border border-status-pending/20 bg-status-pending/10 p-4">
 									<div className="flex items-center gap-2">
@@ -350,28 +370,32 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 								)}
 							</div>
 
-							{matter.attachments && matter.attachments.length > 0 && (
-								<AttachmentPreviewList
-									attachments={matter.attachments.map((attachment) => ({
-										id: attachment.id,
-										fileName: attachment.fileName,
-										fileType: attachment.fileType,
-										fileSize: attachment.fileSize,
-										storageKey: attachment.storageKey,
-										publicUrl: attachment.publicUrl,
-									}))}
-								/>
+							{attachmentItems.length > 0 && (
+								<AttachmentPreviewList attachments={attachmentItems} />
 							)}
 
 							<Separator className="my-6" />
 
-							<div className="space-y-4">
+							<div className="v-stack gap-4">
 								<h2 className="font-semibold text-base sm:text-lg">Activity</h2>
-								<TaskTimeline
-									matterId={matter.id}
-									members={members}
-									statuses={statuses}
-								/>
+								<Suspense
+									fallback={
+										<div className="v-stack gap-3">
+											{[1, 2, 3].map((i) => (
+												<div
+													key={i}
+													className="h-16 animate-pulse rounded bg-muted"
+												/>
+											))}
+										</div>
+									}
+								>
+									<TaskTimeline
+										matterId={matter.id}
+										members={members}
+										statuses={statuses}
+									/>
+								</Suspense>
 								<div className="rounded border bg-muted p-3">
 									<CommentComposer matterId={matter.id} />
 								</div>
@@ -382,8 +406,8 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 				{/* Desktop Sidebar */}
 				<aside className="@3xl:block hidden w-72 shrink-0 overflow-y-auto border-l bg-muted/10 p-4">
-					<div className="space-y-6">
-						<div className="space-y-2">
+					<div className="v-stack gap-6">
+						<div className="v-stack gap-2">
 							<h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">
 								Properties
 							</h3>
@@ -425,7 +449,7 @@ export default function TaskDetailPage({ loaderData }: Route.ComponentProps) {
 
 						<Separator />
 
-						<div className="space-y-2 text-xs">
+						<div className="v-stack gap-2 text-xs">
 							<h3 className="font-medium text-muted-foreground uppercase tracking-wider">
 								Details
 							</h3>

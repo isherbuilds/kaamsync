@@ -199,7 +199,7 @@ export function AttachmentUpload({
 	);
 
 	return (
-		<div className={cn("space-y-3", className)}>
+		<div className={cn("v-stack gap-3", className)}>
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-2 text-muted-foreground text-sm">
 					<Paperclip className="size-4" /> Attachments
@@ -224,7 +224,7 @@ export function AttachmentUpload({
 					per file)
 				</p>
 			) : (
-				<div className="space-y-2">
+				<div className="v-stack gap-2">
 					{files.map((fileItem) => {
 						const entry = uploadEntries[fileItem.id];
 						const isImage =
@@ -299,8 +299,8 @@ export function AttachmentUpload({
 							{uploadEntries._errors?.error && (
 								<p>{uploadEntries._errors.error}</p>
 							)}
-							{errors.map((error, i) => (
-								<p key={`${error}-${i}`}>{error}</p>
+							{errors.map((error) => (
+								<p key={error}>{error}</p>
 							))}
 						</AlertDescription>
 					</AlertContent>

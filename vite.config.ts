@@ -55,7 +55,7 @@ export default defineConfig({
 			manifest: {
 				name: "KaamSync",
 				short_name: "Kaam",
-				start_url: "/",
+				start_url: "/app",
 				display: "standalone",
 				background_color: "#ffffff",
 				theme_color: "#ffffff",

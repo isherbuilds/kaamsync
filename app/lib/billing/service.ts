@@ -4,8 +4,9 @@
 
 import DodoPayments from "dodopayments";
 import {
+	type AddonConfig,
+	addonPricing,
 	canPurchaseAddons,
-	getAddonConfig,
 	getEffectiveMemberLimit,
 	getEffectiveStorageLimit,
 	type ProductKey,
@@ -79,6 +80,21 @@ export const billingConfig = {
 	enabled: !!(env.DODO_PAYMENTS_API_KEY && env.DODO_PAYMENTS_WEBHOOK_SECRET),
 	successUrl: `${env.SITE_URL}/api/billing/redirect?success=true`,
 } as const;
+
+export const getAddonConfig = (plan: ProductKey): AddonConfig | null => {
+	if (plan === "starter" || plan === "enterprise") return null;
+	const pricing = addonPricing[plan];
+	return {
+		seatAddonId:
+			plan === "growth" ? env.DODO_ADDON_SEAT_GROWTH : env.DODO_ADDON_SEAT_PRO,
+		storageAddonId:
+			plan === "growth"
+				? env.DODO_ADDON_STORAGE_GROWTH
+				: env.DODO_ADDON_STORAGE_PRO,
+		seatPriceCents: pricing.seatCents,
+		storageGbPriceCents: pricing.storageGbCents,
+	};
+};
 
 // =============================================================================
 // CACHE - Split by metric for granular invalidation

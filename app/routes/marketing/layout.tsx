@@ -136,7 +136,7 @@ export default function MarketingLayout() {
 								))}
 							</div>
 
-							<div className="mt-8 space-y-4 border-border/40 border-t pt-8">
+							<div className="v-stack mt-8 gap-4 border-border/40 border-t pt-8">
 								<div className="grid grid-cols-2 gap-4">
 									<Link
 										to="/login"
@@ -164,7 +164,7 @@ export default function MarketingLayout() {
 			<footer className="mt-24 border-border/40 border-t">
 				<div className="container mx-auto px-4 py-16 md:px-6">
 					<div className="grid gap-12 md:grid-cols-2 lg:grid-cols-5">
-						<div className="space-y-4 lg:col-span-2">
+						<div className="v-stack gap-4 lg:col-span-2">
 							<Link to="/" className="flex items-center gap-2.5">
 								<div className="center flex size-7 rounded-sm bg-black">
 									<picture>
@@ -189,22 +189,24 @@ export default function MarketingLayout() {
 								operations. Built for clarity.
 							</p>
 						</div>
-						<div className="space-y-4">
+						<div className="v-stack gap-4">
 							<h4 className="font-medium text-sm">Product</h4>
 							<div className="v-stack gap-3">
 								<FooterLink to="/pricing">Pricing</FooterLink>
 								<FooterLink to="/about">About</FooterLink>
 							</div>
 						</div>
-						<div className="space-y-4">
+						<div className="v-stack gap-4">
 							<h4 className="font-medium text-sm">Resources</h4>
 							<div className="v-stack gap-3">
 								<FooterLink to="/contact">Contact</FooterLink>
 								<FooterLink to="/terms">Terms</FooterLink>
 								<FooterLink to="/privacy">Privacy</FooterLink>
+								<FooterLink to="/cookies">Cookies</FooterLink>
+								<FooterLink to="/aup">AUP</FooterLink>
 							</div>
 						</div>
-						<div className="space-y-4">
+						<div className="v-stack gap-4">
 							<h4 className="font-medium text-sm">Connect</h4>
 							<div className="v-stack gap-3">
 								<ExternalFooterLink href="https://x.com/kaamsync">

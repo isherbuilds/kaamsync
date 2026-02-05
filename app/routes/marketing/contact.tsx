@@ -56,7 +56,7 @@ export default function ContactPage() {
 						<MarketingHeading as="h3" className="mb-8 font-bold">
 							Direct Lines
 						</MarketingHeading>
-						<div className="space-y-6">
+						<div className="v-stack gap-6">
 							{[
 								{
 									icon: Mail,
@@ -74,13 +74,13 @@ export default function ContactPage() {
 									<a
 										key={title}
 										href={href}
-										className="group flex items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
+										className="group h-stack items-start gap-4 border border-transparent p-4 transition-colors hover:border-border hover:bg-background"
 									>
 										<div className="center flex size-10 shrink-0 bg-background text-muted-foreground shadow-sm transition-colors group-hover:text-foreground">
 											<Icon className="size-5" />
 										</div>
-										<div>
-											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
+										<div className="v-stack gap-1">
+											<h3 className="font-medium font-mono text-xs uppercase tracking-wide">
 												{title}
 											</h3>
 											<p className="font-medium text-sm">{description}</p>
@@ -89,13 +89,13 @@ export default function ContactPage() {
 								) : (
 									<div
 										key={title}
-										className="group flex items-start gap-4 border border-transparent p-4"
+										className="group h-stack items-start gap-4 border border-transparent p-4"
 									>
 										<div className="center flex size-10 shrink-0 bg-background text-muted-foreground shadow-sm">
 											<Icon className="size-5" />
 										</div>
-										<div>
-											<h3 className="mb-1 font-medium font-mono text-xs uppercase tracking-wide">
+										<div className="v-stack gap-1">
+											<h3 className="font-medium font-mono text-xs uppercase tracking-wide">
 												{title}
 											</h3>
 											<p className="font-medium text-sm">{description}</p>
@@ -104,9 +104,9 @@ export default function ContactPage() {
 								),
 							)}
 
-							<div className="mt-12 border border-border bg-background p-6">
-								<h3 className="mb-2 font-bold text-sm">Status</h3>
-								<div className="flex items-center gap-2">
+							<div className="v-stack mt-12 gap-2 border border-border bg-background p-6">
+								<h3 className="font-bold text-sm">Status</h3>
+								<div className="h-stack gap-2">
 									<span className="relative flex size-2">
 										<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
 										<span className="relative inline-flex size-2 rounded-full bg-green-500" />
@@ -124,27 +124,27 @@ export default function ContactPage() {
 							Tell us what you're dealing with
 						</MarketingHeading>
 
-						<div className="mb-8 rounded-sm border border-primary/10 bg-primary/10 p-4">
-							<h4 className="mb-2 font-medium text-sm">What happens next:</h4>
-							<ul className="space-y-2 text-muted-foreground text-sm">
-								<li className="flex items-center gap-2">
+						<div className="v-stack mb-8 gap-2 rounded-sm border border-primary/10 bg-primary/10 p-4">
+							<h4 className="font-medium text-sm">What happens next:</h4>
+							<ul className="v-stack gap-2 text-muted-foreground text-sm">
+								<li className="h-stack gap-2">
 									<Check className="size-4 shrink-0 text-primary" />
 									<span>A real human reads your message</span>
 								</li>
-								<li className="flex items-center gap-2">
+								<li className="h-stack gap-2">
 									<Check className="size-4 shrink-0 text-primary" />
 									<span>Reply within 2 hours</span>
 								</li>
-								<li className="flex items-center gap-2">
+								<li className="h-stack gap-2">
 									<Check className="size-4 shrink-0 text-primary" />
 									<span>No sales pressure—just help</span>
 								</li>
 							</ul>
 						</div>
 
-						<form className="space-y-6">
+						<form className="v-stack gap-6">
 							<div className="grid gap-6 sm:grid-cols-2">
-								<div className="space-y-2">
+								<div className="v-stack gap-2">
 									<Label htmlFor="firstName">First name</Label>
 									<Input
 										id="firstName"
@@ -152,7 +152,7 @@ export default function ContactPage() {
 										className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 									/>
 								</div>
-								<div className="space-y-2">
+								<div className="v-stack gap-2">
 									<Label htmlFor="lastName">Last name</Label>
 									<Input
 										id="lastName"
@@ -161,7 +161,7 @@ export default function ContactPage() {
 									/>
 								</div>
 							</div>
-							<div className="space-y-2">
+							<div className="v-stack gap-2">
 								<Label htmlFor="email">Email</Label>
 								<Input
 									id="email"
@@ -170,7 +170,7 @@ export default function ContactPage() {
 									className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 								/>
 							</div>
-							<div className="space-y-2">
+							<div className="v-stack gap-2">
 								<Label htmlFor="company">Company</Label>
 								<Input
 									id="company"
@@ -178,7 +178,7 @@ export default function ContactPage() {
 									className="h-11 rounded-none border-border bg-muted/20 focus-visible:ring-1 focus-visible:ring-primary"
 								/>
 							</div>
-							<div className="space-y-2">
+							<div className="v-stack gap-2">
 								<Label htmlFor="message">
 									What's your coordination headache?
 								</Label>

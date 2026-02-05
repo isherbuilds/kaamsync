@@ -5,7 +5,6 @@ import { mutators } from "zero/mutators";
 import { preloadAll } from "zero/preload";
 import { schema } from "zero/schema";
 import type { AuthSession } from "~/lib/auth/client";
-import { getAuthSessionFromLocalStorage } from "~/lib/auth/offline";
 import { must } from "~/lib/utils/must";
 
 const cacheURL = must(
@@ -18,12 +17,12 @@ export function ZeroInit({
 	authSession,
 }: {
 	children: React.ReactNode;
-	authSession?: AuthSession | null;
+	authSession?: AuthSession;
 }) {
-	// Use passed session, fallback to cached for offline
-	const session = authSession ?? getAuthSessionFromLocalStorage();
-	const userID = session?.user.id ?? "anon";
-	const activeOrganizationId = session?.session.activeOrganizationId ?? null;
+	// Use passed session, fallback to anon/null when missing
+	const userID = authSession?.user.id ?? "anon";
+	const activeOrganizationId =
+		authSession?.session.activeOrganizationId ?? null;
 
 	// Per-org IndexedDB key for data isolation
 	const storageKey = !activeOrganizationId

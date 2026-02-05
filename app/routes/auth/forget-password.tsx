@@ -1,4 +1,9 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import {
+	getFormProps,
+	getInputProps,
+	type SubmissionResult,
+	useForm,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { data, Form, Link, useRouteError } from "react-router";
 import { toast } from "sonner";
@@ -36,12 +41,17 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 	return data({ success: true });
 }
 
-export default function ForgetPasswordRoute() {
+export default function ForgetPasswordRoute({
+	actionData,
+}: Route.ComponentProps) {
+	const lastResult = actionData as SubmissionResult<string[]> | undefined;
 	const [form, fields] = useForm({
+		lastResult,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: forgetPasswordSchema });
 		},
 		constraint: getZodConstraint(forgetPasswordSchema),
+		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 
@@ -52,18 +62,22 @@ export default function ForgetPasswordRoute() {
 	return (
 		<BasicLayout
 			title="Forgot your password?"
-			description="Enter your email address and we will send you a password reset link."
+			description="Enter your email and we’ll send you a reset link."
 		>
 			<Form method="post" className="grid gap-4" {...getFormProps(form)}>
 				<InputField
+					labelProps={{ children: "Email" }}
 					inputProps={{
 						...getInputProps(fields.email, { type: "email" }),
-						placeholder: "Enter your email",
+						placeholder: "you@company.com",
 						autoComplete: "email",
+						autoFocus: true,
+						enterKeyHint: "done",
 					}}
 					errors={fields.email.errors}
 				/>
 				<LoadingButton
+					className="w-full"
 					buttonText="Send reset link"
 					loadingText="Sending reset link..."
 					isPending={isPending}
@@ -71,7 +85,7 @@ export default function ForgetPasswordRoute() {
 			</Form>
 
 			<div className="text-center text-sm">
-				<Link to="/auth/sign-in" className="text-primary hover:underline">
+				<Link to="/login" className="text-primary hover:underline">
 					← Back to sign in
 				</Link>
 			</div>

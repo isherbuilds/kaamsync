@@ -13,7 +13,14 @@ export default [
 		route("pricing", "routes/marketing/pricing.tsx"),
 		route("about", "routes/marketing/about.tsx"),
 		route("contact", "routes/marketing/contact.tsx"),
+		route("terms", "routes/marketing/terms.tsx"),
+		route("privacy", "routes/marketing/privacy.tsx"),
+		route("cookies", "routes/marketing/cookies.tsx"),
+		route("aup", "routes/marketing/aup.tsx"),
 	]),
+
+	// Redirect to last org or login/join
+	route("app", "routes/app.tsx"),
 
 	route("join", "routes/join.tsx"),
 

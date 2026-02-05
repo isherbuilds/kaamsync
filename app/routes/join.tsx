@@ -20,7 +20,7 @@ import { auth, getServerSession } from "~/lib/auth/server";
 import { seedTeamDefaults } from "~/lib/infra/seed";
 import { getOrganizationById } from "~/lib/organization/service";
 import { organizationOnboardingSchema } from "~/lib/organization/validations";
-import { toUrlSlug } from "~/lib/utils";
+import { formatAbsoluteDate, toUrlSlug } from "~/lib/utils";
 import type { Route } from "./+types/join";
 
 export const meta: Route.MetaFunction = () => [
@@ -34,11 +34,9 @@ export async function loader({ request }: Route.LoaderArgs) {
 		return redirect("/login");
 	}
 
-	const invitationsPromise = auth.api.listUserInvitations({
+	const invitations = await auth.api.listUserInvitations({
 		query: { email: session.user.email },
 	});
-
-	const invitations = await invitationsPromise;
 
 	const pendingInvites = invitations.filter(
 		(invite) => !invite.status || invite.status === "pending",
@@ -109,7 +107,6 @@ export async function action({ request }: Route.ActionArgs) {
 		return data(
 			{ result: submission.reply() },
 			{ status: submission.status === "error" ? 400 : 200 },
-			// toast.error("Invalid form data.")
 		);
 	}
 
@@ -136,7 +133,6 @@ export async function action({ request }: Route.ActionArgs) {
 
 				return redirect(`/${newOrg.slug}/tasks`);
 			} catch {
-				// toast.message(`Organization creation failed. ${err}`);
 				toast.error("Organization creation failed.");
 				return null;
 			}
@@ -187,11 +183,13 @@ export default function onboardingOrganization({
 	});
 
 	const [orgSlugField, setOrgSlugField] = useState("");
+	const [isSlugDirty, setIsSlugDirty] = useState(false);
 
 	const navigation = useNavigation();
 	const isPending = navigation.state !== "idle";
 
-	const showJoin = userInvites && userInvites.length > 0;
+	const inviteCount = userInvites?.length ?? 0;
+	const showJoin = inviteCount > 0;
 
 	return (
 		<BasicLayout
@@ -203,15 +201,16 @@ export default function onboardingOrganization({
 					<TabsTrigger value="create">Create</TabsTrigger>
 					<TabsTrigger value="join">
 						Join
-						{userInvites && userInvites.length > 0 && (
+						{inviteCount > 0 && (
 							<span className="rounded-full bg-primary px-2 py-0.5 text-primary-foreground text-xs">
-								{userInvites.length}
+								{inviteCount}
 							</span>
 						)}
 					</TabsTrigger>
 				</TabsList>
 
 				<TabsContent value="create">
+					<br />
 					<Form
 						className="grid gap-4"
 						method="POST"
@@ -223,33 +222,36 @@ export default function onboardingOrganization({
 							inputProps={{
 								...getInputProps(fields.name, { type: "text" }),
 								placeholder: "epic work",
-								// enterKeyHint: "next",
 								autoFocus: true,
-								onBlur: (e) => {
-									if (orgSlugField.length === 0) {
-										setOrgSlugField(toUrlSlug(e.target.value));
+								autoComplete: "organization",
+								onChange: (e) => {
+									const nameValue = e.target.value;
+									if (!isSlugDirty) {
+										setOrgSlugField(toUrlSlug(nameValue));
 									}
 								},
 							}}
-							labelProps={{ children: "Org Name" }}
+							labelProps={{ children: "Organization Name" }}
 						/>
 						<InputGroupField
 							errors={fields.slug.errors}
-							groupText="https://example.com/"
+							groupText="https://kaamsync.com/"
 							inputProps={{
 								...getInputProps(fields.slug, { type: "text" }),
 								placeholder: "epic-work",
 								className: "!pl-0.5",
 								value: orgSlugField,
 								onChange: (e) => {
-									setOrgSlugField(e.target.value);
-								},
-								onBlur: (e) => {
 									const sanitized = toUrlSlug(e.target.value);
+									setIsSlugDirty(true);
 									setOrgSlugField(sanitized);
 								},
 							}}
+							labelProps={{ children: "Workspace URL" }}
 						/>
+						<p className="text-muted-foreground text-xs">
+							Use a short, memorable URL. You can edit it anytime.
+						</p>
 						<input name="intent" type="hidden" value="create" />
 						<LoadingButton
 							buttonText="Create"
@@ -273,20 +275,22 @@ export default function onboardingOrganization({
 						</div>
 					)}
 					{showJoin && (
-						<div className="grid gap-3">
+						<div className="grid gap-4">
 							{userInvites?.map((invite) => (
 								<Form
 									key={invite.id}
 									method="POST"
-									{...getFormProps(form)}
 									className="card-section-sm rounded-lg transition-colors hover:border-primary/50"
 								>
-									<div className="flex items-start justify-between gap-4">
+									<div className="h-stack items-start justify-between gap-4">
 										<div className="min-w-0 flex-1">
 											<h3 className="truncate font-semibold">
 												{invite.organizationName || "Organization"}
 											</h3>
-											<div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+											<p className="text-muted-foreground text-xs">
+												/{invite.organizationSlug}
+											</p>
+											<div className="mt-2 h-stack flex-wrap gap-x-3 gap-y-1">
 												<p className="text-muted-foreground text-sm">
 													Role:{" "}
 													<span className="font-medium text-foreground">
@@ -295,27 +299,26 @@ export default function onboardingOrganization({
 												</p>
 												<p className="text-muted-foreground text-xs">
 													Expires:{" "}
-													{new Date(invite.expiresAt).toLocaleDateString()}
+													{formatAbsoluteDate(
+														new Date(invite.expiresAt).getTime(),
+													)}
 												</p>
 											</div>
 										</div>
 										<div className="shrink-0">
 											<input name="intent" type="hidden" value="join" />
 											<input
-												{...getInputProps(fields.invitationId, {
-													type: "hidden",
-												})}
+												type="hidden"
+												name="invitationId"
 												value={invite.id}
 											/>
 											<input
-												{...getInputProps(fields.joinOrgSlug, {
-													type: "hidden",
-												})}
+												type="hidden"
+												name="joinOrgSlug"
 												value={invite.organizationSlug}
 											/>
 											<LoadingButton
 												buttonText="Accept"
-												form={form.id}
 												isPending={isPending}
 												loadingText="Accepting..."
 												size="sm"
