@@ -28,9 +28,13 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 	const [attachments, setAttachments] = useState<{ id: string }[]>([]);
 	const [resetSignal, setResetSignal] = useState(0);
 
+	const hasContent = content.trim().length > 0;
+	const hasAttachments = attachments.length > 0;
+	const canSubmit = hasContent || hasAttachments;
+
 	const handleSubmit = async () => {
-		if (!content.trim()) {
-			toast.error("Comment cannot be empty");
+		if (!canSubmit) {
+			toast.error("Add a comment or attachment");
 			return;
 		}
 		setIsSubmitting(true);
@@ -56,11 +60,11 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 	};
 
 	return (
-		<div className={cn("space-y-3 sm:space-y-4", className)}>
+		<div className={cn("v-stack gap-3 sm:gap-4", className)}>
 			<textarea
 				value={content}
 				onChange={(event) => setContent(event.target.value)}
-				placeholder="Write a comment..."
+				placeholder="Write a comment or add an attachment..."
 				className="min-h-20 w-full resize-none rounded-lg border bg-background px-3 py-2.5 text-sm outline-none transition-all placeholder:text-muted-foreground/50 focus:border-ring focus:ring-2 focus:ring-ring sm:min-h-24 sm:px-4 sm:py-3 sm:text-base"
 			/>
 			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -78,7 +82,7 @@ export function CommentComposer({ matterId, className }: CommentComposerProps) {
 						type="button"
 						size="sm"
 						onClick={handleSubmit}
-						disabled={isSubmitting || !content.trim()}
+						disabled={isSubmitting || !canSubmit}
 					>
 						{isSubmitting ? "Posting..." : "Post comment"}
 					</Button>

@@ -4,16 +4,9 @@ import Sparkles from "lucide-react/dist/esm/icons/sparkles";
 import Users from "lucide-react/dist/esm/icons/users";
 import Zap from "lucide-react/dist/esm/icons/zap";
 import { useState } from "react";
+import { Form } from "react-router";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "~/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
 	type BillingInterval,
@@ -25,15 +18,6 @@ import {
 	products,
 } from "~/config/billing";
 import { cn } from "~/lib/utils";
-
-interface PlanCardProps {
-	plan: ProductKey;
-	interval: BillingInterval;
-	currentPlan?: string | null;
-	onSelect: (plan: ProductKey, interval: BillingInterval) => void;
-	onContactSales?: () => void;
-	loading?: boolean;
-}
 
 const planDescriptions: Record<ProductKey, string> = {
 	starter: "Free forever for small teams up to 3 members",
@@ -49,14 +33,14 @@ const planIcons: Record<ProductKey, React.ReactNode> = {
 	enterprise: <Mail className="h-5 w-5" />,
 };
 
-export function PlanCard({
-	plan,
-	interval,
-	currentPlan,
-	onSelect,
-	onContactSales,
-	loading,
-}: PlanCardProps) {
+interface PlanCardProps {
+	plan: ProductKey;
+	interval: BillingInterval;
+	currentPlan?: string | null;
+	loading?: boolean;
+}
+
+function PlanCard({ plan, interval, currentPlan, loading }: PlanCardProps) {
 	const product = products[plan];
 	const isCurrentPlan =
 		currentPlan === plan || (plan === "starter" && !currentPlan);
@@ -68,7 +52,6 @@ export function PlanCard({
 	const monthlyPrice = product.monthlyPrice;
 	const yearlyPrice = product.yearlyPrice;
 
-	// Calculate display price
 	const displayPrice =
 		interval === "yearly" && yearlyPrice
 			? getMonthlyEquivalent(yearlyPrice)
@@ -78,14 +61,6 @@ export function PlanCard({
 		monthlyPrice && yearlyPrice
 			? getYearlySavings(monthlyPrice, yearlyPrice)
 			: 0;
-
-	const handleClick = () => {
-		if (isEnterprise && onContactSales) {
-			onContactSales();
-		} else {
-			onSelect(plan, interval);
-		}
-	};
 
 	const getButtonText = () => {
 		if (isCurrentPlan) return "Current Plan";
@@ -101,11 +76,16 @@ export function PlanCard({
 		return "outline";
 	};
 
+	const isDisabled =
+		isCurrentPlan ||
+		loading ||
+		(!isEnterprise && !canCheckout(plan) && plan !== "starter");
+
 	return (
-		<Card
+		<div
 			className={cn(
-				"v-stack relative transition-all duration-200 hover:shadow-lg",
-				isPopular && "scale-[1.02] border-primary shadow-md",
+				"v-stack relative rounded border bg-card p-6",
+				isPopular && "border-primary",
 				isEnterprise && "border-dashed",
 			)}
 		>
@@ -116,7 +96,7 @@ export function PlanCard({
 					</Badge>
 				</div>
 			)}
-			<CardHeader className="pb-4">
+			<div className="mb-4 pb-4">
 				<div className="flex items-center gap-2">
 					<div
 						className={cn(
@@ -126,13 +106,13 @@ export function PlanCard({
 					>
 						{planIcons[plan]}
 					</div>
-					<CardTitle className="text-xl">{product.name}</CardTitle>
+					<div className="font-semibold text-xl">{product.name}</div>
 				</div>
-				<CardDescription className="mt-2 min-h-10">
+				<div className="mt-2 min-h-10 text-muted-foreground text-sm">
 					{planDescriptions[plan]}
-				</CardDescription>
-			</CardHeader>
-			<CardContent className="flex-1 space-y-4">
+				</div>
+			</div>
+			<div className="flex-1 space-y-4">
 				{/* Pricing */}
 				<div className="flex items-baseline gap-1">
 					{price === null ? (
@@ -182,52 +162,54 @@ export function PlanCard({
 						</li>
 					))}
 				</ul>
-			</CardContent>
-			<CardFooter className="pt-4">
-				<Button
-					className="w-full"
-					variant={getButtonVariant()}
-					size="lg"
-					disabled={
-						isCurrentPlan ||
-						loading ||
-						(!isEnterprise && !canCheckout(plan) && plan !== "starter")
-					}
-					onClick={handleClick}
-				>
-					{loading ? "Processing..." : getButtonText()}
-				</Button>
-			</CardFooter>
-		</Card>
+			</div>
+			<div className="mt-4 pt-4">
+				{isEnterprise ? (
+					<Button
+						className="w-full"
+						variant={getButtonVariant()}
+						size="lg"
+						disabled={isDisabled}
+						asChild
+					>
+						<a href="mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry">
+							{getButtonText()}
+						</a>
+					</Button>
+				) : (
+					<Form method="post" className="w-full">
+						<input type="hidden" name="intent" value="checkout" />
+						<input type="hidden" name="plan" value={plan} />
+						<input type="hidden" name="interval" value={interval} />
+						<Button
+							type="submit"
+							className="w-full"
+							variant={getButtonVariant()}
+							size="lg"
+							disabled={isDisabled}
+						>
+							{loading ? "Processing..." : getButtonText()}
+						</Button>
+					</Form>
+				)}
+			</div>
+		</div>
 	);
 }
 
 interface PricingGridProps {
 	currentPlan?: string | null;
-	onSelectPlan: (plan: ProductKey, interval: BillingInterval) => void;
-	onContactSales?: () => void;
 	loading?: boolean;
 	defaultInterval?: BillingInterval;
 }
 
 export function PricingGrid({
 	currentPlan,
-	onSelectPlan,
-	onContactSales,
 	loading,
 	defaultInterval = "monthly",
 }: PricingGridProps) {
 	const [interval, setInterval] = useState<BillingInterval>(defaultInterval);
 	const plans: ProductKey[] = ["starter", "growth", "pro", "enterprise"];
-
-	const handleContactSales = () => {
-		if (onContactSales) {
-			onContactSales();
-		} else {
-			window.location.href =
-				"mailto:sales@kaamsync.com?subject=Enterprise%20Plan%20Inquiry";
-		}
-	};
 
 	return (
 		<div className="space-y-8">
@@ -250,15 +232,13 @@ export function PricingGrid({
 			</div>
 
 			{/* Plan Cards */}
-			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
 				{plans.map((plan) => (
 					<PlanCard
 						key={plan}
 						plan={plan}
 						interval={interval}
 						currentPlan={currentPlan}
-						onSelect={onSelectPlan}
-						onContactSales={handleContactSales}
 						loading={loading}
 					/>
 				))}

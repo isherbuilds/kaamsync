@@ -20,10 +20,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function OrganizationSettingsLayout() {
 	return (
-		<main className="flex h-full flex-col">
-			<div className="flex h-12 items-center gap-2 border-b bg-background px-4 lg:hidden">
+		<main className="v-stack h-full">
+			<div className="h-14 h-stack items-center gap-2 border-b bg-background px-4 lg:hidden">
 				<SidebarTrigger />
-				<Link to="../" className="flex items-center gap-2">
+				<Link to="../" className="h-stack items-center gap-2">
 					<ChevronLeft className="size-4" />
 					<h5 className="font-semibold">Settings</h5>
 				</Link>

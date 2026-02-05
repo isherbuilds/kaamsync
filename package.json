@@ -18,15 +18,15 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.981.0",
-		"@aws-sdk/s3-request-presigner": "^3.981.0",
+		"@aws-sdk/client-s3": "^3.982.0",
+		"@aws-sdk/s3-request-presigner": "^3.982.0",
 		"@conform-to/react": "^1.16.0",
 		"@conform-to/zod": "^1.16.0",
 		"@dodopayments/better-auth": "^1.4.2",
 		"@react-email/components": "^1.0.6",
 		"@react-router/node": "^7.13.0",
 		"@react-router/serve": "^7.13.0",
-		"@rocicorp/zero": "^0.25.11",
+		"@rocicorp/zero": "^0.25.12",
 		"@tanstack/react-virtual": "^3.13.18",
 		"better-auth": "^1.4.18",
 		"class-variance-authority": "^0.7.1",
@@ -57,7 +57,7 @@
 	},
 	"devDependencies": {
 		"@babel/preset-typescript": "7.28.5",
-		"@biomejs/biome": "2.3.13",
+		"@biomejs/biome": "2.3.14",
 		"@faker-js/faker": "^10.2.0",
 		"@react-email/preview-server": "^5.2.5",
 		"@react-router/dev": "^7.13.0",

@@ -8,8 +8,8 @@ interface MarketingContainerProps {
 }
 
 const containerVariants = {
-	default: "py-24",
-	hero: "pt-24 pb-32",
+	default: "py-20",
+	hero: "py-24",
 	compact: "py-16",
 	cta: "py-20",
 };

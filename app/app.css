@@ -15,9 +15,7 @@
 
 html,
 body {
-	@apply bg-white dark:bg-gray-950;
-
-	@apply selection:bg-primary/10 selection:text-foreground;
+	@apply selection:bg-primary/20 selection:text-primary-foreground;
 
 	scrollbar-width: thin;
 
@@ -26,143 +24,140 @@ body {
 	}
 }
 
-/* Base Industrial Theme - Modernized */
+/* 
+  Theme: Linear Classic (Default)
+  Description: Refined, professional, deep slate dark mode, crisp light mode.
+  Features: High legibility, distinct component separation, "Linear Purple" primary.
+*/
 :root {
-	--radius: 0.375rem; /* Slightly rounded for modern feel while keeping industrial edge */
+	--radius: 0.375rem;
 
 	/* Colors - High Contrast Industrial */
 	--background: oklch(0.98 0 0); /* Stark White */
 	--foreground: oklch(0.14 0 0); /* Deep Graphite */
 
-	--card: oklch(0.98 0 0);
-	--card-foreground: oklch(0.14 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.141 0.005 285.8);
 
-	--popover: oklch(0.98 0 0);
-	--popover-foreground: oklch(0.14 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.141 0.005 285.8);
 
 	/* SAFETY ORANGE - Primary Action */
 	--primary: lch(50.72% 91.02 43.88);
 	--primary-foreground: oklch(0.98 0 0);
 
-	--secondary: oklch(0.95 0 0); /* Pale Gray */
-	--secondary-foreground: oklch(0.14 0 0);
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.21 0.006 285.8);
 
-	--muted: oklch(0.95 0 0);
-	--muted-foreground: oklch(0.45 0 0); /* Neutral Gray */
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.55 0.01 285.8);
 
-	--accent: oklch(0.92 0 0);
-	--accent-foreground: oklch(0.14 0 0);
+	--accent: oklch(0.96 0.01 285.8);
+	--accent-foreground: oklch(0.21 0.006 285.8);
 
 	--destructive: oklch(0.55 0.22 27); /* Intense Red */
 	--destructive-foreground: oklch(0.98 0 0);
 
-	--border: oklch(0.85 0 0);
-	--input: oklch(0.85 0 0);
-	--ring: oklch(0.6 0.22 35);
+	--border: oklch(0.92 0.005 285.8);
+	--input: oklch(0.92 0.005 285.8);
+	--ring: oklch(0.6 0.21 35);
 
-	/* Status Colors - Industrial Clinical Tone */
-	--success: oklch(0.65 0.18 150);
-	--warning: oklch(0.75 0.15 85);
-	--info: oklch(0.6 0.15 240);
+	/* Status Colors */
+	--success: oklch(0.6 0.15 150);
+	--warning: oklch(0.7 0.15 70);
+	--info: oklch(0.6 0.15 250);
 
 	/* BRAND */
 	--brand-tasks: oklch(0.6 0.22 35);
 	--brand-requests: oklch(0.6 0.15 240);
 
-	/* PRIORITIES */
-	--priority-urgent: oklch(0.55 0.22 27);
-	--priority-high: oklch(0.75 0.15 85);
-	--priority-medium: oklch(0.6 0.22 35);
-	--priority-low: oklch(0.45 0 0);
-	--priority-none: oklch(0.85 0 0);
+	--priority-urgent: oklch(0.6 0.2 25);
+	--priority-high: oklch(0.7 0.15 40);
+	--priority-medium: oklch(0.7 0.15 70);
+	--priority-low: oklch(0.55 0.02 285.8);
+	--priority-none: oklch(0.7 0.01 285.8);
 
-	/* STATUSES */
-	--status-approved: oklch(0.65 0.18 150);
-	--status-rejected: oklch(0.55 0.22 27);
-	--status-pending: oklch(0.75 0.15 85);
-	--status-progress: oklch(0.6 0.15 240);
-	--status-completed: oklch(0.65 0.18 150);
+	/* Statuses */
+	--status-approved: oklch(0.6 0.15 150);
+	--status-rejected: oklch(0.6 0.2 25);
+	--status-pending: oklch(0.7 0.15 70);
+	--status-progress: oklch(0.6 0.15 250);
+	--status-completed: oklch(0.55 0.18 280);
 
-	/* SIDEBAR - HUD Feel */
-	--sidebar: oklch(0.98 0 0);
-	--sidebar-foreground: oklch(0.14 0 0);
-	--sidebar-primary: oklch(0.6 0.22 35);
-	--sidebar-primary-foreground: oklch(0.98 0 0);
-	--sidebar-accent: oklch(0.95 0 0);
-	--sidebar-accent-foreground: oklch(0.14 0 0);
-	--sidebar-border: oklch(0.85 0 0);
-	--sidebar-ring: oklch(0.6 0.22 35);
+	/* Sidebar - Light */
+	--sidebar: oklch(0.985 0.002 247.9);
+	--sidebar-foreground: oklch(0.35 0.01 285.8);
+	--sidebar-primary: oklch(0.6 0.21 35);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.95 0.01 285.8);
+	--sidebar-accent-foreground: oklch(0.141 0.005 285.8);
+	--sidebar-border: oklch(0.93 0.005 285.8);
+	--sidebar-ring: oklch(0.6 0.21 35);
 }
 
 .dark {
-	--background: oklch(0.1 0 0); /* Near Black */
-	--foreground: oklch(0.98 0 0); /* White */
+	/* Backgrounds - Deep Slate/Zinc, not black */
+	--background: oklch(0.13 0.02 280);
+	--foreground: oklch(0.92 0.01 280);
 
-	--card: oklch(0.12 0 0);
-	--card-foreground: oklch(0.98 0 0);
+	--card: oklch(0.15 0.02 280);
+	--card-foreground: oklch(0.92 0.01 280);
 
-	--popover: oklch(0.1 0 0);
-	--popover-foreground: oklch(0.98 0 0);
+	--popover: oklch(0.13 0.02 280);
+	--popover-foreground: oklch(0.92 0.01 280);
 
-	/* Vibrant Orange for Dark Mode */
-	--primary: oklch(0.65 0.22 35);
-	--primary-foreground: oklch(0.1 0 0);
+	/* Primary - Vibrant Blurple for Dark */
+	--primary: oklch(0.65 0.21 35);
+	--primary-foreground: oklch(0.985 0 0);
 
-	--secondary: oklch(0.15 0 0);
-	--secondary-foreground: oklch(0.98 0 0);
+	--secondary: oklch(0.18 0.02 280);
+	--secondary-foreground: oklch(0.92 0.01 280);
 
-	--muted: oklch(0.15 0 0);
-	--muted-foreground: oklch(0.65 0 0);
+	--muted: oklch(0.18 0.02 280);
+	--muted-foreground: oklch(0.65 0.02 280);
 
-	--accent: oklch(0.18 0 0);
-	--accent-foreground: oklch(0.98 0 0);
+	--accent: oklch(0.2 0.02 280);
+	--accent-foreground: oklch(0.985 0 0);
 
 	--destructive: oklch(0.6 0.22 27);
 	--destructive-foreground: oklch(0.98 0 0);
 
-	--border: oklch(0.2 0 0);
-	--input: oklch(0.2 0 0);
-	--ring: oklch(0.65 0.22 35);
+	/* Borders - Subtle but visible */
+	--border: oklch(0.22 0.02 280);
+	--input: oklch(0.22 0.02 280);
+	--ring: oklch(0.65 0.21 35);
 
-	/* Dark Mode Status */
+	/* Sidebar - Slightly darker than bg for depth */
+	--sidebar: oklch(0.11 0.02 280);
+	--sidebar-foreground: oklch(0.7 0.02 280);
+	--sidebar-primary: oklch(0.65 0.22 35);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.18 0.02 280);
+	--sidebar-accent-foreground: oklch(0.92 0.01 280);
+	--sidebar-border: oklch(0.18 0.02 280);
+	--sidebar-ring: oklch(0.65 0.22 35);
+
+	/* Status Colors */
 	--success: oklch(0.65 0.15 150);
-	--warning: oklch(0.75 0.12 85);
-	--info: oklch(0.6 0.15 240);
+	--warning: oklch(0.75 0.15 70);
+	--info: oklch(0.65 0.15 250);
 
 	/* Dark Mode Brand */
-	--brand-tasks: oklch(0.65 0.22 35);
+	--brand-tasks: oklch(0.65 0.21 35);
 	--brand-requests: oklch(0.6 0.15 240);
 
-	/* Dark Mode Priorities */
-	--priority-urgent: oklch(0.6 0.22 27);
-	--priority-high: oklch(0.75 0.12 85);
-	--priority-medium: oklch(0.65 0.22 35);
-	--priority-low: oklch(0.65 0 0);
-	--priority-none: oklch(0.3 0 0);
+	--priority-urgent: oklch(0.65 0.2 25);
+	--priority-high: oklch(0.75 0.15 40);
+	--priority-medium: oklch(0.75 0.15 70);
+	--priority-low: oklch(0.65 0.02 280);
+	--priority-none: oklch(0.3 0.02 280);
 
-	/* Dark Mode Statuses */
+	/* Statuses */
 	--status-approved: oklch(0.65 0.15 150);
-	--status-rejected: oklch(0.6 0.22 27);
-	--status-pending: oklch(0.75 0.12 85);
-	--status-progress: oklch(0.6 0.15 240);
-	--status-completed: oklch(0.65 0.15 150);
-
-	/* Dark Mode Charts */
-	--chart-1: oklch(0.65 0.22 35);
-	--chart-2: oklch(0.65 0.15 150);
-	--chart-3: oklch(0.75 0.12 85);
-	--chart-4: oklch(0.6 0.15 240);
-	--chart-5: oklch(0.6 0.22 27);
-
-	/* Dark Mode Sidebar */
-	--sidebar: oklch(0.12 0 0);
-	--sidebar-foreground: oklch(0.98 0 0);
-	--sidebar-primary: oklch(0.65 0.22 35);
-	--sidebar-primary-foreground: oklch(0.1 0 0);
-	--sidebar-accent: oklch(0.18 0 0);
-	--sidebar-accent-foreground: oklch(0.98 0 0);
-	--sidebar-border: oklch(0.2 0 0);
-	--sidebar-ring: oklch(0.65 0.22 35);
+	--status-rejected: oklch(0.65 0.2 25);
+	--status-pending: oklch(0.75 0.15 70);
+	--status-progress: oklch(0.65 0.15 250);
+	--status-completed: oklch(0.65 0.18 280);
 }
 
 @theme inline {
@@ -233,39 +228,30 @@ body {
 }
 
 @layer utilities {
-	/* Stack Utilities - Layout Patterns */
 	.v-stack {
 		@apply flex flex-col;
 	}
-
 	.h-stack {
 		@apply flex flex-row;
 	}
-
 	.v-stack-reverse {
 		@apply flex flex-col-reverse;
 	}
-
 	.h-stack-reverse {
 		@apply flex flex-row-reverse;
 	}
-
 	.z-stack {
 		@apply grid;
 	}
-
 	.z-stack > * {
 		@apply col-start-1 row-start-1;
 	}
-
 	.center {
 		@apply flex items-center justify-center;
 	}
-
 	.spacer {
 		@apply grow;
 	}
-
 	.circle {
 		@apply aspect-square rounded-full;
 	}

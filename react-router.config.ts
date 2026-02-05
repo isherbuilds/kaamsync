@@ -12,6 +12,10 @@ export default {
 		"/about",
 		"/contact",
 		"/pricing",
+		"/cookies",
+		"/privacy",
+		"/terms",
+		"/aup",
 		"/sitemap.xml",
 	],
 

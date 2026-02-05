@@ -236,15 +236,15 @@ export function hasOrgDeletePermission(role?: OrgRole | null): boolean {
 }
 
 /**
- * Check if org role can manage billing
+ * Check if org role can manage billing (owner-only)
  */
 export function hasBillingManagePermission(role?: OrgRole | null): boolean {
-	return role === "owner" || role === "admin";
+	return role === "owner";
 }
 
 /**
- * Check if org role can view billing
+ * Check if org role can view billing (owner-only)
  */
 export function hasBillingViewPermission(role?: OrgRole | null): boolean {
-	return role === "owner" || role === "admin" || role === "member";
+	return role === "owner";
 }

@@ -1,0 +1,689 @@
+/*
+  DESIGN VARIATIONS - ALL SAVED THEMES
+  ====================================
+  This file contains copies of all saved themes so you can switch between them
+  without losing any version. Each variation includes a :root (light) and
+  .dark (dark) block. To try a theme, copy the corresponding :root and .dark
+  into app/app.css (replace existing :root/.dark).
+
+  Variations included:
+  1) ORIGINAL INDUSTRIAL (pre-change backup)
+  2) LINEAR CLASSIC (current preview - applied in app/app.css)
+  3) HIGH CONTRAST (OLED)
+  4) SOFT MODERN
+  5) LINEAR ORANGE
+  6) EXPERIMENTAL - MINIMAL
+*/
+
+/* ==============================================================
+   VARIATION 1 — ORIGINAL INDUSTRIAL (backup)
+   The original variables from before the redesign. Kept intact.
+   ==============================================================
+*/
+:root {
+	--radius: 0.375rem; /* Slightly rounded for modern feel while keeping industrial edge */
+
+	/* Colors - High Contrast Industrial */
+	--background: oklch(0.98 0 0); /* Stark White */
+	--foreground: oklch(0.14 0 0); /* Deep Graphite */
+
+	--card: oklch(0.98 0 0);
+	--card-foreground: oklch(0.14 0 0);
+
+	--popover: oklch(0.98 0 0);
+	--popover-foreground: oklch(0.14 0 0);
+
+	/* SAFETY ORANGE - Primary Action */
+	--primary: lch(50.72% 91.02 43.88);
+	--primary-foreground: oklch(0.98 0 0);
+
+	--secondary: oklch(0.95 0 0); /* Pale Gray */
+	--secondary-foreground: oklch(0.14 0 0);
+
+	--muted: oklch(0.95 0 0);
+	--muted-foreground: oklch(0.45 0 0); /* Neutral Gray */
+
+	--accent: oklch(0.92 0 0);
+	--accent-foreground: oklch(0.14 0 0);
+
+	--destructive: oklch(0.55 0.22 27); /* Intense Red */
+	--destructive-foreground: oklch(0.98 0 0);
+
+	--border: oklch(0.85 0 0);
+	--input: oklch(0.85 0 0);
+	--ring: oklch(0.6 0.22 35);
+
+	/* Status Colors - Industrial Clinical Tone */
+	--success: oklch(0.65 0.18 150);
+	--warning: oklch(0.75 0.15 85);
+	--info: oklch(0.6 0.15 240);
+
+	/* BRAND */
+	--brand-tasks: oklch(0.6 0.22 35);
+	--brand-requests: oklch(0.6 0.15 240);
+
+	/* PRIORITIES */
+	--priority-urgent: oklch(0.55 0.22 27);
+	--priority-high: oklch(0.75 0.15 85);
+	--priority-medium: oklch(0.6 0.22 35);
+	--priority-low: oklch(0.45 0 0);
+	--priority-none: oklch(0.85 0 0);
+
+	/* STATUSES */
+	--status-approved: oklch(0.65 0.18 150);
+	--status-rejected: oklch(0.55 0.22 27);
+	--status-pending: oklch(0.75 0.15 85);
+	--status-progress: oklch(0.6 0.15 240);
+	--status-completed: oklch(0.65 0.18 150);
+
+	/* SIDEBAR - HUD Feel */
+	--sidebar: oklch(0.98 0 0);
+	--sidebar-foreground: oklch(0.14 0 0);
+	--sidebar-primary: oklch(0.6 0.22 35);
+	--sidebar-primary-foreground: oklch(0.98 0 0);
+	--sidebar-accent: oklch(0.95 0 0);
+	--sidebar-accent-foreground: oklch(0.14 0 0);
+	--sidebar-border: oklch(0.85 0 0);
+	--sidebar-ring: oklch(0.6 0.22 35);
+}
+
+.dark {
+	--background: oklch(0.1 0 0); /* Near Black */
+	--foreground: oklch(0.98 0 0); /* White */
+
+	--card: oklch(0.12 0 0);
+	--card-foreground: oklch(0.98 0 0);
+
+	--popover: oklch(0.1 0 0);
+	--popover-foreground: oklch(0.98 0 0);
+
+	/* Vibrant Orange for Dark Mode */
+	--primary: oklch(0.65 0.22 35);
+	--primary-foreground: oklch(0.1 0 0);
+
+	--secondary: oklch(0.15 0 0);
+	--secondary-foreground: oklch(0.98 0 0);
+
+	--muted: oklch(0.15 0 0);
+	--muted-foreground: oklch(0.65 0 0);
+
+	--accent: oklch(0.18 0 0);
+	--accent-foreground: oklch(0.98 0 0);
+
+	--destructive: oklch(0.6 0.22 27);
+	--destructive-foreground: oklch(0.98 0 0);
+
+	--border: oklch(0.2 0 0);
+	--input: oklch(0.2 0 0);
+	--ring: oklch(0.65 0.22 35);
+
+	/* Dark Mode Sidebar */
+	--sidebar: oklch(0.12 0 0);
+	--sidebar-foreground: oklch(0.98 0 0);
+	--sidebar-primary: oklch(0.65 0.22 35);
+	--sidebar-primary-foreground: oklch(0.1 0 0);
+	--sidebar-accent: oklch(0.18 0 0);
+	--sidebar-accent-foreground: oklch(0.98 0 0);
+	--sidebar-border: oklch(0.2 0 0);
+	--sidebar-ring: oklch(0.65 0.22 35);
+}
+
+/* ==============================================================
+   VARIATION 2 — LINEAR CLASSIC (current preview)
+   This is the theme currently applied in app/app.css (Linear Classic).
+   ==============================================================
+*/
+:root {
+	--radius: 0.375rem;
+
+	/* Colors - Light Mode */
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.141 0.005 285.8);
+
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.141 0.005 285.8);
+
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.141 0.005 285.8);
+
+	/* Linear Purple */
+	--primary: oklch(0.55 0.18 280);
+	--primary-foreground: oklch(0.985 0 0);
+
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.21 0.006 285.8);
+
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.55 0.01 285.8);
+
+	--accent: oklch(0.96 0.01 285.8);
+	--accent-foreground: oklch(0.21 0.006 285.8);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(0.985 0 0);
+
+	--border: oklch(0.92 0.005 285.8);
+	--input: oklch(0.92 0.005 285.8);
+	--ring: oklch(0.55 0.18 280);
+
+	/* Status Colors */
+	--success: oklch(0.6 0.15 150);
+	--warning: oklch(0.7 0.15 70);
+	--info: oklch(0.6 0.15 250);
+
+	/* Brand & Priorities */
+	--brand-tasks: oklch(0.55 0.18 280);
+	--brand-requests: oklch(0.6 0.15 30);
+
+	--priority-urgent: oklch(0.6 0.2 25);
+	--priority-high: oklch(0.7 0.15 40);
+	--priority-medium: oklch(0.7 0.15 70);
+	--priority-low: oklch(0.55 0.02 285.8);
+	--priority-none: oklch(0.7 0.01 285.8);
+
+	/* Sidebar - Light */
+	--sidebar: oklch(0.985 0.002 247.9);
+	--sidebar-foreground: oklch(0.35 0.01 285.8);
+	--sidebar-primary: oklch(0.55 0.18 280);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.95 0.01 285.8);
+	--sidebar-accent-foreground: oklch(0.141 0.005 285.8);
+	--sidebar-border: oklch(0.93 0.005 285.8);
+	--sidebar-ring: oklch(0.55 0.18 280);
+}
+
+.dark {
+	/* Backgrounds - Deep Slate/Zinc, not black */
+	--background: oklch(0.13 0.02 280);
+	--foreground: oklch(0.92 0.01 280);
+
+	--card: oklch(0.15 0.02 280);
+	--card-foreground: oklch(0.92 0.01 280);
+
+	--popover: oklch(0.13 0.02 280);
+	--popover-foreground: oklch(0.92 0.01 280);
+
+	/* Primary - Vibrant Blurple for Dark */
+	--primary: oklch(0.65 0.18 280);
+	--primary-foreground: oklch(0.985 0 0);
+
+	--secondary: oklch(0.18 0.02 280);
+	--secondary-foreground: oklch(0.92 0.01 280);
+
+	--muted: oklch(0.18 0.02 280);
+	--muted-foreground: oklch(0.65 0.02 280);
+
+	--accent: oklch(0.2 0.02 280);
+	--accent-foreground: oklch(0.985 0 0);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(0.985 0 0);
+
+	/* Borders - Subtle but visible */
+	--border: oklch(0.22 0.02 280);
+	--input: oklch(0.22 0.02 280);
+	--ring: oklch(0.65 0.18 280);
+
+	/* Sidebar - Slightly darker than bg for depth */
+	--sidebar: oklch(0.11 0.02 280);
+	--sidebar-foreground: oklch(0.7 0.02 280);
+	--sidebar-primary: oklch(0.65 0.18 280);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.18 0.02 280);
+	--sidebar-accent-foreground: oklch(0.92 0.01 280);
+	--sidebar-border: oklch(0.18 0.02 280);
+	--sidebar-ring: oklch(0.65 0.18 280);
+
+	/* Status Colors */
+	--success: oklch(0.65 0.15 150);
+	--warning: oklch(0.75 0.15 70);
+	--info: oklch(0.65 0.15 250);
+
+	/* Brand & Priorities - Vibrant against dark */
+	--brand-tasks: oklch(0.65 0.18 280);
+	--brand-requests: oklch(0.65 0.15 30);
+
+	--priority-urgent: oklch(0.65 0.2 25);
+	--priority-high: oklch(0.75 0.15 40);
+	--priority-medium: oklch(0.75 0.15 70);
+	--priority-low: oklch(0.65 0.02 280);
+	--priority-none: oklch(0.3 0.02 280);
+
+	/* Statuses */
+	--status-approved: oklch(0.65 0.15 150);
+	--status-rejected: oklch(0.65 0.2 25);
+	--status-pending: oklch(0.75 0.15 70);
+	--status-progress: oklch(0.65 0.15 250);
+	--status-completed: oklch(0.65 0.18 280);
+}
+
+/* ==============================================================
+   VARIATION 3 — HIGH CONTRAST (OLED)
+   ==============================================================
+*/
+:root {
+	--radius: 0.25rem; /* Sharper radius */
+
+	--background: oklch(1 0 0);
+	--foreground: oklch(0 0 0); /* Pure Black Text */
+
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0 0 0);
+
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0 0 0);
+
+	--primary: oklch(0 0 0); /* Monochrome Primary */
+	--primary-foreground: oklch(1 0 0);
+
+	--secondary: oklch(0.96 0 0);
+	--secondary-foreground: oklch(0 0 0);
+
+	--muted: oklch(0.96 0 0);
+	--muted-foreground: oklch(0.4 0 0);
+
+	--accent: oklch(0.94 0 0);
+	--accent-foreground: oklch(0 0 0);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(1 0 0);
+
+	--border: oklch(0.85 0 0); /* Darker border for contrast */
+	--input: oklch(0.85 0 0);
+	--ring: oklch(0 0 0);
+
+	/* Sidebar */
+	--sidebar: oklch(0.98 0 0);
+	--sidebar-foreground: oklch(0.2 0 0);
+	--sidebar-primary: oklch(0 0 0);
+	--sidebar-primary-foreground: oklch(1 0 0);
+	--sidebar-accent: oklch(0.92 0 0);
+	--sidebar-accent-foreground: oklch(0 0 0);
+	--sidebar-border: oklch(0.85 0 0);
+	--sidebar-ring: oklch(0 0 0);
+}
+
+.dark {
+	--background: oklch(0 0 0); /* True Black */
+	--foreground: oklch(1 0 0); /* True White */
+
+	--card: oklch(0.05 0 0); /* Very subtle separation */
+	--card-foreground: oklch(1 0 0);
+
+	--popover: oklch(0.05 0 0);
+	--popover-foreground: oklch(1 0 0);
+
+	--primary: oklch(1 0 0); /* White as primary */
+	--primary-foreground: oklch(0 0 0);
+
+	--secondary: oklch(0.12 0 0);
+	--secondary-foreground: oklch(1 0 0);
+
+	--muted: oklch(0.12 0 0);
+	--muted-foreground: oklch(0.7 0 0);
+
+	--accent: oklch(0.15 0 0);
+	--accent-foreground: oklch(1 0 0);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(1 0 0);
+
+	--border: oklch(0.25 0 0); /* High contrast border */
+	--input: oklch(0.25 0 0);
+	--ring: oklch(1 0 0);
+
+	/* Sidebar */
+	--sidebar: oklch(0 0 0);
+	--sidebar-foreground: oklch(0.8 0 0);
+	--sidebar-primary: oklch(1 0 0);
+	--sidebar-primary-foreground: oklch(0 0 0);
+	--sidebar-accent: oklch(0.15 0 0);
+	--sidebar-accent-foreground: oklch(1 0 0);
+	--sidebar-border: oklch(0.25 0 0);
+	--sidebar-ring: oklch(1 0 0);
+}
+
+/* ==============================================================
+   VARIATION 4 — SOFT MODERN
+   ==============================================================
+*/
+:root {
+	--radius: 0.5rem; /* Softer, rounder */
+
+	--background: oklch(0.99 0.01 85); /* Warm White */
+	--foreground: oklch(0.25 0.02 50); /* Warm Gray */
+
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.25 0.02 50);
+
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.25 0.02 50);
+
+	--primary: oklch(0.6 0.15 50); /* Warm Burnt Orange/Brown */
+	--primary-foreground: oklch(0.99 0.01 85);
+
+	--secondary: oklch(0.96 0.01 85);
+	--secondary-foreground: oklch(0.3 0.02 50);
+
+	--muted: oklch(0.96 0.01 85);
+	--muted-foreground: oklch(0.55 0.02 50);
+
+	--accent: oklch(0.94 0.02 85);
+	--accent-foreground: oklch(0.25 0.02 50);
+
+	--destructive: oklch(0.6 0.15 25);
+	--destructive-foreground: oklch(0.99 0.01 85);
+
+	--border: oklch(0.9 0.01 85);
+	--input: oklch(0.9 0.01 85);
+	--ring: oklch(0.6 0.15 50);
+
+	/* Sidebar */
+	--sidebar: oklch(0.98 0.01 85);
+	--sidebar-foreground: oklch(0.35 0.02 50);
+	--sidebar-primary: oklch(0.6 0.15 50);
+	--sidebar-primary-foreground: oklch(0.99 0.01 85);
+	--sidebar-accent: oklch(0.94 0.02 85);
+	--sidebar-accent-foreground: oklch(0.25 0.02 50);
+	--sidebar-border: oklch(0.9 0.01 85);
+	--sidebar-ring: oklch(0.6 0.15 50);
+}
+
+.dark {
+	--background: oklch(0.18 0.01 50); /* Warm Dark Stone */
+	--foreground: oklch(0.95 0.01 85);
+
+	--card: oklch(0.2 0.01 50);
+	--card-foreground: oklch(0.95 0.01 85);
+
+	--popover: oklch(0.18 0.01 50);
+	--popover-foreground: oklch(0.95 0.01 85);
+
+	--primary: oklch(0.7 0.15 50);
+	--primary-foreground: oklch(0.15 0.01 50);
+
+	--secondary: oklch(0.22 0.01 50);
+	--secondary-foreground: oklch(0.95 0.01 85);
+
+	--muted: oklch(0.22 0.01 50);
+	--muted-foreground: oklch(0.7 0.01 85);
+
+	--accent: oklch(0.24 0.02 50);
+	--accent-foreground: oklch(0.95 0.01 85);
+
+	--destructive: oklch(0.6 0.15 25);
+	--destructive-foreground: oklch(0.95 0.01 85);
+
+	--border: oklch(0.25 0.01 50);
+	--input: oklch(0.25 0.01 50);
+	--ring: oklch(0.7 0.15 50);
+
+	/* Sidebar */
+	--sidebar: oklch(0.16 0.01 50);
+	--sidebar-foreground: oklch(0.8 0.01 85);
+	--sidebar-primary: oklch(0.7 0.15 50);
+	--sidebar-primary-foreground: oklch(0.15 0.01 50);
+	--sidebar-accent: oklch(0.22 0.01 50);
+	--sidebar-accent-foreground: oklch(0.95 0.01 85);
+	--sidebar-border: oklch(0.22 0.01 50);
+	--sidebar-ring: oklch(0.7 0.15 50);
+}
+
+/* ==============================================================
+   VARIATION 5 — LINEAR ORANGE
+   ==============================================================
+*/
+:root {
+	--radius: 0.375rem;
+
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.141 0.005 285.8);
+
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.141 0.005 285.8);
+
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.141 0.005 285.8);
+
+	/* Safety Orange Primary */
+	--primary: oklch(0.6 0.22 35);
+	--primary-foreground: oklch(0.985 0 0);
+
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.21 0.006 285.8);
+
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.55 0.01 285.8);
+
+	--accent: oklch(0.96 0.01 285.8);
+	--accent-foreground: oklch(0.21 0.006 285.8);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(0.985 0 0);
+
+	--border: oklch(0.92 0.005 285.8);
+	--input: oklch(0.92 0.005 285.8);
+	--ring: oklch(0.6 0.22 35);
+
+	/* Sidebar */
+	--sidebar: oklch(0.985 0.002 247.9);
+	--sidebar-foreground: oklch(0.35 0.01 285.8);
+	--sidebar-primary: oklch(0.6 0.22 35);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.95 0.01 285.8);
+	--sidebar-accent-foreground: oklch(0.141 0.005 285.8);
+	--sidebar-border: oklch(0.93 0.005 285.8);
+	--sidebar-ring: oklch(0.6 0.22 35);
+}
+
+.dark {
+	--background: oklch(0.13 0.02 280); /* Same Deep Slate Base */
+	--foreground: oklch(0.92 0.01 280);
+
+	--card: oklch(0.15 0.02 280);
+	--card-foreground: oklch(0.92 0.01 280);
+
+	--popover: oklch(0.13 0.02 280);
+	--popover-foreground: oklch(0.92 0.01 280);
+
+	/* Safety Orange Primary */
+	--primary: oklch(0.65 0.22 35);
+	--primary-foreground: oklch(0.1 0 0);
+
+	--secondary: oklch(0.18 0.02 280);
+	--secondary-foreground: oklch(0.92 0.01 280);
+
+	--muted: oklch(0.18 0.02 280);
+	--muted-foreground: oklch(0.65 0.02 280);
+
+	--accent: oklch(0.2 0.02 280);
+	--accent-foreground: oklch(0.985 0 0);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(0.985 0 0);
+
+	--border: oklch(0.22 0.02 280);
+	--input: oklch(0.22 0.02 280);
+	--ring: oklch(0.65 0.22 35);
+
+	/* Sidebar */
+	--sidebar: oklch(0.11 0.02 280);
+	--sidebar-foreground: oklch(0.7 0.02 280);
+	--sidebar-primary: oklch(0.65 0.22 35);
+	--sidebar-primary-foreground: oklch(0.1 0 0);
+	--sidebar-accent: oklch(0.18 0.02 280);
+	--sidebar-accent-foreground: oklch(0.92 0.01 280);
+	--sidebar-border: oklch(0.18 0.02 280);
+	--sidebar-ring: oklch(0.65 0.22 35);
+}
+
+/* ==============================================================
+   VARIATION 6 — EXPERIMENTAL (minimal starter)
+   A clean minimal theme for quick experimentation.
+   ==============================================================
+*/
+:root {
+	--radius: 0.25rem;
+	--background: oklch(0.99 0 0);
+	--foreground: oklch(0.12 0 0);
+	--card: oklch(0.995 0 0);
+	--card-foreground: var(--foreground);
+	--primary: oklch(0.6 0.16 220);
+	--primary-foreground: oklch(0.985 0 0);
+	--border: oklch(0.92 0 0);
+	--input: var(--border);
+	--ring: oklch(0.6 0.16 220);
+	--sidebar: oklch(0.98 0 0);
+	--sidebar-foreground: oklch(0.38 0 0);
+}
+
+.dark {
+	--background: oklch(0.12 0 0);
+	--foreground: oklch(0.95 0 0);
+	--card: oklch(0.16 0 0);
+	--card-foreground: var(--foreground);
+	--primary: oklch(0.64 0.18 220);
+	--primary-foreground: oklch(0.98 0 0);
+	--border: oklch(0.2 0 0);
+	--input: var(--border);
+	--ring: oklch(0.64 0.18 220);
+	--sidebar: oklch(0.11 0 0);
+	--sidebar-foreground: oklch(0.7 0 0);
+}
+
+/* ==============================================================
+   VARIATION 7 — CALM TEAL
+   A calm, professional teal primary. Distinct from purple (Linear)
+   and blue (others). Matches "calm workspace" brand messaging.
+   ==============================================================
+*/
+:root {
+	--radius: 0.375rem;
+
+	/* Colors - Light Mode */
+	--background: oklch(0.99 0.005 200);
+	--foreground: oklch(0.15 0.02 200);
+
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.15 0.02 200);
+
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.15 0.02 200);
+
+	/* Calm Teal Primary */
+	--primary: oklch(0.55 0.14 185);
+	--primary-foreground: oklch(0.98 0 0);
+
+	--secondary: oklch(0.97 0.005 200);
+	--secondary-foreground: oklch(0.2 0.02 200);
+
+	--muted: oklch(0.97 0.005 200);
+	--muted-foreground: oklch(0.5 0.02 200);
+
+	--accent: oklch(0.95 0.01 200);
+	--accent-foreground: oklch(0.2 0.02 200);
+
+	--destructive: oklch(0.55 0.2 25);
+	--destructive-foreground: oklch(0.98 0 0);
+
+	--border: oklch(0.92 0.01 200);
+	--input: oklch(0.92 0.01 200);
+	--ring: oklch(0.55 0.14 185);
+
+	/* Status Colors */
+	--success: oklch(0.6 0.15 150);
+	--warning: oklch(0.7 0.15 70);
+	--info: oklch(0.6 0.15 250);
+
+	/* Brand - Orange for urgency, Teal for standard */
+	--brand-tasks: oklch(0.6 0.2 35);
+	--brand-requests: oklch(0.55 0.14 185);
+
+	--priority-urgent: oklch(0.6 0.2 25);
+	--priority-high: oklch(0.7 0.15 40);
+	--priority-medium: oklch(0.7 0.15 70);
+	--priority-low: oklch(0.5 0.02 200);
+	--priority-none: oklch(0.7 0.01 200);
+
+	/* Statuses */
+	--status-approved: oklch(0.6 0.15 150);
+	--status-rejected: oklch(0.6 0.2 25);
+	--status-pending: oklch(0.7 0.15 70);
+	--status-progress: oklch(0.55 0.14 185);
+	--status-completed: oklch(0.55 0.12 280);
+
+	/* Sidebar - Light */
+	--sidebar: oklch(0.985 0.005 200);
+	--sidebar-foreground: oklch(0.35 0.02 200);
+	--sidebar-primary: oklch(0.55 0.14 185);
+	--sidebar-primary-foreground: oklch(0.98 0 0);
+	--sidebar-accent: oklch(0.95 0.01 200);
+	--sidebar-accent-foreground: oklch(0.15 0.02 200);
+	--sidebar-border: oklch(0.93 0.01 200);
+	--sidebar-ring: oklch(0.55 0.14 185);
+}
+
+.dark {
+	/* Backgrounds - Deep Slate with subtle teal undertone */
+	--background: oklch(0.13 0.015 200);
+	--foreground: oklch(0.92 0.01 200);
+
+	--card: oklch(0.15 0.015 200);
+	--card-foreground: oklch(0.92 0.01 200);
+
+	--popover: oklch(0.13 0.015 200);
+	--popover-foreground: oklch(0.92 0.01 200);
+
+	/* Calm Teal Primary - Lighter for dark mode */
+	--primary: oklch(0.65 0.14 185);
+	--primary-foreground: oklch(0.98 0 0);
+
+	--secondary: oklch(0.18 0.015 200);
+	--secondary-foreground: oklch(0.92 0.01 200);
+
+	--muted: oklch(0.18 0.015 200);
+	--muted-foreground: oklch(0.6 0.02 200);
+
+	--accent: oklch(0.2 0.015 200);
+	--accent-foreground: oklch(0.98 0 0);
+
+	--destructive: oklch(0.6 0.2 25);
+	--destructive-foreground: oklch(0.98 0 0);
+
+	/* Borders */
+	--border: oklch(0.22 0.015 200);
+	--input: oklch(0.22 0.015 200);
+	--ring: oklch(0.65 0.14 185);
+
+	/* Status Colors */
+	--success: oklch(0.65 0.15 150);
+	--warning: oklch(0.75 0.15 70);
+	--info: oklch(0.65 0.15 250);
+
+	/* Brand */
+	--brand-tasks: oklch(0.65 0.2 35);
+	--brand-requests: oklch(0.65 0.14 185);
+
+	--priority-urgent: oklch(0.65 0.2 25);
+	--priority-high: oklch(0.75 0.15 40);
+	--priority-medium: oklch(0.75 0.15 70);
+	--priority-low: oklch(0.6 0.02 200);
+	--priority-none: oklch(0.3 0.02 200);
+
+	/* Statuses */
+	--status-approved: oklch(0.65 0.15 150);
+	--status-rejected: oklch(0.65 0.2 25);
+	--status-pending: oklch(0.75 0.15 70);
+	--status-progress: oklch(0.65 0.14 185);
+	--status-completed: oklch(0.65 0.12 280);
+
+	/* Sidebar */
+	--sidebar: oklch(0.11 0.015 200);
+	--sidebar-foreground: oklch(0.7 0.02 200);
+	--sidebar-primary: oklch(0.65 0.14 185);
+	--sidebar-primary-foreground: oklch(0.98 0 0);
+	--sidebar-accent: oklch(0.18 0.015 200);
+	--sidebar-accent-foreground: oklch(0.92 0.01 200);
+	--sidebar-border: oklch(0.18 0.015 200);
+	--sidebar-ring: oklch(0.65 0.14 185);
+}

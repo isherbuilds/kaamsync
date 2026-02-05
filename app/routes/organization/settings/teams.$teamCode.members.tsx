@@ -1,5 +1,5 @@
 import { getCollectionProps, getFormProps, useForm } from "@conform-to/react";
-import { parseWithZod } from "@conform-to/zod/v4";
+import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { useQuery, useZero } from "@rocicorp/zero/react";
 import MoreVertical from "lucide-react/dist/esm/icons/more-vertical";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2";
@@ -67,9 +67,12 @@ export default function TeamMembersPage() {
 
 	const [form, fields] = useForm({
 		id: "teams-add-member",
+		constraint: getZodConstraint(addMemberSchema),
 		onValidate: ({ formData }) =>
 			parseWithZod(formData, { schema: addMemberSchema }),
 		defaultValue: { role: "member" },
+		shouldValidate: "onBlur",
+		shouldRevalidate: "onInput",
 		onSubmit: async (event, { submission }) => {
 			event.preventDefault();
 			if (submission?.status !== "success" || !team) return;
@@ -114,7 +117,7 @@ export default function TeamMembersPage() {
 	return (
 		<div className="v-stack gap-6">
 			<div className="flex items-start justify-between gap-4 sm:items-center">
-				<div className="space-y-1">
+				<div className="v-stack gap-1">
 					<h1 className="font-semibold text-lg tracking-tight md:text-xl">
 						{team?.name} Members
 					</h1>

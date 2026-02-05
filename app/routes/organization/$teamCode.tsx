@@ -57,7 +57,6 @@ export const meta: Route.MetaFunction = ({ params }) => [
 // Types
 // ============================================================================
 
-type Matter = Row["mattersTable"] & { status: Row["statusesTable"] };
 type Status = Row["statusesTable"];
 
 type TeamActionProps = {
@@ -104,7 +103,7 @@ export default function TeamTasksPage() {
 
 	// 2. Logic extraction using custom hooks
 	const { flatItems, activeCount, stickyIndices, toggleGroup } =
-		useTasksByStatusGroup(matters as Matter[], statuses);
+		useTasksByStatusGroup(matters, statuses);
 
 	const { isManager, canCreateRequests } = usePermissions(
 		teamId,

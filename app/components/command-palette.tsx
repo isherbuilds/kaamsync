@@ -161,7 +161,7 @@ export function CommandPalette({ teams = [] }: CommandPaletteProps) {
 			<CommandInput placeholder="Type a command or search..." />
 			<CommandList>
 				<CommandEmpty>
-					<div className="flex flex-col items-center gap-2 py-8">
+					<div className="v-stack items-center gap-2 py-8">
 						<Search className="size-8 text-muted-foreground/50" />
 						<p className="text-muted-foreground text-sm">No results found</p>
 						<p className="text-muted-foreground text-xs">

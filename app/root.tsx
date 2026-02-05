@@ -93,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<html
 			lang="en"
-			className={`${colorScheme === "dark" ? "dark" : ""} touch-manipulation bg-background text-foreground`}
+			className={`${colorScheme === "dark" ? "dark" : ""} touch-manipulation`}
 			suppressHydrationWarning
 		>
 			<head>

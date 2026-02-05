@@ -94,10 +94,9 @@ export const queries = defineQueries({
 		({ ctx, args: { teamId } }) =>
 			filterByTeamWithMembershipCheck(zql.mattersTable, ctx, teamId)
 				.where("type", matterType.task)
-				.related("status")
-				.orderBy("priority", "asc") // 0=urgent first, 4=none last
-				.orderBy("dueDate", "asc") // earliest first, nulls last
-				.orderBy("createdAt", "desc") // newest first for same priority+due date
+				.orderBy("priority", "asc")
+				.orderBy("dueDate", "asc")
+				.orderBy("createdAt", "desc")
 				.limit(BULK_SYNC_LIMIT),
 	),
 
@@ -106,16 +105,12 @@ export const queries = defineQueries({
 	getAllMatters: defineQuery(z.tuple([]), ({ ctx }) =>
 		filterByOrganization(zql.mattersTable, ctx)
 			.where("type", matterType.task)
-			// Only sync matters from teams user is a member of
-			// flip: true because user is member of few teams (small subset)
 			.whereExists("team", (w) =>
 				w.whereExists("memberships", (m) =>
 					m.where("userId", ctx.userId).where("deletedAt", "IS", null),
 				),
 			)
-			.related("status")
-			.related("team")
-			.orderBy("updatedAt", "desc") // Sort by last modified for better cache relevance
+			.orderBy("updatedAt", "desc")
 			.limit(BULK_SYNC_LIMIT),
 	),
 

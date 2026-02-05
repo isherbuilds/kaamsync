@@ -7,9 +7,9 @@ import { VitePWA } from "vite-plugin-pwa";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-	// server: {
-	// 	allowedHosts: ["kaamsync.gapple.in"],
-	// },
+	server: {
+		allowedHosts: ["kaamsync.gapple.in"],
+	},
 
 	build: {
 		outDir: "build/client",
@@ -55,7 +55,7 @@ export default defineConfig({
 			manifest: {
 				name: "KaamSync",
 				short_name: "Kaam",
-				start_url: "/",
+				start_url: "/app",
 				display: "standalone",
 				background_color: "#ffffff",
 				theme_color: "#ffffff",

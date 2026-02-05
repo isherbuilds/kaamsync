@@ -132,7 +132,7 @@ function renderActivityContent(
 
 		case "approval":
 			return (
-				<div className="space-y-1">
+				<div className="v-stack gap-1">
 					<p className="text-muted-foreground text-sm sm:text-base">
 						<span className="font-medium text-emerald-600">APPROVED</span> this
 						Request
@@ -147,7 +147,7 @@ function renderActivityContent(
 
 		case "rejection":
 			return (
-				<div className="space-y-1">
+				<div className="v-stack gap-1">
 					<p className="text-muted-foreground text-sm sm:text-base">
 						<span className="font-medium text-destructive">Rejected</span> this
 						request
@@ -239,7 +239,7 @@ const ActivityEntryItem = memo(function ActivityEntryItem({
 				<div
 					className={cn(
 						"rounded-lg border bg-muted/20 px-3 py-2.5 sm:px-4 sm:py-3",
-						entry.type === "comment" && "bg-background shadow-sm",
+						entry.type === "comment" && "bg-background",
 					)}
 				>
 					{content}

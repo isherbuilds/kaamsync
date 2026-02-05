@@ -1,4 +1,9 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import {
+	getFormProps,
+	getInputProps,
+	type SubmissionResult,
+	useForm,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { data, Form, Link, redirect, useRouteError } from "react-router";
 import { toast } from "sonner";
@@ -18,7 +23,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const url = new URL(request.url);
 	const token = url.searchParams.get("token");
 
-	if (!token) return redirect("/auth/sign-in");
+	if (!token) return redirect("/login");
 
 	return data({ token });
 }
@@ -41,17 +46,21 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 	}
 
 	toast.success("Password reset successfully! Please sign in again.");
-	return redirect("/auth/sign-in");
+	return redirect("/login");
 }
 
 export default function ResetPasswordRoute({
 	loaderData: { token },
+	actionData,
 }: Route.ComponentProps) {
+	const lastResult = actionData as SubmissionResult<string[]> | undefined;
 	const [form, fields] = useForm({
+		lastResult,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: resetPasswordSchema });
 		},
 		constraint: getZodConstraint(resetPasswordSchema),
+		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 
@@ -62,7 +71,7 @@ export default function ResetPasswordRoute({
 	return (
 		<BasicLayout
 			title="Reset your password"
-			description="Enter your new password below, minimum 8 characters, maximum 32 characters."
+			description="Choose a new password with at least 8 characters."
 		>
 			<Form method="post" className="grid gap-4" {...getFormProps(form)}>
 				<input type="hidden" name="token" value={token} />
@@ -70,6 +79,8 @@ export default function ResetPasswordRoute({
 					labelProps={{ children: "New Password" }}
 					inputProps={{
 						...getInputProps(fields.newPassword, { type: "password" }),
+						autoFocus: true,
+						enterKeyHint: "next",
 					}}
 					errors={fields.newPassword.errors}
 				/>
@@ -77,6 +88,7 @@ export default function ResetPasswordRoute({
 					labelProps={{ children: "Confirm New Password" }}
 					inputProps={{
 						...getInputProps(fields.confirmPassword, { type: "password" }),
+						enterKeyHint: "done",
 					}}
 					errors={fields.confirmPassword.errors}
 				/>
@@ -88,7 +100,7 @@ export default function ResetPasswordRoute({
 			</Form>
 
 			<div className="text-center text-sm">
-				<Link to="/auth/sign-in" className="text-primary hover:underline">
+				<Link to="/login" className="text-primary hover:underline">
 					← Back to sign in
 				</Link>
 			</div>

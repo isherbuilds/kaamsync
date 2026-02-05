@@ -246,8 +246,8 @@ export const organizationSlugSchema = z
 	.string({ message: "Slug is required." })
 	.toLowerCase()
 	.trim()
-	.regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-		message: "Use lowercase letters, numbers, and hyphens only.",
+	.regex(/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/, {
+		message: "Use lowercase letters, numbers, hyphens, and underscores only.",
 	})
 	.min(MIN_SLUG_LENGTH, "Slug must be at least 2 characters.")
 	.max(MAX_SLUG_LENGTH, "Slug must be at most 64 characters.")

@@ -9,7 +9,7 @@ import {
 } from "~/components/marketing/marketing-layout";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { authClient } from "~/lib/auth/client";
+import { getAuthSession } from "~/lib/auth/offline";
 import { marketingMeta } from "~/lib/seo/marketing-meta";
 import {
 	createFAQPageSchema,
@@ -17,6 +17,15 @@ import {
 	createSoftwareApplicationSchema,
 } from "~/lib/seo/schemas";
 import type { Route } from "./+types/home";
+
+export async function clientLoader() {
+	if (getAuthSession()) {
+		return redirect("/app");
+	}
+	return null;
+}
+
+clientLoader.hydrate = true as const;
 
 // Preload LCP images for both color schemes
 export const links: Route.LinksFunction = () => [
@@ -61,24 +70,6 @@ export const meta: MetaFunction = () =>
 		twitterDescription:
 			"Stop losing track of requests. Built for teams that manage people.",
 	});
-
-export async function clientLoader({ request }: Route.ClientLoaderArgs) {
-	const url = new URL(request.url);
-
-	if (url.pathname !== "/") return null;
-
-	const session = await authClient.getSession();
-
-	if (!session?.data) return null;
-
-	// Sequential: prevents 401 from organization.list() crashing loader
-	const orgs = await authClient.organization.list();
-	const slug = orgs.data?.[0]?.slug;
-
-	return redirect(slug ? `/${slug}/tasks` : "/join");
-}
-
-clientLoader.hydrate = true as const;
 
 const FAQS = [
 	{
@@ -167,7 +158,7 @@ export default function HomePage() {
 						in one calm workspace — even when teams are offline.
 					</p>
 
-					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
+					<div className="v-stack items-center justify-center gap-4 sm:h-stack">
 						<Button
 							size="lg"
 							className="h-14 w-full rounded-sm bg-foreground px-8 font-medium text-background text-lg shadow-[4px_4px_0_0_rgba(0,0,0,0.1)] shadow-primary transition-all hover:bg-foreground hover:shadow-none md:max-w-2xs"
@@ -382,7 +373,7 @@ export default function HomePage() {
 					<div className="text-left">
 						<Suspense
 							fallback={
-								<div className="space-y-4">
+								<div className="v-stack gap-4">
 									{[1, 2, 3].map((item) => (
 										<div
 											key={item}
@@ -407,7 +398,7 @@ export default function HomePage() {
 						Switch chaos with <s>Calm</s> Kaam Sync.
 					</p>
 					<br />
-					<div className="v-stack items-center justify-center gap-4 sm:flex-row">
+					<div className="v-stack items-center justify-center gap-4 sm:h-stack">
 						<Button
 							asChild
 							size="lg"

@@ -1,12 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { getServerSession } from "~/lib/auth/server";
+import { clearSubscriptionCache, clearUsageCache } from "~/lib/billing/service";
 import { getOrganizationById } from "~/lib/organization/service";
 import { safeError } from "~/lib/utils/logger";
 
 /**
  * Billing redirect handler
- * After Dodo Payments checkout, redirects to the user's active organization billing page
+ * After Dodo Payments checkout, clears caches and redirects to the billing page
  */
 export async function loader({ request }: LoaderFunctionArgs) {
 	const url = new URL(request.url);
@@ -26,10 +27,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		const session = await getServerSession(request);
 
 		if (session?.session?.activeOrganizationId) {
+			const orgId = session.session.activeOrganizationId;
+
+			// Clear caches on successful checkout to ensure fresh data
+			if (success === "true") {
+				clearSubscriptionCache(orgId);
+				clearUsageCache(orgId, "all");
+			}
+
 			// Get the organization details to find the slug
-			const org = await getOrganizationById(
-				session.session.activeOrganizationId,
-			);
+			const org = await getOrganizationById(orgId);
 
 			if (org?.slug) {
 				const redirectUrl = `/${org.slug}/settings/billing${queryString ? `?${queryString}` : ""}`;

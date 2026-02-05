@@ -1,4 +1,9 @@
-import { getFormProps, getInputProps, useForm } from "@conform-to/react";
+import {
+	getFormProps,
+	getInputProps,
+	type SubmissionResult,
+	useForm,
+} from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
 import { Form, Link, redirect } from "react-router";
 import { toast } from "sonner";
@@ -41,12 +46,15 @@ export async function clientAction({ request }: Route.ClientActionArgs) {
 	return redirect("/login");
 }
 
-export default function SignUpRoute() {
+export default function SignUpRoute({ actionData }: Route.ComponentProps) {
+	const lastResult = actionData as SubmissionResult<string[]> | undefined;
 	const [form, fields] = useForm({
+		lastResult,
 		onValidate({ formData }) {
 			return parseWithZod(formData, { schema: signUpSchema });
 		},
 		constraint: getZodConstraint(signUpSchema),
+		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 

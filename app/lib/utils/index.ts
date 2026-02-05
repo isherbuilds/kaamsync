@@ -29,10 +29,10 @@ export function cn(...inputs: ClassValue[]) {
 // STRING UTILITIES
 // ============================================================================
 
-export const MAX_SLUG_LENGTH = 30;
+export const MAX_SLUG_LENGTH = 64;
 
-const SLUG_REGEX = /[^a-z0-9-]+/g;
-const TRIM_DASH_REGEX = /^-+|-+$/g;
+const SLUG_REGEX = /[^a-z0-9-_]+/g;
+const TRIM_DASH_REGEX = /^-+/g;
 
 export function toUrlSlug(value: string) {
 	return value
