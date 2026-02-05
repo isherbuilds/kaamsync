@@ -39,7 +39,8 @@ CREATE TABLE "organizations_table" (
 	"slug" text NOT NULL,
 	"logo" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"metadata" text
+	"metadata" text,
+	CONSTRAINT "organizations_table_slug_unique" UNIQUE("slug")
 );
 --> statement-breakpoint
 CREATE TABLE "sessions_table" (
@@ -52,6 +53,7 @@ CREATE TABLE "sessions_table" (
 	"user_agent" text,
 	"user_id" text NOT NULL,
 	"active_organization_id" text,
+	"active_organization_slug" text,
 	CONSTRAINT "sessions_table_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint

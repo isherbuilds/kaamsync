@@ -18,9 +18,6 @@ export function clearSubscriptionCache() {
 	subscriptionCache.clearAll();
 }
 
-// Alias for backwards compatibility
-export const getSubscriptionFromCache = getSubscription;
-
 export async function getSubscriptionSWR(
 	fetchFn: () => Promise<Subscription>,
 	orgSlug: string,

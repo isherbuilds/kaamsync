@@ -60,7 +60,6 @@ export default function ResetPasswordRoute({
 			return parseWithZod(formData, { schema: resetPasswordSchema });
 		},
 		constraint: getZodConstraint(resetPasswordSchema),
-		shouldValidate: "onBlur",
 		shouldRevalidate: "onInput",
 	});
 

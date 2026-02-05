@@ -35,6 +35,16 @@ const routes: SitemapRoute[] = [
 		priority: "0.7",
 		changefreq: "monthly",
 	},
+	{
+		path: "/terms",
+		priority: "0.6",
+		changefreq: "yearly",
+	},
+	{
+		path: "/privacy",
+		priority: "0.6",
+		changefreq: "yearly",
+	},
 ];
 
 export async function loader() {

@@ -1,20 +1,19 @@
 import { redirect } from "react-router";
 import { authClient } from "~/lib/auth/client";
-import { getLastOrgSlug, isOffline } from "~/lib/auth/offline";
+import { getAuthSession, isOffline } from "~/lib/auth/offline";
 
 export async function clientLoader() {
-	const lastSlug = getLastOrgSlug();
+	const authSession = getAuthSession();
 
-	if (lastSlug) {
-		return redirect(`/${lastSlug}/tasks`);
+	if (authSession?.session.activeOrganizationSlug) {
+		return redirect(`/${authSession.session.activeOrganizationSlug}/tasks`);
 	}
 
 	if (isOffline()) {
 		return redirect("/login");
 	}
 
-	const session = await authClient.getSession();
-	if (!session?.data) return redirect("/login");
+	if (!authSession?.session) return redirect("/login");
 
 	const { data: orgs } = await authClient.organization.list();
 	if (orgs?.[0]) {

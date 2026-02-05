@@ -947,6 +947,12 @@ const sessionsTable = {
       customType: null as unknown as string,
       serverName: "active_organization_id",
     },
+    activeOrganizationSlug: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+      serverName: "active_organization_slug",
+    },
   },
   primaryKey: ["id"],
   serverName: "sessions_table",

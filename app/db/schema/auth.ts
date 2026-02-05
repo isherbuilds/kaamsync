@@ -39,6 +39,7 @@ export const sessionsTable = pgTable(
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
 		activeOrganizationId: text("active_organization_id"),
+		activeOrganizationSlug: text("active_organization_slug"),
 	},
 	(table) => [index("sessionsTable_userId_idx").on(table.userId)],
 );
@@ -95,7 +96,7 @@ export const organizationsTable = pgTable(
 	{
 		id: text("id").primaryKey(),
 		name: text("name").notNull(),
-		slug: text("slug").notNull(),
+		slug: text("slug").notNull().unique(),
 		logo: text("logo"),
 		createdAt: timestamp("created_at", { withTimezone: true })
 			.defaultNow()

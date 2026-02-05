@@ -16,6 +16,7 @@ import { AttachmentUpload } from "~/components/attachments/attachment-upload";
 import { planLimits } from "~/config/billing";
 import { Priority, type PriorityValue } from "~/config/matter";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
+import { useIsMobile } from "~/hooks/use-mobile";
 import { useTeamShortIdCache } from "~/hooks/use-short-id";
 import { consumeNextShortId } from "~/lib/cache/short-id";
 import { matterCreateFormSchema } from "~/lib/matter/validations";
@@ -77,6 +78,7 @@ export function CreateMatterDialog({
 	triggerButton,
 }: CreateMatterDialogProps) {
 	const z = useZero();
+	const isMobile = useIsMobile();
 	const [open, setOpen] = useState(false);
 	const [isCreating, setIsCreating] = useState(false);
 	const [attachments, setAttachments] = useState<{ id: string }[]>([]);
@@ -153,7 +155,7 @@ export function CreateMatterDialog({
 			const clientShortID = consumeNextShortId(teamId);
 
 			setIsCreating(true);
-			z.mutate(
+			const result = z.mutate(
 				mutators.matter.create({
 					teamId,
 					teamCode,
@@ -175,18 +177,24 @@ export function CreateMatterDialog({
 					attachmentIds: attachments.map((attachment) => attachment.id),
 					clientShortID,
 				}),
-			)
-				.server.then(() => {
-					toast.success(
-						isRequest
-							? "Request submitted for approval"
-							: `${teamCode}-${clientShortID} created`,
-					);
-					setOpen(false);
-					setAttachments([]);
-					setResetSignal((value) => value + 1);
-					form.reset();
+			);
 
+			// Instant optimistic feedback - Zero handles client-side insert immediately
+			toast.success(
+				isRequest
+					? "Request submitted for approval"
+					: `${teamCode}-${clientShortID} created`,
+			);
+			setOpen(false);
+			setAttachments([]);
+			setResetSignal((value) => value + 1);
+			// form.reset();
+			setIsCreating(false);
+
+			// Handle server confirmation/error asynchronously
+			result.server
+				.then(() => {
+					// Send notifications only after server confirms creation
 					if (assigneeId) {
 						import("~/hooks/use-push-notifications").then(
 							({ sendNotificationToUser }) => {
@@ -201,14 +209,14 @@ export function CreateMatterDialog({
 					}
 				})
 				.catch((e) => {
+					// Zero auto-rollbacks the optimistic insert on server failure
 					console.error(`Failed to create ${type}:`, e);
 					toast.error(
 						e instanceof Error
 							? e.message
 							: `Failed to create ${type}. Please try again.`,
 					);
-				})
-				.finally(() => setIsCreating(false));
+				});
 		},
 	});
 
@@ -250,7 +258,7 @@ export function CreateMatterDialog({
 							<input
 								{...getConformInputProps(fields.title, { type: "text" })}
 								key={fields.title.key}
-								autoFocus
+								autoFocus={!isMobile}
 								autoComplete="off"
 								placeholder={titlePlaceholder}
 								className="w-full bg-transparent font-semibold text-lg leading-tight outline-none placeholder:text-muted-foreground/40 sm:text-xl"

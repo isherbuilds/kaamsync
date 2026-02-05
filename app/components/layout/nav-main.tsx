@@ -21,7 +21,7 @@ interface NavMainProps {
 
 export function NavMain({ items, orgSlug }: NavMainProps) {
 	const location = useLocation();
-	const { setOpenMobile } = useSidebar();
+	const { isMobile, setOpenMobile } = useSidebar();
 
 	return (
 		<SidebarGroup>
@@ -33,7 +33,7 @@ export function NavMain({ items, orgSlug }: NavMainProps) {
 							isActive={location.pathname === `/${orgSlug}${item.url}`}
 						>
 							<Link
-								prefetch="viewport"
+								prefetch={isMobile ? "none" : "intent"}
 								to={`/${orgSlug}${item.url}`}
 								onClick={() => setTimeout(() => setOpenMobile(false), 50)}
 							>

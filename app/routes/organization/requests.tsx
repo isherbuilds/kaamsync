@@ -80,7 +80,7 @@ const RequestRow = memo(function RequestRow({
 	return (
 		<div className="my-0.5">
 			<NavLink
-				prefetch="viewport"
+				prefetch={isMobile ? "none" : "intent"}
 				to={linkTo}
 				className={({ isActive }: { isActive: boolean }) =>
 					cn(
@@ -132,8 +132,13 @@ const RequestRow = memo(function RequestRow({
 				<div className="flex items-center justify-between gap-4 text-muted-foreground text-xs">
 					{assignee?.usersTable && (
 						<div className="flex items-center gap-1.5">
-							<CustomAvatar name={assignee.usersTable.name} className="size-6" />
-							<span className="max-w-24 truncate">{assignee.usersTable.name}</span>
+							<CustomAvatar
+								name={assignee.usersTable.name}
+								className="size-6"
+							/>
+							<span className="max-w-24 truncate">
+								{assignee.usersTable.name}
+							</span>
 						</div>
 					)}
 					<div className="flex gap-2">
@@ -162,8 +167,14 @@ export default function OrganizationRequestsPage() {
 	const isMobile = useIsMobile();
 
 	// Parallel data fetching with independent caching
-	const [authoredRequests] = useQuery(queries.getUserAuthoredMatters(), CACHE_LONG);
-	const [requestsToApprove] = useQuery(queries.getRequestsToApprove(), CACHE_LONG);
+	const [authoredRequests] = useQuery(
+		queries.getUserAuthoredMatters(),
+		CACHE_LONG,
+	);
+	const [requestsToApprove] = useQuery(
+		queries.getRequestsToApprove(),
+		CACHE_LONG,
+	);
 	const [members] = useQuery(queries.getOrganizationMembers(), CACHE_LONG);
 
 	// O(1) member lookups
@@ -194,7 +205,9 @@ export default function OrganizationRequestsPage() {
 			<RequestRow
 				key={matter.id}
 				matter={matter}
-				assignee={matter.assigneeId ? membersByUserId.get(matter.assigneeId) : undefined}
+				assignee={
+					matter.assigneeId ? membersByUserId.get(matter.assigneeId) : undefined
+				}
 				orgSlug={orgSlug}
 				isMobile={isMobile}
 				now={now}
