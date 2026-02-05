@@ -23,7 +23,7 @@ export const DueDateLabel = memo(function DueDateLabel({
 	date: number;
 	isOverdue: boolean;
 }) {
-	const label = useMemo(() => formatDueDateLabel(date), [date]);
+	const label = formatDueDateLabel(date);
 	return (
 		<div
 			className={cn(

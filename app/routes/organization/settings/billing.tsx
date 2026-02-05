@@ -140,7 +140,7 @@ export async function action({ request }: Route.ActionArgs) {
 	return data({ error: "Unknown action" }, { status: 400 });
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, params }: Route.LoaderArgs) {
 	const session = await getServerSession(request);
 	if (!session?.session?.activeOrganizationId) {
 		return data({
@@ -159,7 +159,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 	const userRole = await getMemberRole(orgId, userId);
 
 	if (userRole !== "owner") {
-		throw redirect("/organization/settings");
+		throw redirect(`/${params.orgSlug}/settings`);
 	}
 
 	let subscription = null;

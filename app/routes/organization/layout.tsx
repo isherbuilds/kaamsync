@@ -78,7 +78,7 @@ export async function clientLoader({
 			setLastOrgSlug(orgSlug);
 		} catch (error) {
 			console.error("Failed to set active organization", error);
-			throw error;
+			if (!isOffline()) throw error;
 		}
 	}
 

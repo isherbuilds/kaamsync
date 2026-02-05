@@ -107,7 +107,7 @@ export const mutators = defineMutators({
 			async ({ tx, ctx, args }) => {
 				const id = uuid();
 				const now = Date.now();
-				const orgId = ctx.activeOrganizationId ?? "";
+				let orgId = ctx.activeOrganizationId ?? "";
 
 				const baseInsert = {
 					id,
@@ -135,6 +135,9 @@ export const mutators = defineMutators({
 					}
 					enforceMatterCreationPermission(ctx, membership.role, args.type);
 					baseInsert.orgId = membership.orgId;
+					// Ensure server-side orgId variable matches the validated membership
+					// so subsequent validation/updates use the correct organization.
+					orgId = membership.orgId;
 
 					// Override statusId for requests
 					if (args.type === matterType.request) {
