@@ -1,6 +1,5 @@
 import {
 	bigint,
-	doublePrecision,
 	index,
 	integer,
 	pgTable,

@@ -1,5 +1,5 @@
 {
-  "id": "4590a447-66b9-4a5d-a82c-42c30087d214",
+  "id": "1b46300e-2966-4be0-820c-cc98e7bd03e2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1027,12 +1027,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created": {
-          "name": "created",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
         "edited": {
           "name": "edited",
           "type": "boolean",
@@ -1085,7 +1079,7 @@
               "nulls": "last"
             },
             {
-              "expression": "created",
+              "expression": "created_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1199,9 +1193,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "created": {
-          "name": "created",
-          "type": "double precision",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         }
@@ -1283,9 +1277,9 @@
           "notNull": false,
           "default": true
         },
-        "created": {
-          "name": "created",
-          "type": "double precision",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
         }

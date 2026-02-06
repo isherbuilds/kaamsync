@@ -1,10 +1,10 @@
 import {
 	boolean,
-	doublePrecision,
 	index,
 	pgTable,
 	primaryKey,
 	text,
+	timestamp,
 	unique,
 	varchar,
 } from "drizzle-orm/pg-core";
@@ -26,13 +26,12 @@ export const commentsTable = pgTable(
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
 		body: text("body").notNull(),
-		created: doublePrecision("created").notNull(),
 		edited: boolean("edited").default(false),
 		...commonColumns,
 	},
 	(table) => [
 		index("comments_matter_idx").on(table.matterId),
-		index("comments_matter_created_idx").on(table.matterId, table.created),
+		index("comments_matter_created_idx").on(table.matterId, table.createdAt),
 		index("comments_creator_idx").on(table.creatorId),
 	],
 );
@@ -48,7 +47,7 @@ export const emojisTable = pgTable(
 		creatorId: text("creator_id")
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
-		created: doublePrecision("created").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
 	},
 	(table) => [
 		index("emojis_subject_idx").on(table.subjectType, table.subjectId),
@@ -70,7 +69,7 @@ export const matterNotificationsTable = pgTable(
 			.notNull()
 			.references(() => mattersTable.id, { onDelete: "cascade" }),
 		subscribed: boolean("subscribed").default(true),
-		created: doublePrecision("created").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
 	},
 	(table) => [
 		primaryKey({ columns: [table.userId, table.matterId] }),

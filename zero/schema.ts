@@ -195,11 +195,6 @@ const commentsTable = {
       optional: false,
       customType: null as unknown as string,
     },
-    created: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
-    },
     edited: {
       type: "boolean",
       optional: true,
@@ -263,10 +258,11 @@ const emojisTable = {
       customType: null as unknown as string,
       serverName: "creator_id",
     },
-    created: {
+    createdAt: {
       type: "number",
       optional: false,
       customType: null as unknown as number,
+      serverName: "created_at",
     },
   },
   primaryKey: ["id"],
@@ -442,10 +438,11 @@ const matterNotificationsTable = {
       optional: true,
       customType: null as unknown as boolean,
     },
-    created: {
+    createdAt: {
       type: "number",
       optional: false,
       customType: null as unknown as number,
+      serverName: "created_at",
     },
   },
   primaryKey: ["userId", "matterId"],
