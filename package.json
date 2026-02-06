@@ -18,8 +18,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.983.0",
-		"@aws-sdk/s3-request-presigner": "^3.983.0",
+		"@aws-sdk/client-s3": "^3.984.0",
+		"@aws-sdk/s3-request-presigner": "^3.984.0",
 		"@conform-to/react": "^1.16.0",
 		"@conform-to/zod": "^1.16.0",
 		"@dodopayments/better-auth": "^1.4.2",
@@ -33,7 +33,7 @@
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
 		"dodopayments": "^2.18.0",
-		"dotenv": "^17.2.3",
+		"dotenv": "^17.2.4",
 		"drizzle-orm": "^0.45.1",
 		"drizzle-zero": "^0.17.3",
 		"isbot": "^5.1.34",

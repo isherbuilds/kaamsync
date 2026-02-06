@@ -787,11 +787,22 @@ const membersTable = {
       optional: true,
       customType: null as unknown as string,
     },
+    status: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
     createdAt: {
       type: "number",
       optional: true,
       customType: null as unknown as number,
       serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
     },
   },
   primaryKey: ["id"],

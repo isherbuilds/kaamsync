@@ -80,7 +80,7 @@ export function getTeamRolePermissions(role: string): TeamRolePermissions {
 		default:
 			return {
 				canCreateTasks: false,
-				canCreateRequests: true,
+				canCreateRequests: false,
 				canApproveRequests: false,
 				canManageMembers: false,
 				canManageTeam: false,

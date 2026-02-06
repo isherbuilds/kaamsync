@@ -30,7 +30,9 @@ CREATE TABLE "members_table" (
 	"organization_id" text NOT NULL,
 	"user_id" text NOT NULL,
 	"role" text DEFAULT 'member' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"status" varchar(20) DEFAULT 'active' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "organizations_table" (
@@ -369,6 +371,7 @@ CREATE INDEX "invitationsTable_organizationId_idx" ON "invitations_table" USING 
 CREATE INDEX "invitationsTable_email_idx" ON "invitations_table" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "membersTable_org_status_idx" ON "members_table" USING btree ("organization_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "membersTable_org_user_uidx" ON "members_table" USING btree ("organization_id","user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "organizationsTable_slug_uidx" ON "organizations_table" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "sessionsTable_userId_idx" ON "sessions_table" USING btree ("user_id");--> statement-breakpoint
