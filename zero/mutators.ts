@@ -977,6 +977,9 @@ export const mutators = defineMutators({
 			}),
 			async ({ tx, ctx, args }) => {
 				requireAuthentication(ctx);
+				if (!ctx.activeOrganizationId) {
+					throw new Error(PERMISSION_ERRORS.NOT_LOGGED_IN);
+				}
 				const now = Date.now();
 
 				if (tx.location === "server") {
@@ -994,7 +997,10 @@ export const mutators = defineMutators({
 					}
 
 					const target = await tx.run(
-						zql.membersTable.where("id", args.memberId).one(),
+						zql.membersTable
+							.where("id", args.memberId)
+							.where("organizationId", ctx.activeOrganizationId)
+							.one(),
 					);
 					if (!target) throw new Error(PERMISSION_ERRORS.NOT_ORG_MEMBER);
 

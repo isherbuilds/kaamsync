@@ -1,5 +1,5 @@
 {
-  "id": "f14c4306-ea70-416e-9834-18b581bfe994",
+  "id": "4590a447-66b9-4a5d-a82c-42c30087d214",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2856,15 +2856,23 @@
         },
         "file_size": {
           "name": "file_size",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
-        "created": {
-          "name": "created",
-          "type": "double precision",
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {

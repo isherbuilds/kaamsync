@@ -148,10 +148,17 @@ const attachmentsTable = {
       customType: null as unknown as number,
       serverName: "file_size",
     },
-    created: {
+    createdAt: {
       type: "number",
-      optional: false,
+      optional: true,
       customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
     },
   },
   primaryKey: ["id"],

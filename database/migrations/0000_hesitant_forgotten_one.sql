@@ -242,8 +242,9 @@ CREATE TABLE "attachments" (
 	"public_url" text,
 	"file_name" varchar(500) NOT NULL,
 	"file_type" varchar(100) NOT NULL,
-	"file_size" integer NOT NULL,
-	"created" double precision NOT NULL
+	"file_size" bigint NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "storage_usage_cache" (
