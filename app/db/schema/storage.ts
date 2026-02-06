@@ -1,6 +1,5 @@
 import {
 	bigint,
-	doublePrecision,
 	index,
 	integer,
 	pgTable,
@@ -26,8 +25,13 @@ export const attachmentsTable = pgTable(
 		publicUrl: text("public_url"),
 		fileName: varchar("file_name", { length: 500 }).notNull(),
 		fileType: varchar("file_type", { length: 100 }).notNull(),
-		fileSize: integer("file_size").notNull(),
-		created: doublePrecision("created").notNull(),
+		fileSize: bigint("file_size", { mode: "number" }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
 	},
 	(table) => [
 		index("attachments_subject_idx").on(table.subjectType, table.subjectId),

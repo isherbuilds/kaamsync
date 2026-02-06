@@ -30,7 +30,9 @@ CREATE TABLE "members_table" (
 	"organization_id" text NOT NULL,
 	"user_id" text NOT NULL,
 	"role" text DEFAULT 'member' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"status" varchar(20) DEFAULT 'active' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "organizations_table" (
@@ -105,7 +107,6 @@ CREATE TABLE "comments" (
 	"matter_id" text NOT NULL,
 	"creator_id" text NOT NULL,
 	"body" text NOT NULL,
-	"created" double precision NOT NULL,
 	"edited" boolean DEFAULT false,
 	"created_at" timestamp with time zone NOT NULL,
 	"updated_at" timestamp with time zone NOT NULL,
@@ -119,7 +120,7 @@ CREATE TABLE "emojis" (
 	"subject_id" text NOT NULL,
 	"subject_type" varchar(50) NOT NULL,
 	"creator_id" text NOT NULL,
-	"created" double precision NOT NULL,
+	"created_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "emojis_subject_creator_value_unique" UNIQUE("subject_id","creator_id","value")
 );
 --> statement-breakpoint
@@ -127,7 +128,7 @@ CREATE TABLE "matter_notifications" (
 	"user_id" text NOT NULL,
 	"matter_id" text NOT NULL,
 	"subscribed" boolean DEFAULT true,
-	"created" double precision NOT NULL,
+	"created_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "matter_notifications_user_id_matter_id_pk" PRIMARY KEY("user_id","matter_id")
 );
 --> statement-breakpoint
@@ -240,8 +241,9 @@ CREATE TABLE "attachments" (
 	"public_url" text,
 	"file_name" varchar(500) NOT NULL,
 	"file_type" varchar(100) NOT NULL,
-	"file_size" integer NOT NULL,
-	"created" double precision NOT NULL
+	"file_size" bigint NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "storage_usage_cache" (
@@ -369,6 +371,7 @@ CREATE INDEX "invitationsTable_organizationId_idx" ON "invitations_table" USING 
 CREATE INDEX "invitationsTable_email_idx" ON "invitations_table" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "membersTable_organizationId_idx" ON "members_table" USING btree ("organization_id");--> statement-breakpoint
 CREATE INDEX "membersTable_userId_idx" ON "members_table" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "membersTable_org_status_idx" ON "members_table" USING btree ("organization_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "membersTable_org_user_uidx" ON "members_table" USING btree ("organization_id","user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "organizationsTable_slug_uidx" ON "organizations_table" USING btree ("slug");--> statement-breakpoint
 CREATE INDEX "sessionsTable_userId_idx" ON "sessions_table" USING btree ("user_id");--> statement-breakpoint
@@ -381,7 +384,7 @@ CREATE INDEX "subscriptions_billing_end_idx" ON "subscriptions" USING btree ("ne
 CREATE UNIQUE INDEX "subscriptions_billing_idx" ON "subscriptions" USING btree ("billing_subscription_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "subscriptions_organization_customer_idx" ON "subscriptions" USING btree ("organization_id","billing_customer_id");--> statement-breakpoint
 CREATE INDEX "comments_matter_idx" ON "comments" USING btree ("matter_id");--> statement-breakpoint
-CREATE INDEX "comments_matter_created_idx" ON "comments" USING btree ("matter_id","created");--> statement-breakpoint
+CREATE INDEX "comments_matter_created_idx" ON "comments" USING btree ("matter_id","created_at");--> statement-breakpoint
 CREATE INDEX "comments_creator_idx" ON "comments" USING btree ("creator_id");--> statement-breakpoint
 CREATE INDEX "emojis_subject_idx" ON "emojis" USING btree ("subject_type","subject_id");--> statement-breakpoint
 CREATE INDEX "matter_notifications_user_subscribed_idx" ON "matter_notifications" USING btree ("user_id","subscribed");--> statement-breakpoint

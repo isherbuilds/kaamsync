@@ -239,7 +239,7 @@ export const queries = defineQueries({
 				.where("subjectType", "matter")
 				.where("subjectId", matterId)
 				.where("orgId", ctx.activeOrganizationId ?? "")
-				.orderBy("created", "desc")
+				.orderBy("createdAt", "desc")
 				.limit(DEFAULT_LIMIT),
 	),
 
@@ -250,7 +250,7 @@ export const queries = defineQueries({
 				.where("subjectType", "comment")
 				.where("subjectId", commentId)
 				.where("orgId", ctx.activeOrganizationId ?? "")
-				.orderBy("created", "desc")
+				.orderBy("createdAt", "desc")
 				.limit(DEFAULT_LIMIT),
 	),
 
@@ -261,7 +261,7 @@ export const queries = defineQueries({
 				.where("subjectType", "comment")
 				.where("subjectId", "IN", commentIds.length > 0 ? commentIds : [""])
 				.where("orgId", ctx.activeOrganizationId ?? "")
-				.orderBy("created", "desc")
+				.orderBy("createdAt", "desc")
 				.limit(Math.min(200, Math.max(DEFAULT_LIMIT, commentIds.length * 10))),
 	),
 

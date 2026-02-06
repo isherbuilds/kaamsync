@@ -148,10 +148,17 @@ const attachmentsTable = {
       customType: null as unknown as number,
       serverName: "file_size",
     },
-    created: {
+    createdAt: {
       type: "number",
-      optional: false,
+      optional: true,
       customType: null as unknown as number,
+      serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
     },
   },
   primaryKey: ["id"],
@@ -187,11 +194,6 @@ const commentsTable = {
       type: "string",
       optional: false,
       customType: null as unknown as string,
-    },
-    created: {
-      type: "number",
-      optional: false,
-      customType: null as unknown as number,
     },
     edited: {
       type: "boolean",
@@ -256,10 +258,11 @@ const emojisTable = {
       customType: null as unknown as string,
       serverName: "creator_id",
     },
-    created: {
+    createdAt: {
       type: "number",
       optional: false,
       customType: null as unknown as number,
+      serverName: "created_at",
     },
   },
   primaryKey: ["id"],
@@ -435,10 +438,11 @@ const matterNotificationsTable = {
       optional: true,
       customType: null as unknown as boolean,
     },
-    created: {
+    createdAt: {
       type: "number",
       optional: false,
       customType: null as unknown as number,
+      serverName: "created_at",
     },
   },
   primaryKey: ["userId", "matterId"],
@@ -787,11 +791,22 @@ const membersTable = {
       optional: true,
       customType: null as unknown as string,
     },
+    status: {
+      type: "string",
+      optional: true,
+      customType: null as unknown as string,
+    },
     createdAt: {
       type: "number",
       optional: true,
       customType: null as unknown as number,
       serverName: "created_at",
+    },
+    updatedAt: {
+      type: "number",
+      optional: true,
+      customType: null as unknown as number,
+      serverName: "updated_at",
     },
   },
   primaryKey: ["id"],

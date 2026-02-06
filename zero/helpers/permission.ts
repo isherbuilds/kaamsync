@@ -10,7 +10,13 @@ import {
 	type ProductKey,
 	planLimits,
 } from "~/config/billing";
-import { matterType, orgRole, type TeamRole, teamRole } from "~/db/helpers";
+import {
+	matterType,
+	membershipStatus,
+	orgRole,
+	type TeamRole,
+	teamRole,
+} from "~/db/helpers";
 import {
 	hasRequestCreationPermission,
 	hasTaskCreationPermission,
@@ -102,6 +108,7 @@ export async function findTeamMembership(
 			.where("teamId", teamId)
 			.where("userId", ctx.userId)
 			.where("orgId", ctx.activeOrganizationId)
+			.where("status", membershipStatus.active)
 			.where("deletedAt", "IS", null)
 			.one(),
 	);
@@ -124,6 +131,8 @@ export async function findOrganizationMembership(
 			.one(),
 	);
 	if (!m) throw new Error(PERMISSION_ERRORS.NOT_ORG_MEMBER);
+	if (m.status !== membershipStatus.active)
+		throw new Error(PERMISSION_ERRORS.NOT_ORG_MEMBER);
 	return m;
 }
 

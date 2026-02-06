@@ -5,6 +5,7 @@ import {
 	text,
 	timestamp,
 	uniqueIndex,
+	varchar,
 } from "drizzle-orm/pg-core";
 
 export const usersTable = pgTable("users_table", {
@@ -117,13 +118,18 @@ export const membersTable = pgTable(
 			.notNull()
 			.references(() => usersTable.id, { onDelete: "cascade" }),
 		role: text("role").default("member").notNull(),
+		status: varchar("status", { length: 20 }).default("active").notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
 			.defaultNow()
 			.notNull(),
 	},
 	(table) => [
 		index("membersTable_organizationId_idx").on(table.organizationId),
 		index("membersTable_userId_idx").on(table.userId),
+		index("membersTable_org_status_idx").on(table.organizationId, table.status),
 		uniqueIndex("membersTable_org_user_uidx").on(
 			table.organizationId,
 			table.userId,

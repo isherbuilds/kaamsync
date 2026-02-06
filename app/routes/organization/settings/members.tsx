@@ -1,15 +1,19 @@
 import { getFormProps, getInputProps, useForm } from "@conform-to/react";
 import { getZodConstraint, parseWithZod } from "@conform-to/zod/v4";
-import { useQuery } from "@rocicorp/zero/react";
+import { useQuery, useZero } from "@rocicorp/zero/react";
 import Mail from "lucide-react/dist/esm/icons/mail";
 import MoreVertical from "lucide-react/dist/esm/icons/more-vertical";
+import ShieldAlert from "lucide-react/dist/esm/icons/shield-alert";
 import ShieldCheck from "lucide-react/dist/esm/icons/shield-check";
 import Trash2 from "lucide-react/dist/esm/icons/trash-2";
+import UserCheck from "lucide-react/dist/esm/icons/user-check";
 import UserPlus from "lucide-react/dist/esm/icons/user-plus";
+import UserX from "lucide-react/dist/esm/icons/user-x";
 import X from "lucide-react/dist/esm/icons/x";
 import { useState, useTransition } from "react";
-import { data, Link, useRouteError, useRouteLoaderData } from "react-router";
+import { Link, useRouteError, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
+import { mutators } from "zero/mutators";
 import { queries } from "zero/queries";
 import { CACHE_LONG } from "zero/query-cache-policy";
 import { z } from "zod";
@@ -33,7 +37,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { orgRole } from "~/db/helpers";
+import { membershipStatus, orgRole } from "~/db/helpers";
 import { useOrganizationLoaderData } from "~/hooks/use-loader-data";
 import { authClient } from "~/lib/auth/client";
 
@@ -45,6 +49,7 @@ const inviteSchema = z.object({
 });
 
 export default function OrgMembersPage() {
+	const zr = useZero();
 	const { authSession } = useOrganizationLoaderData();
 	const settingsData = useRouteLoaderData<typeof settingsLoader>(
 		"routes/organization/settings/layout",
@@ -125,6 +130,26 @@ export default function OrgMembersPage() {
 			});
 			if (error) toast.error(error.message);
 			else toast.success("Member removed from organization");
+		});
+	};
+
+	const updateMemberStatus = (
+		memberId: string,
+		status: "active" | "inactive",
+	) => {
+		startTransition(async () => {
+			try {
+				await zr.mutate(mutators.member.updateStatus({ memberId, status }));
+				toast.success(
+					status === membershipStatus.active
+						? "Member activated"
+						: "Member suspended",
+				);
+			} catch (err) {
+				toast.error(
+					err instanceof Error ? err.message : "Failed to update status",
+				);
+			}
 		});
 	};
 
@@ -242,11 +267,20 @@ export default function OrgMembersPage() {
 										</div>
 									</div>
 
-									{/* Right: Role + Actions */}
+									{/* Right: Status + Role + Actions */}
 									<div className="ml-4 flex items-center gap-2">
+										{m.status === membershipStatus.inactive && (
+											<Badge
+												variant="destructive"
+												className="hidden h-6 px-2 font-medium text-xs sm:flex"
+											>
+												<ShieldAlert className="mr-1 size-3" />
+												Suspended
+											</Badge>
+										)}
 										<Badge
 											variant="outline"
-					className="hidden h-6 border-border/40 bg-muted/40 px-2 font-medium text-muted-foreground text-xs capitalize sm:flex"
+											className="hidden h-6 border-border/40 bg-muted/40 px-2 font-medium text-muted-foreground text-xs capitalize sm:flex"
 										>
 											{m.role === "admin" || m.role === "owner" ? (
 												<ShieldCheck className="mr-1 size-3" />
@@ -276,6 +310,31 @@ export default function OrgMembersPage() {
 													>
 														Change to {m.role === "admin" ? "Member" : "Admin"}
 													</DropdownMenuItem>
+													{m.status === membershipStatus.active ? (
+														<DropdownMenuItem
+															onClick={() =>
+																updateMemberStatus(
+																	m.id,
+																	membershipStatus.inactive,
+																)
+															}
+														>
+															<UserX className="mr-2 size-4" />
+															Suspend Member
+														</DropdownMenuItem>
+													) : (
+														<DropdownMenuItem
+															onClick={() =>
+																updateMemberStatus(
+																	m.id,
+																	membershipStatus.active,
+																)
+															}
+														>
+															<UserCheck className="mr-2 size-4" />
+															Activate Member
+														</DropdownMenuItem>
+													)}
 													<DropdownMenuSeparator />
 													<DropdownMenuItem
 														className="text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -303,7 +362,7 @@ export default function OrgMembersPage() {
 						{invites?.map((i) => (
 							<div
 								key={i.id}
-					className="group v-stack relative overflow-hidden rounded-lg border border-border/40 bg-muted/20 p-4 text-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
+								className="group v-stack relative overflow-hidden rounded-lg border border-border/40 bg-muted/20 p-4 text-sm transition-colors duration-200 hover:border-border/40 hover:bg-muted/40"
 							>
 								<div className="mb-3 flex items-start justify-between">
 									<div className="rounded-lg border border-border/40 bg-background p-2">
@@ -336,7 +395,7 @@ export default function OrgMembersPage() {
 							</div>
 						))}
 						{invites?.length === 0 && (
-				<div className="rounded-lg border border-border/40 border-dashed bg-muted/20 p-8 text-center">
+							<div className="rounded-lg border border-border/40 border-dashed bg-muted/20 p-8 text-center">
 								<p className="text-muted-foreground text-sm">
 									No pending invitations
 								</p>

@@ -1,7 +1,7 @@
 import { defineMutator, defineMutators } from "@rocicorp/zero";
 import { v7 as uuid } from "uuid";
 import { z } from "zod";
-import { matterType, membershipStatus, teamRole } from "~/db/helpers";
+import { matterType, membershipStatus, orgRole, teamRole } from "~/db/helpers";
 import { TEAM_DEFAULT_STATUSES } from "~/lib/organization/defaults";
 import { RESERVED_TEAM_SLUGS } from "~/lib/organization/validations";
 import { assignMatterShortId } from "./helpers/mutator";
@@ -207,12 +207,10 @@ export const mutators = defineMutators({
 				const now = Date.now();
 
 				let oldPriority: number | null = null;
-				let canModify = true;
 
 				if (tx.location === "server") {
 					const accessResult = await checkMatterModifyAccess(tx, ctx, args.id);
-					canModify = accessResult.canModify;
-					if (!canModify) {
+					if (!accessResult.canModify) {
 						throw new Error(PERMISSION_ERRORS.CANNOT_MODIFY_MATTER);
 					}
 					if (args.priority !== undefined) {
@@ -826,6 +824,10 @@ export const mutators = defineMutators({
 					throw new Error("User is not a member of this organization");
 				}
 
+				if (orgMembership.status !== membershipStatus.active) {
+					throw new Error("User's organization membership is not active");
+				}
+
 				// Check if already a member (including deleted)
 				const existingMembership = await tx.run(
 					zql.teamMembershipsTable
@@ -947,7 +949,10 @@ export const mutators = defineMutators({
 				const statusId = uuid();
 				const now = Date.now();
 
-				// Insert immediately for optimistic UI
+				if (tx.location === "server") {
+					await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
+				}
+
 				await tx.mutate.statusesTable.insert({
 					id: statusId,
 					teamId: args.teamId,
@@ -960,11 +965,59 @@ export const mutators = defineMutators({
 					createdAt: now,
 					updatedAt: now,
 				});
+			},
+		),
+	},
 
-				// Server-only: permission check
-				if (tx.location === "server") {
-					await requireTeamRole(tx, ctx, args.teamId, teamRole.manager);
+	member: {
+		updateStatus: defineMutator(
+			z.object({
+				memberId: z.string(),
+				status: z.enum(["active", "inactive"] as const),
+			}),
+			async ({ tx, ctx, args }) => {
+				requireAuthentication(ctx);
+				if (!ctx.activeOrganizationId) {
+					throw new Error(PERMISSION_ERRORS.NOT_LOGGED_IN);
 				}
+				const now = Date.now();
+
+				if (tx.location === "server") {
+					const orgMembership = await findOrganizationMembership(
+						tx,
+						ctx,
+						ctx.activeOrganizationId,
+					);
+
+					if (
+						orgMembership.role !== orgRole.owner &&
+						orgMembership.role !== orgRole.admin
+					) {
+						throw new Error(PERMISSION_ERRORS.NO_APPROPRIATE_ROLE);
+					}
+
+					const target = await tx.run(
+						zql.membersTable
+							.where("id", args.memberId)
+							.where("organizationId", ctx.activeOrganizationId)
+							.one(),
+					);
+					if (!target) throw new Error(PERMISSION_ERRORS.NOT_ORG_MEMBER);
+
+					if (target.userId === ctx.userId) {
+						throw new Error("Cannot change your own status");
+					}
+
+					if (target.role === orgRole.owner) {
+						throw new Error("Cannot change status of an owner");
+					}
+				}
+
+				await tx.mutate.membersTable.update({
+					id: args.memberId,
+					status: args.status,
+					updatedAt: now,
+				});
 			},
 		),
 	},
